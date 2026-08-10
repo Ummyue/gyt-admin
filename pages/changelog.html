@@ -108,6 +108,23 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-10T16:30:00',
+          version: 'v1.7.99.210',
+          module: '追保函详情页',
+          summary: '追保函详情页（pages/bond-letter-detail.html）按 user 2026-08-10 图完整重做（user 反馈"图1为追保涵管理的「详情」按钮，详情页 你补充一下高保真原型图"）—— 原 v1.7.99.85 旧版只有占位信息（"待补充"字样） + 4 个无效 tabs（追保信息/函件内容/签收记录/操作记录），按 user 图重做 2 个 tabs：1) **顶部 detail-header**（v1.7.99.210）：« 返回箭头 + 标题"线下追保函详情" + 追保函编号：ZBH234324 + 📋 复制 + "已生效"绿底 tag（同 v1.7.99.201 保证金详情同款模式）；2) **4 列信息块**（合同/卖方/买方/创建时间）：所属合同编号（带链接 + 复制）/ 卖方企业 河南荣厚实业有限公司 / 买方企业 周口替换商贸有限公司 / 创建时间 2025-02-17 14:05:52；3) **2 个 tabs**（追保函信息 / 追保函操作记录(1)）+ tab 切换 JS；4) **区块 1 业务线信息**（3 列）：业务线号 SKYWX202308220001 / 业务线名称 天宇源国际-河南荣厚-周口替换商贸有限公司 / 上游采购合同编号 TYYGJ-HNRH-202308-004；5) **区块 2 追保函信息**（3 列）：追保金额(元) ¥111.00 / 签发日期 2025-02-17 / 追保截止日期 2025-02-17；6) **区块 3 追保函附件**（3 列表格 + 一键下载按钮）：待盖章附件 / 已生效附件（hover 黑色 toast "2023-12-12 12:23:32"）/ 其他附件（3 个 PDF）+ 单据类型 / 文件名（蓝色超链接）/ 操作（下载）；7) **Tab 2 追保函操作记录(1)**（5 列表格）：操作类型"上传追保函" / 操作人"张爽" / 所属公司"港通供应链" / 操作内容"上传追保函附件（已生效附件 44354657687.pdf）" / 操作时间"2023-12-12 12:23:32"；8) 通用复制函数 copyText() + Utils.toast 调用。',
+          changes: [
+            { type: 'add', location: 'pages/bond-letter-detail.html 顶部 detail-header', before: 'v1.7.99.85 旧版：占位信息（"待补充"字样） + 4 个无效 tabs', after: 'v1.7.99.210：« 返回箭头 + 标题"线下追保函详情" + 追保函编号：ZBH234324 + 📋 复制 + 已生效绿底 tag' },
+            { type: 'add', location: 'pages/bond-letter-detail.html 4 列信息块', before: 'v1.7.99.85 旧版：3 行 info-grid-3 简单字段', after: 'v1.7.99.210：4 列（合同/卖方/买方/创建时间），合同带超链接+复制' },
+            { type: 'modify', location: 'pages/bond-letter-detail.html Tabs', before: '4 个 tabs（追保信息/函件内容/签收记录/操作记录）', after: 'v1.7.99.210：2 个 tabs（追保函信息 / 追保函操作记录(1)）+ switchTab JS' },
+            { type: 'add', location: 'pages/bond-letter-detail.html Tab1 业务线信息', before: 'v1.7.99.85 旧版：无', after: 'v1.7.99.210：3 列（业务线号 SKYWX202308220001 / 业务线名称 / 上游采购合同编号 TYYGJ-HNRH-202308-004）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html Tab1 追保函信息', before: 'v1.7.99.85 旧版：无', after: 'v1.7.99.210：3 列（追保金额(元) ¥111.00 / 签发日期 / 追保截止日期）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html Tab1 追保函附件', before: 'v1.7.99.85 旧版：无', after: 'v1.7.99.210：3 列表格（单据类型 / 文件名 / 操作）+ 一键下载按钮 + 3 行 mock（待盖章/已生效 hover 黑色 toast / 其他 3 个 PDF）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html Tab2 追保函操作记录', before: 'v1.7.99.85 旧版：无', after: 'v1.7.99.210：5 列表格 1 行 mock（操作类型/操作人/所属公司/操作内容/操作时间）' },
+            { type: 'modify', location: 'pages/bond-letter-detail.html <title>', before: '追保函详情 - 豫港通', after: '追保函详情 - 豫港通 v1.7.99.210' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.209', after: '豫港通原型 v.1.7.99.210' }
+          ]
+        },
+        {
           ts: '2026-08-10T16:00:00',
           version: 'v1.7.99.209',
           module: '付款管理 - 选择合同抽屉',

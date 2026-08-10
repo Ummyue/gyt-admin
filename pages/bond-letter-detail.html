@@ -1,0 +1,368 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>追保函详情 - 豫港通 v1.7.99.210</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/all-pages.css">
+  <style>
+    /* v1.7.99.210 详情页样式（与保证金调整/采购结算详情同款） */
+    .detail-back { color: var(--color-primary); cursor: pointer; font-size: 18px; font-weight: 600; line-height: 1; text-decoration: none; display: inline-flex; align-items: center; }
+    .detail-back:hover { opacity: 0.8; }
+    .detail-header { padding: 16px 24px; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px; }
+    .detail-header .detail-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .detail-no-row { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+    .detail-no-label { color: var(--text-secondary); font-size: 14px; }
+    .detail-no-value { font-family: 'SF Mono', Consolas, monospace; font-size: 14px; color: var(--text-primary); }
+    .copy-icon { cursor: pointer; color: var(--text-tertiary); font-size: 14px; }
+    .copy-icon:hover { color: var(--color-primary); }
+    .status-tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
+    .status-tag.green { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+    .info-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
+    .info-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
+    .info-item { display: flex; flex-direction: column; gap: 4px; }
+    .info-label { font-size: 12px; color: var(--text-tertiary); }
+    .info-value { font-size: 14px; color: var(--text-primary); }
+    .link-primary { color: var(--color-primary); text-decoration: none; }
+    .link-primary:hover { text-decoration: underline; }
+    .tabs { display: flex; border-bottom: 1px solid var(--border-color); padding: 0 24px; background: #fff; border-radius: 6px 6px 0 0; margin-top: 12px; }
+    .tab { padding: 12px 16px; cursor: pointer; font-size: 14px; color: var(--text-secondary); border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .tab:hover { color: var(--color-primary); }
+    .block { background: #fff; padding: 16px 24px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px; }
+    .block-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+    .block-title::before { content: ''; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px; flex-shrink: 0; }
+    .attach-block-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .attach-block-header .block-title { margin-bottom: 0; }
+    .attach-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .attach-table th { background: #F8FAFC; padding: 10px 12px; text-align: left; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); }
+    .attach-table td { padding: 12px; border-bottom: 1px solid var(--border-color); }
+    .attach-table tr:last-child td { border-bottom: none; }
+    .attach-table tr:hover { background: #F8FAFC; }
+    .attach-file-list a { color: var(--color-primary); text-decoration: none; margin-right: 4px; }
+    .attach-file-list a:hover { text-decoration: underline; }
+    .attach-download { color: var(--color-primary); cursor: pointer; }
+    .attach-download:hover { text-decoration: underline; }
+    .toast-time { display: inline-block; background: #1F2937; color: white; padding: 4px 10px; border-radius: 4px; font-size: 12px; box-shadow: 0 2px 8px rgba(0,0,0,0.15); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+  <div class="topbar-logo">
+    <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+    <span>豫港通</span>
+  </div>
+                  <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+  <div class="topbar-right">
+    <div class="topbar-icon-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <span class="badge"></span>
+    </div>
+    <div class="topbar-user">
+      <div class="topbar-user-avatar">张</div>
+      <div>
+        <div class="topbar-user-name">张爽</div>
+        <div class="topbar-user-org">港通供应链</div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <div class="page-header"><div class="sidemenu-items">
+          <a href="./project-list.html" class="sidemenu-item">项目准入（列表）</a><a href="./project-apply.html" class="sidemenu-item">新增立项申请</a><a href="./project-detail.html" class="sidemenu-item">项目准入详情</a><a href="./customer-list.html" class="sidemenu-item">客户管理（列表）</a><a href="./customer-apply.html" class="sidemenu-item">新增客户申请</a><a href="./customer-quota.html" class="sidemenu-item">客户额度管理</a><a href="./blacklist.html" class="sidemenu-item">黑名单管理</a>
+        </div>
+      </div><div class="sidemenu-group open">
+        <div class="sidemenu-group-title">
+          <span class="icon">📄</span>
+          <span style="flex: 1;">数字供应链·合同</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./contract-purchase.html" class="sidemenu-item">采购合同</a><a href="./contract-purchase-new.html" class="sidemenu-item">新增/编辑采购框架合同</a><a href="./contract-purchase-framework-detail.html" class="sidemenu-item">采购框架合同详情</a><a href="./contract-purchase-order-new.html" class="sidemenu-item">新增/编辑采购订单/单批次合同</a><a href="./contract-purchase-order-detail.html" class="sidemenu-item">采购订单/单批次合同详情</a><a href="./contract-sales.html" class="sidemenu-item">销售合同</a><a href="./contract-sales-new.html" class="sidemenu-item">新增/编辑销售框架合同</a><a href="./contract-sales-framework-detail.html" class="sidemenu-item">销售框架合同详情</a><a href="./contract-sales-order-new.html" class="sidemenu-item">新增销售订单/单批次合同</a><a href="./contract-sales-order-detail.html" class="sidemenu-item">销售订单/单批次合同详情</a><a href="./contract-supplement.html" class="sidemenu-item">补充协议</a><a href="./contract-supplement-new.html" class="sidemenu-item">新增补协-框架合同</a><a href="./contract-supplement-framework-detail.html" class="sidemenu-item">补协详情页-框架合同</a><a href="./contract-supplement-order-new.html" class="sidemenu-item">新增补协-订单/单批次合同</a><a href="./contract-supplement-order-detail.html" class="sidemenu-item">补协详情页-订单/单批次合同</a>
+        </div>
+      </div><div class="sidemenu-group open">
+        <div class="sidemenu-group-title">
+          <span class="icon">📦</span>
+          <span style="flex: 1;">数字供应链·业务</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./business-line.html" class="sidemenu-item">业务线管理</a><a href="./business-line-relate.html" class="sidemenu-item">业务线关联</a><a href="./business-line-detail.html" class="sidemenu-item">业务线详情</a><a href="./shipment-out.html" class="sidemenu-item">发货管理</a><a href="./shipment-out-new.html" class="sidemenu-item">新增发货申请</a><a href="./shipment-out-detail.html" class="sidemenu-item">发货申请详情</a><a href="./shipment-in.html" class="sidemenu-item">收货管理</a><a href="./shipment-in-new.html" class="sidemenu-item">新增收货数据</a><a href="./shipment-in-detail.html" class="sidemenu-item">收货信息详情</a><a href="./goods-transfer.html" class="sidemenu-item">货转管理</a><a href="./goods-transfer-up.html" class="sidemenu-item">上游货转</a><a href="./goods-transfer-up-detail.html" class="sidemenu-item">上游货转详情</a><a href="./goods-transfer-down.html" class="sidemenu-item">下游货转</a><a href="./goods-transfer-down-new.html" class="sidemenu-item">新增下游货转</a><a href="./goods-transfer-down-detail.html" class="sidemenu-item">下游货转详情</a>
+        </div>
+      </div><div class="sidemenu-group open">
+        <div class="sidemenu-group-title">
+          <span class="icon">💰</span>
+          <span style="flex: 1;">数字供应链·资金</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./payment-list.html" class="sidemenu-item">付款列表</a><a href="./payment-new.html" class="sidemenu-item">新增付款</a><a href="./payment-detail.html" class="sidemenu-item">付款详情</a><a href="./refund-list.html" class="sidemenu-item">退款列表</a><a href="./refund-apply.html" class="sidemenu-item">退款申请</a><a href="./refund-detail.html" class="sidemenu-item">退款详情</a><a href="./receipt-list.html" class="sidemenu-item">回款列表</a><a href="./margin-pool.html" class="sidemenu-item">保证金管理</a><a href="./margin-adjust.html" class="sidemenu-item">保证金调整</a><a href="./margin-adjust-detail.html" class="sidemenu-item">调整记录</a>
+        </div>
+      </div><div class="sidemenu-group open">
+        <div class="sidemenu-group-title">
+          <span class="icon">🧾</span>
+          <span style="flex: 1;">数字供应链·结算</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./settlement-purchase.html" class="sidemenu-item">采购结算</a><a href="./settlement-purchase-new.html" class="sidemenu-item">新增/编辑采购结算单</a><a href="./settlement-purchase-detail.html" class="sidemenu-item">采购结算单详情</a><a href="./settlement-sales.html" class="sidemenu-item">销售结算</a><a href="./settlement-sales-new.html" class="sidemenu-item">新增/编辑销售结算单</a><a href="./settlement-sales-detail.html" class="sidemenu-item">销售结算单详情</a><a href="./invoice.html" class="sidemenu-item">进项发票</a>
+        </div>
+      </div><div class="sidemenu-group open">
+        <div class="sidemenu-group-title">
+          <span class="icon">📋</span>
+          <span style="flex: 1;">数字供应链·风险</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./market-price.html" class="sidemenu-item">盯市价格管理</a><a href="./market-price-detail.html" class="sidemenu-item">指标详情</a><a href="./bond-letter.html" class="sidemenu-item">追保函管理</a><a href="./bond-letter-new.html" class="sidemenu-item">新增/编辑追保函</a><a href="./bond-letter-detail.html" class="sidemenu-item active">追保函详情</a>
+        </div>
+      </div><div class="sidemenu-group">
+        <div class="sidemenu-group-title">
+          <span class="icon">🏭</span>
+          <span style="flex: 1;">仓储管理</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./warehouse-inbound.html" class="sidemenu-item">入库记录</a><a href="./warehouse-inbound-new.html" class="sidemenu-item">新增入库</a><a href="./warehouse-inbound-detail.html" class="sidemenu-item">入库详情</a><a href="./warehouse-outbound.html" class="sidemenu-item">出库记录</a><a href="./warehouse-outbound-new.html" class="sidemenu-item">新增出库</a><a href="./warehouse-outbound-detail.html" class="sidemenu-item">出库详情</a><a href="./warehouse-release.html" class="sidemenu-item">放货管理</a><a href="./warehouse-release-new.html" class="sidemenu-item">新增放货指令</a><a href="./warehouse-release-detail.html" class="sidemenu-item">放货指令详情</a>
+        </div>
+      </div><div class="sidemenu-group">
+        <div class="sidemenu-group-title">
+          <span class="icon">🔔</span>
+          <span style="flex: 1;">预警中心</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./warning-list.html" class="sidemenu-item">预警列表</a><a href="./warning-detail.html" class="sidemenu-item">预警详情</a><a href="./warning-config.html" class="sidemenu-item">预警规则配置</a>
+        </div>
+      </div><div class="sidemenu-group">
+        <div class="sidemenu-group-title">
+          <span class="icon">📊</span>
+          <span style="flex: 1;">数据中心</span>
+          <span class="arrow">▾</span>
+        </div>
+        <div class="sidemenu-items">
+          <a href="./dashboard.html" class="sidemenu-item">驾驶舱</a><a href="./report-project.html" class="sidemenu-item">项目台账表</a><a href="./report-bizline.html" class="sidemenu-item">业务线台账表</a><a href="./report-fund.html" class="sidemenu-item">资金占压表</a><a href="./report-inventory.html" class="sidemenu-item">库存明细表</a><a href="./report-ar-ap.html" class="sidemenu-item">应收应付表</a><a href="./report-risk.html" class="sidemenu-item">风控统计报表</a><a href="./report-compliance.html" class="sidemenu-item">合规验证报告列表</a><a href="./report-compliance-detail.html" class="sidemenu-item">合规报告详情</a>
+        </div>
+      </div>
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+      <!-- 面包屑 -->
+      <div class="page-header">
+        <div class="breadcrumb"><span>数字供应链</span><span class="separator">/</span><span>追保函管理</span><span class="separator">/</span><span class="current">追保函详情</span></div>
+      </div>
+
+      <!-- 详情内容 -->
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+
+        <!-- 头部 detail-header（v1.7.99.210：返回箭头 + 标题 + 编号 + 复制 + tag） -->
+        <div class="detail-header">
+          <div class="detail-title-row">
+            <a class="detail-back" onclick="history.back()" title="返回">«</a>
+            <span class="detail-title">线下追保函详情</span>
+          </div>
+          <div class="detail-no-row">
+            <span class="detail-no-label">追保函编号：</span>
+            <span class="detail-no-value">ZBH234324</span>
+            <span class="copy-icon" title="复制" onclick="copyText('ZBH234324')">📋</span>
+            <span class="status-tag green">已生效</span>
+          </div>
+        </div>
+
+        <!-- 4 列信息：合同/卖方/买方/创建时间 -->
+        <div class="block">
+          <div class="info-grid-4">
+            <div class="info-item">
+              <span class="info-label">所属合同编号</span>
+              <span class="info-value">
+                <a class="link-primary" href="#">销售090701long有一天突然</a>
+                <span class="copy-icon" title="复制" onclick="copyText('销售090701long有一天突然')">📋</span>
+              </span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">卖方企业</span>
+              <span class="info-value">河南荣厚实业有限公司</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">买方企业</span>
+              <span class="info-value">周口替换商贸有限公司</span>
+            </div>
+            <div class="info-item">
+              <span class="info-label">创建时间</span>
+              <span class="info-value">2025-02-17 14:05:52</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tabs（v1.7.99.210：追保函信息 / 追保函操作记录(1)） -->
+        <div class="tabs">
+          <div class="tab active" data-tab="info" onclick="switchTab('info')">追保函信息</div>
+          <div class="tab" data-tab="log" onclick="switchTab('log')">追保函操作记录(1)</div>
+        </div>
+
+        <!-- Tab 1：追保函信息 -->
+        <div class="tab-content" id="tab-info" style="display: block;">
+
+          <!-- 业务线信息（3 列） -->
+          <div class="block">
+            <div class="block-title">业务线信息</div>
+            <div class="info-grid-3">
+              <div class="info-item">
+                <span class="info-label">业务线号</span>
+                <span class="info-value" style="font-family: 'SF Mono', Consolas, monospace;">SKYWX202308220001</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">业务线名称</span>
+                <span class="info-value">天宇源国际-河南荣厚-周口替换商贸有限公司</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">上游采购合同编号</span>
+                <span class="info-value" style="font-family: 'SF Mono', Consolas, monospace;">TYYGJ-HNRH-202308-004</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 追保函信息（3 列） -->
+          <div class="block">
+            <div class="block-title">追保函信息</div>
+            <div class="info-grid-3">
+              <div class="info-item">
+                <span class="info-label">追保金额(元)</span>
+                <span class="info-value">¥111.00</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">签发日期</span>
+                <span class="info-value">2025-02-17</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">追保截止日期</span>
+                <span class="info-value">2025-02-17</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 追保函附件（3 列表格 + 一键下载按钮） -->
+          <div class="block">
+            <div class="attach-block-header">
+              <div class="block-title">追保函附件</div>
+              <button class="btn btn-text btn-sm" onclick="Utils.toast('一键下载追保函附件', 'success')">一键下载</button>
+            </div>
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;">单据类型</th>
+                  <th>文件名</th>
+                  <th style="width: 15%;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>待盖章附件</td>
+                  <td class="attach-file-list">
+                    <a href="javascript:void(0)" onclick="Utils.toast('预览 44354657687.pdf', 'info')">44354657687.pdf</a>
+                  </td>
+                  <td><a class="attach-download" onclick="Utils.toast('下载 44354657687.pdf', 'success')">下载</a></td>
+                </tr>
+                <tr>
+                  <td>已生效附件</td>
+                  <td class="attach-file-list">
+                    <a href="javascript:void(0)" onclick="Utils.toast('预览 44354657687.pdf', 'info')">44354657687.pdf</a>
+                    <span class="toast-time">2023-12-12 12:23:32</span>
+                  </td>
+                  <td><a class="attach-download" onclick="Utils.toast('下载 44354657687.pdf', 'success')">下载</a></td>
+                </tr>
+                <tr>
+                  <td>其他附件</td>
+                  <td class="attach-file-list">
+                    <a href="javascript:void(0)" onclick="Utils.toast('预览 44354657687.pdf', 'info')">44354657687.pdf</a>,
+                    <a href="javascript:void(0)" onclick="Utils.toast('预览 44354657687.pdf', 'info')">44354657687.pdf</a>,
+                    <a href="javascript:void(0)" onclick="Utils.toast('预览 44354657687.pdf', 'info')">44354657687.pdf</a>
+                  </td>
+                  <td><a class="attach-download" onclick="Utils.toast('下载 3 个附件', 'success')">下载</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- Tab 2：追保函操作记录(1) -->
+        <div class="tab-content" id="tab-log" style="display: none;">
+          <div class="block" style="margin-top: 12px;">
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 18%;">操作类型</th>
+                  <th style="width: 12%;">操作人</th>
+                  <th style="width: 18%;">所属公司</th>
+                  <th>操作内容</th>
+                  <th style="width: 18%;">操作时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>上传追保函</td>
+                  <td>张爽</td>
+                  <td>港通供应链</td>
+                  <td>上传追保函附件（已生效附件 44354657687.pdf）</td>
+                  <td>2023-12-12 12:23:32</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  </div>
+  <!-- /main-content -->
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.210 tab 切换
+    function switchTab(key) {
+      var tabs = document.querySelectorAll('.tab');
+      tabs.forEach(function(t) {
+        if (t.getAttribute('data-tab') === key) t.classList.add('active');
+        else t.classList.remove('active');
+      });
+      document.getElementById('tab-info').style.display = (key === 'info') ? 'block' : 'none';
+      document.getElementById('tab-log').style.display = (key === 'log') ? 'block' : 'none';
+    }
+
+    // 复制文字
+    function copyText(txt) {
+      try {
+        if (navigator.clipboard) {
+          navigator.clipboard.writeText(txt).then(function() {
+            if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('已复制：' + txt, 'success');
+          });
+        } else {
+          // fallback
+          var ta = document.createElement('textarea');
+          ta.value = txt;
+          document.body.appendChild(ta);
+          ta.select();
+          document.execCommand('copy');
+          document.body.removeChild(ta);
+          if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('已复制：' + txt, 'success');
+        }
+      } catch (e) {
+        if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('复制失败', 'error');
+      }
+    }
+  </script>
+</body>
+</html>
