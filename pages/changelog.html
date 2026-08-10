@@ -108,10 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-10T17:45:00',
+          version: 'v1.7.99.212',
+          module: '追保函列表详情跳转 + changelog JS 语法',
+          summary: '修复 2 个 bug（user 2026-08-10 反馈"https://yugangtong-prototype.pages.dev/pages/bond-letter-detail.html 页面我仍然无法通过点击详情访问，并且版本变更记录又不能用了"）—— 1) **Bug 1 changelog.html JS 语法错误**：v1.7.99.211 summary 字符串里包含 `<script src="../shared/js/left-sidemenu.js"><\/script>`（反引号包裹的代码片段），HTML parser 看到 `<\/script>` 误认为当前 `<script>` 块提前结束，导致整个 changelog.html 的 JS 都跑不起来——"版本变更记录"页面打不开（按 v1.7.99.x 系列 memory 8.2 经验：JS 字符串里 `<\/script>` 必须转义为 `<\/script>`）；2) **Bug 2 追保函列表详情按钮不跳转**：bond-letter.html 事件委托（line 263+）原本对 view action 只是 `Utils.toast`，没真的跳转到 bond-letter-detail.html——修改为：view action 拿 tr 里第 2 个 .col-num（即追保函编号）拼成 URL `window.location.href = "./bond-letter-detail.html?blNo=" + encodeURIComponent(blNo)`；3) **changelog.html v1.7.99.211 summary 已修**：把 `<\/script>` → `<\/script>` 防止 HTML parser 误判；4) title 升级 v1.7.99.211 → v1.7.99.212。',
+          changes: [
+            { type: 'modify', location: 'pages/bond-letter.html 事件委托 line 263-281', before: 'view action 只触发 Utils.toast，不跳转', after: 'v1.7.99.212：view action 拿 tr 第 2 个 .col-num（追保函编号）→ window.location.href = "./bond-letter-detail.html?blNo=" + encodeURIComponent(blNo)' },
+            { type: 'modify', location: 'pages/changelog.html v1.7.99.211 entry summary', before: '保留 `<script src="../shared/js/left-sidemenu.js"><\/script>` 引用（<\/script> 触发 HTML parser 误判，script 块提前结束）', after: 'v1.7.99.212：<\/script> → <\/script>（按 memory 8.2 经验，HTML parser 看到 <\/script> 不会误判 script 结束）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.211', after: '豫港通原型 v.1.7.99.212' }
+          ]
+        },
+        {
           ts: '2026-08-10T16:40:00',
           version: 'v1.7.99.211',
           module: '追保函详情页 - sidemenu 重复修复',
-          summary: '追保函详情页（pages/bond-letter-detail.html）删除 main-content 里的 inline sidemenu 模板（user 2026-08-10 反馈"顶部这个长列表是个显示错误"——v1.7.99.210 重写时保留了 v1.7.99.85 旧版的 inline sidemenu 模板，导致 left-sidemenu.js 动态生成的 sidemenu 跟 inline 模板同时显示，整个 main-content 被挤掉）—— 1) 删除 main-content 里的所有 inline sidemenu 模板（约 75 行：sidemenu-items + 8 个 sidemenu-group：项目准入 + 数字供应链·合同/业务/资金/结算/风险 + 仓储管理 + 预警中心 + 数据中心）；2) 保留 `<div class="sidemenu" id="leftSidemenu"></div>` 容器 + `<script src="../shared/js/left-sidemenu.js"></script>` 引用——让 JS 动态生成 sidemenu；3) 文件大小 24271 → 15326 bytes（-9KB / -37%）；4) title 升级 v1.7.99.210 → v1.7.99.211。',
+          summary: '追保函详情页（pages/bond-letter-detail.html）删除 main-content 里的 inline sidemenu 模板（user 2026-08-10 反馈"顶部这个长列表是个显示错误"——v1.7.99.210 重写时保留了 v1.7.99.85 旧版的 inline sidemenu 模板，导致 left-sidemenu.js 动态生成的 sidemenu 跟 inline 模板同时显示，整个 main-content 被挤掉）—— 1) 删除 main-content 里的所有 inline sidemenu 模板（约 75 行：sidemenu-items + 8 个 sidemenu-group：项目准入 + 数字供应链·合同/业务/资金/结算/风险 + 仓储管理 + 预警中心 + 数据中心）；2) 保留 `<div class="sidemenu" id="leftSidemenu"></div>` 容器 + `<script src="../shared/js/left-sidemenu.js"><\/script>` 引用——让 JS 动态生成 sidemenu；3) 文件大小 24271 → 15326 bytes（-9KB / -37%）；4) title 升级 v1.7.99.210 → v1.7.99.211。',
           changes: [
             { type: 'delete', location: 'pages/bond-letter-detail.html main-content 顶部 inline sidemenu 模板', before: '<div class="page-header"><div class="sidemenu-items">...sidemenu-group × 8 (项目准入 + 6 个数字供应链 + 仓储 + 预警 + 数据中心)...</div></div>', after: 'v1.7.99.211：删除（约 75 行冗余 inline 模板，由 shared/js/left-sidemenu.js 动态生成 sidemenu）' },
             { type: 'modify', location: 'pages/bond-letter-detail.html <title>', before: '追保函详情 - 豫港通 v1.7.99.210', after: '追保函详情 - 豫港通 v1.7.99.211' },
