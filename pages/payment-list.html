@@ -1,0 +1,452 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>付款管理 - 豫港通 v1.7.99.209</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 右侧抽屉（v1.7.99.54 模式 + v1.7.99.58 复用） */
+    .cp-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 999; display: none;
+    }
+    .cp-drawer-overlay.open { display: block; }
+    .cp-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 1440px; max-width: 95vw;
+      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12);
+      z-index: 1000; display: none; flex-direction: column;
+    }
+    .cp-drawer.open { display: flex; }
+    .cp-drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .cp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .cp-drawer-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .cp-drawer-close:hover { color: var(--text-primary); }
+    .cp-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
+    .cp-drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .cp-drawer-filter {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px 16px;
+      margin-bottom: 16px;
+    }
+    .cp-drawer-filter-item { display: flex; align-items: center; gap: 8px; }
+    .cp-drawer-filter-item label { color: var(--text-tertiary); font-size: 12px; min-width: 64px; }
+    .cp-drawer-filter-buttons { display: flex; gap: 8px; align-items: flex-end; }
+    .cp-drawer-filter-buttons button { height: 30px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">资金管理</a>
+          <span class="sep">/</span>
+          <span class="current">付款管理</span>
+        </div>
+
+        <!-- 标题 + 新增付款按钮（v1.7.99.58：点击触发抽屉弹窗） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">付款管理</h1>
+          <button class="btn btn-primary" onclick="openContractDrawer()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            新增付款
+          </button>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区（v1.7.99.58 按图 1：6 字段） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">数据导出</button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入订单、合同、资金流水号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业名称</span>
+                <input type="text" class="input" placeholder="请输入企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">付款类型</span>
+                <select class="select"><option>请选择付款类型</option><option>预付款</option><option>预结算付款</option><option>结算付款</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">付款日期</span>
+                <input type="text" class="input" placeholder="请选择合同签订日期">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">资金来源</span>
+                <select class="select"><option>请选择付款类型</option><option>自有资金</option><option>供应链资金</option><option>银行融资</option><option>保理融资</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">业务类型</span>
+                <select class="select"><option>请选择业务类型</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.58 按图 1：6 状态） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active">全部</div>
+                <div class="cp-tab" style="color: #1e40af;">待提交</div>
+                <div class="cp-tab" style="color: #d97706;">审批中</div>
+                <div class="cp-tab" style="color: #15803d;">已付款</div>
+                <div class="cp-tab" style="color: #dc2626;">驳回</div>
+                <div class="cp-tab" style="color: #6b7280;">无效</div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <button class="btn btn-text btn-sm">数据导出</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格（v1.7.99.180 状态机切换：tab 切换重渲染 tbody） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table" style="min-width: 1500px;">
+                <thead>
+                  <tr>
+                    <th style="width: 180px;">合同编号</th>
+                    <th style="width: 200px;">收款方</th>
+                    <th style="width: 110px;">付款类型</th>
+                    <th style="width: 110px;">资金来源</th>
+                    <th style="width: 130px;text-align: right;">付款金额(元)</th>
+                    <th style="width: 110px;">付款日期</th>
+                    <th style="width: 200px;">资金流水号</th>
+                    <th style="width: 130px;">付款状态</th>
+                    <th class="col-action" style="width: 130px;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="paymentTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 400 条记录 第 1 / 80 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">4</div>
+                  <div class="cp-pagination-page">5</div>
+                  <div class="cp-pagination-page">6</div>
+                  <div class="cp-pagination-page">7</div>
+                  <div class="cp-pagination-page">8</div>
+                  <div class="cp-pagination-page">9</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 右侧抽屉：选择采购合同（v1.7.99.58 新增） ==================== -->
+  <div class="cp-drawer-overlay" id="contractDrawerOverlay" onclick="closeContractDrawer()"></div>
+  <div class="cp-drawer" id="contractDrawer" role="dialog">
+    <div class="cp-drawer-header">
+      <div class="cp-drawer-title">选择采购订单/单批次合同</div>
+      <span class="cp-drawer-close" onclick="closeContractDrawer()" title="关闭">×</span>
+    </div>
+    <div class="cp-drawer-body">
+      <!-- 4 字段筛选 + 查询/重置（v1.7.99.58 复用 v1.7.99.54 drawer 模式） -->
+      <div class="cp-drawer-filter">
+        <div class="cp-drawer-filter-item"><label>合同编号</label><input type="text" class="input" placeholder="请输入合同编号"></div>
+        <div class="cp-drawer-filter-item"><label>企业名称</label><input type="text" class="input" placeholder="请输入企业名称"></div>
+        <div class="cp-drawer-filter-item"><label>品名</label><input type="text" class="input" placeholder="请输入品名"></div>
+        <div class="cp-drawer-filter-item"><label>签订日期</label><input type="text" class="input" placeholder="请选择合同日期范围"></div>
+        <div class="cp-drawer-filter-buttons">
+          <button class="btn btn-default btn-sm">重置</button>
+          <button class="btn btn-primary btn-sm">查询</button>
+        </div>
+      </div>
+      <!-- 11 列表格（v1.7.99.58：复选框 + 11 字段，只显示采购订单/单批次合同） -->
+      <div class="cp-table-wrap">
+        <table class="cp-table">
+          <thead>
+            <tr>
+              <!-- v1.7.99.209 单选模式：删除全选 checkbox，列宽 40px 保留 -->
+              <th style="width: 40px;"></th>
+              <th>订单/单批次合同编号</th>
+              <th>卖方企业</th>
+              <th>业务类型</th>
+              <th>品类</th>
+              <th style="text-align: right;">合同数量</th>
+              <th style="text-align: right;">合同单价</th>
+              <th style="text-align: right;">合同总价</th>
+              <th>交货期限</th>
+              <th>签订日期</th>
+              <th>业务负责人</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="radio" name="contract-radio" class="row-radio"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3,400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="contract-radio" class="row-radio"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>预付业务</td>
+              <td>糖粉</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3,400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="contract-radio" class="row-radio"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>账期业务</td>
+              <td>谷物</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3,400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="contract-radio" class="row-radio"></td>
+              <td class="col-num">DLXLC-DSRMT-202203-001</td>
+              <td>杞县广润贸易有限公司</td>
+              <td>购销业务</td>
+              <td>玉米</td>
+              <td style="text-align: right;">5,000.00 吨</td>
+              <td style="text-align: right;">2,800.00 元/吨</td>
+              <td style="text-align: right;">14,000,000.00 元</td>
+              <td>2026-01-15~2026-12-15</td>
+              <td>2026-01-15</td>
+              <td>李四</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="contract-radio" class="row-radio"></td>
+              <td class="col-num">HNCIEGMS26(购)H02-01</td>
+              <td>首浪（北京）环境测试有限公司</td>
+              <td>存货业务</td>
+              <td>测试品名</td>
+              <td style="text-align: right;">200 吨</td>
+              <td style="text-align: right;">—</td>
+              <td style="text-align: right;">—</td>
+              <td>2024-11-01~2024-11-08</td>
+              <td>2024-11-01</td>
+              <td>王五</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="cp-drawer-footer">
+      <button class="btn btn-secondary" onclick="closeContractDrawer()">取消</button>
+      <button class="btn btn-primary" onclick="confirmContract()">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 「选择合同」抽屉弹窗（v1.7.99.58 新增）
+    function openContractDrawer() {
+      document.getElementById('contractDrawer').classList.add('open');
+      document.getElementById('contractDrawerOverlay').classList.add('open');
+    }
+    function closeContractDrawer() {
+      document.getElementById('contractDrawer').classList.remove('open');
+      document.getElementById('contractDrawerOverlay').classList.remove('open');
+    }
+    function confirmContract() {
+      // v1.7.99.209 单选模式：找到选中的合同
+      var selected = document.querySelector('input[name="contract-radio"]:checked');
+      if (!selected) {
+        alert('请先选择一个采购合同');
+        return;
+      }
+      var firstRow = selected.closest('tr');
+      var contractNo = firstRow.querySelectorAll('td')[1].textContent.trim();
+      // 跳转到新增付款表单页（带合同编号）
+      window.location.href = './payment-new.html?contract=' + encodeURIComponent(contractNo);
+    }
+
+    // ===== 6 状态 tab 切换 + 表格数据联动（v1.7.99.180 修复） =====
+    // 之前只切换 active class 没过滤数据；现在 PAYMENT_MOCK 按 tab key 索引，renderPayment 重渲染 tbody
+    var PAYMENT_STATUS = {
+      '全部':     { tag: '',          color: '' },
+      '待提交':   { tag: '待提交',     color: 'tag-blue' },
+      '审批中':   { tag: '●平台运营审核中', color: 'tag-yellow' },
+      '已付款':   { tag: '●已生效',   color: 'tag-green' },
+      '驳回':     { tag: '●平台审批驳回', color: 'tag-red' },
+      '无效':     { tag: '无效',      color: 'tag-gray' }
+    };
+
+    var PAYMENT_MOCK = {
+      'all': [
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '预付款',     source: '自有资金',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520004', status: '待提交' },
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '预结算付款', source: '供应链资金', amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520005', status: '审批中' },
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '结算付款',   source: '中原银行',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520006', status: '驳回' },
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '结算付款',   source: '善美保理',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520007', status: '已付款' },
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '结算付款',   source: '华夏银行',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520008', status: '已付款' },
+        { contract: 'GTGYL-MSXS-20260127-s', payee: '郑州承泽运输有限公司',   type: '预付款',     source: '自有资金',   amount: '68,000,000.00',  date: '2026-01-27', flow: 'SKZJ20260127161901001', status: '待提交' },
+        { contract: 'XSDD-TYYGJ-20241003-002', payee: '天宇豪国际贸易集团',   type: '预结算付款', source: '供应链资金', amount: '52,000,000.00',  date: '2024-10-03', flow: 'SKZJ20241003120000022', status: '审批中' },
+        { contract: 'CGHT-GQCS-20240308-003', payee: '高琦测试煤业有限公司',  type: '结算付款',   source: '中原银行',   amount: '12,800,000.00',  date: '2024-03-08', flow: 'SKZJ20240308100003003', status: '驳回' },
+        { contract: 'XSHT-SXJY-20240711-005', payee: '山西锦阳煤业有限公司',  type: '结算付款',   source: '善美保理',   amount: '85,000,000.00',  date: '2024-07-11', flow: 'SKZJ20240711130004004', status: '已付款' },
+        { contract: 'CGHT-SYMT-20240618-001', payee: '陕煤物流监管有限公司',  type: '结算付款',   source: '华夏银行',   amount: '46,500,000.00',  date: '2024-06-18', flow: 'SKZJ20240618150005005', status: '已付款' },
+        { contract: 'GTGYL-HKJC-20240510-001', payee: '河南机场物流有限公司', type: '预付款',     source: '自有资金',   amount: '8,600,000.00',   date: '2024-05-10', flow: 'SKZJ20240510090006006', status: '已付款' }
+      ],
+      '待提交': [
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '预付款',     source: '自有资金', amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520004', status: '待提交' },
+        { contract: 'GTGYL-MSXS-20260127-s', payee: '郑州承泽运输有限公司',   type: '预付款',     source: '自有资金', amount: '68,000,000.00',  date: '2026-01-27', flow: 'SKZJ20260127161901001', status: '待提交' }
+      ],
+      '审批中': [
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '预结算付款', source: '供应链资金', amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520005', status: '审批中' },
+        { contract: 'XSDD-TYYGJ-20241003-002', payee: '天宇豪国际贸易集团',  type: '预结算付款', source: '供应链资金', amount: '52,000,000.00',  date: '2024-10-03', flow: 'SKZJ20241003120000022', status: '审批中' }
+      ],
+      '已付款': [
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '结算付款',   source: '善美保理',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520007', status: '已付款' },
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '结算付款',   source: '华夏银行',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520008', status: '已付款' },
+        { contract: 'XSHT-SXJY-20240711-005', payee: '山西锦阳煤业有限公司', type: '结算付款',   source: '善美保理',   amount: '85,000,000.00',  date: '2024-07-11', flow: 'SKZJ20240711130004004', status: '已付款' },
+        { contract: 'CGHT-SYMT-20240618-001', payee: '陕煤物流监管有限公司', type: '结算付款',   source: '华夏银行',   amount: '46,500,000.00',  date: '2024-06-18', flow: 'SKZJ20240618150005005', status: '已付款' },
+        { contract: 'GTGYL-HKJC-20240510-001', payee: '河南机场物流有限公司', type: '预付款',    source: '自有资金',   amount: '8,600,000.00',   date: '2024-05-10', flow: 'SKZJ20240510090006006', status: '已付款' }
+      ],
+      '驳回': [
+        { contract: 'DLXLC-DSRMT-202203-001', payee: '杞县广润贸易有限公司', type: '结算付款',   source: '中原银行',   amount: '100,000,000.22', date: '2023-04-06', flow: 'SKZJ20230619155520006', status: '驳回' },
+        { contract: 'CGHT-GQCS-20240308-003', payee: '高琦测试煤业有限公司', type: '结算付款',   source: '中原银行',   amount: '12,800,000.00',  date: '2024-03-08', flow: 'SKZJ20240308100003003', status: '驳回' }
+      ],
+      '无效': [
+        { contract: 'XSHT-SXJY-20240711-003', payee: '山西锦阳煤业有限公司', type: '预付款',     source: '供应链资金', amount: '5,200,000.00',   date: '2024-06-15', flow: 'SKZJ20240615120000099', status: '无效' }
+      ]
+    };
+
+    function renderPayment(key) {
+      var data = PAYMENT_MOCK[key] || [];
+      var tbody = document.getElementById('paymentTbody');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 80px 0; color: var(--text-tertiary);"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #D1D5DB;"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg><span style="font-size: 13px;">暂无数据</span></div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function(r) {
+        var st = PAYMENT_STATUS[r.status] || PAYMENT_STATUS['全部'];
+        var action = '';
+        if (r.status === '待提交') {
+          action = '<a href="javascript:void(0);" onclick="window.location.href=\'./payment-new.html?contract=' + encodeURIComponent(r.contract) + '&type=edit\'">修改</a>' +
+                   '<a href="./payment-detail.html">详情</a>';
+        } else {
+          action = '<a href="./payment-detail.html">详情</a>';
+        }
+        return '<tr>' +
+          '<td class="col-num">' + r.contract + '</td>' +
+          '<td>' + r.payee + '</td>' +
+          '<td>' + r.type + '</td>' +
+          '<td>' + r.source + '</td>' +
+          '<td style="text-align: right;" class="col-num">' + r.amount + '</td>' +
+          '<td>' + r.date + '</td>' +
+          '<td class="col-num">' + r.flow + '</td>' +
+          '<td><span class="tag ' + st.color + '">' + st.tag + '</span></td>' +
+          '<td class="col-action" style="text-align: right;">' + action + '</td>' +
+        '</tr>';
+      }).join('');
+    }
+
+    (function() {
+      var tabs = document.querySelectorAll('.cp-tab-bar-tabs .cp-tab');
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          var key = tab.textContent.trim();
+          renderPayment(key === '全部' ? 'all' : key);
+        });
+      });
+      // 初始渲染"全部"
+      renderPayment('all');
+    })();
+  </script>
+  </div>
+  <!-- /main-content -->
+</body>
+</html>

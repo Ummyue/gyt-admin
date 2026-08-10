@@ -108,6 +108,20 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-10T16:00:00',
+          version: 'v1.7.99.209',
+          module: '付款管理 - 选择合同抽屉',
+          summary: '付款管理-新增付款弹出层"选择采购订单/单批次合同"修改为单选（user 2026-08-10 反馈"付款管理中的新增付款弹出层选择采购合同修改为单选"）—— 1) **表头 checkbox 去掉**：原本 `<input type="checkbox" id="headerCheckbox" onclick="toggleSelectAll(this)">` 全选控件删掉（保留空 th 40px 列宽不变）；2) **5 行 checkbox 改成 radio**：`<input type="checkbox" class="row-checkbox">` → `<input type="radio" name="contract-radio" class="row-radio">`（同 name 自动互斥）；3) **JS confirmContract 改单选 selector**：`querySelectorAll(".row-checkbox:checked")` → `querySelector("input[name=contract-radio]:checked")`；4) **JS toggleSelectAll 函数删掉**（不再需要全选）；5) **alert 校验保留**："请先选择一个采购合同"——单选模式下不变；6) 跳转逻辑不变：选中的合同编号写入 URL → `payment-new.html?contract=XXX`；7) title 升级 v1.7.99.208 → v1.7.99.209。',
+          changes: [
+            { type: 'modify', location: 'pages/payment-list.html 选择合同抽屉表头 line 240-241', before: '<th style="width: 40px;"><input type="checkbox" id="headerCheckbox" onclick="toggleSelectAll(this)"></th>', after: 'v1.7.99.209：<!-- 单选模式：删除全选 checkbox，列宽 40px 保留 --><th style="width: 40px;"></th>' },
+            { type: 'modify', location: 'pages/payment-list.html 5 行行选择控件 line 255/268/281/294/307', before: '<td><input type="checkbox" class="row-checkbox"></td>', after: 'v1.7.99.209：<td><input type="radio" name="contract-radio" class="row-radio"></td>（同 name 自动互斥）' },
+            { type: 'modify', location: 'pages/payment-list.html JS confirmContract() line 342-353', before: 'var selected = document.querySelectorAll(".row-checkbox:checked"); if (selected.length === 0) {...}', after: 'v1.7.99.209：var selected = document.querySelector("input[name=contract-radio]:checked"); if (!selected) {...}（单选模式）' },
+            { type: 'delete', location: 'pages/payment-list.html JS toggleSelectAll() 函数 line 355-361', before: 'function toggleSelectAll(master) { ... querySelectorAll(".row-checkbox").forEach(...) }', after: 'v1.7.99.209：删除（不再需要全选）' },
+            { type: 'modify', location: 'pages/payment-list.html <title>', before: '付款管理 - 豫港通', after: '付款管理 - 豫港通 v1.7.99.209' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.208', after: '豫港通原型 v.1.7.99.209' }
+          ]
+        },
+        {
           ts: '2026-08-10T15:50:00',
           version: 'v1.7.99.208',
           module: '数据中心 - 业务线台账表 6 字段',
