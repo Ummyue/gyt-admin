@@ -1,0 +1,9 @@
+# macOS
+.DS_Store
+
+# 部署临时
+.deploy_tmp/
+.wrangler/
+
+# 会话交接（运行时生成，不入库）
+.session-handoff/

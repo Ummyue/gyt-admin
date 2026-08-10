@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目台账表 - 豫港通 v1.7.99.97</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 0; }
+
+    /* v1.7.99.97 顶部 KPI 容器：与设计系统 metric-cards 一致 */
+    .report-kpi-row { padding: 16px 24px 0 24px; background: var(--bg-page); }
+    .report-kpi-row .metric-cards { padding: 0; }
+
+    /* v1.7.99.97 表格行点击样式 */
+    .cp-row-clickable { cursor: pointer; transition: background 0.15s; }
+    .cp-row-clickable:hover { background: #F0F7FF !important; }
+
+    /* v1.7.99.97 进度条小条（库存表） */
+    .bar-mini { display: inline-block; vertical-align: middle; width: 50px; height: 6px; background: #E2E8F0; border-radius: 3px; margin-right: 6px; position: relative; }
+    .bar-mini::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; }
+    .bar-mini.warn::after { background: #F59E0B; }
+    .bar-mini.danger::after { background: #DC2626; }
+    .bar-mini.ok::after { background: #15803D; }
+
+    /* v1.7.99.190 客户数量 cell - 两个 tag 上下排列 */
+    .cust-cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item active" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <div class="breadcrumb-inline" style="padding: 16px 24px 0 24px;">
+          <a href="./cockpit.html">数据中心</a>
+          <span class="sep">/</span>
+          <span class="current">项目台账表</span>
+        </div>
+
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 8px 24px 12px 24px;">
+          <div>
+            <h1 class="page-h1" style="margin: 0;">项目台账表</h1>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">所有项目按业务实体展开（项目编号 / 客户数量 / 合同金额 / 累计回款 / 状态），数据来源于项目管理立项流程</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-default">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出 Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="report-kpi-row">
+          <div class="metric-cards">
+        <div class="metric-card">
+          <div class="metric-icon blue">📋</div>
+          <div class="metric-content">
+            <div class="metric-label">项目总数</div>
+            <div class="metric-value">128</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon green">✅</div>
+          <div class="metric-content">
+            <div class="metric-label">执行中</div>
+            <div class="metric-value">42</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon orange">💰</div>
+          <div class="metric-content">
+            <div class="metric-label">累计合同金额</div>
+            <div class="metric-value">¥ 18.6<span class="metric-suffix">亿</span></div>
+          </div>
+        </div>
+          </div>
+        </div>
+
+        <div class="cp-panel" style="margin: 16px 24px;">
+
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目类型</span>
+                <select class="select"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目状态</span>
+                <select class="select"><option>全部</option><option>执行中</option><option>已完结</option><option>已终止</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">客户名称</span>
+                <input type="text" class="input" placeholder="请输入客户名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">立项时间</span>
+                <input type="text" class="input" placeholder="开始 ~ 结束">
+              </div>
+            </div>
+          </div>
+
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table" style="table-layout: fixed; width: 100%; min-width: 100%;">
+                <thead>
+                  <tr>
+                    <th style="width: 10%;">项目编号</th>
+                    <th style="width: 16%;">项目名称</th>
+                    <th style="width: 7%;">项目类型</th>
+                    <th style="width: 12%;">客户数量</th>
+                    <th style="width: 11%;">合同金额</th>
+                    <th style="width: 11%;">累计回款</th>
+                    <th style="width: 8%;">项目状态</th>
+                    <th style="width: 8%;">立项时间</th>
+                    <th style="width: 7%;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2026-001</td><td>陕煤物流监管-郑煤 5 万吨存煤</td><td><span class="tag tag-blue">存货业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 1 家</span><span class="tag tag-green">下游 3 家</span></div></td><td style="text-align: right;" class="col-num">¥ 250,000,000</td><td style="text-align: right;" class="col-num">¥ 95,000,000</td><td><span class="tag tag-green">执行中</span></td><td>2026-01-15</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2026-002</td><td>中豫港通-天宇源国际铜精矿预付</td><td><span class="tag tag-purple">预付业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 2 家</span><span class="tag tag-green">下游 4 家</span></div></td><td style="text-align: right;" class="col-num">¥ 380,000,000</td><td style="text-align: right;" class="col-num">¥ 120,000,000</td><td><span class="tag tag-green">执行中</span></td><td>2026-02-08</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2026-003</td><td>荣厚实业-云南云核铝锭账期</td><td><span class="tag tag-orange">账期业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 1 家</span><span class="tag tag-green">下游 5 家</span></div></td><td style="text-align: right;" class="col-num">¥ 120,000,000</td><td style="text-align: right;" class="col-num">¥ 30,000,000</td><td><span class="tag tag-green">执行中</span></td><td>2026-03-22</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2025-018</td><td>郑州信必达-河钢 8 万吨钢材</td><td><span class="tag tag-blue">存货业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 1 家</span><span class="tag tag-green">下游 2 家</span></div></td><td style="text-align: right;" class="col-num">¥ 580,000,000</td><td style="text-align: right;" class="col-num">¥ 580,000,000</td><td><span class="tag tag-gray">已完结</span></td><td>2025-09-10</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2025-015</td><td>中豫港通-河南机场物流铝卷</td><td><span class="tag tag-purple">预付业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 3 家</span><span class="tag tag-green">下游 0 家</span></div></td><td style="text-align: right;" class="col-num">¥ 95,000,000</td><td style="text-align: right;" class="col-num">¥ 0</td><td><span class="tag tag-red">已终止</span></td><td>2025-07-18</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2025-010</td><td>陕煤物流监管-晋煤 3 万吨存煤</td><td><span class="tag tag-blue">存货业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 1 家</span><span class="tag tag-green">下游 2 家</span></div></td><td style="text-align: right;" class="col-num">¥ 165,000,000</td><td style="text-align: right;" class="col-num">¥ 165,000,000</td><td><span class="tag tag-gray">已完结</span></td><td>2025-04-22</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2025-005</td><td>荣厚实业-河南中原黄金铜杆</td><td><span class="tag tag-orange">账期业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 1 家</span><span class="tag tag-green">下游 3 家</span></div></td><td style="text-align: right;" class="col-num">¥ 240,000,000</td><td style="text-align: right;" class="col-num">¥ 240,000,000</td><td><span class="tag tag-gray">已完结</span></td><td>2025-02-15</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">PRJ-2024-025</td><td>郑州信必达-神火铝业 5 万吨铝锭</td><td><span class="tag tag-blue">存货业务</span></td><td><div class="cust-cell"><span class="tag tag-blue">上游 1 家</span><span class="tag tag-green">下游 4 家</span></div></td><td style="text-align: right;" class="col-num">¥ 420,000,000</td><td style="text-align: right;" class="col-num">¥ 420,000,000</td><td><span class="tag tag-gray">已完结</span></td><td>2024-11-08</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 128 条记录 · 第 1 / 13 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>// v1.7.99.97 inline Utils fallback（v1.7.99.80 模式）
+    window.Utils = window.Utils || { toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} } };
+  </script>
+  </div>
+</body>
+</html>

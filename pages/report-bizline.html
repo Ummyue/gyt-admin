@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>业务线台账表 - 豫港通 v1.7.99.189</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 0; }
+
+    /* v1.7.99.97 顶部 KPI 容器：与设计系统 metric-cards 一致 */
+    .report-kpi-row { padding: 16px 24px 0 24px; background: var(--bg-page); }
+    .report-kpi-row .metric-cards { padding: 0; }
+
+    /* v1.7.99.97 表格行点击样式 */
+    .cp-row-clickable { cursor: pointer; transition: background 0.15s; }
+    .cp-row-clickable:hover { background: #F0F7FF !important; }
+
+    /* v1.7.99.97 进度条小条（库存表） */
+    .bar-mini { display: inline-block; vertical-align: middle; width: 50px; height: 6px; background: #E2E8F0; border-radius: 3px; margin-right: 6px; position: relative; }
+    .bar-mini::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; }
+    .bar-mini.warn::after { background: #F59E0B; }
+    .bar-mini.danger::after { background: #DC2626; }
+    .bar-mini.ok::after { background: #15803D; }
+
+    /* v1.7.99.153 业务线台账表 20 列表头/数据列样式修复 */
+    .cp-table { font-size: 12px; }
+    .cp-table tbody td { padding: 10px 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .cp-table tbody td.col-num,
+    .cp-table tbody td.col-money { white-space: nowrap; }
+    /* 业务线名称 td 截断（避免超长溢出） */
+    .cp-table tbody td:nth-child(2) { max-width: 0; }
+    /* 上下游客 td 截断 */
+    .cp-table tbody td:nth-child(4),
+    .cp-table tbody td:nth-child(5) { max-width: 0; }
+
+    /* v1.7.99.189 表头列显示隐藏工具栏 */
+    .rb-col-toggle-bar { display: flex; align-items: center; justify-content: space-between; padding: 10px 16px; border-bottom: 1px solid var(--border-color); background: #fafbfc; }
+    .rb-col-toggle-tip { font-size: 12px; color: var(--text-tertiary); }
+    .rb-col-toggle-bar-right { position: relative; }
+    .rb-col-toggle-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: #fff; color: var(--text-primary); font-size: 13px; cursor: pointer; }
+    .rb-col-toggle-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .rb-col-toggle-panel { position: absolute; top: calc(100% + 4px); right: 0; z-index: 100; min-width: 240px; max-height: 480px; overflow-y: auto; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08); padding: 12px 16px; }
+    .rb-col-toggle-panel-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; padding-bottom: 8px; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; background: #fff; }
+    .rb-col-toggle-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; font-size: 13px; color: var(--text-primary); cursor: pointer; }
+    .rb-col-toggle-item input[type="checkbox"] { cursor: pointer; }
+    .rb-col-toggle-panel-footer { margin-top: 10px; padding-top: 8px; border-top: 1px solid var(--border-color); text-align: right; position: sticky; bottom: 0; background: #fff; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item active" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <div class="breadcrumb-inline" style="padding: 16px 24px 0 24px;">
+          <a href="./cockpit.html">数据中心</a>
+          <span class="sep">/</span>
+          <span class="current">业务线台账表</span>
+        </div>
+
+        <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 8px 24px 12px 24px;">
+          <div>
+            <h1 class="page-h1" style="margin: 0;">业务线台账表</h1>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">所有业务线按"上游-下游"链路展开（业务线号 / 上下游 / 货品总额 / 在执行金额 / 状态），数据来源于业务线管理</div>
+          </div>
+          <div style="display: flex; gap: 8px;">
+            <button class="btn btn-default">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              导出 Excel
+            </button>
+          </div>
+        </div>
+
+        <div class="report-kpi-row">
+          <div class="metric-cards">
+        <div class="metric-card">
+          <div class="metric-icon blue">🔗</div>
+          <div class="metric-content">
+            <div class="metric-label">业务线总数</div>
+            <div class="metric-value">87</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon green">📥</div>
+          <div class="metric-content">
+            <div class="metric-label">上游业务</div>
+            <div class="metric-value">52</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon orange">📤</div>
+          <div class="metric-content">
+            <div class="metric-label">下游业务</div>
+            <div class="metric-value">35</div>
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon purple">💰</div>
+          <div class="metric-content">
+            <div class="metric-label">累计交易额</div>
+            <div class="metric-value">¥ 25.8<span class="metric-suffix">亿</span></div>
+          </div>
+        </div>
+          </div>
+        </div>
+
+        <div class="cp-panel" style="margin: 16px 24px;">
+
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">业务类型</span>
+                <select class="select"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">业务状态</span>
+                <select class="select"><option>全部</option><option>执行中</option><option>已完结</option><option>已终止</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">上游企业</span>
+                <input type="text" class="input" placeholder="请输入上游企业">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">下游企业</span>
+                <input type="text" class="input" placeholder="请输入下游企业">
+              </div>
+              <!-- v1.7.99.189 新增：4 个字段筛选（项目编号/项目名称/采销框架合同/采销订单） -->
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目编号</span>
+                <input type="text" class="input" placeholder="请输入项目编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目名称</span>
+                <input type="text" class="input" placeholder="请输入项目名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">采/销框架合同</span>
+                <input type="text" class="input" placeholder="请输入采购/销售框架合同编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">采/销订单</span>
+                <input type="text" class="input" placeholder="请输入采购/销售订单/单批次合同编号">
+              </div>
+            </div>
+          </div>
+
+          <div class="cp-block" style="padding: 0;">
+            <!-- v1.7.99.189 表头列显示隐藏工具栏 -->
+            <div class="rb-col-toggle-bar">
+              <div class="rb-col-toggle-bar-left">
+                <span class="rb-col-toggle-tip">提示：点击右侧"列设置"可自定义显示/隐藏表头列（最多 20 列）</span>
+              </div>
+              <div class="rb-col-toggle-bar-right">
+                <button type="button" class="rb-col-toggle-btn" id="colToggleBtn" onclick="toggleColPanel(event)">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+                  列设置
+                </button>
+                <div class="rb-col-toggle-panel" id="colTogglePanel" style="display: none;">
+                  <div class="rb-col-toggle-panel-title">自定义列显示</div>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="1" checked onchange="toggleColumn(1, this.checked)"> 业务线号</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="2" checked onchange="toggleColumn(2, this.checked)"> 业务线名称</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="3" checked onchange="toggleColumn(3, this.checked)"> 类型</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="4" checked onchange="toggleColumn(4, this.checked)"> 上游企业</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="5" checked onchange="toggleColumn(5, this.checked)"> 下游企业</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="6" checked onchange="toggleColumn(6, this.checked)"> 上游货转（吨）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="7" checked onchange="toggleColumn(7, this.checked)"> 下游货转（吨）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="8" checked onchange="toggleColumn(8, this.checked)"> 库存（吨）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="9" checked onchange="toggleColumn(9, this.checked)"> 向上游支付（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="10" checked onchange="toggleColumn(10, this.checked)"> 下游合同回款（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="11" checked onchange="toggleColumn(11, this.checked)"> 下游业务回款（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="12" checked onchange="toggleColumn(12, this.checked)"> 上游结算数量（吨）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="13" checked onchange="toggleColumn(13, this.checked)"> 上游结算金额（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="14" checked onchange="toggleColumn(14, this.checked)"> 下游结算数量（吨）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="15" checked onchange="toggleColumn(15, this.checked)"> 下游结算金额（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="16" checked onchange="toggleColumn(16, this.checked)"> 上游开票金额（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="17" checked onchange="toggleColumn(17, this.checked)"> 下游开票金额（元）</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="18" checked onchange="toggleColumn(18, this.checked)"> 状态</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="19" checked onchange="toggleColumn(19, this.checked)"> 创建时间</label>
+                  <label class="rb-col-toggle-item"><input type="checkbox" data-col-idx="20" checked onchange="toggleColumn(20, this.checked)"> 操作</label>
+                  <div class="rb-col-toggle-panel-footer">
+                    <button type="button" class="btn btn-text btn-sm" onclick="resetColumnPref()">恢复默认</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="cp-table-wrap" style="overflow-x: auto;">
+              <table class="cp-table" style="table-layout: fixed; width: 2300px; min-width: 2300px;">
+                <thead>
+                  <tr>
+                    <th style="width: 130px;">业务线号</th>
+                    <th style="width: 200px;">业务线名称</th>
+                    <th style="width: 60px;">类型</th>
+                    <th style="width: 120px;">上游企业</th>
+                    <th style="width: 120px;">下游企业</th>
+                    <th style="width: 110px;"><div>上游货转</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（吨）</div></th>
+                    <th style="width: 110px;"><div>下游货转</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（吨）</div></th>
+                    <th style="width: 110px;"><div>库存</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（吨）</div></th>
+                    <th style="width: 120px;"><div>向上游支付</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th style="width: 120px;"><div>下游合同回款</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th style="width: 120px;"><div>下游业务回款</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th style="width: 120px;"><div>上游结算数量</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（吨）</div></th>
+                    <th style="width: 120px;"><div>上游结算金额</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th style="width: 120px;"><div>下游结算数量</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（吨）</div></th>
+                    <th style="width: 120px;"><div>下游结算金额</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th style="width: 120px;"><div>上游开票金额</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th style="width: 120px;"><div>下游开票金额</div><div style="font-size:10px;color:#94A3B8;font-weight:400;">（元）</div></th>
+                    <th class="col-status" style="width: 90px;">状态</th>
+                    <th class="col-time" style="width: 110px;">创建时间</th>
+                    <th class="col-action" style="width: 80px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202601150001</td><td>陕煤物流-郑煤-信必达</td><td><span class="tag tag-blue">存货</span></td><td>陕煤物流</td><td>信必达国际</td><td class="col-num">15,577.80</td><td class="col-num">15,577.35</td><td class="col-num">0</td><td class="col-money">¥ 60,765,275.91</td><td class="col-money">¥ 15,681,662.19</td><td class="col-money">¥ 15,577.35</td><td class="col-num">60,661,235.00</td><td class="col-money">¥ 15,577.35</td><td class="col-num">0</td><td class="col-money">¥ 61,873,413.91</td><td class="col-money">¥ 35,460,395.00</td><td class="col-money">¥ 26,038,320.00</td><td class="col-status"><span class="tag tag-green">执行中</span></td><td class="col-time">2026-01-15</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202408210001</td><td>天宇源国际-荣厚实业-云南云核</td><td><span class="tag tag-purple">预付</span></td><td>天宇源国际</td><td>云南云核地质</td><td class="col-num">22,358.40</td><td class="col-num">22,358.00</td><td class="col-num">0.40</td><td class="col-money">¥ 88,352,490.20</td><td class="col-money">¥ 23,452,879.50</td><td class="col-money">¥ 22,358.00</td><td class="col-num">88,134,752.50</td><td class="col-money">¥ 22,358.00</td><td class="col-num">0.40</td><td class="col-money">¥ 90,124,672.30</td><td class="col-money">¥ 51,628,420.00</td><td class="col-money">¥ 37,802,150.00</td><td class="col-status"><span class="tag tag-green">执行中</span></td><td class="col-time">2024-08-21</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202503100002</td><td>荣厚实业-河南中原黄金-招金</td><td><span class="tag tag-orange">账期</span></td><td>荣厚实业</td><td>招金矿业</td><td class="col-num">8,500.00</td><td class="col-num">8,500.00</td><td class="col-num">0</td><td class="col-money">¥ 28,750,000.00</td><td class="col-money">¥ 12,460,000.00</td><td class="col-money">¥ 8,500.00</td><td class="col-num">28,750,000.00</td><td class="col-money">¥ 8,500.00</td><td class="col-num">0</td><td class="col-money">¥ 29,250,000.00</td><td class="col-money">¥ 16,710,000.00</td><td class="col-money">¥ 12,180,000.00</td><td class="col-status"><span class="tag tag-green">执行中</span></td><td class="col-time">2025-03-10</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202509100001</td><td>郑州信必达-河钢集团-承钢</td><td><span class="tag tag-blue">存货</span></td><td>郑州信必达</td><td>承德钢铁</td><td class="col-num">38,000.00</td><td class="col-num">38,000.00</td><td class="col-num">0</td><td class="col-money">¥ 168,720,000.00</td><td class="col-money">¥ 56,234,500.00</td><td class="col-money">¥ 38,000.00</td><td class="col-num">168,720,000.00</td><td class="col-money">¥ 38,000.00</td><td class="col-num">0</td><td class="col-money">¥ 170,640,000.00</td><td class="col-money">¥ 97,560,000.00</td><td class="col-money">¥ 71,400,000.00</td><td class="col-status"><span class="tag tag-gray">已完结</span></td><td class="col-time">2025-09-10</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202411200003</td><td>中豫港通-河南机场物流-东航物流</td><td><span class="tag tag-purple">预付</span></td><td>中豫港通</td><td>东航物流</td><td class="col-num">6,200.00</td><td class="col-num">0</td><td class="col-num">0</td><td class="col-money">¥ 22,562,400.00</td><td class="col-money">¥ 0</td><td class="col-money">¥ 0</td><td class="col-num">22,562,400.00</td><td class="col-money">¥ 0</td><td class="col-num">0</td><td class="col-money">¥ 0</td><td class="col-money">¥ 14,100,000.00</td><td class="col-money">¥ 0</td><td class="col-status"><span class="tag tag-red">已终止</span></td><td class="col-time">2024-11-20</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202504220001</td><td>陕煤物流-晋煤集团-晋能</td><td><span class="tag tag-blue">存货</span></td><td>陕煤物流</td><td>晋能集团</td><td class="col-num">10,800.00</td><td class="col-num">10,800.00</td><td class="col-num">0</td><td class="col-money">¥ 47,952,000.00</td><td class="col-money">¥ 16,210,000.00</td><td class="col-money">¥ 10,800.00</td><td class="col-num">47,952,000.00</td><td class="col-money">¥ 10,800.00</td><td class="col-num">0</td><td class="col-money">¥ 48,492,000.00</td><td class="col-money">¥ 27,756,000.00</td><td class="col-money">¥ 20,280,000.00</td><td class="col-status"><span class="tag tag-gray">已完结</span></td><td class="col-time">2025-04-22</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202502150002</td><td>荣厚实业-河南中原黄金-河南黄金</td><td><span class="tag tag-orange">账期</span></td><td>荣厚实业</td><td>河南黄金集团</td><td class="col-num">15,200.00</td><td class="col-num">15,200.00</td><td class="col-num">0</td><td class="col-money">¥ 69,720,000.00</td><td class="col-money">¥ 23,560,000.00</td><td class="col-money">¥ 15,200.00</td><td class="col-num">69,720,000.00</td><td class="col-money">¥ 15,200.00</td><td class="col-num">0</td><td class="col-money">¥ 70,488,000.00</td><td class="col-money">¥ 40,320,000.00</td><td class="col-money">¥ 29,484,000.00</td><td class="col-status"><span class="tag tag-gray">已完结</span></td><td class="col-time">2025-02-15</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKYWX202411080001</td><td>郑州信必达-神火铝业-云铝</td><td><span class="tag tag-blue">存货</span></td><td>郑州信必达</td><td>云铝股份</td><td class="col-num">28,500.00</td><td class="col-num">28,500.00</td><td class="col-num">0</td><td class="col-money">¥ 122,265,000.00</td><td class="col-money">¥ 42,184,500.00</td><td class="col-money">¥ 28,500.00</td><td class="col-num">122,265,000.00</td><td class="col-money">¥ 28,500.00</td><td class="col-num">0</td><td class="col-money">¥ 124,050,000.00</td><td class="col-money">¥ 70,860,000.00</td><td class="col-money">¥ 51,840,000.00</td><td class="col-status"><span class="tag tag-gray">已完结</span></td><td class="col-time">2024-11-08</td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 87 条记录 · 第 1 / 9 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>// v1.7.99.97 inline Utils fallback（v1.7.99.80 模式）
+    window.Utils = window.Utils || { toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} } };
+  </script>
+  <script>
+    // v1.7.99.189 表头列显示隐藏（业务线台账表 20 列）
+    const RB_COL_PREF_KEY = 'report-bizline-col-pref';
+
+    function toggleColPanel(e) {
+      if (e) e.stopPropagation();
+      const panel = document.getElementById('colTogglePanel');
+      panel.style.display = panel.style.display === 'none' ? 'block' : 'none';
+    }
+
+    // 点击页面其他位置关闭列设置面板
+    document.addEventListener('click', function(e) {
+      const panel = document.getElementById('colTogglePanel');
+      const btn = document.getElementById('colToggleBtn');
+      if (!panel || !btn) return;
+      if (panel.contains(e.target) || btn.contains(e.target)) return;
+      panel.style.display = 'none';
+    });
+
+    function toggleColumn(colIdx, show) {
+      // 通过 nth-child 控制 th + 所有 td（含 tr）
+      const display = show ? '' : 'none';
+      document.querySelectorAll('.cp-table tr > *:nth-child(' + colIdx + ')').forEach(function(el) {
+        el.style.display = display;
+      });
+      saveColumnPref();
+    }
+
+    function saveColumnPref() {
+      const checks = document.querySelectorAll('#colTogglePanel input[type="checkbox"]');
+      const pref = {};
+      checks.forEach(function(c) {
+        pref[c.getAttribute('data-col-idx')] = c.checked;
+      });
+      try { localStorage.setItem(RB_COL_PREF_KEY, JSON.stringify(pref)); } catch (e) {}
+    }
+
+    function loadColumnPref() {
+      let pref = null;
+      try { pref = JSON.parse(localStorage.getItem(RB_COL_PREF_KEY) || 'null'); } catch (e) {}
+      if (!pref) return;
+      Object.keys(pref).forEach(function(idx) {
+        const show = pref[idx];
+        const checkbox = document.querySelector('#colTogglePanel input[data-col-idx="' + idx + '"]');
+        if (checkbox) {
+          checkbox.checked = show;
+          toggleColumn(parseInt(idx, 10), show);
+        }
+      });
+    }
+
+    function resetColumnPref() {
+      try { localStorage.removeItem(RB_COL_PREF_KEY); } catch (e) {}
+      document.querySelectorAll('#colTogglePanel input[type="checkbox"]').forEach(function(c) {
+        c.checked = true;
+        toggleColumn(parseInt(c.getAttribute('data-col-idx'), 10), true);
+      });
+    }
+
+    // 页面加载时应用用户偏好
+    loadColumnPref();
+  </script>
+  </div>
+</body>
+</html>
