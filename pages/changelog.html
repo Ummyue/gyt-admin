@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>版本变更记录 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <style>
+    .changelog-page { min-height: 100vh; background: #f5f7fa; }
+    .changelog-topbar { background: #fff; border-bottom: 1px solid var(--border-default); padding: 14px 32px; display: flex; align-items: center; justify-content: space-between; }
+    .changelog-topbar-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .changelog-topbar-meta { font-size: 12px; color: var(--text-tertiary); }
+    .changelog-body { max-width: 1080px; margin: 32px auto; padding: 0 24px; }
+    .changelog-summary { background: #fff; border: 1px solid var(--border-default); border-radius: 8px; padding: 16px 20px; margin-bottom: 16px; display: flex; gap: 24px; align-items: center; justify-content: space-between; }
+    .changelog-summary-left { display: flex; gap: 24px; align-items: center; flex: 1; }
+    .changelog-summary-item { font-size: 13px; color: var(--text-secondary); }
+    .changelog-summary-num { color: var(--color-primary); font-weight: 600; font-size: 16px; margin-right: 4px; }
+    /* v1.7.99.174 刷新按钮 */
+    .changelog-refresh-btn { padding: 6px 14px; font-size: 13px; color: var(--color-primary); background: #fff; border: 1px solid var(--color-primary); border-radius: 4px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; transition: all 0.15s; white-space: nowrap; }
+    .changelog-refresh-btn:hover { background: var(--color-primary); color: #fff; }
+    .changelog-refresh-btn.refreshing svg { animation: spin 0.8s linear infinite; }
+    @keyframes spin { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .changelog-list { display: flex; flex-direction: column; gap: 16px; }
+    .changelog-card { background: #fff; border: 1px solid var(--border-default); border-radius: 8px; overflow: hidden; }
+    .changelog-card-header { padding: 14px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; gap: 12px; background: #fafbfc; flex-wrap: wrap; }
+    .changelog-card-meta { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .changelog-card-ts { font-size: 13px; color: var(--text-secondary); font-weight: 500; }
+    .changelog-card-ts strong { color: var(--text-primary); font-weight: 600; }
+    .tag-version { font-size: 12px; color: #1e40af; background: #dbeafe; padding: 2px 10px; border-radius: 4px; font-weight: 600; font-family: 'SF Mono', Menlo, monospace; }
+    .tag-module { font-size: 12px; color: #7c2d12; background: #ffedd5; padding: 2px 10px; border-radius: 4px; font-weight: 500; }
+    .changelog-card-body { padding: 20px; }
+    /* 文字总结 */
+    .changelog-summary-text { font-size: 14px; color: var(--text-primary); line-height: 1.7; padding: 12px 16px; background: #f0f9ff; border-left: 3px solid #0284c7; border-radius: 4px; margin-bottom: 16px; }
+    /* 改动列表 */
+    .changelog-changes-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .changelog-changes { border: 1px solid var(--border-light); border-radius: 6px; overflow: hidden; margin-bottom: 16px; }
+    .changelog-change { display: grid; grid-template-columns: 60px 1fr; gap: 12px; padding: 10px 12px; border-bottom: 1px solid var(--border-light); font-size: 13px; align-items: start; }
+    .changelog-change:last-child { border-bottom: 0; }
+    .changelog-change-type { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 3px; text-align: center; line-height: 1.5; }
+    .changelog-change-type.add { background: #dcfce7; color: #15803d; }
+    .changelog-change-type.remove { background: #fee2e2; color: #dc2626; }
+    .changelog-change-type.modify { background: #dbeafe; color: #1e40af; }
+    .changelog-change-content { display: flex; flex-direction: column; gap: 4px; }
+    .changelog-change-location { color: var(--text-tertiary); font-size: 12px; }
+    .changelog-change-diff { display: grid; grid-template-columns: 1fr auto 1fr; gap: 8px; align-items: center; }
+    .changelog-change-before, .changelog-change-after { padding: 6px 10px; border-radius: 4px; word-break: break-all; }
+    .changelog-change-before { background: #fef2f2; color: #991b1b; font-size: 12px; line-height: 1.5; }
+    .changelog-change-before.empty { background: #f8fafc; color: #94a3b8; font-style: italic; }
+    .changelog-change-after { background: #f0fdf4; color: #166534; font-size: 12px; line-height: 1.5; }
+    .changelog-change-after.empty { background: #f8fafc; color: #94a3b8; font-style: italic; }
+    .changelog-change-arrow { color: var(--text-tertiary); font-size: 14px; }
+    /* 截图 */
+    .changelog-snapshots { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+    .changelog-snapshot { border: 1px solid var(--border-light); border-radius: 6px; overflow: hidden; }
+    .changelog-snapshot-label { background: #f1f5f9; padding: 6px 12px; font-size: 12px; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); }
+    .changelog-snapshot-label.prev { color: #94a3b8; }
+    .changelog-snapshot-label.next { color: var(--color-primary); }
+    .changelog-snapshot-img { width: 100%; aspect-ratio: 16 / 9; background: #f8fafc; display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: 12px; overflow: hidden; }
+    .changelog-snapshot-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .changelog-empty { background: #fff; border: 1px dashed var(--border-default); border-radius: 12px; padding: 60px 24px; text-align: center; }
+    .changelog-empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .changelog-empty-title { font-size: 16px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px; }
+    .changelog-empty-desc { font-size: 13px; color: var(--text-secondary); max-width: 480px; margin: 0 auto; line-height: 1.7; }
+  </style>
+</head>
+<body>
+  <div class="changelog-page">
+    <div class="changelog-topbar">
+      <div class="changelog-topbar-title">📋 豫港通 · 高保真原型 · 版本变更记录</div>
+      <div class="changelog-topbar-meta" id="metaInfo">加载中…</div>
+    </div>
+    <div class="changelog-body">
+      <div class="changelog-summary" id="summary"></div>
+      <div class="changelog-list" id="changelogList">
+        <!-- JS 渲染 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/changelog.js"></script>
+  <script>
+    (function () {
+      function fmtTs(iso) {
+        if (!iso) return '—';
+        const d = new Date(iso);
+        const pad = n => String(n).padStart(2, '0');
+        // 智能识别：原字符串带 Z（UTC）→ +8 转北京时间；不带 Z（本地）→ 直接读取
+        const isUTC = typeof iso === 'string' && /Z$/.test(iso);
+        if (isUTC) {
+          const beijing = new Date(d.getTime() + 8 * 3600 * 1000);
+          return `${beijing.getUTCFullYear()}-${pad(beijing.getUTCMonth() + 1)}-${pad(beijing.getUTCDate())} ${pad(beijing.getUTCHours())}:${pad(beijing.getUTCMinutes())}:${pad(beijing.getUTCSeconds())}`;
+        }
+        return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}:${pad(d.getSeconds())}`;
+      }
+
+      function relativeTime(iso) {
+        if (!iso) return '';
+        const d = new Date(iso);
+        const diff = (Date.now() - d.getTime()) / 1000;
+        if (diff < 60) return '刚刚';
+        if (diff < 3600) return `${Math.floor(diff / 60)} 分钟前`;
+        if (diff < 86400) return `${Math.floor(diff / 3600)} 小时前`;
+        if (diff < 86400 * 7) return `${Math.floor(diff / 86400)} 天前`;
+        return fmtTs(iso);
+      }
+
+      // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
+      // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
+      var BASELINE = [
+        {
+          ts: '2026-08-10T15:40:00',
+          version: 'v1.7.99.207',
+          module: '数据中心 - 台账 CF Pages 部署',
+          summary: '业务线台账表 v1.7.99.189 + 项目台账表 v1.7.99.190 部署到 Cloudflare Pages + 补 changelog 记录（user 2026-08-10 反馈"我刚刚错误的把本会话要做的任务，丢到了上边这个会话id中，主要是数据中心的改动，你读一下在这修改一下"——错误会话 mvs_45fccedc9cb04b158d54d846ddacd0c6 里 v1.7.99.189-190 的代码已写好 + GitHub push 成功（commit ca7431d "feat(数据中心-台账): 业务线台账表 + 项目台账表 字段与显隐"），但 CF Pages 没部署完——卡在等 CLOUDFLARE_API_TOKEN 步骤）—— 1) 跑 wrangler pages deploy 部署整个 yugangtong-prototype/ 目录到 yugangtong-prototype.pages.dev（用之前 v1.7.99.0-206 那一批用过的 CLOUDFLARE_API_TOKEN，token 已存 memory 不用再问 user 拿）；2) 验证部署后：业务线台账表线上 v1.7.99.154 → v1.7.99.189（19KB → 28KB）/ 项目台账表线上 v1.7.99.97（13KB）→ v1.7.99.97（14KB, body 改 12 处含 .cust-cell + 客户数量 tag）/ app.html title v1.7.99.206 → v1.7.99.207；3) 补 v1.7.99.189 + v1.7.99.190 之前漏的 changelog entry（错误会话里做的工作没记 changelog，这次一并补上）；4) 整个 v1.7.99.201-206 已部署过，跟 v1.7.99.189-190 同步一次 deploy 无冲突。',
+          changes: [
+            { type: 'modify', location: 'CF Pages 部署 yugangtong-prototype.pages.dev', before: '业务线台账表线上 v1.7.99.154 (19KB) / 项目台账表线上 v1.7.99.97 (13KB) —— 错误会话做完 v1.7.99.189-190 但没 deploy', after: 'v1.7.99.207：业务线台账表线上 v1.7.99.189 (28KB, +43 处关键 marker) / 项目台账表线上 v1.7.99.97 (14KB, +12 处 .cust-cell + 客户数量 tag) / app.html title v1.7.99.207' },
+            { type: 'add', location: 'pages/changelog.html BASELINE 数组', before: '只有 v1.7.99.166-206，没有 v1.7.99.189-190（错误会话里做的工作没记 changelog）', after: 'v1.7.99.207：补 v1.7.99.189 + v1.7.99.190 + v1.7.99.207 3 条 entry' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.206', after: '豫港通原型 v.1.7.99.207' }
+          ]
+        },
+        {
+          ts: '2026-08-10T12:10:00',
+          version: 'v1.7.99.190',
+          module: '数据中心 - 项目台账表',
+          summary: '项目台账表（pages/report-project.html）"客户"列改为"客户数量"，8 行 mock 改成两个 tag（上游/下游）上下排列（错误会话 mvs_45fccedc9cb04b158d54d846ddacd0c6 做的，user 2026-08-10 反馈"数据中心-项目台账 中需要把客户列改成客户数量，且把每个项目客户数量按上下游展示"）—— 1) 表头 "客户" → "客户数量"（宽度 11% → 12%）；2) 顶部描述同步 "（项目编号 / 客户 / ...）" → "（项目编号 / 客户数量 / ...）"；3) 8 行数据客户列 → 两个 tag 上下排列：🟦"上游 N 家"（tag-blue 在上）+ 🟩"下游 M 家"（tag-green 在下），业务规则体感：存货业务上游少（1 家）下游多；预付/账期上下游都分散；已终止项目下游归 0（合理）；4) 新增 CSS `.cust-cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }`；5) **v1.7.99.190 代码已写但 CF Pages 没部署**——v1.7.99.207 补部署。',
+          changes: [
+            { type: 'modify', location: 'pages/report-project.html 表格表头 line 150', before: '<th style="width: 11%;">客户</th>', after: 'v1.7.99.190：<th style="width: 12%;">客户数量</th>' },
+            { type: 'modify', location: 'pages/report-project.html 顶部描述 line 77', before: '所有项目按业务实体展开（项目编号 / 客户 / 合同金额 / 累计回款 / 状态），数据来源于项目管理立项流程', after: 'v1.7.99.190：所有项目按业务实体展开（项目编号 / 客户数量 / 合同金额 / 累计回款 / 状态），数据来源于项目管理立项流程' },
+            { type: 'modify', location: 'pages/report-project.html 8 行 mock 数据 line 159-166', before: '<td>陕煤物流监管</td> 等（v1.7.99.97 旧版只显示企业名）', after: 'v1.7.99.190：<div class="cust-cell"><span class="tag tag-blue">上游 N 家</span><span class="tag tag-green">下游 M 家</span></div>（8 行：上游 1-3 / 下游 0-5）' },
+            { type: 'add', location: 'pages/report-project.html CSS line 27-28', before: '无 .cust-cell 样式（v1.7.99.97 旧版）', after: 'v1.7.99.190：新增 .cust-cell { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; }' }
+          ]
+        },
+        {
+          ts: '2026-08-10T12:00:00',
+          version: 'v1.7.99.189',
+          module: '数据中心 - 业务线台账表',
+          summary: '业务线台账表（pages/report-bizline.html）新增 4 个筛选项 + 20 列显示隐藏工具栏（错误会话 mvs_45fccedc9cb04b158d54d846ddacd0c6 做的，user 2026-08-10 反馈"业务线台账的改动"）—— 1) **新增 4 个筛选项**（line 166-188）：项目编号 / 项目名称 / 采/销框架合同 / 采销订单（cp-filter 6 字段 2 行 × 3 列布局）；2) **新增 20 列显隐工具栏**（.rb-col-toggle-bar / .rb-col-toggle-btn / .rb-col-toggle-panel / .rb-col-toggle-item / .rb-col-toggle-panel-footer）："列设置"按钮 + 弹层 + 20 个 checkbox 控制 20 列显隐；3) JS 函数 renderBizline() 按显隐配置渲染 20 列表格（line 298+）；4) **v1.7.99.189 代码已写但 CF Pages 没部署**——v1.7.99.207 补部署。',
+          changes: [
+            { type: 'add', location: 'pages/report-bizline.html 4 个新筛选项 line 166-188', before: '只有 2 个筛选项（v1.7.99.166 旧版）', after: 'v1.7.99.189：加 项目编号 / 项目名称 / 采/销框架合同 / 采销订单 4 个 cp-filter-item' },
+            { type: 'add', location: 'pages/report-bizline.html 20 列显隐工具栏 CSS line 38-48', before: '无列设置样式（v1.7.99.166 旧版）', after: 'v1.7.99.189：新增 .rb-col-toggle-bar / .rb-col-toggle-btn / .rb-col-toggle-panel / .rb-col-toggle-item / .rb-col-toggle-panel-footer 完整样式' },
+            { type: 'add', location: 'pages/report-bizline.html 20 列显隐工具栏 HTML line 187+', before: '无列设置工具栏（v1.7.99.166 旧版）', after: 'v1.7.99.189：表头列显示隐藏工具栏——"列设置"按钮 + 弹层 + 20 个 checkbox' },
+            { type: 'add', location: 'pages/report-bizline.html JS line 298+', before: '无显隐渲染函数（v1.7.99.166 旧版）', after: 'v1.7.99.189：renderBizline() 按显隐配置渲染 20 列表格' }
+          ]
+        },
+        {
+          ts: '2026-08-10T11:30:00',
+          version: 'v1.7.99.206',
+          module: '合规验证报告 docs',
+          summary: '合规验证报告列表页 + 详情页需求设计文档完整重写（user 2026-08-10 反馈"图1为合规验证报告管理的列表页面的需求规则描述...图2/图3/图4为合规验证报告管理页中列表数据的「查看详情」页面的完整需求规则描述"——按 user 4 张图完整重写 2 个 docs）—— 1) **p-report-compliance.md v1.7.99.206**：按图1 完整重写，新增 § 2 业务规则（生成规则：定时任务 1 小时 + 监测【已付款】付款记录 / 搜索条件 10 字段同【数字供应链】-【业务线管理】/ 列表说明：当前登录账号所属企业下的所有业务线）；§ 4 字段定义 12 列完整（含数据来源/展示形式/取值规则）；§ 6 数据规则 8 条按图1 字段"备注"列；§ 9 注意事项——非新增功能，复用后台【风控管理】-【付款后管理】，将"付款后管理 + 贷后报告"两个功能结合移植到前台业务端；2) **p-report-compliance-detail.md v1.7.99.206**：按图2/3/4 完整重写，§ 3 业务线基本信息 11 字段（图2 详细规则：资金来源付款=0 展示"-"、运输合同条件渲染、交货期限销售优先、运输方式业务类型去重合并、业务线状态驳回时鼠标移入展示驳回原因）；§ 4 项目信息 6 字段；§ 5 合作期间主体风险监控（取值逻辑：主体范围排除 5 类+日期范围 min-max+状态排除已处理+12 信息类型表格）；§ 6 业务完整性校验 6 项（按图3 详细规则：已收货<已发货显示-0/发票足额补充 3 条件同时满足）；§ 7-8 上下游付款/回款（按图3 详细规则：付款只上游/回款只下游/回款是否足额二元判断+完全未回款归到足额）；§ 9 业务线状态（数据完善状态+动态审核按钮）；§ 10 风险校验检查规则表 12 行（图4：主体准入类 4 + 交易实质类 8）；§ 11 校验结果状态说明（通过/不通过/未发生 三种状态）。',
+          changes: [
+            { type: 'modify', location: 'docs/p-report-compliance.md 顶部 + 全文', before: 'v1.7.99.200 终版（按实际 prototype 字段）', after: 'v1.7.99.206 终版——按图1 完整重写：新增 § 2 业务规则（生成规则+搜索条件 10 字段+列表说明）/ § 6 数据规则 8 条（按图1 字段"备注"列）/ § 9 注意事项（非新增功能，复用后台【风控管理】-【付款后管理】）' },
+            { type: 'modify', location: 'docs/p-report-compliance-detail.md 顶部 + 全文', before: 'v1.0 终版（基于原型 70-78 截图）', after: 'v1.7.99.206 终版——按图2/3/4 完整重写：§ 3 业务线基本信息 11 字段（含资金来源付款=0 展示"-"+运输合同条件渲染+交货期限销售优先+驳回时鼠标移入展示驳回原因）/ § 5 合作期间主体风险监控（取值逻辑+12 信息类型）/ § 6 业务完整性校验（含已收货<已发货显示-0+发票足额补充 3 条件）/ § 7-8 上下游付款/回款（按图3 详细规则+回款是否足额二元判断）/ § 9 业务线状态（动态审核按钮控件）/ § 10 风险校验检查规则表 12 行（主体准入类 4+交易实质类 8）/ § 11 校验结果状态说明' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.205', after: '豫港通原型 v.1.7.99.206' }
+          ]
+        },
+        {
+          ts: '2026-08-10T11:15:00',
+          version: 'v1.7.99.205',
+          module: '回款管理列表页',
+          summary: '回款管理列表页顶部右侧「查询」「重置」按钮去掉，按 v1.7.99.184 全站筛选标准统一（user 2026-08-10 反馈"回款管理列表页面，顶部右侧「查询」「重置」按钮去掉 顶部控件统一"）—— 1) 删 cp-filter 末尾的 .cp-filter-item "操作"列 div（line 112-115，含 grid-column: 1 / -1 + 查询按钮 + 重置按钮）；2) 6 字段自然布局为 2 行 × 3 列 grid（编号 / 回款方 / 收款账号 / 回款日期 / 回款方式 / 数据来源）—— 跟 settlement-purchase / payment-list 等其他 v1.7.99.184 全站列表页一致；3) 实时 input/change 事件过滤由 .cp-filter-summary 区块触发（filter-chips.js），不需要显式"查询"按钮提交。',
+          changes: [
+            { type: 'modify', location: 'pages/receipt-list.html 筛选区 line 112-115', before: '<div class="cp-filter-item" style="grid-column: 1 / -1; flex-direction: row; justify-content: flex-end; gap: 8px;"><button>查询</button><button>重置</button></div>', after: 'v1.7.99.205：删 .cp-filter-item 整块（v1.7.99.184 全站筛选标准）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.204', after: '豫港通原型 v.1.7.99.205' }
+          ]
+        },
+        {
+          ts: '2026-08-10T11:00:00',
+          version: 'v1.7.99.204',
+          module: '采购结算单详情页',
+          summary: '采购结算单详情页顶部整块删除「« 采购结算单详情」返回按钮（user 2026-08-10 反馈"采购结算单详情页面顶部左侧标记红框的部分需要去掉「采购结算单详情」文字按钮"—— user 选 B 方案：整块按钮都删）—— 1) **4 项配套清理**（v1.7.99.183/v1.7.99.192 模式）：a) 删 .back-btn 按钮 div（line 128-131，含返回箭头 svg + 文字 + onclick=history.back()）；b) 删外层 .detail-header-row 父级容器；c) 删 .detail-header .back-btn CSS 类；d) 改 .detail-title margin-top 10px → 0；2) 详情页顶部直接展示"结算单编号 + 已生效 tag + 来源 tag + 所属合同编号 + 卖方/买方/创建时间 5 字段"；3) **保留不动**：顶部面包屑（结算管理/采购结算/采购结算单详情）+ sidemenu 里的"采购结算 → 采购结算单详情"active 菜单项；4) docs/p-settlement-purchase-detail.md 顶部 v1.7.99.204 状态 + 关键改动说明 + 末尾文档版本记录。',
+          changes: [
+            { type: 'modify', location: 'pages/settlement-purchase-detail.html 顶部 detail-header', before: '<div class="detail-header-row"><div class="back-btn" onclick="history.back()">« 采购结算单详情</div></div> + <div class="detail-title" style="margin-top: 10px;">（v1.7.99.70 旧版）', after: 'v1.7.99.204：删 .detail-header-row + .back-btn 整块 + 改 .detail-title margin-top 10px → 0（顶部直接展示结算单编号 + 5 字段）' },
+            { type: 'modify', location: 'pages/settlement-purchase-detail.html CSS line 14', before: '.detail-header .back-btn { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); cursor: pointer; font-size: 13px; } .detail-header .back-btn:hover { color: var(--color-primary); }', after: 'v1.7.99.204：删 .back-btn CSS 类（无引用即删）' },
+            { type: 'modify', location: 'docs/p-settlement-purchase-detail.md 顶部', before: 'v1.0 终版（基于原型 49-54 截图）', after: 'v1.7.99.204 终版（v1.0 基础上 + v1.7.99.204 删顶部「« 采购结算单详情」整块返回按钮）' },
+            { type: 'modify', location: 'docs/p-settlement-purchase-detail.md 末尾文档版本', before: 'v1.7.99.x（2026-07-28）最后更新', after: 'v1.7.99.204：整块删除顶部「« 采购结算单详情」返回按钮（4 项配套清理）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.203', after: '豫港通原型 v.1.7.99.204' }
+          ]
+        },
+        {
+          ts: '2026-08-10T10:10:00',
+          version: 'v1.7.99.203',
+          module: '业务线详情页操作按钮',
+          summary: '业务线详情页"操作"下拉第 4 项"查看合规验证报告"点击后跳到对应业务线的合规验证报告详情页（user 2026-08-10 反馈"查看监控：修改文字按钮名称为「查看合规验证报告」并且点击后跳至对应合同的「合规验证报告」详情页"）—— 1) 文字按钮 v1.7.99.202 已改为"查看合规验证报告"（原"查看监控"）；2) v1.7.99.203 点击行为从 toast"功能开发中"改为 `window.location.href = "./report-compliance-detail.html"` 跳到合规验证报告详情页（与 `report-compliance.html` 列表"查看报告"链接同款）；3) docs/p-business-line-detail.md 关键改动说明 v1.7.99.202 → v1.7.99.203 修正。',
+          changes: [
+            { type: 'modify', location: 'pages/business-line-detail.html openBlModal() function', before: "type='compliance' 时给 toast 提示'功能开发中'（v1.7.99.202）", after: "v1.7.99.203：window.location.href = './report-compliance-detail.html' 跳到合规验证报告详情页" },
+            { type: 'modify', location: 'docs/p-business-line-detail.md v1.7.99.202 关键改动', before: "「关键新增】查看合规验证报告：点击后 toast 提示（独立页面待后续迭代）", after: "v1.7.99.203：点击后跳到 ./report-compliance-detail.html" },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.202', after: '豫港通原型 v.1.7.99.203' }
+          ]
+        },
+        {
+          ts: '2026-08-10T09:50:00',
+          version: 'v1.7.99.202',
+          module: '业务线详情页操作按钮',
+          summary: '业务线详情页"操作"按钮改为下拉菜单 + 3 个二次弹窗（user 2026-08-10 反馈"业务线管理页面，点击具体业务线打开业务线详情页面，有对应的操作按钮"——按 user 4 张图实现：图1 操作下拉 4 项 + 图2 解除业务线二次弹窗 + 图3 业务线完结申请选择弹框 + 图4 一键下载附件选择弹框）—— 1) **操作按钮改下拉菜单**：把"操作"按钮改成点击展开下拉菜单，4 项 = 解除业务线 / 申请业务完结 / 一键下载附件 / 查看合规验证报告（原"查看监控"→ 改为"查看合规验证报告"）；2) **弹窗 1：解除业务线**（图2 二次确认弹窗）：带感叹号 icon + 标题"解除业务线" + 提示"解除后，该业务线将删除，不影响上下游合同数据。确认要解除吗？" + 取消/确定；3) **弹窗 2：业务线完结申请**（图3 选择弹框）：标题"业务线完结申请" + 单选"申请完结合同：上游采购合同 / 下游销售合同" + 取消/确定（必选校验）；4) **弹窗 3：一键下载附件**（图4 选择弹框）：标题"一键下载附件" + 多选"上游附件 / 下游附件"（默认全选） + 取消/确定（至少选 1 项校验）；5) **查看合规验证报告**：点击后 toast 提示"功能开发中"（独立页面待后续迭代）；6) docs/p-business-line-detail.md 顶部加 v1.7.99.202 状态 + 关键改动说明 + 末尾加文档版本记录 + line 197 操作字段更新为 4 项。',
+          changes: [
+            { type: 'modify', location: 'pages/business-line-detail.html 头部 line 227', before: '<button class="btn btn-primary btn-sm">操作</button>（v1.0 单独按钮无下拉）', after: 'v1.7.99.202：加 id="blActionBtn" + onclick="toggleBlActionMenu(event)" + 下拉菜单 #blActionMenu 4 项' },
+            { type: 'modify', location: 'pages/business-line-detail.html 头部 HTML', before: '无下拉菜单 HTML', after: 'v1.7.99.202：新增 .bl-action-menu 包含 4 个 a 链接——解除业务线 / 申请业务完结 / 一键下载附件 / 查看合规验证报告（点击分别触发 openBlModal(type)）' },
+            { type: 'add', location: 'pages/business-line-detail.html CSS', before: '无下拉菜单 + 弹窗 CSS（v1.0 旧版）', after: 'v1.7.99.202：新增 .bl-action-menu（min-width 160px 蓝字下拉）+ .bl-modal-mask（遮罩 rgba 0.4）+ .bl-modal（520px 弹窗体）+ .bl-modal-header / .bl-modal-body / .bl-modal-footer（标题灰底 + 内容 + 底部按钮）+ .bl-modal-radio-group / .bl-modal-checkbox-group（单选多选组）+ .bl-modal-title-icon（22×22 蓝圆感叹号 icon）' },
+            { type: 'add', location: 'pages/business-line-detail.html 3 个 modal HTML', before: '无弹窗 HTML（v1.0 旧版）', after: 'v1.7.99.202：在 body 末尾新增 3 个 .bl-modal-mask——#blModalRelease（解除业务线 二次确认，带感叹号 icon + 提示文案 + 取消/确定） / #blModalFinish（业务线完结申请 单选：上游采购合同/下游销售合同） / #blModalDownload（一键下载附件 多选：上游附件/下游附件 默认全选）' },
+            { type: 'add', location: 'pages/business-line-detail.html 操作下拉 + 弹窗 JS', before: '无相关 JS（v1.0 旧版）', after: 'v1.7.99.202：新增 4 个函数——toggleBlActionMenu(e)（切换下拉显示 + stopPropagation）/ openBlModal(type)（关闭下拉 + 打开对应弹窗；type=compliance 时给 toast "功能开发中"）/ closeBlModal(type)（移除 .show class）/ confirmBlAction(type)（必选校验 + toast 成功提示 + 关闭弹窗）+ 点击外部关闭下拉事件监听' },
+            { type: 'modify', location: 'docs/p-business-line-detail.md 顶部', before: 'v1.0 终版', after: 'v1.7.99.202 终版（v1.0 基础上 + v1.7.99.202 操作下拉菜单 4 项）' },
+            { type: 'modify', location: 'docs/p-business-line-detail.md line 197 操作字段', before: '业务线详情 / 解除业务线', after: '业务线详情 / 解除业务线 / 申请业务完结 / 一键下载附件 / 查看合规验证报告' },
+            { type: 'modify', location: 'docs/p-business-line-detail.md 末尾文档版本', before: 'v1.7.99.55 最后更新', after: 'v1.7.99.202：操作按钮改下拉 + 3 个二次弹窗 + 4 项操作列表' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.201', after: '豫港通原型 v.1.7.99.202' }
+          ]
+        },
+        {
+          ts: '2026-08-07T16:30:00',
+          version: 'v1.7.99.201',
+          module: '保证金调整记录详情页',
+          summary: '保证金调整记录详情页顶部重排为 1+3+3 布局（user 2026-08-07 反馈"图1保证金调整记录页面顶部的布局错乱了，按图2布局方案优化一下"）—— 1) **行 1**：保 icon（24×24 渐变蓝圆角块，"保"字）+ "保证金调整编号：" 标题 + 编号值（mono 字体）+ 复制图标 + "已调整"绿底 tag（最右）；2) **行 2**：销售订单/单批次编号（带超链接 + 复制）/ 卖方企业 / 买方企业（3 列 grid）；3) **行 3**：调整方式 / 创建人 / 创建时间（3 列 grid）；4) 解决 v1.7.99.198 旧版 grid 4 列 6 字段导致的标题/已调整 tag/编号 互相重叠 + 6 字段顺序错位问题；5) **关键 bug**：`design-system.css` 的 `.detail-header { display: flex; align-items: flex-start; gap: 16px; }` 默认是 row 方向，导致 row1/row2/row3 水平排列不是垂直堆叠——v1.7.99.201 解决：在 inline `<style>` 加 `.detail-header { flex-direction: column; }` 覆盖为 column 方向；6) docs/p-margin-adjust-detail.md 同步重写——按 1+3+3 布局更新字段定义 + 8 节统一格式 + v1.7.99.201 修改记录。',
+          changes: [
+            { type: 'modify', location: 'pages/margin-adjust-detail.html .detail-header', before: 'padding: 16px 24px; background: #fff（继承 design-system.css 默认 display: flex row）', after: 'v1.7.99.201：加 flex-direction: column——覆盖 design-system.css 的 display: flex row，让 row1/row2/row3 垂直堆叠' },
+            { type: 'modify', location: 'pages/margin-adjust-detail.html .detail-header-row1', before: 'display: grid; grid-template-columns: 1fr auto（v1.7.99.198 标题+tag 左 / 编号+复制 右）', after: 'v1.7.99.201：display: flex; align-items: center; gap: 12px——保 icon + 标题 + 编号 + 复制 + tag 一行展示' },
+            { type: 'modify', location: 'pages/margin-adjust-detail.html .detail-title-icon', before: '不存在（v1.7.99.198 旧版）', after: 'v1.7.99.201：新增 24×24 渐变蓝块（linear-gradient 135deg #1E40AF → #3B82F6），圆角 6px，"保"字 12px 白字' },
+            { type: 'modify', location: 'pages/margin-adjust-detail.html .detail-header-row2, .detail-header-row3', before: 'grid-template-columns: repeat(4, 1fr)（v1.7.99.198 4 列 6 字段错位）', after: 'v1.7.99.201：grid-template-columns: 1.6fr 1fr 1fr——row2/row3 共用模板 3 列（row2 销售订单/卖方/买方；row3 调整方式/创建人/创建时间）' },
+            { type: 'modify', location: 'pages/margin-adjust-detail.html .detail-header-row3 .item:nth-child(1) .value', before: '不存在（v1.7.99.198 旧版）', after: 'v1.7.99.201：white-space: normal——row3 col1 内容较短，允许换行显示完整' },
+            { type: 'modify', location: 'pages/margin-adjust-detail.html 顶部 HTML', before: '<div class="detail-title-wrap"><span class="detail-title">保证金调整记录</span><span class="status-badge adjusted">已调整</span></div> + <div class="detail-no-wrap">编号+复制</div>（v1.7.99.198 旧版）', after: 'v1.7.99.201：保 icon + <span class="detail-title">保证金调整编号：</span> + 编号 + 复制 + 已调整 tag 横向排列' },
+            { type: 'modify', location: 'docs/p-margin-adjust-detail.md', before: 'v1.7.99.196 终版（顶部 8 字段 + 章节导航 9 项）', after: 'v1.7.99.201 重写——按 1+3+3 布局更新字段定义（行 1 4 元素 + 行 2/3 各 3 字段）+ 8 节统一格式' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.200', after: '豫港通原型 v.1.7.99.201' }
+          ]
+        },
+        {
+          ts: '2026-08-07T16:40:00',
+          version: 'v1.7.99.200',
+          module: '数据中心 MD 文档',
+          summary: '数据中心需求设计 md 文档完全重写（user 2026-08-07 反馈"你检查一下数据中心的需求设计md文档，第一与实际最终版本的原型页面字段不一致，并未按实际页面规整需求描述规则，同时，没有按不同菜单将其拆分（驾驶舱/项目台账/业务线台账表...）你把需求文档按实际原型字段以及数据规则重新整理MD需求设计文档"）—— 1) **重写 9 个 docs**（按实际 prototype 页面字段 + 9 个子菜单拆分）：p-dashboard.md（驾驶舱，2 筛选 + 4 tab + 卡片区）/ p-report-project.md（4 筛选 + 9 列）/ p-report-bizline.md（4 筛选 + 17 列）/ p-report-fund.md（2 KPI 卡 + 分组表 16 列）/ p-report-inventory.md（多组 KPI + 18 列）/ p-report-ar-ap.md（4 筛选 + 11 列）/ p-report-risk.md（4 筛选 + 9 列）/ p-report-compliance.md（7 筛选 + 11 列）/ p-report-compliance-detail.md（v1.7.99.198 已按实际重写，保留）；2) **重写 02.16-数据中心.md 模块总览**：按 9 个子菜单拆分，每个子菜单对应独立 p-*.md 文档链接；3) **统一 8 节格式**：0. 章节导航 / 1. 业务定位 / 2. 页面结构 / 3. 字段定义 / 4. 按钮交互 / 5. 数据规则 / 6. 异常处理 / 7. 跨模块流转 / 8. 文档版本；4) **每个 docs 顶部加关联页链接**（如 p-report-project.md 顶部链接 p-dashboard/p-report-bizline/... 等 8 个关联 docs）。',
+          changes: [
+            { type: 'modify', location: 'docs/02.16-数据中心.md', before: 'v1.0 旧版（9 个页面 sitemap + 章节导航不清晰）', after: 'v1.7.99.200 重写——按 9 个子菜单拆分，每个子菜单对应独立 p-*.md 链接' },
+            { type: 'modify', location: 'docs/p-dashboard.md', before: 'v1.0 占位版（"驾驶舱（晋晋）" 旧版）', after: 'v1.7.99.200 重写——按实际 prototype 字段（2 筛选 + 4 tab + 卡片区）' },
+            { type: 'modify', location: 'docs/p-report-project.md', before: 'v1.7.99.151 旧版（项目编号/名称/上游/下游/金额/状态 错位）', after: 'v1.7.99.200 重写——按实际 prototype 字段（4 筛选 + 9 列：项目编号/项目名称/项目类型/客户/合同金额/累计回款/项目状态/立项时间/操作）' },
+            { type: 'modify', location: 'docs/p-report-bizline.md', before: 'v1.0 旧版（业务线号/品名/采购合同/销售合同/进度 错位）', after: 'v1.7.99.200 重写——按实际 prototype 字段（4 筛选 + 17 列：业务线号/名称/类型/上游/下游/上游货转/下游货转/库存/向上游支付/下游合同回款/下游业务回款/上游结算数量/上游结算金额/下游结算数量/下游结算金额/业务状态/操作）' },
+            { type: 'modify', location: 'docs/p-report-fund.md', before: 'v1.0 旧版（无 2 个 KPI 卡描述）', after: 'v1.7.99.200 重写——按实际 prototype 字段（2 KPI 卡：上游供应商资金流水 + 下游采购商资金流水 + 分组表 16 列）' },
+            { type: 'modify', location: 'docs/p-report-inventory.md', before: 'v1.0 旧版（错位）', after: 'v1.7.99.200 重写——按实际 prototype 字段（多组 KPI + 18 列）' },
+            { type: 'modify', location: 'docs/p-report-ar-ap.md', before: 'v1.0 旧版（错位）', after: 'v1.7.99.200 重写——按实际 prototype 字段（4 筛选 + 11 列）' },
+            { type: 'modify', location: 'docs/p-report-risk.md', before: 'v1.0 旧版（错位）', after: 'v1.7.99.200 重写——按实际 prototype 字段（4 筛选 + 9 列）' },
+            { type: 'modify', location: 'docs/p-report-compliance.md', before: 'v1.0 旧版（错位）', after: 'v1.7.99.200 重写——按实际 prototype 字段（7 筛选 + 11 列）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.199', after: '豫港通原型 v.1.7.99.200' }
+          ]
+        },
+        {
+          ts: '2026-08-07T16:00:00',
+          version: 'v1.7.99.199',
+          module: '保证金管理 + 全站 MD 文档',
+          summary: '保证金管理去掉"保证金明细"tab + 删审批相关 + 全站 MD 文档大扫除（user 2026-08-07 反馈"保证金管理页面，顶部的tap「保证金明细」去掉，没有tap了，同时保证见管理中并未有审批流程，所有与审批相关的都删除；将所有MD文档中的「复用建议」模块删除，并且去掉与原数据库表的关联描述，你统一检查一下，并且检查所有原型页面对应的需求设计文档md 是否有缺失，如果有缺失，查询对应原型图页面并依据我给的规则提示补充对应需求设计文档"）—— 1) margin-pool.html 删"保证金明细"tab（v1.7.99.196 留下的）+ 删 cp-filter-actions 区块的"查询/重置"按钮（v1.7.99.184 全站筛选标准）；2) margin-adjust.html 删 5 处审批相关文字（钉钉审核/OA 审核/NC 完成付款）→ 改为"提交后直接保存"；3) margin-adjust-detail.html 操作记录 4 行 mock 改为不依赖审批（OA 审批驳回/通过/提交审批 → 已调整/调整中/已发起/新建）；4) 86 个 docs/p-*.md 批量清理（用 2 个 Python 脚本）—— a) 删"## 9./10. N. 复用建议"章节（14 + 87 = 87 处替换）；b) 删"## 3. 核心实体"章节（76 处，含 `t_margin_pool` `t_payment_margin_voucher` 等数据库表关联）；c) 删字段定义表里的 `t_xxx.yyy` 引用（变 `yyy`）；d) 删头部说明里"主产品 t_xxx 借用"等数据库表描述；5) 删 typo `p-settle-purchase.md`（合并到 `p-settlement-purchase.md`）；6) **核对 81 个 app.html pageTree 引用 + 81 个 docs** 全部对齐，**0 缺失**；7) 4 个孤儿 docs（p-warehouse-video / p-account-company / p-account-personal / p-warehouse-pickup）对应的 prototype 也不在 pageTree 里（v1.7.99.121 已记录为废弃），保留不动。',
+          changes: [
+            { type: 'modify', location: 'pages/margin-pool.html tab 区块', before: '<div class="cp-block cp-block-tab"><div class="cp-tab-bar"><div class="cp-tab-bar-tabs"><div class="cp-tab active">保证金明细</div></div>（v1.7.99.196）', after: 'v1.7.99.199：删整个 tab 块，改为 cp-filter-summary 当前搜索 + 数据导出 横向布局' },
+            { type: 'modify', location: 'pages/margin-pool.html cp-filter-actions', before: '<div class="cp-filter-actions"><button>查询</button><button>重置</button></div>（v1.7.99.67 旧版）', after: 'v1.7.99.199：删除（按 v1.7.99.184 全站筛选标准）' },
+            { type: 'modify', location: 'pages/margin-adjust.html 5 处审批相关', before: '提交后，保证金调整信息将推送钉钉进行审核...（v1.7.99.196）', after: '提交后，保证金调整信息将直接保存到系统中（v1.7.99.199）' },
+            { type: 'modify', location: 'pages/margin-adjust-detail.html 操作记录 4 行 mock', before: 'OA 审批驳回/OA 审批通过/提交审批/新建（v1.7.99.196 含 OA 审批）', after: '已调整/调整中/已发起/新建（v1.7.99.199 全部不依赖审批）' },
+            { type: 'modify', location: '86 个 docs/p-*.md', before: '含"## 9./10. 复用建议"章节 + "## 3. 核心实体"章节（含 t_xxx 数据库表关联）', after: 'v1.7.99.199：批量清理 277+ 处（2 个 Python 脚本）—— 删复用建议章节 + 删核心实体章节 + 删字段引用 t_xxx.yyy → yyy + 删主产品借用描述' },
+            { type: 'delete', location: 'docs/p-settle-purchase.md', before: null, after: 'typo 合并到 p-settlement-purchase.md，删除' },
+            { type: 'add', location: '全站核对', before: null, after: '81 个 app.html pageTree 引用 + 81 个 docs 全部对齐，0 缺失；4 个孤儿 docs（p-warehouse-video / p-account-company / p-account-personal / p-warehouse-pickup）保留不动' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.198', after: '豫港通原型 v.1.7.99.199' }
+          ]
+        },
+        {
+          ts: '2026-08-07T15:40:00',
+          version: 'v1.7.99.198',
+          module: '合规报告 + 保证金详情',
+          summary: '彻底修复合规验证报告详情页 + 保证金调整记录详情页排版 bug——user 2026-08-07 反馈"修复图1后方 通过/不通过的排版，他明显没有在一列上，你修改一下啊，这个我已经多次让你调整，为什么一直没修复完成"+"图2「保证金调整记录」页面中顶部内容排版有些错乱，修复一下"。修复：1) **合规报告 colspan=2 全清**（v1.7.99.198 关键修复）——v1.7.99.197 只改了"主体准入类"5 行，但"交易实质类"15 行里还有 12 处 colspan=2（v1.7.99.113 写时留的），导致"检验结果"列在 colspan=2 行错位（x 坐标偏差 200+px）——这次用 Python 脚本批量拆开 12 处 colspan=2（每个"检查规则"+"检查过程"合并 td 拆成 2 个独立 td：检查规则填规则描述，检查过程填具体比对数据）；2) **保证金详情顶部重排**（v1.7.99.198 修复）——原 detail-header-row1 把"标题+tag+编号+复制"全塞 flex 容器导致"DLXLC-DSRMT-202203"被挤到换行成"DLXLC-DSRMT-/202203"——改成 grid 2 列布局（左：标题+tag，右：编号+复制）保证编号独立空间不换行。',
+          changes: [
+            { type: 'modify', location: 'report-compliance-detail.html 交易实质类 12 处 colspan=2', before: '<td class="cell-mono" colspan="2">采购合同交期期限:2026-01-27~2026-01-29<br>销售合同交期期限:2026-01-20~2026-01-30</td>（v1.7.99.113 留的 bug，v1.7.99.197 漏改）', after: '<td>采购合同交期期限 = 销售合同交期期限</td><td>采购合同交期期限:2026-01-27~2026-01-29<br>销售合同交期期限:2026-01-20~2026-01-30</td>（v1.7.99.198 拆开 12 处，0 处 colspan=2 剩余）' },
+            { type: 'modify', location: 'margin-adjust-detail.html detail-header-row1 CSS + HTML', before: '.detail-header-row1{display:flex;gap:12px}（v1.7.99.196 旧版——标题+tag+编号+复制全塞 flex 导致编号被挤换行）', after: '.detail-header-row1{display:grid;grid-template-columns:1fr auto;gap:24px}（v1.7.99.198 改成 grid 2 列，左：标题+tag，右：编号+复制）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.197', after: '豫港通原型 v.1.7.99.198' }
+          ]
+        },
+        {
+          ts: '2026-08-07T15:00:00',
+          version: 'v1.7.99.197',
+          module: '合规验证报告详情',
+          summary: '修复合规验证报告详情页（report-compliance-detail.html）"十不准及四流一致性校验"区块 2 个视觉 bug（user 2026-08-07 反馈"合规验证报告详情中还是有数据串行的情况，我已经用箭头标出来了，并且后边的通过/不通过也没有对齐，修复一下"）—— 1) **数据串行修复**（user 红色箭头标出）："主体准入类"5 行（背景主业风险 x2 + 空壳企业风险 + 关联方交易风险 + 资质缺失风险）原本用 `colspan="2"` 合并了"检查规则"和"检查过程"2 列，导致内容看起来"串行"——拆开 2 个独立 td，"检查规则"列填规则名称（品名符合集团核定主业清单 / 项目经过集团审批 / 上下游客户是否流入（负面清单核验））,"检查过程"列填具体内容（当前业务品类为... / 当前关联项目... / 上下游客户不在准入有效期内、非空壳企业 / ...）；2) **检验结果列对齐修复**（user 红色框标出）：col-result 列单元格加 `text-align: center` 让"✓ 通过"/"✗ 不通过" tag 全部居中对齐，修复前因为 `.result-tag` 是 `inline-flex` + 单元格默认 `text-align: left` 导致 tag 水平位置不一致。',
+          changes: [
+            { type: 'modify', location: 'report-compliance-detail.html 主体准入类 5 行 td', before: '<td class="cell-mono" colspan="2">品名符合集团核定主业清单<br>当前业务品类为...</td>（v1.7.99.113 用 colspan=2 合并 2 列）', after: '<td>品名符合集团核定主业清单</td><td>当前业务品类为...</td>（v1.7.99.197 拆开 2 列独立显示）' },
+            { type: 'modify', location: 'report-compliance-detail.html forbidden-table CSS', before: '/* col-result 18% + 默认 text-align: left（导致 tag 水平位置不一致）*/', after: '/* v1.7.99.197：col-result 列加 text-align: center + td:last-child 同款，让"通过/不通过" tag 全部居中对齐 */' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.196', after: '豫港通原型 v.1.7.99.197' }
+          ]
+        },
+        {
+          ts: '2026-08-07T11:50:00',
+          version: 'v1.7.99.196',
+          module: '保证金管理',
+          summary: '保证金管理重构（user 2026-08-07 反馈："去掉图2中的「调整业务」tap，同时在列表的操作列，增加「查看」按钮，查看按钮的详情页为图1；图3为「查看」按钮，查看按钮的详情页中tap2操作记录页面；更新以上的原型页面，并重写对应此部分的md需求文档"）—— 1) margin-pool.html 去掉"调整记录"tab（v1.7.99.67 第 2 个 tab）+ 操作列加"查看"按钮（href="./margin-adjust-detail.html?adjustNo=DLXLC-DSRMT-{NNN}"）保留"保证金调整"按钮；2) 新建 margin-adjust-detail.html（详情页 2 tab：保证金调整信息含销售订单合同信息 11 字段 + 保证金调整信息 4 字段 + 附件 + 操作记录 (10) 含 5 列表格 4 行 mock）；3) app.html / shared/js/topnav-drawer.js 菜单项"调整记录" → "保证金调整记录" + file 改 margin-record → margin-adjust-detail；4) 6 个 pages/ inline sidemenu margin-record → margin-adjust-detail；5) **重写 3 个 docs**——按 user 截图 4/5/6 黄底需求重写 p-margin-adjust.md 3 种调整方式字段定义 + 校验规则 + 跨系统联动（OA + NC）；新建 p-margin-adjust-detail.md 详情页 2 tab 完整文档；重写 p-margin-pool.md 同步去掉"调整记录"tab 描述 + 加"查看"按钮路由；6) 删 docs/p-margin-record.md（独立"调整记录"页已合并到详情页）。',
+          changes: [
+            { type: 'modify', location: 'pages/margin-pool.html tab 切换', before: '2 tab：保证金明细 / 调整记录（v1.7.99.67）', after: '1 tab：保证金明细（v1.7.99.196 去掉"调整记录"tab）' },
+            { type: 'modify', location: 'pages/margin-pool.html 操作列', before: '<a href="./margin-adjust.html?contractNo=...">保证金调整</a>（v1.7.99.67 1 个按钮）', after: '<a href="./margin-adjust-detail.html?adjustNo=DLXLC-DSRMT-001">查看</a> <a href="./margin-adjust.html?contractNo=...">保证金调整</a>（v1.7.99.196 加"查看"按钮）' },
+            { type: 'modify', location: 'pages/margin-pool.html #tab-record 区块', before: '5 字段筛选 + 8 列调整记录表格 + 7 行 mock（v1.7.99.67）', after: '删除（v1.7.99.196 合并到详情页操作记录 tab）' },
+            { type: 'add', location: 'pages/margin-adjust-detail.html', before: null, after: '新建详情页 2 tab：tap1 保证金调整信息（销售订单合同信息 11 字段 + 保证金调整信息 4 字段 + 附件）/ tap2 操作记录 (10)（5 列表格 4 行 mock）' },
+            { type: 'modify', location: 'app.html line 537-539 + shared/js/topnav-drawer.js line 73-77', before: '调整记录 file=margin-record', after: '保证金调整记录 file=margin-adjust-detail' },
+            { type: 'modify', location: '6 个 pages/ 文件 inline sidemenu', before: './margin-record.html', after: './margin-adjust-detail.html' },
+            { type: 'add', location: 'docs/p-margin-adjust-detail.md', before: null, after: '新建——按 user 截图 1 + 3 详情页 2 tab 设计 8 字段顶部 + tap1 销售订单合同信息 11 字段 + 保证金调整信息 4 字段 + 附件 + tap2 操作记录 5 列 4 行 mock' },
+            { type: 'modify', location: 'docs/p-margin-adjust.md', before: 'v1.7.99.67 旧版 4 字段 + 1 字段流程', after: 'v1.7.99.196 重写——按 user 截图 4/5/6 黄底需求 3 种调整方式字段定义：① 冲抵最后一笔货款（当前保证金 + 冲抵货款金额 + 情况说明 + 附件）② 转移为另一笔业务（当前保证金 + 转移金额 + 情况说明 + 选择合同 + 状态限制执行中/待上传双签合同）③ 保证金退款（当前保证金 + 申请退款金额 + 收款账号名称 + 开户行 + 账号 + 退款日期 + 情况说明 + NC 回传实际退款）' },
+            { type: 'modify', location: 'docs/p-margin-pool.md', before: 'v1.7.99.195 旧版 2 tab 描述', after: 'v1.7.99.196 重写——去掉"调整记录" tab 描述 + 加"查看"按钮路由 + 加"调整方式 → 状态流转差异"流程图' },
+            { type: 'delete', location: 'docs/p-margin-record.md', before: '独立"调整记录"页面文档', after: '已合并到 p-margin-adjust-detail.md，删除' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.195', after: '豫港通原型 v.1.7.99.196' }
+          ]
+        },
+        {
+          ts: '2026-08-07T11:40:00',
+          version: 'v1.7.99.195',
+          module: '保证金管理 + 全站菜单审计',
+          summary: '修复左侧「原型目录」vs 右侧原型页面的保证金管理不一致问题（user 2026-08-07 反馈"左边是旧的，你最早生成的"）+ 全站菜单审计——user 反馈左侧 app.html 菜单项「保证金管理」指向 margin-pool.html（旧版 list-card 卡片式），但右侧实际渲染的页面是 margin-list.html（新版 5 数据卡片 + tab 保证金明细/调整记录 + 9 列表格）。修复方案：1) **重命名** margin-list.html → margin-pool.html（用新版 5 数据卡片页面覆盖旧版 list-card 卡片式页面，file 名跟 docs/p-margin-pool.md 保持一致）；2) app.html line 537 file/doc 字段保持 margin-pool/p-margin-pool 不变（已经对了）；3) shared/js/topnav-drawer.js 4 处 file 改 margin-list.html → margin-pool.html；4) 8 个 pages/ 文件 inline sidemenu 改 margin-list.html → margin-pool.html（含 margin-adjust.html line 254/256/556/560 4 处 + warning-detail.html + margin-record.html + bond-letter-new.html + shipment-in-new.html + business-line-relate.html + bond-letter-detail.html + shipment-in-detail.html）；5) **全站审计**：用 Python 脚本（/tmp/audit-menu.py）对比 app.html 81 file vs shared/js/topnav-drawer.js 53 file vs pages/ 110 HTML vs docs/ 82 MD——确认保证金管理 3 file + 3 doc 全对齐（0 ❌），其他模块 14 个孤儿文件（已废弃页面）保留不动等 user 提再做。',
+          changes: [
+            { type: 'modify', location: 'pages/margin-list.html → pages/margin-pool.html', before: '旧版 margin-list.html（v1.7.99.67 5 数据卡片 + tab 保证金明细/调整记录 + 9 列表格，新版但 file 名错）', after: '重命名为 margin-pool.html 覆盖旧版（保持 docs/p-margin-pool.md 命名一致，旧版 list-card 卡片式页面被覆盖）' },
+            { type: 'modify', location: 'shared/js/topnav-drawer.js line 73-77', before: '保证金管理 file=margin-list.html', after: '保证金管理 file=margin-pool.html（4 处：top-level + 保证金明细 + 保证金调整 + 调整记录）' },
+            { type: 'modify', location: '8 个 pages/ 文件 inline sidemenu', before: 'href="./margin-list.html"（margin-adjust.html 4 处 + warning-detail.html + margin-record.html + bond-letter-new.html + shipment-in-new.html + business-line-relate.html + bond-letter-detail.html + shipment-in-detail.html）', after: 'href="./margin-pool.html"（8 个文件 × 多处）' },
+            { type: 'add', location: '/tmp/audit-menu.py', before: null, after: 'Python 审计脚本：对比 app.html 81 file + drawer.js 53 file + pages/ 110 HTML + docs/ 82 MD，输出 0/1 是否对齐 + 14 个孤儿文件清单' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.194', after: '豫港通原型 v.1.7.99.195' }
+          ]
+        },
+        {
+          ts: '2026-08-07T11:00:00',
+          version: 'v1.7.99.194',
+          module: '放货指令列表',
+          summary: '修复放货指令列表页（warehouse-release.html）"查看"按钮 href="#" 没路由的 bug——user 2026-08-07 反馈"放货指令列表中的「查看」按钮未路由到「放货指令详情」页面，你查看修复一下"。修复：1) 新增 STATUS_TO_KEY 映射（列表页 6 状态 → 详情页 IIFE keyToText 的 6 key 对齐：审批中→approving / 生效中→effective / 已超额→awaiting-effect-voucher / 已完结→effective / 已驳回→rejected / 已作废→voided）；2) renderRelease 模板字符串里"查看"按钮 href 从 "#" 改为 "./warehouse-release-detail.html?status=${STATUS_TO_KEY[r.status] || \'approving\'}"（带状态参数让详情页正确显示对应状态）。',
+          changes: [
+            { type: 'add', location: 'warehouse-release.html STATUS_COLOR 后', before: null, after: '新增 STATUS_TO_KEY 映射（6 状态对齐详情页 keyToText）' },
+            { type: 'modify', location: 'warehouse-release.html renderRelease 模板字符串 col-action', before: '<a href="#">查看</a>', after: '<a href="./warehouse-release-detail.html?status=${STATUS_TO_KEY[r.status] || \'approving\'}">查看</a>' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.193', after: '豫港通原型 v.1.7.99.194' }
+          ]
+        },
+        {
+          ts: '2026-08-07T10:50:00',
+          version: 'v1.7.99.193',
+          module: '全站审批页面',
+          summary: '全站审批页面统一去掉"预计完成"字段——按 user 2026-08-07 反馈"检查所有审批页面，把预计完成时间这个字段信息统一去掉"实施：1) 6 个合同详情页（contract-purchase-framework-detail.html / contract-purchase-order-detail.html / contract-sales-framework-detail.html / contract-sales-order-detail.html / contract-supplement-framework-detail.html / contract-supplement-order-detail.html）删 approval-summary-item id=approvalEstTimeWrap 4 行 HTML + 删 JS 里 隐藏"预计完成"（已完结）的 3 行代码（var estWrap = document.getElementById(\'approvalEstTimeWrap\')）; 2) payment-detail.html / refund-detail.html 删 3 行无 id 摘要项; 3) customer-detail.html / project-detail.html 删 1 行 metadata 字段; 4) customer-apply.html 删 2 处（line 674 摘要 3 行 + line 808 关键指标 2 行）; 5) docs/02.01-apply.md + docs/02.01-list.md 字段定义表删"预计完成"行; 6) 保留 docs/p-*.md 里 changelog 历史记录不动（v1.7.99.151 已删过类似字段的描述保留作为历史）。',
+          changes: [
+            { type: 'modify', location: '6 个合同详情页 approval-summary', before: '含 id=approvalEstTimeWrap 的 4 行（label=预计完成 + value=2026-07-21 18:00）', after: '删除 4 行 HTML + 删除 JS 里的 getElementById(\'approvalEstTimeWrap\') 引用（6 个文件 × 2 处 = 12 处删除）' },
+            { type: 'modify', location: 'payment-detail.html + refund-detail.html approval-summary', before: '3 行（label=预计完成 + value=日期）', after: '删除 3 行（2 个文件 × 1 处 = 2 处删除）' },
+            { type: 'modify', location: 'customer-detail.html + project-detail.html approval-status-meta', before: '1 行（预计完成 2026-07-21 18:00）', after: '删除 1 行（2 个文件 × 1 处 = 2 处删除）' },
+            { type: 'modify', location: 'customer-apply.html 申请摘要 + 关键指标', before: 'line 674 摘要 3 行 + line 808 关键指标 2 行', after: '删除 2 处（共 5 行）' },
+            { type: 'modify', location: 'docs/02.01-apply.md + docs/02.01-list.md 字段定义表', before: '| **预计完成** | `sla_deadline` + 累计 | "2026-07-21 18:00" |', after: '删除 2 行字段定义（保留 docs/p-*.md changelog 历史记录不动）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.192', after: '豫港通原型 v.1.7.99.193' }
+          ]
+        },
+        {
+          ts: '2026-08-07T10:30:00',
+          version: 'v1.7.99.192',
+          module: '退款详情',
+          summary: '退款详情页（refund-detail.html）顶部删返回按钮 + 步骤条 2 步 → 3 步（在"登记退款信息"和"流程结束，退款完成"之间加"审批中"节点）—— 1) 顶部 detail-header-row1 删"返回"按钮（v1.7.99.183 模式，跟 v1.7.99.188 付款详情页一致：用户用浏览器/侧边栏/面包屑导航，不需要页面级返回按钮）；2) 步骤条加第 2 步"审批中"（IIFE 按 status 切换每步状态：已退款→第 1 步 done + 第 2 步 done"审批通过" + 第 3 步 done；审批中→第 1 步 done + 第 2 步 current（蓝圈 box-shadow 突出）+ 第 3 步 pending；已驳回→第 1 步 done + 第 2 步 rejected（红字✕）+ 第 3 步 pending）；3) CSS 加 .step-item.current / .pending / .rejected 三种状态样式（参考 v1.7.99.177 付款详情页模式）。',
+          changes: [
+            { type: 'modify', location: 'refund-detail.html detail-header-row1', before: '退款详情标题 + 已退款 status-badge + 返回按钮（onclick=history.back()，margin-left: auto）', after: '退款详情标题 + status-badge（去掉返回按钮，按 v1.7.99.183 销售结算单详情 + v1.7.99.188 付款详情页规范）' },
+            { type: 'modify', location: 'refund-detail.html step-bar', before: '2 步：登记退款信息 ✓ → 流程结束，退款完成 ✓（v1.7.99.63）', after: '3 步：登记退款信息 ✓ → 审批中（2）→ 流程结束，退款完成（3）（v1.7.99.192 加第 2 步 + 每步带 id 便于 IIFE 切换状态）' },
+            { type: 'add', location: 'refund-detail.html CSS step-item 状态样式', before: '/* 步骤条 2 步样式（v1.7.99.63） */', after: '/* 步骤条 3 步样式（v1.7.99.192）加 .step-item.current（蓝圈 + box-shadow 突出）/ .pending（灰字）/ .rejected（红字红圈✕）3 种状态 */' },
+            { type: 'modify', location: 'refund-detail.html IIFE（line 391 附近）', before: 'v1.7.99.177 按 status 切 badge + 审批 tab + footer', after: 'v1.7.99.192 按 status 切 badge + 审批 tab + footer + 步骤条 3 步状态（已退款全 done / 审批中第 2 步 current / 已驳回第 2 步 rejected 红字）' },
+            { type: 'modify', location: 'docs/p-refund-detail.md line 494', before: '🔴 步骤条：2 步（登记退款信息 → 流程结束，退款完成）', after: '🔴 步骤条：3 步（登记退款信息 → 审批中 → 流程结束，退款完成；IIFE 按 status 切每步状态：已退款全 done / 审批中第 2 步 current / 已驳回第 2 步 rejected）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.191', after: '豫港通原型 v.1.7.99.192' }
+          ]
+        },
+        {
+          ts: '2026-08-07T10:20:00',
+          version: 'v1.7.99.191',
+          module: '放货指令详情',
+          summary: '放货指令详情页（warehouse-release-detail.html）3 tab → 4 tab 改造—— 1) 在"放货信息"后边加"审批管理"tab（复用 v1.7.99.176 货转详情页的通用审批组件 + approval.css：approval-status-card 黄底"审批进行中"+ approval-summary 3 字段 + approval-grid 5 节点 timeline + approval-aside 关键指标"放货编号/放货数量/当前已用时"）；2) 状态机为审批中时（URL ?status=approving）底部加 footer-actions 固定底栏右侧"审批通过/驳回审批" 2 按钮（按 v1.7.99.188 付款详情页 + v1.7.99.187 货转详情页 footer-actions 摆放规范），其他状态（已生效/待上传已生效单据/驳回/已作废）tab 名改"审批记录" + 底部按钮隐藏；3) 出库记录/操作记录 2 个 tab 加表头（user 反馈 v1.7.99.185 旧版没表头，empty state 整个覆盖了 panel；现在改为始终显示表头，空 body 替代 empty state）。',
+          changes: [
+            { type: 'add', location: 'warehouse-release-detail.html head', before: null, after: '<link rel="stylesheet" href="../assets/css/approval.css">（复用 v1.7.99.176 通用审批样式）' },
+            { type: 'modify', location: 'warehouse-release-detail.html detail-tabs', before: '3 tab：放货信息 / 出库记录 / 操作记录', after: '4 tab：放货信息 / 审批管理(id=approvalTab 默认显示) / 出库记录 / 操作记录' },
+            { type: 'add', location: 'warehouse-release-detail.html tab-approval panel', before: null, after: '复制 v1.7.99.176 货转详情页 gtApprovalPanel 完整结构（approval-status-card 黄底"审批进行中"/approval-summary 3 字段/approval-grid 5 节点 timeline 含业务部审批已 done + 4 个 pending/approval-aside 关键指标）' },
+            { type: 'modify', location: 'warehouse-release-detail.html tab-outbound', before: '<div class="empty-state">（v1.7.99.185 旧版没表头，empty state 整个覆盖 panel）', after: '<table class="outbound-table"><thead>6 列（出库编号/关联下煤计划编号/出库日期/仓房&货位/出库数量(吨)/车数(辆)）</thead><tbody></tbody></table>（v1.7.99.191 加表头 + 始终显示，无论有无数据）' },
+            { type: 'modify', location: 'warehouse-release-detail.html tab-log', before: '<div class="empty-state">', after: '<table class="log-table"><thead>5 列（操作类型/操作人员/所属公司/操作内容/操作时间）</thead><tbody></tbody></table>' },
+            { type: 'add', location: 'warehouse-release-detail.html footer-actions', before: null, after: '<div class="footer-actions" id="whApprovalFooter" style="display: none;"> + 右侧 2 按钮（btn-primary 审批通过 + btn-danger-outline 驳回审批），左侧空（不放"导出客户准入报告"——放货指令详情页无此逻辑）' },
+            { type: 'modify', location: 'warehouse-release-detail.html switchDetailTab + IIFE', before: 'v1.7.99.185 3 tab 真正切换', after: 'v1.7.99.191 4 tab 真正切换 + status IIFE：URL ?status= 解析（keyToText 映射列表页 6 状态 key）→ 1) tab 名动态（approving→"审批管理"、其他→"审批记录"） 2) 底部 footer 显示（仅 approving 时 flex）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.190', after: '豫港通原型 v.1.7.99.191' }
+          ]
+        },
+        {
+          ts: '2026-08-07T09:05:00',
+          version: 'v1.7.99.190',
+          module: '客户准入详情',
+          summary: '客户准入详情页（customer-detail.html）Tab 3「客户股权关系」按项目准入详情页（project-detail.html）统一—— customer 之前是 4 个独立 card（疑似实控人/股东信息/对外投资/纳税信息，v1.7.99.128 新增），改成跟 project 一样的 1 个 card 包含 2 个 section（股东信息 + 对外投资，border-top 分隔）+ 字段定义跟 project 一致（3 列：股东/持股比例/认缴出资日期）+ tag 风格跟 project 一致（"大股东" + "实际控制人" + "最终受益人" 3 个 tag）。删 customer 独有的"疑似实控人（大数据分析）"股权链树状图区块和"纳税信息"区块（project 没这 2 个）。',
+          changes: [
+            { type: 'modify', location: 'customer-detail.html line 32 CSS 注释', before: '/* v1.7.99.128 股权关系 tab：股权链（树状图）+ 股东信息 + 纳税信息 */', after: '/* v1.7.99.190 客户股权关系 tab：按 project-detail.html 统一为 1 card 2 section（股东信息 + 对外投资） */' },
+            { type: 'modify', location: 'customer-detail.html Tab 3 body', before: '4 个独立 card：3.1 疑似实控人（股权链树状图 + 3 条股权路径 + 河南国资委 + 总持股 60.02%）/ 3.2 股东信息（6 列：序号/发起人/持股/标签/认缴额/认缴日期）/ 3.3 对外投资（3 家，7 列）/ 3.4 纳税信息（5 列：申报年度/税种/所属期间/实缴金额/操作）', after: '1 个 card 2 个 section（border-top 分隔）：section 1 股东信息（3 列：股东/持股比例/认缴出资日期 + "大股东/实际控制人/最终受益人" 3 tag 风格跟 project 一致，第一股东"河南中豫国际港务集团有限公司"挂 3 tag）/ section 2 对外投资（3 家，7 列跟 project 一致）' },
+            { type: 'remove', location: 'customer-detail.html Tab 3 区块 3.1 疑似实控人', before: '疑似实控人（大数据分析）card + equity-summary + 3 条股权路径 tree 结构（河南省人民政府国资委→中豫豫投资控股集团→河南中豫产业投资集团→郑州国控产业→河南国际物流枢纽）', after: null },
+            { type: 'remove', location: 'customer-detail.html Tab 3 区块 3.4 纳税信息', before: '纳税信息 card + 5 列表格（申报年度/税种/税种所属期间/实缴(退)金额/操作）+ 暂无数据 empty state', after: null },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.189', after: '豫港通原型 v.1.7.99.190' }
+          ]
+        },
+        {
+          ts: '2026-08-07T08:50:00',
+          version: 'v1.7.99.189',
+          module: '项目立项申请 / 项目立项详情',
+          summary: '项目立项申请页 label「关联报告上传」→「上传关联报告或附件」（user 反馈更准确描述支持 word/pdf/jpg/jpeg/png + 关联报告 2 种文件类型）+ 项目立项详情页 footer-scenario 在 approving-approver（审批中，审批人视角）和 done（执行中/已完结）2 个场景的底部固定底栏**最左**位置新增「导出客户准入报告」按钮（user 反馈：审批中与执行中 2 个状态统一加左下方）。',
+          changes: [
+            { type: 'modify', location: 'project-apply.html line 1272', before: '<label class="form-label">关联报告上传</label>', after: '<label class="form-label">上传关联报告或附件</label>' },
+            { type: 'add', location: 'project-detail.html footer-scenario approving-approver', before: '原 3 按钮（复制为新项目/审批通过/驳回审批）', after: '新增最左位置 1 按钮：<button class="btn btn-secondary">导出客户准入报告</button>，共 4 按钮（左→右：导出/复制/审批通过/驳回）' },
+            { type: 'add', location: 'project-detail.html footer-scenario done', before: '原 2 按钮（复制为新项目/返回）', after: '新增最左位置 1 按钮：<button class="btn btn-secondary">导出客户准入报告</button>，共 3 按钮（左→右：导出/复制/返回）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.188', after: '豫港通原型 v.1.7.99.189' }
+          ]
+        },
+        {
+          ts: '2026-08-06T20:05:00',
+          version: 'v1.7.99.188',
+          module: '付款详情',
+          summary: '付款详情页顶部重构（user 反馈"删返回按钮 + 排版更规范"）—— 删右上角"返回"按钮（v1.7.99.183 模式 + 父容器 row1 简化去掉 margin-left: auto）+ 重构 detail-header 从 3 行（标题/状态 + 付款流水号独立行 + 5 字段）改为 2 行（标题/状态 + grid 2 列：左付款流水号 360px + 竖线分割 / 右 5 字段 1fr）。同步修 v1.7.99.177 留的 bug：原 IIFE 直接用 URL 原始 key（"effective"/"approving"等）做 badge 文字，导致 ?status=effective 时显示 "effective" 而不是"已付款"；加 keyToText 映射（与货转详情页 v1.7.99.187 一致）。',
+          changes: [
+            { type: 'remove', location: 'payment-detail.html detail-header', before: '<button class="btn btn-secondary" onclick="history.back()" style="margin-left: auto;">+ SVG 返回箭头 + 文字"返回"', after: null },
+            { type: 'modify', location: 'payment-detail.html detail-header HTML', before: '3 行布局：.detail-header-row1（标题+状态+返回）+ 独立 div 付款流水号 + .detail-header-row2（5 字段 flex-wrap）', after: '2 行布局：.detail-header-row1（标题+状态 badge，无返回按钮）+ .detail-header-grid（grid 2 列：.pay-no-cell 360px 付款流水号 + 竖线分割 / .fields-cell 1fr 5 字段）' },
+            { type: 'modify', location: 'payment-detail.html head CSS', before: '.detail-header-row1/row2 + .icon-copy（旧）', after: '.detail-header-row1（margin-bottom 10→14px）+ 新增 .detail-header-grid（grid 2 列 360px/1fr + 28px gap + 顶部 border-top 分隔线）+ .pay-no-cell/.fields-cell + .status-badge.approving/.rejected 补充 + .icon-copy 加 flex-shrink: 0' },
+            { type: 'modify', location: 'payment-detail.html IIFE', before: 'status = URL 原始 key（如 "effective"），badge.textContent = status 直接显示', after: '加 keyToText 映射：all/paid/effective→"已付款"、approving/awaiting-effect-voucher→"审批中"、rejected→"已驳回"、partial→"部分付款"，badge 显示映射后中文' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.187', after: '豫港通原型 v.1.7.99.188' }
+          ]
+        },
+        {
+          ts: '2026-08-06T19:55:00',
+          version: 'v1.7.99.187',
+          module: '货转管理 / 货转详情',
+          summary: '货转管理列表页状态机 tab 切换联动数据（v1.7.99.57 旧版只切 active class 不过滤数据；v1.7.99.176 减了 9→6 状态机但没修这个 bug，跟 v1.7.99.180 付款管理同样的问题）—— 改为 MOCK.up + MOCK.down 按 6 状态分组的 mock + renderGoodsTransfer(direction, key) 重渲染 tbody + tab onclick 触发 + 6 tab count 动态从 MOCK 计算 + 方向切换（switchDirection）也重新 render + 同步分页 hint 文字。同步按 v1.7.99.177 模式给货转详情页（up-detail + down-detail）加底部固定审批按钮：仅 status=审批中 时显示"审批通过/驳回审批"两按钮，借鉴 payment-detail.html .footer-actions sticky bottom bar 样式 + 顶部 status badge（已生效绿/审批中黄/驳回红/已作废灰 4 状态颜色）+ tab 名动态（审批中→"审批管理"，其他→"审批记录"）+ URL ?status= 可覆盖默认状态。',
+          changes: [
+            { type: 'modify', location: 'goods-transfer.html 表格 tbody', before: '上游 10 行 + 下游 2 行硬编码 <tr>（6 个 tab 共享同一份数据，切换 tab 视觉变但数据不变）', after: '上游 <tbody id="gtTbodyUp"></tbody> + 下游 <tbody id="gtTbodyDown"></tbody> 空 tbody，由 renderGoodsTransfer(direction, key) 动态渲染' },
+            { type: 'add', location: 'goods-transfer.html script MOCK_up + MOCK_down', before: null, after: 'MOCK_up 12 行（已分配 6 状态：2 审批中 / 1 待上传已生效单据 / 5 已生效 / 2 驳回 / 2 已作废），MOCK_down 4 行（1 审批中 / 0 待上传 / 2 已生效 / 0 驳回 / 1 已作废），每行 7 字段（合同/货转/买方/卖方/收货人/开具日/状态，下游多 3 字段：数量/发运方式/状态）' },
+            { type: 'add', location: 'goods-transfer.html script renderGoodsTransfer(direction, key)', before: null, after: 'filter getMock(direction, key) → 渲染 7/10 列 <tr>（按 status 决定操作列内容：已生效显示查看+作废+下载，其他状态只显示查看）→ 7 字段（上游）/ 10 字段（下游）+ 空数据 → empty state（文件夹 SVG + "暂无数据"）' },
+            { type: 'add', location: 'goods-transfer.html script updateTabCounts()', before: null, after: '遍历 6 tab 内的 .count span → 从 MOCK[direction][status].length 取真实数量，方向切换时自动重算' },
+            { type: 'modify', location: 'goods-transfer.html tab onclick IIFE', before: '只切换 active class（v1.7.99.57 写的不切数据）', after: 'tab.addEventListener → removeAll(active) + addSelf(active) + renderGoodsTransfer(direction, currentKey)，初始 updateTabCounts() + renderGoodsTransfer("up", "all")' },
+            { type: 'modify', location: 'goods-transfer.html switchDirection 函数', before: '只切 table 可见性 + 改分页 hint 文字', after: '切 table 可见性 + renderGoodsTransfer(dir, currentKey) + updateTabCounts() + 改分页 hint 文字"共有 N 条记录"' },
+            { type: 'add', location: 'goods-transfer-up-detail.html + down-detail.html footer-actions', before: null, after: '主 div 关闭后插入 <div class="footer-actions" id="gtApprovalFooter" style="display: none;"> + 2 按钮（btn-primary 审批通过 + btn-danger-outline 驳回审批）+ onclick 弹 mock 提示（显示货转合同号）' },
+            { type: 'add', location: 'goods-transfer-up-detail.html + down-detail.html status-badge', before: null, after: '顶部标题旁加 <span class="status-badge" id="gtStatusBadge">（CSS：approved 绿/approving 黄/rejected 红/voided 灰 4 状态颜色）' },
+            { type: 'modify', location: 'goods-transfer-up-detail.html + down-detail.html IIFE', before: 'currentStatus 默认 approved，只改 tab 名"审批记录"', after: 'currentStatus 从 URL ?status= 解析（keyToText 映射列表页 6 状态 key）→ statusMap 4 状态 → 1) 顶部 badge 颜色 2) tab 名动态（approving→"审批管理"，其他→"审批记录"） 3) 底部 footer 显示（仅 approving 时 flex）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.186', after: '豫港通原型 v.1.7.99.187' }
+          ]
+        },
+        {
+          ts: '2026-08-06T19:30:00',
+          version: 'v1.7.99.186',
+          module: '放货指令详情 / 文档同步',
+          summary: '放货指令详情 docs 同步补全（Figma 设计稿 → 文档 7.7 节）—— HTML 在 v1.7.99.185 已按 Figma 设计稿实现 3 tab（放货信息/出库记录/操作记录）+ 6 列出库表格 + 5 列操作记录表格 + 暂无数据 empty state + 放货数量/出库数量 summary，docs/p-warehouse-release-detail.md 7.7 节还停留在 v1.7.99.148 之前的版本（只列了"放货基本信息/商品明细/执行记录"3 项），现在按 Figma 设计稿 + HTML 实现补充完整的 7.7.1-7.7.6 小节：3 tab 结构表 + tab 切换规则 + 顶部 header 8 字段 + 放货信息 tab 3 区块完整字段 + 出库记录 tab 6 字段 + 操作记录 tab 5 字段。',
+          changes: [
+            { type: 'modify', location: 'docs/p-warehouse-release-detail.md 7.7 节', before: '旧版 3 项（放货基本信息/商品明细/执行记录）', after: '7.7.1 3 tab 结构表 + 7.7.2 tab 切换规则 + 7.7.3 顶部 header 8 字段 + 7.7.4 放货信息 tab 3 区块完整字段（含 3 summary + 8 列回款表 + 3 列附件表）+ 7.7.5 出库记录 tab 6 字段 + summary（放货数量/出库数量）+ 数据来源 t_outbound + 7.7.6 操作记录 tab 5 字段 + 数据来源 t_warehouse_release_log' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.185', after: '豫港通原型 v.1.7.99.186' }
+          ]
+        },
+        {
+          ts: '2026-08-06T19:05:00',
+          version: 'v1.7.99.185',
+          module: '放货指令详情',
+          summary: '放货指令详情 3 tab 真正切换（v1.7.99.148 旧版只切 active class 不切 content）—— 把现有 3 个区块（放货信息/业务线下回款信息/附件信息）包到 #tab-info panel + 新增 #tab-outbound panel（6 列表格 + 暂无数据 empty state + 放货数量/出库数量 summary 2 个数据点）+ 新增 #tab-log panel（5 列表格 + 暂无数据 empty state）+ 修复 switchDetailTab 真正显示/隐藏 tab-content。',
+          changes: [
+            { type: 'add', location: 'warehouse-release-detail.html head CSS', before: null, after: '.outbound-table（6 列 = 出库编号/关联下煤计划编号/出库日期/仓房&货位/出库数量/车数）+ .outbound-summary + .log-table（5 列 = 操作类型/操作人员/所属公司/操作内容/操作时间）+ .empty-state 通用空状态' },
+            { type: 'add', location: 'warehouse-release-detail.html body', before: null, after: '<div class="tab-content" id="tab-outbound" style="display: none;"> + <div class="tab-content" id="tab-log" style="display: none;">（2 个新 panel）' },
+            { type: 'modify', location: 'warehouse-release-detail.html body', before: '原 3 个区块（放货信息/回款/附件）直接展开', after: '包到 <div class="tab-content" id="tab-info"> 里面（默认显示）' },
+            { type: 'modify', location: 'warehouse-release-detail.html script switchDetailTab', before: '只切 active class + Utils.toast 提示', after: '真正显示/隐藏：document.querySelectorAll(".tab-content").forEach(panel => { panel.style.display = "none"; }); var target = document.getElementById("tab-" + key); if (target) target.style.display = "";' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.184', after: '豫港通原型 v.1.7.99.185' }
+          ]
+        },
+        {
+          ts: '2026-08-06T18:50:00',
+          version: 'v1.7.99.184',
+          module: '采购结算列表 / 销售结算列表',
+          summary: '删筛选区"查询/重置"按钮，按全站标准筛选控件统一（v1.7.99.184 锁）—— 标准 = 顶部 cp-filter-summary（当前搜索 + 数据导出）+ 5-6 个 cp-filter-item 字段 + NO 查询/重置按钮（实时 input/change 事件过滤）。settlement-purchase.html 和 settlement-sales.html 2 个页面都从 6 个 cp-filter-item 改为 5 个（删最后 1 个"操作"列 + 查询/重置按钮）。其他 4 个含查询按钮的页面（payment-list/shipment-out/contract-purchase-relate-sales/contract-sales-relate-purchase）都是抽屉内（cp-drawer-filter-buttons），不属于筛选区，保留。',
+          changes: [
+            { type: 'remove', location: 'settlement-purchase.html line 116-122', before: '<div class="cp-filter-item"><span class="cp-filter-label" style="visibility: hidden;">操作</span> + <div style="display: flex; gap: 8px;"><button class="btn btn-primary btn-sm">查询</button><button class="btn btn-default btn-sm">重置</button></div></div>', after: null },
+            { type: 'remove', location: 'settlement-sales.html line 116-122', before: '同上模式（settlement-purchase.html + settlement-sales.html 完全一致）', after: null },
+            { type: 'modify', location: '2 个结算列表页 cp-filter-item 数量', before: '6 个（含"操作"列）', after: '5 个（去掉"操作"列）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.183', after: '豫港通原型 v.1.7.99.184' }
+          ]
+        },
+        {
+          ts: '2026-08-06T16:55:00',
+          version: 'v1.7.99.183',
+          module: '销售结算单详情',
+          summary: '销售结算单详情页删除"返回"按钮（按 user 反馈"注意排版"）—— 删 .back-btn div + .detail-header-row 父容器（不再需要）+ .back-btn / .detail-header-row / .back-btn:hover CSS 3 行（死代码）+ .detail-title 的 margin-top: 10px（原来用于跟 back-btn 隔开，现在不需要了）。',
+          changes: [
+            { type: 'remove', location: 'settlement-sales-detail.html line 14-15', before: '.detail-header .back-btn { display: inline-flex; ... } + .back-btn:hover { ... }（CSS 死代码）', after: null },
+            { type: 'remove', location: 'settlement-sales-detail.html line 13', before: '.detail-header-row { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }（CSS 死代码）', after: null },
+            { type: 'remove', location: 'settlement-sales-detail.html line 130-134', before: '<div class="back-btn" onclick="history.back()">← 销售结算单详情</div> + 父 <div class="detail-header-row">', after: null },
+            { type: 'modify', location: 'settlement-sales-detail.html line 135', before: '<div class="detail-title" style="margin-top: 10px;">（原 margin-top 用于跟 back-btn 隔开）', after: '<div class="detail-title">（去掉 margin-top，现在直接顶到 .detail-header 顶部）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.182', after: '豫港通原型 v.1.7.99.183' }
+          ]
+        },
+        {
+          ts: '2026-08-06T16:40:00',
+          version: 'v1.7.99.182',
+          module: '回款认领 / 回款认领详情',
+          summary: '删除"回款认领操作"和"回款认领详情"两个页面（实际流程不需要独立页面）—— 删除 2 个 HTML + 2 个 docs + app.html 2 个菜单项 + shared/js/topnav-drawer.js 资金管理>回款管理 children 数组 2 个 entries + 7 个页面 inline sidemenu 中的"回款认领"和"回款认领详情"链接。',
+          changes: [
+            { type: 'remove', location: 'pages/receipt-claim.html', before: '回款认领操作主页面', after: null },
+            { type: 'remove', location: 'pages/receipt-claim-detail.html', before: '回款认领详情主页面', after: null },
+            { type: 'remove', location: 'docs/p-receipt-claim.md', before: '回款认领详细文档', after: null },
+            { type: 'remove', location: 'docs/p-receipt-claim-detail.md', before: '回款认领详情详细文档', after: null },
+            { type: 'remove', location: 'app.html line 537-538', before: "2 个菜单项：'回款认领操作' + '回款认领详情'", after: null },
+            { type: 'remove', location: 'shared/js/topnav-drawer.js line 70-71', before: "资金管理>回款管理 children 数组 2 个 entries", after: null },
+            { type: 'remove', location: '7 个页面 inline sidemenu', before: '<a href="./receipt-claim.html">回款认领</a> + <a href="./receipt-claim-detail.html">回款认领详情</a>', after: null },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.181', after: '豫港通原型 v.1.7.99.182' }
+          ]
+        },
+        {
+          ts: '2026-08-06T15:35:00',
+          version: 'v1.7.99.181',
+          module: '订单管理',
+          summary: '删除"订单管理"模块（实际系统无此功能）—— 删除 pages/order-list.html + docs/p-order-list.md + docs/02.04-订单管理.md + app.html 菜单项 + 8 个页面（warning-detail/margin-record/bond-letter-new/shipment-in-new/receipt-claim-detail/business-line-relate/bond-letter-detail/shipment-in-detail）的 inline sidemenu 中的"订单管理"链接。',
+          changes: [
+            { type: 'remove', location: 'pages/order-list.html', before: '订单管理主页面（5 tab + 2 行 mock + 分页）', after: null },
+            { type: 'remove', location: 'docs/p-order-list.md', before: '订单管理详细文档（v1.1 终版）', after: null },
+            { type: 'remove', location: 'docs/02.04-订单管理.md', before: '订单管理规范文档', after: null },
+            { type: 'remove', location: 'app.html line 513', before: "{ name: '订单管理', file: 'order-list', doc: 'p-order-list' }（主页菜单项）", after: null },
+            { type: 'remove', location: '8 个页面 inline sidemenu', before: '<a href="./order-list.html" class="sidemenu-item">订单管理</a>', after: null },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.180', after: '豫港通原型 v.1.7.99.181' }
+          ]
+        },
+        {
+          ts: '2026-08-06T15:20:00',
+          version: 'v1.7.99.180',
+          module: '付款管理 / 导航对照',
+          summary: '付款管理列表页状态机切换不联动数据修复（原来 6 状态 tab 只切 active class 不重渲染，11 行表格硬编码）—— 改为 PAYMENT_MOCK 按 tab key 索引 + renderPayment(key) 重渲染 tbody + tab onclick 触发；空数据 empty state。同步做了一次"用户原型目录 vs TOPNAV_MENU"全量对照，代码侧无改动（用户确认：风险运营管理不加/数据中心保持 7 项/提放货管理命名不变）。',
+          changes: [
+            { type: 'modify', location: 'payment-list.html 表格 tbody', before: '硬编码 10 行 <tr>（全部 5 种状态各 2 行）', after: '空 tbody + id="paymentTbody"，由 renderPayment() 动态渲染' },
+            { type: 'add', location: 'payment-list.html script PAYMENT_MOCK', before: null, after: '按 tab key 索引的 6 组 mock：all(11) / 待提交(2) / 审批中(2) / 已付款(5) / 驳回(2) / 无效(1)，每行含 合同/收款方/类型/来源/金额/日期/流水号/状态' },
+            { type: 'add', location: 'payment-list.html script renderPayment(key)', before: null, after: 'filter MOCK[key] → render 9 列 <tr> → 待提交状态带"修改"链接（payment-new.html?contract=...&type=edit），其他状态只有"详情"链接；空数据 → empty state（文件夹 SVG + "暂无数据"）' },
+            { type: 'modify', location: 'payment-list.html tab 点击处理', before: 'IIFE 只切换 active class（不切数据）', after: 'tab.addEventListener → removeAll(active) + addSelf(active) + renderPayment(key)，初始 renderPayment("all")' },
+            { type: 'add', location: 'payment-list.html PAYMENT_STATUS 映射表', before: null, after: '6 状态 → tag 颜色 + 显示文案映射：待提交/●平台运营审核中/●已生效/●平台审批驳回/无效' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.179', after: '豫港通原型 v.1.7.99.180' }
+          ]
+        },
+        {
+          ts: '2026-08-06T14:50:00',
+          version: 'v1.7.99.179',
+          module: '退款管理 / 消息通知',
+          summary: '修复退款管理列表页"查看"按钮 href="#" 没路由（改为 href="./refund-detail.html"）+ 消息通知加"资金审批"tap（枚举付款 2 条 + 退款 2 条，路由到 payment-detail.html / refund-detail.html，subtype 区分"付款/退款" type 标签紫色）。',
+          changes: [
+            { type: 'modify', location: 'refund-list.html 表格 操作 列', before: '<a href="#">查看</a>（href="#" 没路由）', after: '<a href="./refund-detail.html">查看</a>' },
+            { type: 'add', location: 'shared/js/topnav-drawer.js .notif-row1 .type.fund CSS', before: null, after: 'background: #f3e8ff; color: #6b21a8;（紫色，区别于合同蓝/项目橙）' },
+            { type: 'add', location: 'shared/js/topnav-drawer.js 弹窗 notif-tabs', before: '2 tab：合同 / 项目准入', after: '3 tab：合同 / 项目准入 / 资金审批（id="numFund" badge 4）' },
+            { type: 'add', location: 'shared/js/topnav-drawer.js NOTIF_MOCK.fund', before: null, after: '4 条 mock：付款 2 条（SKJZ... → payment-detail.html）+ 退款 2 条（TK... → refund-detail.html），每条带 subtype 字段用于 type 标签显示"付款"/"退款"' },
+            { type: 'modify', location: 'shared/js/topnav-drawer.js renderNotifList type 文字映射', before: "n.type === 'contract' ? '合同' : '项目准入'", after: "n.type === 'contract' ? '合同' : n.type === 'project' ? '项目准入' : n.subtype || '资金'" },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.177', after: '豫港通原型 v.1.7.99.179' }
+          ]
+        },
+        {
+          ts: '2026-08-06T12:25:00',
+          version: 'v1.7.99.177',
+          module: '准入详情 / 付款详情 / 退款详情',
+          summary: '准入详情页（project-detail/customer-detail）底部按钮挤在一起修复：footer-scenario 加 gap: 12px；移除 v1.7.99.108 内嵌的"审批通过+驳回审批"（v1.7.99.160 底部已固定显示，重复了——user 反馈"不应该全部都加"）。付款/退款详情页加"审批管理"tab + 底部固定审批通过/驳回审批按钮（仅 status=审批中 时显示，默认演示 status=审批中）。',
+          changes: [
+            { type: 'modify', location: 'project-detail.html / customer-detail.html .footer-scenario CSS', before: "display: flex; align-items: center; width: 100%;", after: "display: flex; align-items: center; width: 100%; gap: 12px;（按钮间距）" },
+            { type: 'remove', location: 'project-detail.html time-line 节点 3 下方', before: "v1.7.99.108 内嵌 at-actions（审批通过+驳回审批，data-show-scenario=approving-approver）", after: null },
+            { type: 'remove', location: 'customer-detail.html time-line 节点下方', before: "v1.7.99.128 内嵌 at-actions（同上模式）", after: null },
+            { type: 'add', location: 'payment-detail.html head', before: null, after: '<link rel="stylesheet" href="../assets/css/approval.css">（复用 v1.7.99.160 通用审批样式）' },
+            { type: 'add', location: 'payment-detail.html tab 栏', before: '2 tab（付款信息/操作记录）', after: '3 tab（付款信息/审批管理/操作记录，id=approvalTab 默认 display:none，status=审批中时显示）' },
+            { type: 'add', location: 'payment-detail.html tabPanelApproval', before: null, after: '复用 approval.css 组件：approval-status-card（待审批/撤回申请） + approval-summary（申请单号/提交时间/提交人/预计完成） + approval-grid（5 节点 timeline + 关键指标：付款金额/收款方/付款方式/付款日期）' },
+            { type: 'add', location: 'payment-detail.html 底部固定底栏', before: null, after: '.footer-actions#paymentApprovalFooter（display:none，status=审批中时显示）+ 借鉴 v1.7.99.175 合同详情页 sticky bottom bar 样式（btn-primary 审批通过 + btn-danger-outline 驳回审批 + onclick 弹 mock 提示）' },
+            { type: 'add', location: 'payment-detail.html script', before: null, after: 'status 决定：URL ?status=审批中 或默认 → 显示 approvalTab + paymentApprovalFooter + 顶部 status badge 变黄底（#fef3c7 / #a16207）' },
+            { type: 'add', location: 'refund-detail.html 同样改造', before: null, after: '同 payment-detail.html（tab + 通用审批 + 底部固定底栏，status=审批中时显示）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.176', after: '豫港通原型 v.1.7.99.177' }
+          ]
+        },
+        {
+          ts: '2026-08-06T12:10:00',
+          version: 'v1.7.99.176',
+          module: '货转详情 / 货转管理',
+          summary: '货转详情页加 2 tab（货转信息 + 审批管理，状态机：货转状态为"审批中"时 tab 名=审批管理，其他状态=审批记录）+ 货转管理列表页状态机 9→6（按 user 图 2 简化为 全部/审批中/待上传已生效单据/已生效/驳回/已作废）。',
+          changes: [
+            { type: 'add', location: 'goods-transfer-up-detail.html / goods-transfer-down-detail.html head', before: null, after: '<link rel="stylesheet" href="../assets/css/approval.css">（复用 v1.7.99.160 通用审批样式）' },
+            { type: 'add', location: '货转详情页 标题下方', before: null, after: '.gt-tabs 标签栏 + 2 个 .gt-tab（货转信息 / 审批管理，id="gtApprovalTab"）' },
+            { type: 'add', location: '货转详情页 区块 1 之前', before: '原 4 块直接展示', after: '包到 .gt-tab-panel#gtInfoPanel 里（默认显示），/info 后闭合' },
+            { type: 'add', location: '货转详情页 附件信息之后', before: null, after: '.gt-tab-panel#gtApprovalPanel（hidden）+ 复用 approval.css 组件：approval-status-card / approval-summary / approval-grid / timeline 5 节点全部 done' },
+            { type: 'add', location: '货转详情页 script', before: null, after: 'switchTap() 2 tab 切换 + tab 名字动态（currentStatus === "approving" → 审批管理，否则 → 审批记录，默认 currentStatus = "approved"）' },
+            { type: 'modify', location: 'goods-transfer.html 状态 tab 栏（v1.7.99.176 按 user 图 2 简化）', before: '9 tab：全部/待提交/审批中/待签约/已签约/退回/已作废/待确认/已驳回', after: '6 tab：全部/审批中/待上传已生效单据/已生效/驳回/已作废' },
+            { type: 'modify', location: 'goods-transfer.html 状态筛选项', before: '9 选项：待提交/审批中/待签约/已签约/退回/已作废/待确认/已驳回', after: '6 选项：审批中/待上传已生效单据/已生效/驳回/已作废（与 tab 同步）' },
+            { type: 'add', location: 'goods-transfer.html 状态 data-key', before: null, after: '新增 awaiting-effect-voucher（待上传已生效单据）+ effective（已生效）' },
+            { type: 'remove', location: 'goods-transfer.html', before: 'data-key pending/awaiting-sign/signed/returned/awaiting-confirm（5 个旧 tab）', after: null },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.175', after: '豫港通原型 v.1.7.99.176' }
+          ]
+        },
+        {
+          ts: '2026-08-06T11:55:00',
+          version: 'v1.7.99.175',
+          module: '合同详情 / 审批底栏',
+          summary: 'v1.7.99.160 审批中固定底栏修复：3 个根因问题（1）显示条件 === approving 永远不成立（2）默认状态 executing/completed 不是 approving（3）IIFE 同步执行时 footer div 还没解析到 DOM（getElementById 返回 null）—— 3 项全部修复 + 按钮加 onclick 弹 mock 提示 + 用 setTimeout(0) 延后执行。',
+          changes: [
+            { type: 'modify', location: 'contract-purchase-order-detail.html 显示条件', before: "footer.style.display = (currentStatus === 'approving') ? 'flex' : 'none'", after: "footer.style.display = ['approving', 'rejected', 'unsigned'].includes(currentStatus) ? 'flex' : 'none'" },
+            { type: 'modify', location: 'contract-purchase-order-detail.html 默认状态', before: "var currentStatus = 'executing'", after: "var currentStatus = 'approving'" },
+            { type: 'modify', location: 'contract-purchase-order-detail.html 按钮 onclick', before: '<button class="btn btn-primary">审批通过</button>（无 onclick，静态按钮）', after: 'onclick=alert 弹 mock 提示（带合同编号）' },
+            { type: 'modify', location: 'contract-purchase-order-detail.html 执行时机', before: 'IIFE 同步执行（footer div 在 <\/script> 之后才出现 → getElementById 返回 null）', after: 'setTimeout(updateApprovalFooter, 0) 延后到 DOM 解析完后执行' },
+            { type: 'modify', location: 'contract-sales-order-detail.html 同样 4 项修复', before: '同采购订单', after: '同采购订单' },
+            { type: 'modify', location: 'contract-supplement-order-detail.html 同样 4 项修复', before: 'var currentStatus = "completed"', after: "var currentStatus = 'approving'" },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.174', after: '豫港通原型 v.1.7.99.175' }
+          ]
+        },
+        {
+          ts: '2026-08-06T11:50:00',
+          version: 'v1.7.99.174',
+          module: '通用 / 消息通知 + 版本变更记录',
+          summary: '顶部铃铛从 project-list.html 单一页面提升到 shared/js/topnav-drawer.js 全局共享（所有有 .topbar-right 的页面自动有铃铛 + 弹窗 + 合同/项目准入 2 类型消息）；版本变更记录顶部加刷新按钮（重新读取 localStorage + baseline 合并）。',
+          changes: [
+            { type: 'add', location: 'shared/js/topnav-drawer.js renderNotifBell()', before: null, after: '全局注入逻辑：检测到 .topbar-right 自动注入 notifBell + notifDropdown HTML + CSS + NOTIF_MOCK + toggleNotifDropdown / switchNotifTab / renderNotifList / notifItemClick / markAllNotifRead / closeNotifDropdown JS 函数 + 外部点击关闭监听' },
+            { type: 'add', location: 'shared/js/topnav-drawer.js initNotif()', before: null, after: 'DOMContentLoaded 时检查 .topbar-right，存在则执行 renderNotifBell()（if notifBell 已存在则跳过，避免与 project-list.html 内置铃铛重复）' },
+            { type: 'modify', location: 'pages/changelog.html 顶部 summary CSS', before: '.changelog-summary { display: flex; gap: 24px; }', after: '.changelog-summary { justify-content: space-between; } + .changelog-summary-left { flex: 1; display: flex; gap: 24px; }' },
+            { type: 'add', location: 'pages/changelog.html 顶部 summary', before: null, after: '🔄 刷新按钮（id="changelogRefreshBtn"）+ 旋转动画（CSS @keyframes spin）' },
+            { type: 'add', location: 'pages/changelog.html script', before: null, after: 'refreshChangelog() 函数：读 localStorage + BASELINE 合并 → 重新 renderSummary + renderList → toast 提示（Utils.toast 不存在则降级到 console.log）' },
+            { type: 'modify', location: 'pages/project-list.html 行 537-651（铃铛 CSS + 弹窗 + JS）', before: 'v1.7.99.170 hardcode 整段铃铛代码', after: '保留（topnav-drawer.js 检测 #notifBell 已存在则跳过自动注入，避免重复）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.173', after: '豫港通原型 v.1.7.99.174' }
+          ]
+        },
+        {
+          ts: '2026-08-06T11:35:00',
+          version: 'v1.7.99.173',
+          module: '结算单管理 / 版本变更记录',
+          summary: 'v1.7.99.172 签章状态回滚「单签」→「待盖章」（双签保持），版本变更记录时间显示 bug 修复（baseline UTC 时间 +8 时区转换 + fmtTs 智能识别 UTC/本地）。',
+          changes: [
+            { type: 'modify', location: 'settlement-purchase-new.html 签章状态下拉', before: '单签 / 双签（2 选项）', after: '待盖章 / 双签（2 选项）' },
+            { type: 'modify', location: 'settlement-purchase-new.html JS pickSignStatus', before: "if (v === '单签')", after: "if (v === '待盖章')" },
+            { type: 'modify', location: 'settlement-purchase-new.html JS confirmSubmit / doSubmit', before: "currentSignStatus === '单签'", after: "currentSignStatus === '待盖章'" },
+            { type: 'modify', location: 'settlement-sales-new.html 签章状态下拉', before: '单签 / 双签（2 选项）', after: '待盖章 / 双签（2 选项）' },
+            { type: 'modify', location: 'settlement-sales-new.html JS pickSignStatus / confirmSubmit / doSubmit', before: "v === '单签' / currentSignStatus === '单签'", after: "v === '待盖章' / currentSignStatus === '待盖章'" },
+            { type: 'modify', location: 'pages/changelog.html fmtTs 函数', before: 'new Date(iso) → getFullYear/getMonth/getDate/getHours（本地时区，错把 baseline UTC 当时区）', after: '智能识别 iso 字符串末尾是否带 Z：带 Z（UTC）→ +8 小时转北京时间；不带 Z → 当本地时间' },
+            { type: 'modify', location: 'pages/changelog.html BASELINE 时间戳（v1.7.99.165~172）', before: '7 条 ts 字段写为 2026-08-06T..:..:00.000Z（UTC，被 fmtTs 误读为本地时间导致显示多 8 小时）', after: '7 条 ts 字段去掉 .000Z 后缀，写为 2026-08-06T..:..:00（北京时间）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.172', after: '豫港通原型 v.1.7.99.173' }
+          ]
+        },
+        {
+          ts: '2026-08-06T11:18:00',
+          version: 'v1.7.99.172',
+          module: '结算单管理',
+          summary: '采购/销售结算单新增表单页「签章状态」下拉选项从「待盖章 / 驳回（销售：双签）」改为「单签 / 双签」，JS 联动条件同步。',
+          changes: [
+            { type: 'modify', location: 'settlement-purchase-new.html 签章状态下拉', before: '待盖章 / 驳回（2 选项）', after: '单签 / 双签（2 选项）' },
+            { type: 'modify', location: 'settlement-purchase-new.html JS pickSignStatus', before: "if (v === '待盖章') / else if (v === '驳回')", after: "if (v === '单签') / else if (v === '双签')" },
+            { type: 'modify', location: 'settlement-purchase-new.html JS confirmSubmit / doSubmit', before: "currentSignStatus === '待盖章' / '驳回'", after: "currentSignStatus === '单签' / '双签'" },
+            { type: 'modify', location: 'settlement-sales-new.html 签章状态下拉', before: '待盖章 / 双签（2 选项）', after: '单签 / 双签（2 选项）' },
+            { type: 'modify', location: 'settlement-sales-new.html JS pickSignStatus', before: "if (v === '待盖章')", after: "if (v === '单签')" },
+            { type: 'modify', location: 'settlement-sales-new.html JS confirmSubmit / doSubmit', before: "currentSignStatus === '待盖章'", after: "currentSignStatus === '单签'" },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.170', after: '豫港通原型 v.1.7.99.172' }
+          ]
+        },
+        {
+          ts: '2026-08-06T11:04:00',
+          version: 'v1.7.99.171',
+          module: '通用 / 浏览器标签',
+          summary: '浏览器 tab 标题从「豫港通高保真原型 v0.3」改为「豫港通原型 v.1.7.99.170」，后续版本号按实际版本号更新。',
+          changes: [
+            { type: 'modify', location: 'app.html <title>', before: '豫港通高保真原型 v0.3', after: '豫港通原型 v.1.7.99.170（v 后加点，格式：豫港通原型 v.X.Y.Z.WWW）' }
+          ]
+        },
+        {
+          ts: '2026-08-06T10:58:00',
+          version: 'v1.7.99.170',
+          module: '通用 / 消息通知',
+          summary: '顶部铃铛新增消息通知弹窗（合同 / 项目准入 2 类型待审批消息），点击消息跳转到详情页审批管理。',
+          changes: [
+            { type: 'modify', location: 'topbar 铃铛按钮', before: '空 badge（无数字）', after: 'badge 数字 6（3 合同 + 3 项目准入）+ id="notifBell" + onclick="toggleNotifDropdown(event)"' },
+            { type: 'add', location: '页面 body 末尾', before: null, after: '.notif-dropdown 弹窗 HTML（id="notifDropdown"）' },
+            { type: 'add', location: '页面 body 末尾', before: null, after: '.notif-tabs 切 tab 组件（合同 / 项目准入 2 个 tab + 红点 count）' },
+            { type: 'add', location: '页面 body 末尾', before: null, after: '.notif-list 消息列表（红点 + 类型 tag + 编号 + 标题 + 提交人 + 时间）' },
+            { type: 'add', location: '页面 body 末尾', before: null, after: '.notif-foot 底部（关闭 / 查看全部）+ 全部标记已读' },
+            { type: 'add', location: '页面 body 末尾', before: null, after: 'NOTIF_MOCK 数据（合同 3 条 / 项目准入 3 条）+ toggleNotifDropdown / switchNotifTab / notifItemClick / markAllNotifRead JS 函数 + 外部点击关闭' },
+            { type: 'add', location: '点击消息后', before: null, after: '合同: 跳 contract-purchase-order-detail.html / contract-sales-order-detail.html / contract-supplement-order-detail.html' },
+            { type: 'add', location: '点击消息后', before: null, after: '项目准入: 跳 project-detail.html' }
+          ]
+        },
+        {
+          ts: '2026-08-06T10:36:00',
+          version: 'v1.7.99.169',
+          module: '业务线管理',
+          summary: '业务线管理状态机去掉「待上传双签合同」，业务线状态合并规则：合同「待上传双签合同」/「执行中」→ 业务线 tab 都显示「执行中」。',
+          changes: [
+            { type: 'remove', location: '状态 tab 栏', before: '待上传双签合同 tab (count=0)', after: null },
+            { type: 'remove', location: 'updateBusinessLineTabCounts JS', before: 'counts.pending_contract 计算', after: null },
+            { type: 'modify', location: 'counts.executing 计算', before: 'BL_MOCK.filter(r => r.tags.includes("executing")).length', after: 'BL_MOCK.filter(r => r.tags.includes("executing") || r.tags.includes("pending_contract")).length（合并 pending_contract）' },
+            { type: 'modify', location: '状态 tab 总数', before: '6 tab', after: '5 tab' }
+          ]
+        },
+        {
+          ts: '2026-08-06T10:31:00',
+          version: 'v1.7.99.167',
+          module: '业务线管理',
+          summary: '业务线管理状态机去掉「已终止」，tab 数 7→6，「全部」count 5→4。',
+          changes: [
+            { type: 'remove', location: '状态 tab 栏', before: '已终止 tab (count=2)', after: null },
+            { type: 'remove', location: 'BL_MOCK 数据', before: 'YWX202309050005 mock row（terminated tag，对上游付款 24,600,000 / 采购结算金额 52,981,799 等）', after: null },
+            { type: 'remove', location: 'updateBusinessLineTabCounts JS', before: 'counts.terminated 计算', after: null },
+            { type: 'modify', location: '状态 tab 总数', before: '7 tab', after: '6 tab' },
+            { type: 'modify', location: '「全部」tab count', before: 'count=5', after: 'count=4' }
+          ]
+        },
+        {
+          ts: '2026-08-06T10:16:00',
+          version: 'v1.7.99.166',
+          module: '货转管理',
+          summary: '货转管理表单页（上游货转 / 下游货转）底部按钮加「保存草稿」，2 按钮 → 3 按钮。',
+          changes: [
+            { type: 'add', location: '底部按钮栏', before: null, after: '保存草稿按钮 (btn-secondary)' },
+            { type: 'modify', location: '底部按钮栏', before: '取消 / 确定（2 按钮）', after: '取消 / 保存草稿 / 确定（3 按钮）' },
+            { type: 'add', location: '页面 script', before: null, after: 'saveDraft() 函数 + Utils.toast fallback 到 alert' }
+          ]
+        },
+        {
+          ts: '2026-08-06T09:51:00',
+          version: 'v1.7.99.165',
+          module: '发货管理',
+          summary: '填写发货信息运输方式 4 状态机切换（默认火运+汽运）：火运+汽运 / 火运 / 汽运 / 船运 + 班列信息下拉 + onTransportModeChange() 切换。',
+          changes: [
+            { type: 'modify', location: '发货信息-运输方式 select', before: '5 选项（火运 / 中欧班列 / 海运 / 公路 / 铁路）', after: '4 选项（火运+汽运 / 火运 / 汽运 / 船运）' },
+            { type: 'add', location: '发货信息 表单（火运 / 火运+汽运）', before: null, after: '班列名称*（5 选项：国内班列 / 中欧班列-东线线路 / 欧盟 / 中俄 / 中亚）' },
+            { type: 'add', location: '发货信息 表单（汽运）', before: null, after: '发货批次*（单批次发货 / 多批次发货 radio）' },
+            { type: 'add', location: '发货信息 表单（汽运 / 船运）', before: null, after: '发货地址* + 收货地址*' },
+            { type: 'modify', location: '发货信息 表单（火运 / 火运+汽运）', before: '发站 / 到站（普通 input）', after: '发站 / 到站（灰底 readonly 同步合同信息：万泰站 / 新郑）' },
+            { type: 'add', location: '页面 script', before: null, after: 'onTransportModeChange() 状态机切换（data-only="rail-truck,rail" 切换显示）' },
+            { type: 'modify', location: '运输信息 表', before: '运单号 / 车种 / 车号 / 票重 / 操作（常显）', after: '同上 - 仅火运 / 火运+汽运显示' },
+            { type: 'modify', location: '附件信息 区块', before: '大票* / 车号表 / 其他凭证（常显）', after: '火运/火运+汽运: 大票* / 车号表 / 其他凭证 / 汽运/船运: 运输凭证*' }
+          ]
+        }
+      ];
+
+      function loadAll() {
+        try {
+          var raw = localStorage.getItem('ygt_changelog_v1');
+          return raw ? JSON.parse(raw) : [];
+        } catch (e) {
+          return [];
+        }
+      }
+
+      function renderSummary(list) {
+        var summary = document.getElementById('summary');
+        var first = list.length > 0 ? list[list.length - 1] : null;
+        var last = list.length > 0 ? list[0] : null;
+        summary.innerHTML = ''
+          + '<div class="changelog-summary-left">'
+          +   '<div class="changelog-summary-item"><span class="changelog-summary-num">' + list.length + '</span>条变更记录</div>'
+          +   '<div class="changelog-summary-item">最早：<strong>' + (first ? fmtTs(first.ts) : '—') + '</strong></div>'
+          +   '<div class="changelog-summary-item">最近：<strong>' + (last ? relativeTime(last.ts) : '—') + '</strong>' + (last ? '（' + fmtTs(last.ts) + '）' : '') + '</div>'
+          + '</div>'
+          + '<button class="changelog-refresh-btn" id="changelogRefreshBtn" onclick="refreshChangelog()" title="重新读取 localStorage + baseline 合并最新变更记录">'
+          +   '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 0 1 9-9 9.75 9.75 0 0 1 6.74 2.74L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-9 9 9.75 9.75 0 0 1-6.74-2.74L3 16"/><path d="M3 21v-5h5"/></svg>'
+          +   '刷新'
+          + '</button>';
+      }
+
+      // v1.7.99.174 刷新：重新读取 localStorage + baseline，合并渲染
+      function refreshChangelog() {
+        var btn = document.getElementById('changelogRefreshBtn');
+        if (btn) btn.classList.add('refreshing');
+        try {
+          var local = [];
+          try { local = JSON.parse(localStorage.getItem('ygt_changelog_v1') || '[]'); } catch (e) { local = []; }
+          // baseline + local 合并（unshift：baseline 在前）
+          var merged = BASELINE.concat(local);
+          renderSummary(merged);
+          renderList(merged);
+          // toast 提示（Utils.toast 不存在则降级为 console.log）
+          try {
+            if (window.Utils && Utils.toast) Utils.toast('已刷新，共 ' + merged.length + ' 条变更记录', 'success');
+            else if (typeof showToast === 'function') showToast('已刷新，共 ' + merged.length + ' 条变更记录', 'success');
+            else console.log('changelog refresh: ' + merged.length + ' 条');
+          } catch (e) { console.log('changelog refresh: ' + merged.length + ' 条'); }
+        } finally {
+          setTimeout(function() { if (btn) btn.classList.remove('refreshing'); }, 600);
+        }
+      }
+      window.refreshChangelog = refreshChangelog;
+
+      function escapeHtml(s) {
+        if (s === null || s === undefined) return '';
+        return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+      }
+
+      function renderChange(ch) {
+        var beforeHtml = ch.before
+          ? '<div class="changelog-change-before">' + escapeHtml(ch.before) + '</div>'
+          : '<div class="changelog-change-before empty">（无 / 新增项）</div>';
+        var afterHtml = ch.after
+          ? '<div class="changelog-change-after">' + escapeHtml(ch.after) + '</div>'
+          : '<div class="changelog-change-after empty">（已删除）</div>';
+        return ''
+          + '<div class="changelog-change">'
+          +   '<div class="changelog-change-type ' + ch.type + '">' + (ch.type === 'add' ? '+ 新增' : ch.type === 'remove' ? '− 删除' : '~ 修改') + '</div>'
+          +   '<div class="changelog-change-content">'
+          +     '<div class="changelog-change-location">📍 ' + escapeHtml(ch.location) + '</div>'
+          +     '<div class="changelog-change-diff">' + beforeHtml + '<div class="changelog-change-arrow">→</div>' + afterHtml + '</div>'
+          +   '</div>'
+          + '</div>';
+      }
+
+      function renderSnapshot(label, snap, type) {
+        var safeLabel = type === 'prev' ? '变更前' : '变更后';
+        if (!snap) {
+          return '<div class="changelog-snapshot">'
+            + '<div class="changelog-snapshot-label ' + type + '">' + safeLabel + '</div>'
+            + '<div class="changelog-snapshot-img">（无截图）</div>'
+            + '</div>';
+        }
+        return '<div class="changelog-snapshot">'
+          + '<div class="changelog-snapshot-label ' + type + '">' + safeLabel + '</div>'
+          + '<div class="changelog-snapshot-img"><img src="' + snap + '" alt="' + safeLabel + '"></div>'
+          + '</div>';
+      }
+
+      function renderCard(item) {
+        var changesHtml = '';
+        if (item.changes && item.changes.length) {
+          changesHtml = ''
+            + '<div class="changelog-changes-title">📐 改动明细（' + item.changes.length + ' 项）</div>'
+            + '<div class="changelog-changes">' + item.changes.map(renderChange).join('') + '</div>';
+        }
+        var snapshotsHtml = '';
+        if (item.prevSnapshot || item.newSnapshot) {
+          snapshotsHtml = '<div class="changelog-snapshots">'
+            + renderSnapshot('变更前', item.prevSnapshot, 'prev')
+            + renderSnapshot('变更后', item.newSnapshot, 'next')
+            + '</div>';
+        }
+        return ''
+          + '<div class="changelog-card">'
+          +   '<div class="changelog-card-header">'
+          +     '<div class="changelog-card-meta">'
+          +       '<span class="tag-version">' + escapeHtml(item.version || 'v1.7.99.0') + '</span>'
+          +       '<span class="tag-module">' + escapeHtml(item.module || '未指定模块') + '</span>'
+          +       '<span class="changelog-card-ts"><strong>' + relativeTime(item.ts) + '</strong> · ' + fmtTs(item.ts) + '</span>'
+          +     '</div>'
+          +   '</div>'
+          +   '<div class="changelog-card-body">'
+          +     (item.summary ? '<div class="changelog-summary-text">📝 ' + escapeHtml(item.summary) + '</div>' : '')
+          +     changesHtml
+          +     snapshotsHtml
+          +   '</div>'
+          + '</div>';
+      }
+
+      function renderList(list) {
+        var wrap = document.getElementById('changelogList');
+        if (list.length === 0) {
+          wrap.innerHTML = '<div class="changelog-empty">'
+            + '<div class="changelog-empty-icon">📭</div>'
+            + '<div class="changelog-empty-title">暂无变更记录</div>'
+            + '<div class="changelog-empty-desc">当前为「功能壳」状态。<br>后续每次原型调整，将通过 <code>window.YGTChangelog.add({...})</code> 写入记录，<br>包含：版本号 / 功能模块归属 / 改动时间 / 改动明细（旧 → 新） / 文字总结。</div>'
+            + '</div>';
+          return;
+        }
+        wrap.innerHTML = list.map(renderCard).join('');
+      }
+
+      function init() {
+        // 合并 baseline + localStorage（localStorage 的 unshift 在头部）
+        var runtime = loadAll();
+        var list = runtime.concat(BASELINE);
+        renderSummary(list);
+        renderList(list);
+        document.getElementById('metaInfo').textContent = '共 ' + list.length + ' 条 · 按时间倒序';
+      }
+
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', init);
+      } else {
+        init();
+      }
+    })();
+  </script>
+</body>
+</html>

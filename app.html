@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>豫港通原型 v.1.7.99.207</title>
+  <link rel="stylesheet" href="./assets/css/design-system.css">
+  <style>
+    /* 三栏容器：四边留间距 + 灰色背景 */
+    body {
+      margin: 0;
+      padding: 16px;
+      background: #E5E7EB;
+      height: 100vh;
+      box-sizing: border-box;
+      display: flex;
+      gap: 16px;
+      overflow: hidden;
+    }
+
+    /* 三栏通用卡片样式 */
+    .panel {
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .panel-header {
+      height: 44px;
+      padding: 0 16px;
+      border-bottom: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-shrink: 0;
+      background: #fff;
+    }
+    .panel-header-title {
+      font-size: 13px;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .panel-header-actions {
+      margin-left: auto;
+      display: flex;
+      gap: 4px;
+    }
+    .icon-btn {
+      width: 28px; height: 28px;
+      border-radius: var(--radius-sm);
+      display: flex; align-items: center; justify-content: center;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border: none; background: transparent;
+    }
+    .icon-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+
+    /* 左侧：菜单 */
+    #leftPanel {
+      width: 260px;
+      flex-shrink: 0;
+      transition: width 0.2s;
+    }
+    #leftPanel.collapsed { width: 0; padding: 0; border: 0; box-shadow: none; }
+    #leftPanel.collapsed .panel-header,
+    #leftPanel.collapsed .sidemenu-tree { display: none; }
+
+    .sidemenu-search {
+      padding: 8px 12px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .sidemenu-tree {
+      flex: 1;
+      overflow-y: auto;
+      padding: 8px 0;
+    }
+    .tree-group {
+      margin-bottom: 4px;
+    }
+    .tree-group-title {
+      padding: 8px 16px 4px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 7px 16px 7px 32px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-left: 3px solid transparent;
+      transition: all 0.1s;
+    }
+    .tree-item:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .tree-item.active {
+      background: var(--color-primary-lighter);
+      color: var(--color-primary);
+      border-left-color: var(--color-primary);
+      font-weight: 500;
+    }
+    .tree-item .tree-item-doc {
+      margin-left: auto;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      font-family: var(--font-mono);
+    }
+    .tree-item.active .tree-item-doc { color: var(--color-primary); }
+
+    /* 3 级菜单：sub 标题 + 空状态 */
+    .tree-sub {
+      margin-bottom: 2px;
+    }
+    .tree-sub-title {
+      padding: 6px 16px 4px 28px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-secondary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .tree-sub-title::before {
+      content: '▸';
+      color: var(--text-tertiary);
+      font-size: 10px;
+      margin-right: 4px;
+    }
+    .tree-sub .tree-item {
+      padding-left: 44px;
+    }
+    .tree-empty {
+      padding: 6px 16px 6px 44px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-style: italic;
+    }
+
+    /* 中间：原型 */
+    #centerPanel {
+      flex: 1;
+      min-width: 0;
+    }
+    .center-toolbar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 0 12px;
+    }
+    .center-toolbar-divider {
+      width: 1px; height: 16px;
+      background: var(--border-default);
+      margin: 0 4px;
+    }
+    .toolbar-btn {
+      height: 28px;
+      padding: 0 10px;
+      border-radius: var(--radius-sm);
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      background: transparent;
+      border: none;
+      cursor: pointer;
+    }
+    .toolbar-btn:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .toolbar-btn-primary { color: var(--color-primary); font-weight: 500; }
+    .toolbar-btn-primary:hover { background: var(--color-primary-lighter); }
+
+    .prototype-frame {
+      flex: 1;
+      border: 0;
+      background: #fff;
+      width: 100%;
+    }
+
+    /* 右侧：文档 */
+    #rightPanel {
+      width: 480px;
+      flex-shrink: 0;
+      transition: width 0.2s;
+    }
+    #rightPanel.collapsed { width: 0; padding: 0; border: 0; box-shadow: none; }
+    #rightPanel.collapsed .panel-header,
+    #rightPanel.collapsed .doc-body { display: none; }
+
+    .doc-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px 32px;
+      font-size: 13px;
+      line-height: 1.7;
+      color: var(--text-secondary);
+    }
+    .doc-body h1 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; }
+    .doc-body h2 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-default); }
+    .doc-body h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 16px 0 6px; }
+    .doc-body p { margin: 6px 0; }
+    .doc-body ul, .doc-body ol { margin: 6px 0; padding-left: 20px; }
+    .doc-body li { margin: 3px 0; }
+    .doc-body table { width: 100%; border-collapse: collapse; margin: 8px 0; font-size: 12px; }
+    .doc-body th { background: var(--bg-page); padding: 6px 10px; text-align: left; font-weight: 500; color: var(--text-secondary); border: 1px solid var(--border-default); white-space: nowrap; }
+    .doc-body td { padding: 6px 10px; border: 1px solid var(--border-light); color: var(--text-primary); vertical-align: top; }
+    .doc-body code { background: var(--bg-page); padding: 1px 5px; border-radius: 3px; font-family: var(--font-mono); font-size: 12px; color: var(--color-danger); }
+    .doc-body pre { background: var(--bg-page); padding: 10px; border-radius: 6px; font-size: 12px; overflow-x: auto; margin: 8px 0; }
+    .doc-body blockquote { border-left: 3px solid var(--color-primary); padding: 6px 12px; background: var(--color-primary-lighter); color: var(--text-secondary); margin: 8px 0; border-radius: 0 4px 4px 0; font-size: 12px; }
+    .doc-body hr { border: none; border-top: 1px solid var(--border-light); margin: 16px 0; }
+    .doc-body .mermaid { background: #fff; padding: 8px; border-radius: 6px; margin: 8px 0; }
+    .doc-loading { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
+
+    .doc-meta {
+      display: flex;
+      gap: 8px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      margin: 0 0 16px;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .doc-meta-tag { padding: 1px 6px; background: var(--color-primary-lighter); color: var(--color-primary); border-radius: 3px; font-weight: 500; }
+
+    /* 折叠后的浮动按钮 */
+    .float-toggle {
+      position: fixed;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 28px;
+      height: 56px;
+      background: #fff;
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      z-index: 100;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .float-toggle:hover { background: var(--bg-hover); }
+    .float-toggle.show { display: flex; }
+    #leftToggle { left: 4px; }
+    #rightToggle { right: 4px; }
+
+    /* ===== 流程图可点击放大 ===== */
+    .doc-body .mermaid {
+      cursor: zoom-in;
+      transition: all 0.2s;
+      position: relative;
+    }
+    .doc-body .mermaid:hover {
+      box-shadow: 0 2px 12px rgba(30, 64, 175, 0.15);
+    }
+    .doc-body .mermaid::after {
+      content: '🔍 点击放大';
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      background: rgba(255,255,255,0.85);
+      padding: 2px 6px;
+      border-radius: 3px;
+      pointer-events: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .doc-body .mermaid:hover::after { opacity: 1; }
+
+    /* Lightbox */
+    .lightbox {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      animation: lb-fade 0.15s ease-out;
+    }
+    @keyframes lb-fade { from { opacity: 0; } to { opacity: 1; } }
+    .lightbox-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(15, 23, 42, 0.88);
+      backdrop-filter: blur(4px);
+      cursor: zoom-out;
+    }
+    .lightbox-content {
+      position: relative;
+      width: 92vw;
+      height: 88vh;
+      background: #fff;
+      border-radius: 12px;
+      box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+      padding: 24px 32px;
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+    .lightbox-header {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding-bottom: 12px;
+      border-bottom: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+    .lightbox-title {
+      font-size: 14px;
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+    .lightbox-meta {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-left: auto;
+      margin-right: 12px;
+    }
+    .lightbox-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      background: var(--bg-hover);
+      border: none;
+      font-size: 18px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-secondary);
+    }
+    .lightbox-close:hover { background: var(--color-danger-light); color: var(--color-danger); }
+    .lightbox-body {
+      flex: 1;
+      overflow: auto;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 16px;
+    }
+    .lightbox-body svg {
+      max-width: 100%;
+      max-height: 100%;
+      width: auto;
+      height: auto;
+    }
+    .lightbox-footer {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      text-align: center;
+      padding-top: 8px;
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+    }
+  </style>
+</head>
+<body>
+  <!-- 左侧：菜单（可折叠） -->
+  <div class="panel" id="leftPanel">
+    <div class="panel-header">
+      <div class="panel-header-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        原型目录
+      </div>
+      <div class="panel-header-actions">
+        <button class="icon-btn" id="leftCollapseBtn" title="收起">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="sidemenu-search">
+      <input type="text" class="input" placeholder="搜索页面..." id="searchInput" style="height: 28px; font-size: 12px;">
+    </div>
+    <div class="sidemenu-tree" id="sidemenuTree"></div>
+  </div>
+
+  <!-- 左侧浮动展开按钮（折叠后显示） -->
+  <div class="float-toggle" id="leftToggle">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+  </div>
+
+  <!-- 中间：原型 -->
+  <div class="panel" id="centerPanel">
+    <div class="panel-header">
+      <button class="icon-btn" id="leftCollapseBtn2" title="展开/收起左侧">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+      </button>
+      <div class="panel-header-title">
+        <span>高保真原型</span>
+      </div>
+      <div class="center-toolbar">
+        <div class="center-toolbar-divider"></div>
+        <span style="font-size: 12px; color: var(--text-tertiary);" id="currentPageLabel">项目准入</span>
+        <span style="font-size: 11px; color: var(--text-tertiary);" id="currentPagePos">1 / 35</span>
+      </div>
+      <div class="panel-header-actions">
+        <button class="toolbar-btn" id="btnPrev">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
+          上一
+        </button>
+        <button class="toolbar-btn" id="btnNext">
+          下一
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
+        </button>
+        <div class="center-toolbar-divider"></div>
+        <button class="toolbar-btn" id="btnCenter" title="窗口化（仅显示中间）">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
+          窗口化
+        </button>
+        <button class="toolbar-btn" id="btnRightToggle" title="展开/收起右侧">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          文档
+        </button>
+        <button class="toolbar-btn" id="btnFull" title="全屏（仅中间）">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3m0 18h3a2 2 0 0 0 2-2v-3M3 16v3a2 2 0 0 0 2 2h3"/></svg>
+          全屏
+        </button>
+        <button class="toolbar-btn" onclick="window.open('./index.html', '_blank')" title="返回首页">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12h18M12 3v18"/></svg>
+        </button>
+      </div>
+    </div>
+    <iframe class="prototype-frame" id="prototypeFrame" src="./pages/project-apply.html"></iframe>
+  </div>
+
+  <!-- 右侧浮动展开按钮（折叠后显示） -->
+  <div class="float-toggle" id="rightToggle">
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+  </div>
+
+  <!-- 右侧：文档 -->
+  <div class="panel" id="rightPanel">
+    <div class="panel-header">
+      <div class="panel-header-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6M16 13H8M16 17H8M10 9H8"/></svg>
+        需求设计文档
+      </div>
+      <div class="panel-header-actions">
+        <button class="icon-btn" id="btnDownloadMd" title="下载 MD 文件" disabled>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+        </button>
+        <button class="icon-btn" id="rightCollapseBtn" title="收起">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="doc-body" id="docBody">
+      <div class="doc-loading">正在加载文档...</div>
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script>
+    // ===== 页面树（83 个页面，1:1 路由映射，3 级 group→sub→page）=====
+    const pageTree = [
+      { group: '工作台', icon: '🏠', pages: [
+        { sub: '工作台', pages: [
+          { name: '工作台', file: 'workbench', doc: 'p-workbench' }
+        ]}
+      ]},
+      { group: '准入管理', icon: '📋', pages: [
+        { sub: '项目准入', pages: [
+          { name: '项目列表', file: 'project-list', doc: 'p-project-list' },
+          { name: '新增立项申请', file: 'project-apply', doc: 'p-project-apply' },
+          { name: '项目准入详情', file: 'project-detail', doc: 'p-project-detail' }
+        ]},
+        { sub: '客户准入', pages: [
+          { name: '客户列表', file: 'customer-list', doc: 'p-customer-list' },
+          { name: '新增客户申请', file: 'customer-apply', doc: 'p-customer-apply' },
+          { name: '客户额度管理', file: 'customer-quota', doc: 'p-customer-quota' }
+        ]},
+        { sub: '黑名单管理', pages: [
+          { name: '黑名单管理', file: 'blacklist', doc: 'p-blacklist' }
+        ]}
+      ]},
+      { group: '数字供应链', icon: '📦', pages: [
+        { sub: '合同管理', pages: [
+          { name: '采购合同（列表）', file: 'contract-purchase', doc: 'p-contract-purchase' },
+          { name: '采购合同 · 新增/编辑', file: 'contract-purchase-new', doc: 'p-contract-purchase-new' },
+          { name: '采购合同 · 详情', file: 'contract-purchase-framework-detail', doc: 'p-contract-purchase-framework-detail' },
+          { name: '采购订单合同 · 新增/编辑', file: 'contract-purchase-order-new', doc: 'p-contract-purchase-order-new' },
+          { name: '采购订单合同 · 详情', file: 'contract-purchase-order-detail', doc: 'p-contract-purchase-order-detail' },
+          { name: '销售合同（列表）', file: 'contract-sales', doc: 'p-contract-sales' },
+          { name: '销售合同 · 新增/编辑', file: 'contract-sales-new', doc: 'p-contract-sales-new' },
+          { name: '销售合同 · 详情', file: 'contract-sales-framework-detail', doc: 'p-contract-sales-framework-detail' },
+          { name: '销售订单合同 · 新增', file: 'contract-sales-order-new', doc: 'p-contract-sales-order-new' },
+          { name: '销售订单合同 · 详情', file: 'contract-sales-order-detail', doc: 'p-contract-sales-order-detail' },
+          { name: '补充协议（列表）', file: 'contract-supplement', doc: 'p-contract-supplement' },
+          { name: '补充协议 · 框架合同', file: 'contract-supplement-new', doc: 'p-contract-supplement-new' },
+          { name: '补协详情页 · 框架合同', file: 'contract-supplement-framework-detail', doc: 'p-contract-supplement-framework-detail' },
+          { name: '补协 · 订单合同', file: 'contract-supplement-order-new', doc: 'p-contract-supplement-order-new' },
+          { name: '补协详情页 · 订单合同', file: 'contract-supplement-order-detail', doc: 'p-contract-supplement-order-detail' },
+          { name: '运输合同', file: 'contract-shipping', doc: 'p-contract-shipping' }
+        ]},
+        { sub: '业务线管理', pages: [
+          { name: '业务线管理', file: 'business-line', doc: 'p-business-line' },
+          { name: '业务线关联', file: 'business-line-relate', doc: 'p-business-line-relate' },
+          { name: '业务线详情', file: 'business-line-detail', doc: 'p-business-line-detail' },
+        ]},
+        { sub: '收发货管理', pages: [
+          { name: '发货管理', file: 'shipment-out', doc: 'p-shipment-out' },
+          { name: '新增发货申请', file: 'shipment-out-new', doc: 'p-shipment-out-new' },
+          { name: '发货申请详情', file: 'shipment-out-detail', doc: 'p-shipment-out-detail' },
+          { name: '收货管理', file: 'shipment-in', doc: 'p-shipment-in' },
+          { name: '新增收货数据', file: 'shipment-in-new', doc: 'p-shipment-in-new' },
+          { name: '收货信息详情', file: 'shipment-in-detail', doc: 'p-shipment-in-detail' }
+        ]},
+        { sub: '货转管理', pages: [
+          { name: '货转管理', file: 'goods-transfer', doc: 'p-goods-transfer' },
+          { name: '已上传上游货转', file: 'goods-transfer-up', doc: 'p-goods-transfer-up' },
+          { name: '已上传上游货转详情', file: 'goods-transfer-up-detail', doc: 'p-goods-transfer-up-detail' },
+          { name: '新增下游货转', file: 'goods-transfer-down-new', doc: 'p-goods-transfer-down-new' },
+          { name: '下游货转详情', file: 'goods-transfer-down-detail', doc: 'p-goods-transfer-down-detail' }
+        ]},
+        { sub: '资金管理', pages: [
+          { name: '付款列表', file: 'payment-list', doc: 'p-payment-list' },
+          { name: '新增付款', file: 'payment-new', doc: 'p-payment-new' },
+          { name: '付款详情', file: 'payment-detail', doc: 'p-payment-detail' },
+          { name: '退款列表', file: 'refund-list', doc: 'p-refund-list' },
+          { name: '退款申请', file: 'refund-apply', doc: 'p-refund-apply' },
+          { name: '退款详情', file: 'refund-detail', doc: 'p-refund-detail' },
+          { name: '回款列表', file: 'receipt-list', doc: 'p-receipt-list' },
+          { name: '保证金管理', file: 'margin-pool', doc: 'p-margin-pool' },
+          { name: '保证金调整', file: 'margin-adjust', doc: 'p-margin-adjust' },
+          { name: '保证金调整记录', file: 'margin-adjust-detail', doc: 'p-margin-adjust-detail' }
+        ]},
+        { sub: '结算单管理', pages: [
+          { name: '采购结算（列表）', file: 'settlement-purchase', doc: 'p-settlement-purchase' },
+          { name: '采购结算 · 新增/编辑', file: 'settlement-purchase-new', doc: 'p-settlement-purchase-new' },
+          { name: '采购结算单详情', file: 'settlement-purchase-detail', doc: 'p-settlement-purchase-detail' },
+          { name: '销售结算（列表）', file: 'settlement-sales', doc: 'p-settlement-sales' },
+          { name: '销售结算 · 新增/编辑', file: 'settlement-sales-new', doc: 'p-settlement-sales-new' },
+          { name: '销售结算单详情', file: 'settlement-sales-detail', doc: 'p-settlement-sales-detail' }
+        ]},
+        { sub: '发票管理', pages: [
+          { name: '进项发票', file: 'invoice', doc: 'p-invoice' }
+        ]},
+        { sub: '盯市管理', pages: [
+          { name: '盯市价格管理', file: 'market-price', doc: 'p-market-price' },
+          { name: '指标详情', file: 'market-price-detail', doc: 'p-market-price-detail' }
+        ]},
+        { sub: '追保函管理', pages: [
+          { name: '追保函管理', file: 'bond-letter', doc: 'p-bond-letter' },
+          { name: '新增/编辑追保函', file: 'bond-letter-new', doc: 'p-bond-letter-new' },
+          { name: '追保函详情', file: 'bond-letter-detail', doc: 'p-bond-letter-detail' }
+        ]}
+      ]},
+      { group: '仓储管理', icon: '🏭', pages: [
+        { sub: '入库管理', pages: [
+          { name: '入库记录', file: 'warehouse-inbound', doc: 'p-warehouse-inbound' },
+          { name: '新增入库', file: 'warehouse-inbound-new', doc: 'p-warehouse-inbound-new' },
+          { name: '入库详情', file: 'warehouse-inbound-detail', doc: 'p-warehouse-inbound-detail' }
+        ]},
+        { sub: '出库管理', pages: [
+          { name: '出库记录', file: 'warehouse-outbound', doc: 'p-warehouse-outbound' },
+          { name: '新增出库', file: 'warehouse-outbound-new', doc: 'p-warehouse-outbound-new' },
+          { name: '出库详情', file: 'warehouse-outbound-detail', doc: 'p-warehouse-outbound-detail' }
+        ]},
+        { sub: '提货管理', pages: [
+          { name: '放货管理', file: 'warehouse-release', doc: 'p-warehouse-release' },
+          { name: '新增放货指令', file: 'warehouse-release-new', doc: 'p-warehouse-release-new' },
+          { name: '放货指令详情', file: 'warehouse-release-detail', doc: 'p-warehouse-release-detail' }
+        ]},
+        { sub: '库存管理', pages: [] },
+        { sub: '视频监控', pages: [] },
+        { sub: '巡库管理', pages: [] },
+        { sub: '系统管理', pages: [] }
+      ]},
+      { group: '风险运营管理', icon: '⚠️', pages: [
+        { sub: '风险运营报表', pages: [] },
+        { sub: '风控规则配置', pages: [] }
+      ]},
+      { group: '数据中心', icon: '📊', pages: [
+        { sub: '驾驶舱', pages: [
+          { name: '驾驶舱', file: 'dashboard', doc: 'p-dashboard' }
+        ]},
+        { sub: '业务报表', pages: [
+          { name: '项目台账表', file: 'report-project', doc: 'p-report-project' },
+          { name: '业务线台账表', file: 'report-bizline', doc: 'p-report-bizline' },
+          { name: '资金占压表', file: 'report-fund', doc: 'p-report-fund' },
+          { name: '库存明细表', file: 'report-inventory', doc: 'p-report-inventory' },
+          { name: '应收应付表', file: 'report-ar-ap', doc: 'p-report-ar-ap' },
+          { name: '风控统计报表', file: 'report-risk', doc: 'p-report-risk' }
+        ]},
+        { sub: '合规验证报告', pages: [
+          { name: '合规验证报告列表', file: 'report-compliance', doc: 'p-report-compliance' },
+          { name: '合规报告详情', file: 'report-compliance-detail', doc: 'p-report-compliance-detail' }
+        ]}
+      ]},
+      { group: '预警中心', icon: '🔔', pages: [
+        { sub: '预警列表页', pages: [
+          { name: '预警列表', file: 'warning-list', doc: 'p-warning-list' },
+          { name: '预警详情', file: 'warning-detail', doc: 'p-warning-detail' }
+        ]},
+        { sub: '预警规则配置', pages: [
+          { name: '预警规则配置', file: 'warning-config', doc: 'p-warning-config' }
+        ]}
+      ]},
+      { group: '账户中心', icon: '👤', pages: [
+        { sub: '账户中心', pages: [] }
+      ]}
+    ];
+
+    // ===== 全局：扁平化所有页面（递归 3 级）=====
+    function flattenPages() {
+      const result = [];
+      function walk(items, group, icon, sub) {
+        items.forEach(item => {
+          if (item.sub) {
+            walk(item.pages, group, icon, item.sub);
+          } else if (item.file) {
+            result.push({ ...item, group, icon, sub });
+          }
+        });
+      }
+      pageTree.forEach(g => walk(g.pages, g.group, g.icon, null));
+      return result;
+    }
+    const allPages = flattenPages();
+    let currentIdx = 0;
+
+    // ===== 渲染左侧菜单（递归 3 级）=====
+    function renderTree() {
+      const tree = document.getElementById('sidemenuTree');
+      function renderItem(item, group, icon, sub) {
+        if (item.sub) {
+          const subPagesHtml = (item.pages && item.pages.length > 0)
+            ? item.pages.map(p => renderItem(p, group, icon, item.sub)).join('')
+            : '<div class="tree-empty">暂无页面</div>';
+          return `<div class="tree-sub" data-sub="${item.sub}">
+            <div class="tree-sub-title">${item.sub}</div>
+            ${subPagesHtml}
+          </div>`;
+        } else {
+          const flatIdx = allPages.findIndex(x => x.file === item.file);
+          return `<div class="tree-item" data-idx="${flatIdx}" data-file="${item.file}">
+            <span>${item.name}</span>
+            <span class="tree-item-doc">${item.doc}</span>
+          </div>`;
+        }
+      }
+      tree.innerHTML = pageTree.map(g => {
+        const items = g.pages.map(p => renderItem(p, g.group, g.icon, null)).join('');
+        return `<div class="tree-group">
+          <div class="tree-group-title"><span>${g.icon}</span>${g.group}</div>
+          ${items}
+        </div>`;
+      }).join('');
+      tree.querySelectorAll('.tree-item').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = parseInt(el.dataset.idx);
+          goToPage(idx);
+        });
+      });
+    }
+
+    // ===== 切换页面 =====
+    function goToPage(idx) {
+      if (idx < 0 || idx >= allPages.length) return;
+      currentIdx = idx;
+      const p = allPages[idx];
+      document.getElementById('prototypeFrame').src = `./pages/${p.file}.html`;
+      document.getElementById('currentPageLabel').textContent = p.name;
+      document.getElementById('currentPagePos').textContent = `${idx + 1} / ${allPages.length}`;
+      // 高亮
+      document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
+      const activeEl = document.querySelector(`.tree-item[data-idx="${idx}"]`);
+      if (activeEl) activeEl.classList.add('active');
+      // 加载文档
+      loadDoc(p);
+    }
+
+    // ===== 加载文档 =====
+    let _currentDoc = { md: '', code: '', name: '' };
+    function loadDoc(page) {
+      const body = document.getElementById('docBody');
+      const dlBtn = document.getElementById('btnDownloadMd');
+      body.innerHTML = '<div class="doc-loading">正在加载文档...</div>';
+      dlBtn.disabled = true;
+      const url = `./docs/${page.doc}.md`;
+      fetch(url)
+        .then(r => r.ok ? r.text() : Promise.reject('404'))
+        .then(md => {
+          _currentDoc = { md, code: page.doc, name: page.name };
+          dlBtn.disabled = false;
+          body.innerHTML = `
+            <div class="doc-meta">
+              <span class="doc-meta-tag">${page.doc}</span>
+              <span>${page.name}</span>
+            </div>
+            ${marked.parse(md)}`;
+          // 渲染 mermaid
+          body.querySelectorAll('pre code.language-mermaid, code.language-mermaid').forEach(el => {});
+          body.querySelectorAll('pre').forEach((pre, i) => {
+            if (pre.textContent.includes('flowchart') || pre.textContent.includes('sequenceDiagram') || pre.textContent.includes('stateDiagram')) {
+              const div = document.createElement('div');
+              div.className = 'mermaid';
+              div.textContent = pre.textContent;
+              pre.replaceWith(div);
+            }
+          });
+          if (window.mermaid) {
+            mermaid.run();
+          }
+          // 给 mermaid 容器加点击放大
+          setTimeout(() => attachLightbox(), 300);
+          body.scrollTop = 0;
+        })
+        .catch(err => {
+          _currentDoc = { md: '', code: page.doc, name: page.name };
+          body.innerHTML = `<div class="doc-loading">📄 文档待补充（${page.doc}）</div>`;
+        });
+    }
+
+    // ===== 下载 MD =====
+    document.getElementById('btnDownloadMd').addEventListener('click', () => {
+      if (!_currentDoc.md) return;
+      // 命名规则：菜单名 + 页面类型（清理特殊字符）
+      // 例：项目准入（列表） → 项目管理-列表；采购合同 → 采购合同；项目准入详情 → 项目准入详情
+      const fileName = _currentDoc.name
+        .replace(/[()（）\/\\:*?"<>|]/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '') + '.md';
+      const blob = new Blob([_currentDoc.md], { type: 'text/markdown;charset=utf-8' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    });
+
+    // ===== 流程图点击放大 =====
+    function attachLightbox() {
+      const body = document.getElementById('docBody');
+      const diagrams = body.querySelectorAll('.mermaid');
+      diagrams.forEach((el, idx) => {
+        if (el.dataset.lbBound) return;
+        el.dataset.lbBound = '1';
+        el.addEventListener('click', () => openLightbox(el, idx, diagrams.length));
+      });
+    }
+
+    function openLightbox(sourceEl, idx, total) {
+      const svg = sourceEl.querySelector('svg');
+      if (!svg) return;
+      const svgClone = svg.cloneNode(true);
+      // 移除 svg 内部的 max-width 限制
+      svgClone.removeAttribute('style');
+      svgClone.style.maxWidth = 'none';
+      svgClone.style.maxHeight = 'none';
+
+      const lb = document.createElement('div');
+      lb.className = 'lightbox';
+      // 找最近的标题（上一个 h2/h3）作为 lightbox 标题
+      let title = '流程图';
+      let prev = sourceEl.previousElementSibling;
+      while (prev && !/^H[1-6]$/.test(prev.tagName)) prev = prev.previousElementSibling;
+      if (prev) title = prev.textContent || title;
+
+      lb.innerHTML = `
+        <div class="lightbox-backdrop"></div>
+        <div class="lightbox-content">
+          <div class="lightbox-header">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <span class="lightbox-title">${title}</span>
+            <span class="lightbox-meta">${idx + 1} / ${total}</span>
+            <button class="lightbox-close" title="关闭">×</button>
+          </div>
+          <div class="lightbox-body"></div>
+          <div class="lightbox-footer">点击背景 / 按 ESC / × 关闭 · 流程图支持滚轮缩放</div>
+        </div>
+      `;
+      lb.querySelector('.lightbox-body').appendChild(svgClone);
+      document.body.appendChild(lb);
+
+      const close = () => {
+        lb.style.animation = 'lb-fade 0.1s ease-in reverse';
+        setTimeout(() => lb.remove(), 100);
+      };
+      lb.querySelector('.lightbox-close').addEventListener('click', close);
+      lb.querySelector('.lightbox-backdrop').addEventListener('click', close);
+      const escHandler = e => { if (e.key === 'Escape') { close(); document.removeEventListener('keydown', escHandler); } };
+      document.addEventListener('keydown', escHandler);
+    }
+
+    // ===== 折叠控制 =====
+    function setupToggle(collapseBtnId, panelId, toggleBtnId) {
+      const panel = document.getElementById(panelId);
+      const btn = document.getElementById(collapseBtnId);
+      const toggleBtn = document.getElementById(toggleBtnId);
+      const hide = () => {
+        panel.classList.add('collapsed');
+        toggleBtn.classList.add('show');
+        // 调整 toggleBtn 位置
+        if (panelId === 'leftPanel') toggleBtn.style.left = '4px';
+        else toggleBtn.style.right = '4px';
+      };
+      const show = () => {
+        panel.classList.remove('collapsed');
+        toggleBtn.classList.remove('show');
+      };
+      btn.addEventListener('click', hide);
+      toggleBtn.addEventListener('click', show);
+    }
+    setupToggle('leftCollapseBtn', 'leftPanel', 'leftToggle');
+    setupToggle('leftCollapseBtn2', 'leftPanel', 'leftToggle');
+    setupToggle('rightCollapseBtn', 'rightPanel', 'rightToggle');
+    document.getElementById('btnRightToggle').addEventListener('click', () => {
+      const p = document.getElementById('rightPanel');
+      if (p.classList.contains('collapsed')) {
+        p.classList.remove('collapsed');
+        document.getElementById('rightToggle').classList.remove('show');
+      } else {
+        p.classList.add('collapsed');
+        document.getElementById('rightToggle').classList.add('show');
+        document.getElementById('rightToggle').style.right = '4px';
+      }
+    });
+    document.getElementById('btnCenter').addEventListener('click', () => {
+      const lp = document.getElementById('leftPanel');
+      const rp = document.getElementById('rightPanel');
+      [lp, rp].forEach(p => {
+        if (!p.classList.contains('collapsed')) {
+          p.classList.add('collapsed');
+          (p.id === 'leftPanel' ? document.getElementById('leftToggle') : document.getElementById('rightToggle')).classList.add('show');
+        }
+      });
+    });
+    document.getElementById('btnFull').addEventListener('click', () => {
+      const lp = document.getElementById('leftPanel');
+      const rp = document.getElementById('rightPanel');
+      const isFull = lp.classList.contains('collapsed') && rp.classList.contains('collapsed');
+      if (isFull) {
+        lp.classList.remove('collapsed');
+        document.getElementById('leftToggle').classList.remove('show');
+        rp.classList.remove('collapsed');
+        document.getElementById('rightToggle').classList.remove('show');
+      } else {
+        [lp, rp].forEach(p => {
+          p.classList.add('collapsed');
+          (p.id === 'leftPanel' ? document.getElementById('leftToggle') : document.getElementById('rightToggle')).classList.add('show');
+        });
+        if (document.getElementById('rightToggle').classList.contains('show')) {
+          document.getElementById('rightToggle').style.right = '4px';
+        }
+        if (document.getElementById('leftToggle').classList.contains('show')) {
+          document.getElementById('leftToggle').style.left = '4px';
+        }
+      }
+    });
+
+    // ===== 上一/下一 =====
+    document.getElementById('btnPrev').addEventListener('click', () => goToPage(currentIdx - 1));
+    document.getElementById('btnNext').addEventListener('click', () => goToPage(currentIdx + 1));
+
+    // ===== 搜索 =====
+    document.getElementById('searchInput').addEventListener('input', e => {
+      const kw = e.target.value.trim().toLowerCase();
+      document.querySelectorAll('.tree-item').forEach(el => {
+        const txt = el.textContent.toLowerCase();
+        el.style.display = (!kw || txt.includes(kw)) ? 'flex' : 'none';
+      });
+    });
+
+    // ===== 初始化 =====
+    // v1.7.99.10：默认按 HTML 里 iframe src 加载（而不是强制 goToPage(0)）
+    // - 让 app.html 可以绑定到具体 prototype 入口（项目管理按钮 → 跳 app.html → 默认显示 project-apply）
+    // - ?src=xxx query 参数可显式覆盖
+    // - URL 末尾的 #page-xxx hash 也可指定（兼容性）
+    renderTree();
+    (function initIframe() {
+      const urlParams = new URLSearchParams(location.search);
+      const hashMatch = location.hash.match(/^#page-([\w-]+)/);
+      let targetFile = urlParams.get('src') || (hashMatch ? hashMatch[1] : null);
+      if (!targetFile) {
+        // 从 HTML iframe src 提取文件名（如 "./pages/project-apply.html" → "project-apply"）
+        const iframeSrc = document.getElementById('prototypeFrame').getAttribute('src') || '';
+        const m = iframeSrc.match(/\/pages\/([\w-]+)\.html/);
+        if (m) targetFile = m[1];
+      }
+      if (targetFile) {
+        const idx = allPages.findIndex(p => p.file === targetFile);
+        if (idx >= 0) {
+          goToPage(idx);
+          return;
+        }
+      }
+      // 兜底：跳 pageTree 第一项（保持旧行为兼容）
+      goToPage(0);
+    })();
+
+    // 测试钩子：?lightbox=1 自动打开第一个流程图
+    if (location.search.includes('lightbox=1')) {
+      setTimeout(() => {
+        const first = document.querySelector('.mermaid');
+        if (first) first.click();
+      }, 2500);
+    }
+  </script>
+</body>
+</html>
