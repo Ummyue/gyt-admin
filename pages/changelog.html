@@ -108,6 +108,23 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-10T18:50:00',
+          version: 'v1.7.99.214',
+          module: '追保函列表 - 状态机 tab 切换过滤数据',
+          summary: '追保函管理列表（pages/bond-letter.html）状态机 tab 切换过滤数据（user 2026-08-10 反馈"追保函页面中的状态机点击没有过滤数据，这个你补做一下"）—— 1) **现状**：v1.7.99.191 代码已在本地（17 行 BOND_MOCK + getFilteredMock + renderBondTable + updateBondTabCounts + 修复的 switchTab），但**没 commit + 没部署**（v1.7.99.212 commit 部署的 bond-letter.html 还是 17504 bytes 旧版），所以 user 看到的是 v1.7.99.85 旧版——tab 切换只切 active 不过滤数据；2) **v1.7.99.214 补做**：commit 本地 v1.7.99.191 的代码 + wrangler deploy 部署到 CF Pages——a) title v1.7.99.191 → v1.7.99.214；b) 6 个 tab 加 data-tab-key 属性（all/auditing/uploading/effective/rejected/voided）；c) BOND_MOCK 7 行 → 17 行（4 审批中 + 3 待上传 + 3 驳回，v1.7.99.191 扩 mock）；d) getFilteredMock(tabKey) 函数：tabKey 映射到 status 文字，BOND_MOCK.filter(r => r.status === targetStatus)；e) renderBondTable() 函数：data = getFilteredMock(currentTabKey)，tbody.innerHTML 重渲染；f) updateBondTabCounts() 函数：动态计算各 tab 的真实数量（替代硬编码 100/10/10/10/10/10）；g) switchTab(el, key) 改：切 active + currentTabKey = key + renderBondTable()；h) DOMContentLoaded 调用 updateBondTabCounts() + renderBondTable() 初始化。3) **线上 size**：17504 → 24094 bytes（+6590 bytes / +37%）。',
+          changes: [
+            { type: 'modify', location: 'pages/bond-letter.html <title>', before: '追保函管理 - 豫港通 v1.7.99.85', after: '追保函管理 - 豫港通 v1.7.99.214（v1.7.99.191 代码补做 + 部署）' },
+            { type: 'modify', location: 'pages/bond-letter.html 6 个 tab line 119-124', before: '6 个 tab onclick="switchTab(this, ...)" 无 data-tab-key', after: 'v1.7.99.214：加 data-tab-key 属性（all/auditing/uploading/effective/rejected/voided）' },
+            { type: 'modify', location: 'pages/bond-letter.html BOND_MOCK line 239-262', before: '7 行 mock（6 已生效 + 1 已作废，v1.7.99.85）', after: 'v1.7.99.214：17 行 mock（+4 审批中 +3 待上传 +3 驳回，v1.7.99.191 扩）' },
+            { type: 'add', location: 'pages/bond-letter.html getFilteredMock(tabKey) line 264+', before: '无（v1.7.99.85）', after: 'v1.7.99.214：tabKey → status 文字 → BOND_MOCK.filter(...)' },
+            { type: 'add', location: 'pages/bond-letter.html renderBondTable() line 280+', before: '硬编码 BOND_MOCK.map 渲染', after: 'v1.7.99.214：data = getFilteredMock(currentTabKey) + tbody.innerHTML 重渲染 + empty state 处理' },
+            { type: 'add', location: 'pages/bond-letter.html updateBondTabCounts() line 307+', before: '硬编码 count 数字（100/10/10/10/10/10）', after: 'v1.7.99.214：动态计算各 tab 真实数量' },
+            { type: 'modify', location: 'pages/bond-letter.html switchTab(el, key) line 325-330', before: '只切 active 不过滤', after: 'v1.7.99.214：切 active + currentTabKey = key + renderBondTable()' },
+            { type: 'add', location: 'pages/bond-letter.html DOMContentLoaded 初始化 line 331-334', before: '无', after: 'v1.7.99.214：updateBondTabCounts() + renderBondTable() 初始化' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.213', after: '豫港通原型 v.1.7.99.214' }
+          ]
+        },
+        {
           ts: '2026-08-10T18:10:00',
           version: 'v1.7.99.213',
           module: '新增退款 - 采购合同隐藏保证金选项',

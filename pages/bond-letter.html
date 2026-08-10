@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>追保函管理 - 豫港通 v1.7.99.85</title>
+  <title>追保函管理 - 豫港通 v1.7.99.214</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/list-page.css">
   <style>
@@ -116,14 +116,22 @@
           <div class="cp-block cp-block-tab">
             <div class="cp-tab-bar">
               <div class="cp-tab-bar-tabs">
-                <div class="cp-tab active" onclick="switchTab(this, 'all')"><span class="lightning">⚡</span>全部 <span class="count">100</span></div>
-                <div class="cp-tab" onclick="switchTab(this, 'auditing')"><span class="lightning">⚡</span>审批中 <span class="count">10</span></div>
-                <div class="cp-tab" onclick="switchTab(this, 'uploading')"><span class="lightning">⚡</span>待上传已生效单据 <span class="count">10</span></div>
-                <div class="cp-tab" onclick="switchTab(this, 'effective')"><span class="lightning">⚡</span>已生效 <span class="count">10</span></div>
-                <div class="cp-tab" onclick="switchTab(this, 'rejected')"><span class="lightning">⚡</span>驳回 <span class="count">10</span></div>
-                <div class="cp-tab" onclick="switchTab(this, 'voided')"><span class="lightning">⚡</span>已作废 <span class="count">10</span></div>
+                <div class="cp-tab active" data-tab-key="all" onclick="switchTab(this, 'all')"><span class="lightning">⚡</span>全部 <span class="count">100</span></div>
+                <div class="cp-tab" data-tab-key="auditing" onclick="switchTab(this, 'auditing')"><span class="lightning">⚡</span>审批中 <span class="count">10</span></div>
+                <div class="cp-tab" data-tab-key="uploading" onclick="switchTab(this, 'uploading')"><span class="lightning">⚡</span>待上传已生效单据 <span class="count">10</span></div>
+                <div class="cp-tab" data-tab-key="effective" onclick="switchTab(this, 'effective')"><span class="lightning">⚡</span>已生效 <span class="count">10</span></div>
+                <div class="cp-tab" data-tab-key="rejected" onclick="switchTab(this, 'rejected')"><span class="lightning">⚡</span>驳回 <span class="count">10</span></div>
+                <div class="cp-tab" data-tab-key="voided" onclick="switchTab(this, 'voided')"><span class="lightning">⚡</span>已作废 <span class="count">10</span></div>
               </div>
               <div class="cp-tab-bar-actions">
+                <a href="./bond-letter-new.html" class="btn btn-primary btn-sm" style="margin-right: 8px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                  新增追保函
+                </a>
+                <a href="./bond-letter-new-offline.html" class="btn btn-default btn-sm" style="margin-right: 12px; text-decoration: none; display: inline-flex; align-items: center; gap: 4px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                  新增线下追保函
+                </a>
                 <button class="btn btn-text btn-sm" style="margin-right: 12px;">
                   <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                   数据导出
@@ -198,10 +206,13 @@
       '已作废': 'voided',
     };
 
-    // v1.7.99.85：7 行 mock（按图 1 1:1 复制）
+    // v1.7.99.85 + v1.7.99.191：17 行 mock 覆盖 5 状态（按图 1 1:1 复制 + 扩展）
     // 关键差异：第 1-4 行有"有效"追保函编号（ZBH/ceshi/1234/日期为翁）= 修改+作废+详情
     //          第 5-6 行追保函编号是乱填的（发士大夫士大夫/发顺丰）= 只有详情
     //          第 7 行 = 已作废 = 只有详情
+    //          第 8-11 行 = 审批中（v1.7.99.191 扩 mock）
+    //          第 12-14 行 = 待上传已生效单据（v1.7.99.191 扩 mock）
+    //          第 15-17 行 = 驳回（v1.7.99.191 扩 mock）
     function renderActions(row) {
       // 业务规则：已生效 + 有有效追保函编号 = 修改+作废+详情；其他 = 详情
       if (row.status === '已生效' && row.hasValidNo) {
@@ -216,47 +227,111 @@
         return '<a href="javascript:void(0)" data-action="view">详情</a>' +
                '<a href="javascript:void(0)" data-action="upload">上传附件</a>' +
                '<a href="javascript:void(0)" data-action="void" class="danger">作废</a>';
+      } else if (row.status === '审批中') {
+        return '<a href="javascript:void(0)" data-action="view">详情</a>' +
+               '<a href="javascript:void(0)" data-action="withdraw" class="danger">撤回</a>';
       } else {
-        // 审批中 / 已作废 / 已生效(无有效编号) = 详情
+        // 已作废 / 已生效(无有效编号) = 详情
         return '<a href="javascript:void(0)" data-action="view">详情</a>';
       }
     }
 
     const BOND_MOCK = [
+      // 已生效 6 行
       { contract: 'GTGYL-MSXS-20250217-001', seller: '河南荣厚实业有限公司', buyer: '周口替换商贸有限公司', amount: '111.00', deadline: '2025-02-17', issueDate: '2025-02-17', blNo: 'ZBH-20250217-0001', uploadTime: '—', status: '已生效', hasValidNo: true },
       { contract: 'XSHT-TYYGJ-20240915-001', seller: '河南荣厚实业有限公司', buyer: '天宇源国际贸易集团有限公司', amount: '22.00', deadline: '2025-02-14', issueDate: '2025-02-14', blNo: 'ZBH-20250214-0002', uploadTime: '—', status: '已生效', hasValidNo: true },
       { contract: 'CGHT-GQCS-20240308-003', seller: '河南荣厚实业有限公司', buyer: '高琦测试煤业有限公司', amount: '22.00', deadline: '2025-02-13', issueDate: '2025-02-13', blNo: 'ZBH-20250213-0003', uploadTime: '—', status: '已生效', hasValidNo: true },
       { contract: 'XSHT-SXJY-20231012-008', seller: '河南荣厚实业有限公司', buyer: '山西锦阳鑫煤炭销售有限公司', amount: '12,312.00', deadline: '2023-10-15', issueDate: '2023-10-12', blNo: 'ZBH-20231012-0004', uploadTime: '—', status: '已生效', hasValidNo: true },
       { contract: 'CGHT-JYJT-20231009-015', seller: '山西锦阳鑫煤炭销售有限公司', buyer: '河南荣厚实业有限公司', amount: '333.00', deadline: '2023-10-09', issueDate: '2023-10-09', blNo: 'ZBH-20231009-0005', uploadTime: '—', status: '已生效', hasValidNo: true },
       { contract: 'XSHT-HNJH-20231009-022', seller: '山西锦阳鑫煤炭销售有限公司', buyer: '河南荣厚实业有限公司', amount: '11.00', deadline: '2023-10-09', issueDate: '2023-10-09', blNo: 'ZBH-20231009-0006', uploadTime: '—', status: '已生效', hasValidNo: true },
+      // 已作废 1 行
       { contract: 'CGHT-SYMT-20231009-031', seller: '山西锦阳鑫煤炭销售有限公司', buyer: '河南荣厚实业有限公司', amount: '99,999,999.99', deadline: '2023-10-09', issueDate: '2023-10-09', blNo: 'ZBH-20231009-0007', uploadTime: '—', status: '已作废', hasValidNo: false },
+      // 审批中 4 行（v1.7.99.191 扩）
+      { contract: 'XSHT-XPWL-20240710-002', seller: '河南荣厚实业有限公司', buyer: '周口替换商贸有限公司', amount: '880.00', deadline: '2024-07-15', issueDate: '2024-07-10', blNo: 'ZBH-20240710-0008', uploadTime: '—', status: '审批中', hasValidNo: false },
+      { contract: 'CGHT-XJYX-20240712-005', seller: '新疆德远昌物流有限公司', buyer: '河南荣厚实业有限公司', amount: '1,250.00', deadline: '2024-07-20', issueDate: '2024-07-12', blNo: 'ZBH-20240712-0009', uploadTime: '—', status: '审批中', hasValidNo: false },
+      { contract: 'XSHT-CCWL-20240715-001', seller: '河南中豫港通供应链管理有限公司', buyer: '周口替换商贸有限公司', amount: '3,600.00', deadline: '2024-07-22', issueDate: '2024-07-15', blNo: 'ZBH-20240715-0010', uploadTime: '—', status: '审批中', hasValidNo: false },
+      { contract: 'CGHT-HKMT-20240718-007', seller: '河南荣厚实业有限公司', buyer: '周口替换商贸有限公司', amount: '15,200.00', deadline: '2024-07-25', issueDate: '2024-07-18', blNo: 'ZBH-20240718-0011', uploadTime: '—', status: '审批中', hasValidNo: false },
+      // 待上传已生效单据 3 行（v1.7.99.191 扩）
+      { contract: 'XSHT-SMCM-20240601-003', seller: '河南中豫港通供应链管理有限公司', buyer: '周口替换商贸有限公司', amount: '5,400.00', deadline: '2024-06-15', issueDate: '2024-06-01', blNo: 'ZBH-20240601-0012', uploadTime: '—', status: '待上传已生效单据', hasValidNo: true },
+      { contract: 'CGHT-WHJK-20240605-002', seller: '武汉裕龙能源有限公司', buyer: '河南荣厚实业有限公司', amount: '12,800.00', deadline: '2024-06-20', issueDate: '2024-06-05', blNo: 'ZBH-20240605-0013', uploadTime: '—', status: '待上传已生效单据', hasValidNo: true },
+      { contract: 'XSHT-AGSY-20240610-006', seller: '安徽发投企业管理有限公司', buyer: '河南荣厚实业有限公司', amount: '6,500.00', deadline: '2024-06-25', issueDate: '2024-06-10', blNo: 'ZBH-20240610-0014', uploadTime: '—', status: '待上传已生效单据', hasValidNo: true },
+      // 驳回 3 行（v1.7.99.191 扩）
+      { contract: 'CGHT-GYMT-20240501-001', seller: '河南荣厚实业有限公司', buyer: '高琦测试煤业有限公司', amount: '4,200.00', deadline: '2024-05-15', issueDate: '2024-05-01', blNo: 'ZBH-20240501-0015', uploadTime: '—', status: '驳回', hasValidNo: true },
+      { contract: 'XSHT-HNJT-20240505-004', seller: '河南诚泽运输有限公司', buyer: '天宇源国际贸易集团有限公司', amount: '7,800.00', deadline: '2024-05-20', issueDate: '2024-05-05', blNo: 'ZBH-20240505-0016', uploadTime: '—', status: '驳回', hasValidNo: true },
+      { contract: 'CGHT-ZJTK-20240510-003', seller: '郑州信必达国际供应链有限公司', buyer: '河南荣厚实业有限公司', amount: '9,500.00', deadline: '2024-05-25', issueDate: '2024-05-10', blNo: 'ZBH-20240510-0017', uploadTime: '—', status: '驳回', hasValidNo: true },
     ];
 
+    var currentTabKey = 'all';
+
+    function getFilteredMock(tabKey) {
+      if (tabKey === 'all') return BOND_MOCK;
+      // tabKey 映射到 status 文字
+      var keyToStatus = {
+        auditing: '审批中',
+        uploading: '待上传已生效单据',
+        effective: '已生效',
+        rejected: '驳回',
+        voided: '已作废',
+      };
+      var targetStatus = keyToStatus[tabKey];
+      if (!targetStatus) return BOND_MOCK;
+      return BOND_MOCK.filter(function (r) { return r.status === targetStatus; });
+    }
+
     function renderBondTable() {
-      const tbody = document.getElementById('bondTbody');
-      tbody.innerHTML = BOND_MOCK.map((r) => {
-        const statusCls = BL_STATUS_CLASS[r.status] || '';
-        return `<tr>
-          <td class="col-num">${r.contract}</td>
-          <td>${r.seller}</td>
-          <td>${r.buyer}</td>
-          <td style="text-align: right;" class="col-num">¥ ${r.amount}</td>
-          <td>${r.deadline}</td>
-          <td>${r.issueDate}</td>
-          <td class="col-num">${r.blNo}</td>
-          <td>${r.uploadTime}</td>
-          <td><span class="bl-status ${statusCls}">${r.status}</span></td>
-          <td class="col-action" style="text-align: right;">
-            <div class="col-action-row">${renderActions(r)}</div>
-          </td>
-        </tr>`;
+      var data = getFilteredMock(currentTabKey);
+      var tbody = document.getElementById('bondTbody');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="10"><div class="empty-state"><div class="empty-state-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div>暂无数据</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(function (r) {
+        var statusCls = BL_STATUS_CLASS[r.status] || '';
+        return '<tr>' +
+          '<td class="col-num">' + r.contract + '</td>' +
+          '<td>' + r.seller + '</td>' +
+          '<td>' + r.buyer + '</td>' +
+          '<td style="text-align: right;" class="col-num">¥ ' + r.amount + '</td>' +
+          '<td>' + r.deadline + '</td>' +
+          '<td>' + r.issueDate + '</td>' +
+          '<td class="col-num">' + r.blNo + '</td>' +
+          '<td>' + r.uploadTime + '</td>' +
+          '<td><span class="bl-status ' + statusCls + '">' + r.status + '</span></td>' +
+          '<td class="col-action" style="text-align: right;">' +
+            '<div class="col-action-row">' + renderActions(r) + '</div>' +
+          '</td>' +
+        '</tr>';
       }).join('');
     }
-    function switchTab(el, key) {
-      document.querySelectorAll('.cp-tab').forEach(t => t.classList.remove('active'));
-      el.classList.add('active');
+
+    function updateBondTabCounts() {
+      var counts = {
+        all: BOND_MOCK.length,
+        auditing: BOND_MOCK.filter(function (r) { return r.status === '审批中'; }).length,
+        uploading: BOND_MOCK.filter(function (r) { return r.status === '待上传已生效单据'; }).length,
+        effective: BOND_MOCK.filter(function (r) { return r.status === '已生效'; }).length,
+        rejected: BOND_MOCK.filter(function (r) { return r.status === '驳回'; }).length,
+        voided: BOND_MOCK.filter(function (r) { return r.status === '已作废'; }).length,
+      };
+      document.querySelectorAll('.cp-tab').forEach(function (t) {
+        var key = t.getAttribute('data-tab-key');
+        if (key && counts[key] !== undefined) {
+          var span = t.querySelector('.count');
+          if (span) span.textContent = counts[key];
+        }
+      });
     }
-    document.addEventListener('DOMContentLoaded', renderBondTable);
+
+    function switchTab(el, key) {
+      document.querySelectorAll('.cp-tab').forEach(function (t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      currentTabKey = key;
+      renderBondTable();
+    }
+    document.addEventListener('DOMContentLoaded', function () {
+      updateBondTabCounts();
+      renderBondTable();
+    });
 
     // 操作列点击事件委托（v1.7.99.80/83/84 模式：inline Utils fallback）
     // v1.7.99.212 hotfix: view action 真的跳转到 bond-letter-detail.html?blNo=XXX（之前只是 toast）
