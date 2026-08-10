@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-10T15:50:00',
+          version: 'v1.7.99.208',
+          module: '数据中心 - 业务线台账表 6 字段',
+          summary: '数据中心 - 业务线台账表（pages/report-bizline.html）新增 6 个字段 + 8 行枚举数据（user 2026-08-10 反馈"数据中心-业务线台账表-新增字段如下"）—— 1) **业务线号前加 4 字段**：项目编号（110px） / 项目名称（200px） / 采购框架合同编号（130px） / 销售框架合同编号（130px）；2) **业务线名称后、类型前加 2 字段**：采购订单/单批次合同编号（140px） / 销售订单/单批次合同编号（140px）；3) **表格宽度 2300px → 3170px**；4) **20 列显隐 → 26 列显隐**（col-toggle idx 1-26 + 业务线号/业务线名称/类型/上游/下游... 全部 idx 后移 4）；5) **8 行枚举数据**：项目编号 PRJ-2026-001/002/003 + PRJ-2025-018/015/010/005 + PRJ-2024-025（跟项目台账表 8 个项目对应）/ 采购框架合同编号 CGHT-YYYY-NNN / 销售框架合同编号 XSHT-YYYY-NNN / 采购订单/单批次合同编号 PO-YYYY-NNN-001 / 销售订单/单批次合同编号 SO-YYYY-NNN-001；6) **顶部描述同步**："上游-下游"链路 → "项目-业务线"链路展开（项目编号 / 项目名称 / 采购框架 / 销售框架 / 业务线号 / 业务线名称 / 采购订单 / 销售订单 / 类型 / 上下游 / 货品总额 / 在执行金额 / 状态）；7) title 升级 v1.7.99.207 → v1.7.99.208；8) toggleColumn JS 函数无需改（按 nth-child 控制，原生支持 idx 1-26）。',
+          changes: [
+            { type: 'modify', location: 'pages/report-bizline.html 表格宽度 line 233', before: 'width: 2300px; min-width: 2300px;', after: 'v1.7.99.208：width: 3170px; min-width: 3170px;（+6 字段 +870px）' },
+            { type: 'add', location: 'pages/report-bizline.html 表头 line 236-243', before: '业务线号 / 业务线名称 / 类型 / 上游企业 / 下游企业...（20 列原版）', after: 'v1.7.99.208：项目编号 / 项目名称 / 采购框架合同编号 / 销售框架合同编号 + 业务线号 / 业务线名称 + 采购订单/单批次合同编号 / 销售订单/单批次合同编号 + 类型 + 上游/下游企业...（26 列）' },
+            { type: 'add', location: 'pages/report-bizline.html 列设置 26 项 line 200-225', before: '20 个 checkbox idx 1-20', after: 'v1.7.99.208：26 个 checkbox idx 1-26（新增 6 个：项目编号/项目名称/采购框架合同编号/销售框架合同编号/采购订单/销售订单）' },
+            { type: 'modify', location: 'pages/report-bizline.html 8 行 mock 数据 line 265-272', before: '业务线号/业务线名称/类型/上游/下游...（20 列 × 8 行）', after: 'v1.7.99.208：每行前 4 列加项目编号/项目名称/采购框架合同编号/销售框架合同编号，中间 2 列加采购订单/销售订单/单批次合同编号（26 列 × 8 行）' },
+            { type: 'modify', location: 'pages/report-bizline.html 顶部描述 line 97', before: '所有业务线按"上游-下游"链路展开（业务线号 / 上下游 / 货品总额 / 在执行金额 / 状态）', after: 'v1.7.99.208：所有业务线按"项目-业务线"链路展开（项目编号 / 项目名称 / 采购框架合同编号 / 销售框架合同编号 / 业务线号 / 业务线名称 / 采购订单编号 / 销售订单编号 / 类型 / 上下游 / 货品总额 / 在执行金额 / 状态）' },
+            { type: 'modify', location: 'pages/report-bizline.html <title>', before: '业务线台账表 - 豫港通 v1.7.99.189', after: '业务线台账表 - 豫港通 v1.7.99.208' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.207', after: '豫港通原型 v.1.7.99.208' }
+          ]
+        },
+        {
           ts: '2026-08-10T15:40:00',
           version: 'v1.7.99.207',
           module: '数据中心 - 台账 CF Pages 部署',
