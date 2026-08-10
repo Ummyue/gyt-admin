@@ -1,0 +1,417 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增退款 - 豫港通 v1.7.99.213</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 表单区块 */
+    .form-section { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 16px; }
+    .form-section-title { padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--border-default); border-left: 3px solid var(--color-primary); padding-left: 17px; }
+    .form-section-body { padding: 20px; }
+
+    /* 合同信息 4 列布局（3 行 3 字段） */
+    .contract-grid { display: grid; grid-template-columns: 110px 1fr 110px 1fr 110px 1fr; }
+    .contract-grid .label,
+    .contract-grid .value { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border-default); }
+    .contract-grid .label { background: #F8FAFC; color: var(--text-tertiary); }
+    .contract-grid .value { color: var(--text-primary); }
+    .contract-grid .col-divider { border-right: 1px solid var(--border-default); }
+    .contract-grid .col-span-2 { grid-column: span 2; }
+
+    /* 退款信息 - 标签 + 输入框 2 列布局 */
+    .refund-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 20px 24px; }
+    .refund-field { display: flex; flex-direction: column; gap: 6px; }
+    .refund-field.col-span-3 { grid-column: span 3; }
+    .refund-field .label { font-size: 13px; color: var(--text-primary); }
+    .refund-field .label .required { color: #DC2626; }
+    .refund-field input,
+    .refund-field select,
+    .refund-field textarea { padding: 8px 12px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 13px; font-family: inherit; color: var(--text-primary); background: #fff; }
+    .refund-field input:focus,
+    .refund-field select:focus,
+    .refund-field textarea:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1); }
+    .refund-field input[readonly] { background: #F9FAFB; color: var(--text-secondary); }
+    .refund-field textarea { min-height: 80px; resize: vertical; }
+    .radio-group { display: flex; gap: 18px; align-items: center; padding-top: 6px; }
+    .radio-group label { display: inline-flex; align-items: center; gap: 4px; font-size: 13px; cursor: pointer; }
+    .add-reason { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--color-primary); color: var(--color-primary); background: #fff; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+    /* 附件（v1.7.99.63 按图 3：蓝底提示框 + 退款凭证 + 上传按钮） */
+    .attach-tips { background: #EFF6FF; color: #1E40AF; padding: 10px 16px; font-size: 12px; border-radius: 4px; margin-bottom: 14px; }
+    .attach-row { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
+    .attach-row .type { width: 100px; font-size: 13px; color: var(--text-primary); }
+    .attach-row .type .required { color: #DC2626; }
+    .attach-row .file { flex: 1; }
+    .attach-row .upload-btn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 12px; border: 1px solid var(--color-primary); color: var(--color-primary); background: #fff; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+    /* 侧边抽屉（v1.7.99.63 按图 2：合同选择） */
+    .side-drawer-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 999; }
+    .side-drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 1440px; max-width: 90vw; background: #fff; box-shadow: -4px 0 16px rgba(0, 0, 0, 0.12); z-index: 1000; display: flex; flex-direction: column; }
+    .side-drawer-header { padding: 16px 24px; border-bottom: 1px solid var(--border-default); display: flex; align-items: center; justify-content: space-between; }
+    .side-drawer-header h3 { margin: 0; font-size: 16px; font-weight: 600; }
+    .side-drawer-close { cursor: pointer; font-size: 20px; color: var(--text-tertiary); background: none; border: none; padding: 0; }
+    .side-drawer-body { flex: 1; overflow-y: auto; padding: 16px 24px; }
+    .side-drawer-footer { padding: 14px 24px; border-top: 1px solid var(--border-default); display: flex; justify-content: flex-end; gap: 10px; }
+
+    /* 抽屉内筛选 + 表格 */
+    .drawer-filter { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px; }
+    .drawer-filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-filter-item .label { font-size: 12px; color: var(--text-tertiary); }
+    .drawer-filter-item input,
+    .drawer-filter-item select { padding: 7px 10px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 13px; }
+    .drawer-filter-actions { grid-column: span 6; display: flex; gap: 8px; }
+
+    .radio-col { width: 32px; text-align: center; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./refund-list.html">退款管理</a>
+          <span class="sep">/</span>
+          <span class="current">新增退款</span>
+        </div>
+
+        <!-- 标题 + 返回 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">新增退款</h1>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-secondary" id="pickContractBtn" onclick="openContractDrawer()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 21l-6-6m2-5a7 7 0 1 1-14 0 7 7 0 0 1 14 0z"/></svg>
+              选择合同
+            </button>
+            <button class="btn btn-secondary" onclick="window.location.href='./refund-list.html'">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              返回
+            </button>
+          </div>
+        </div>
+
+        <!-- 区块 1：合同信息（v1.7.99.63 按图 3：3 行 3 字段 + 收货人跨 2 列） -->
+        <div class="form-section">
+          <h3 class="form-section-title">合同信息</h3>
+          <div class="form-section-body" style="padding: 0;">
+            <div class="contract-grid">
+              <!-- Row 1：合同编号 / 卖方企业 / 买方企业 -->
+              <div class="label col-divider">合同编号</div>
+              <div class="value col-divider" id="contractNoCell">-</div>
+              <div class="label col-divider">卖方企业</div>
+              <div class="value col-divider" id="sellerCell">-</div>
+              <div class="label">买方企业</div>
+              <div class="value" id="buyerCell">-</div>
+
+              <!-- Row 2：品名 / 基准价格 / 数量 -->
+              <div class="label col-divider">品名</div>
+              <div class="value col-divider" id="productCell">-</div>
+              <div class="label col-divider">基准价格</div>
+              <div class="value col-divider" id="priceCell">-</div>
+              <div class="label">数量</div>
+              <div class="value" id="qtyCell">-</div>
+
+              <!-- Row 3：交货期限 / 运输方式 / 收货人 -->
+              <div class="label">交货期限</div>
+              <div class="value col-divider" id="deadlineCell">-</div>
+              <div class="label col-divider">运输方式</div>
+              <div class="value col-divider" id="transportCell">-</div>
+              <div class="label">收货人</div>
+              <div class="value" id="receiverCell">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：退款信息（v1.7.99.63 按图 3：3 列布局 9 字段 + 退款类型 + 退款原因） -->
+        <div class="form-section">
+          <h3 class="form-section-title">退款信息</h3>
+          <div class="form-section-body">
+            <div class="refund-grid">
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 退款方</label>
+                <input type="text" value="重庆远端煤炭销售有限公司" readonly>
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 收款方</label>
+                <input type="text" value="陕西魏煤供应链管理有限公司" readonly>
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 资金来源</label>
+                <select><option>自有资金</option><option>银行融资</option></select>
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 收款账号名称</label>
+                <input type="text" placeholder="请选择收款账号">
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 收款账号开户行</label>
+                <input type="text" placeholder="请输入开户行">
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 收款账号</label>
+                <input type="text" placeholder="请输入收款账号">
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 退款方式</label>
+                <select><option>请选择退款方式</option><option>银行转账</option><option>票据</option><option>其他</option></select>
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 退款金额(元)</label>
+                <input type="number" placeholder="请输入退款金额">
+              </div>
+              <div class="refund-field">
+                <label class="label"><span class="required">*</span> 退款日期</label>
+                <input type="text" placeholder="请选择退款日期">
+              </div>
+              <div class="refund-field col-span-3">
+                <label class="label"><span class="required">*</span> 退款类型</label>
+                <div class="radio-group" id="refundTypeGroup">
+                  <label id="refundTypeMarginOption"><input type="radio" name="refundType" value="保证金"> 保证金</label>
+                  <label><input type="radio" name="refundType" value="货款" checked> 货款</label>
+                </div>
+              </div>
+              <div class="refund-field col-span-3">
+                <label class="label" style="display: flex; align-items: center; justify-content: space-between;">
+                  <span>添加原因</span>
+                  <span class="add-reason" onclick="Utils.toast('添加原因', 'info')">+ 添加原因</span>
+                </label>
+                <textarea placeholder="请输入退款原因，最多200字"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 3：附件（v1.7.99.63 按图 3：蓝底提示框 + 退款凭证 + 上传按钮） -->
+        <div class="form-section">
+          <h3 class="form-section-title">附件</h3>
+          <div class="form-section-body">
+            <div class="attach-tips">
+              退款凭证：可支持格式为png、jpg、png、pdf、doc、docx、xls、xlsx的附件，单个附件大小不得超过100M的文件。
+            </div>
+            <table style="width: 100%; border-collapse: collapse;">
+              <thead>
+                <tr style="background: #F8FAFC;">
+                  <th style="padding: 10px 14px; font-size: 13px; text-align: left; color: var(--text-tertiary); font-weight: 500; width: 160px;">申报类型</th>
+                  <th style="padding: 10px 14px; font-size: 13px; text-align: left; color: var(--text-tertiary); font-weight: 500;">文件名称</th>
+                  <th style="padding: 10px 14px; font-size: 13px; text-align: right; color: var(--text-tertiary); font-weight: 500; width: 120px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr style="border-bottom: 1px solid var(--border-default);">
+                  <td style="padding: 10px 14px; font-size: 13px;">
+                    <span style="color: #DC2626;">*</span> 退款凭证
+                  </td>
+                  <td style="padding: 10px 14px; font-size: 13px; color: var(--text-tertiary);">-</td>
+                  <td style="padding: 10px 14px; font-size: 13px; text-align: right;">
+                    <span class="upload-btn" onclick="Utils.toast('上传退款凭证', 'info')">↑ 上传</span>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 底部操作按钮（v1.7.99.63 占位 - 实际可能不要，详情页不显业务变更按钮，但表单页允许提交） -->
+        <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 16px;">
+          <button class="btn btn-secondary" onclick="window.location.href='./refund-list.html'">取消</button>
+          <button class="btn btn-primary" onclick="Utils.toast('提交退款申请（演示）', 'success')">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 侧边抽屉：合同选择（v1.7.99.63 按图 2） -->
+  <div id="contractDrawerMask" class="side-drawer-mask" style="display: none;" onclick="closeContractDrawer()"></div>
+  <div id="contractDrawer" class="side-drawer" style="display: none;">
+    <div class="side-drawer-header">
+      <h3>选择合同</h3>
+      <button class="side-drawer-close" onclick="closeContractDrawer()">×</button>
+    </div>
+    <div class="side-drawer-body">
+      <!-- 6 字段筛选 -->
+      <div class="drawer-filter">
+        <div class="drawer-filter-item">
+          <span class="label">合同编号</span>
+          <input type="text" placeholder="请输入合同编号">
+        </div>
+        <div class="drawer-filter-item">
+          <span class="label">企业名称</span>
+          <input type="text" placeholder="请输入企业名称">
+        </div>
+        <div class="drawer-filter-item">
+          <span class="label">运输方式</span>
+          <select><option>请选择运输方式</option><option>汽运</option><option>火运</option><option>船运</option></select>
+        </div>
+        <div class="drawer-filter-item">
+          <span class="label">签订日期</span>
+          <input type="text" placeholder="开始时间 ~ 结束时间">
+        </div>
+        <div class="drawer-filter-item">
+          <span class="label">合同类型</span>
+          <select><option>请选择合同类型</option><option>采购合同</option><option>销售合同</option></select>
+        </div>
+        <div class="drawer-filter-item">
+          <span class="label">业务类型</span>
+          <select><option>请选择业务类型</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+        </div>
+        <div class="drawer-filter-actions">
+          <button class="btn btn-secondary">重置</button>
+          <button class="btn btn-primary">查询</button>
+        </div>
+      </div>
+
+      <!-- 表格（v1.7.99.63 按图 2：10 列 6 行） -->
+      <table class="cp-table">
+        <thead>
+          <tr>
+            <th class="radio-col"></th>
+            <th>合同类型</th>
+            <th>合同编号</th>
+            <th>卖方企业名称</th>
+            <th>买方企业名称</th>
+            <th>收货人</th>
+            <th>交货期限</th>
+            <th>签订日期</th>
+            <th style="text-align: right;">已付款金额(元)</th>
+            <th>运输方式</th>
+          </tr>
+        </thead>
+        <tbody id="contractDrawerTbody">
+          <tr><td class="radio-col"><input type="radio" name="pickContract" value="0"></td><td>销售合同</td><td>RLCG-RL.Y2-202602-09</td><td>河南省煤炭进出口有限公司</td><td>国电投河南电力燃料有限公司</td><td>国电投河南电力燃料有限公司</td><td>2026-02-11 至 2026-02-27</td><td>2026-02-11</td><td style="text-align: right;">0</td><td>汽运</td></tr>
+          <tr><td class="radio-col"><input type="radio" name="pickContract" value="1"></td><td>采购合同</td><td>HNCIEGNMYB26(购)H02-01</td><td>山西省金能物资贸易有限公司</td><td>河南省煤炭进出口有限公司</td><td>国电投河南电力燃料有限公司</td><td>2026-01-31 至 2026-02-12</td><td>2026-01-31</td><td style="text-align: right;">0</td><td>汽运</td></tr>
+          <tr><td class="radio-col"><input type="radio" name="pickContract" value="2"></td><td>采购合同</td><td>HNCIEGNMYB25(购)H12-04</td><td>山西省金能物资贸易有限公司</td><td>河南省煤炭进出口有限公司</td><td>国电投河南电力燃料有限公司</td><td>2025-12-19 至 2025-12-30</td><td>2025-12-19</td><td style="text-align: right;">0</td><td>汽运</td></tr>
+          <tr><td class="radio-col"><input type="radio" name="pickContract" value="3"></td><td>销售合同</td><td>燃料公司-2025-燃煤-0247(濮阳)</td><td>河南省煤炭进出口有限公司</td><td>国能河南燃料有限公司</td><td>国能河南燃料有限公司</td><td>2025-12-10 至 2025-12-31</td><td>2025-12-10</td><td style="text-align: right;">0</td><td>火运</td></tr>
+          <tr><td class="radio-col"><input type="radio" name="pickContract" value="4"></td><td>采购合同</td><td>HNCIEGNMYB25(购)H12-02</td><td>河北钰钜贸易有限公司</td><td>河南省煤炭进出口有限公司</td><td>国能濮阳热电有限公司</td><td>2025-12-10 至 2025-12-31</td><td>2025-12-10</td><td style="text-align: right;">0</td><td>火运</td></tr>
+          <tr><td class="radio-col"><input type="radio" name="pickContract" value="5"></td><td>销售合同</td><td>HNJCK(销)20251215</td><td>河南省煤炭进出口有限公司</td><td>重庆基创建设开发有限公司</td><td>重庆基创建设开发有限公司</td><td>2025-12-15 至 2026-01-15</td><td>2025-12-15</td><td style="text-align: right;">31,079,626.9</td><td>汽运</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="side-drawer-footer">
+      <button class="btn btn-secondary" onclick="closeContractDrawer()">取消</button>
+      <button class="btn btn-primary" onclick="confirmPickContract()">下一步</button>
+    </div>
+  </div>
+
+  <script src="../assets/js/mockData.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.80 修复：assets/js/app.js 不存在（项目 assets/js/ 目录为空），
+    // inline 一个最小 Utils fallback，避免点"下一步"时 Utils.toast 报错中断 closeContractDrawer
+    window.Utils = window.Utils || {
+      toast: function (msg, type) {
+        try { console.log('[toast]', type || 'info', msg); } catch (e) {}
+      }
+    };
+
+    // 合同 mock 数据（v1.7.99.63 + v1.7.99.213 加 type 字段区分采购/销售）
+    var CONTRACT_MOCK = [
+      { no: 'RLCG-RL.Y2-202602-09', type: '销售', seller: '河南省煤炭进出口有限公司', buyer: '国电投河南电力燃料有限公司', product: '无烟煤', price: '850元/吨', qty: '3,000吨', deadline: '2026-02-11 至 2026-02-27', transport: '汽运', receiver: '国电投河南电力燃料有限公司' },
+      { no: 'HNCIEGNMYB26(购)H02-01', type: '采购', seller: '山西省金能物资贸易有限公司', buyer: '河南省煤炭进出口有限公司', product: '动力煤', price: '720元/吨', qty: '5,000吨', deadline: '2026-01-31 至 2026-02-12', transport: '汽运', receiver: '国电投河南电力燃料有限公司' },
+      { no: 'HNCIEGNMYB25(购)H12-04', type: '采购', seller: '山西省金能物资贸易有限公司', buyer: '河南省煤炭进出口有限公司', product: '动力煤', price: '710元/吨', qty: '4,000吨', deadline: '2025-12-19 至 2025-12-30', transport: '汽运', receiver: '国电投河南电力燃料有限公司' },
+      { no: '燃料公司-2025-燃煤-0247(濮阳)', type: '销售', seller: '河南省煤炭进出口有限公司', buyer: '国能河南燃料有限公司', product: '烟煤', price: '780元/吨', qty: '6,000吨', deadline: '2025-12-10 至 2025-12-31', transport: '火运', receiver: '国能河南燃料有限公司' },
+      { no: 'HNCIEGNMYB25(购)H12-02', type: '采购', seller: '河北钰钜贸易有限公司', buyer: '河南省煤炭进出口有限公司', product: '贫瘦煤', price: '900元/吨', qty: '3,328吨', deadline: '2025-12-10 至 2025-12-31', transport: '火运', receiver: '国能濮阳热电有限公司' },
+      { no: 'HNJCK(销)20251215', type: '销售', seller: '河南省煤炭进出口有限公司', buyer: '重庆基创建设开发有限公司', product: '焦煤', price: '1,200元/吨', qty: '3,000吨', deadline: '2025-12-15 至 2026-01-15', transport: '汽运', receiver: '重庆基创建设开发有限公司' }
+    ];
+
+    // 打开合同选择抽屉
+    function openContractDrawer() {
+      document.getElementById('contractDrawerMask').style.display = 'block';
+      document.getElementById('contractDrawer').style.display = 'flex';
+    }
+
+    // 关闭抽屉
+    function closeContractDrawer() {
+      document.getElementById('contractDrawerMask').style.display = 'none';
+      document.getElementById('contractDrawer').style.display = 'none';
+    }
+
+    // 确认选择合同
+    function confirmPickContract() {
+      var radios = document.querySelectorAll('input[name="pickContract"]:checked');
+      if (radios.length === 0) {
+        Utils.toast('请先选择一个合同', 'warning');
+        return;
+      }
+      var idx = parseInt(radios[0].value, 10);
+      var c = CONTRACT_MOCK[idx];
+      if (c) {
+        document.getElementById('contractNoCell').textContent = c.no;
+        document.getElementById('sellerCell').textContent = c.seller;
+        document.getElementById('buyerCell').textContent = c.buyer;
+        document.getElementById('productCell').textContent = c.product;
+        document.getElementById('priceCell').textContent = c.price;
+        document.getElementById('qtyCell').textContent = c.qty;
+        document.getElementById('deadlineCell').textContent = c.deadline;
+        document.getElementById('transportCell').textContent = c.transport;
+        document.getElementById('receiverCell').textContent = c.receiver;
+
+        // v1.7.99.213: 采购合同时隐藏"保证金"选项 + 默认选"货款"
+        // 销售合同时显示"保证金" + "货款"（保留默认"货款"）
+        var marginOption = document.getElementById('refundTypeMarginOption');
+        var goodsRadio = document.querySelector('input[name="refundType"][value="货款"]');
+        if (c.type === '采购') {
+          marginOption.style.display = 'none';
+          // 如果之前选了保证金，重置为货款
+          var marginRadio = marginOption.querySelector('input[type="radio"]');
+          if (marginRadio && marginRadio.checked) {
+            marginRadio.checked = false;
+          }
+          if (goodsRadio) goodsRadio.checked = true;
+        } else {
+          marginOption.style.display = '';
+        }
+
+        Utils.toast('已选择合同：' + c.no, 'success');
+      }
+      closeContractDrawer();
+    }
+
+    // 初始化：默认打开抽屉（v1.7.99.63 演示效果）
+    document.addEventListener('DOMContentLoaded', function() {
+      openContractDrawer();
+    });
+  </script>
+</body>
+</html>

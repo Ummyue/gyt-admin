@@ -108,6 +108,19 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-10T18:10:00',
+          version: 'v1.7.99.213',
+          module: '新增退款 - 采购合同隐藏保证金选项',
+          summary: '新增退款页（pages/refund-apply.html）选择采购合同时隐藏"保证金"选项 + 默认选"货款"（user 2026-08-10 反馈"1.新增退款时，如果用户选择的是采购合同，隐藏退款类型中的「保证金」选项，默认选择货款"）—— 1) **退款类型 radio 容器加 id**：`<div class="radio-group" id="refundTypeGroup">` + `<label id="refundTypeMarginOption">保证金</label>` + `<label>货款 checked</label>`（默认 checked 改为"货款"，之前是空 checked 状态）；2) **CONTRACT_MOCK 6 条合同加 type 字段**：3 采购（HNCIEGNMYB26(购)H02-01 / HNCIEGNMYB25(购)H12-04 / HNCIEGNMYB25(购)H12-02）+ 3 销售（RLCG-RL.Y2-202602-09 / 燃料公司-2025-燃煤-0247(濮阳) / HNJCK(销)20251215）；3) **confirmPickContract 末尾加 logic**（v1.7.99.213）：`if (c.type === "采购") { marginOption.style.display = "none"; 货款.checked = true; } else { marginOption.style.display = ""; }`——选采购合同时隐藏"保证金"label + 默认选"货款"+ 选过"保证金"的重置回"货款"；4) title 升级 v1.7.99.212 → v1.7.99.213。',
+          changes: [
+            { type: 'modify', location: 'pages/refund-apply.html 退款类型 radio 容器 line 208-210', before: '<div class="radio-group"> 2 个 radio（保证金/货款，无 checked）', after: 'v1.7.99.213：加 id="refundTypeGroup" + id="refundTypeMarginOption" + "货款"加 checked' },
+            { type: 'modify', location: 'pages/refund-apply.html CONTRACT_MOCK line 349-356', before: '6 条合同无 type 字段（无法区分采购/销售）', after: 'v1.7.99.213：6 条加 type 字段（3 采购 + 3 销售）' },
+            { type: 'modify', location: 'pages/refund-apply.html confirmPickContract() line 388-398', before: '关闭抽屉前无 contract type 判断', after: 'v1.7.99.213：if (c.type === "采购") { 隐藏保证金 + 默认货款 } else { 显示保证金 }' },
+            { type: 'modify', location: 'pages/refund-apply.html <title>', before: '新增退款 - 豫港通', after: '新增退款 - 豫港通 v1.7.99.213' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.212', after: '豫港通原型 v.1.7.99.213' }
+          ]
+        },
+        {
           ts: '2026-08-10T17:45:00',
           version: 'v1.7.99.212',
           module: '追保函列表详情跳转 + changelog JS 语法',
