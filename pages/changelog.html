@@ -108,6 +108,29 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-11T11:10:00',
+          version: 'v1.7.99.216',
+          module: '追保函新增页 - 完整表单重做（v1.7.99.215 误删表单内容修正）',
+          summary: '追保函新增页（pages/bond-letter-new.html）按 user 图 1 完整重做（user 2026-08-11 反馈 追保函新增页面的顶部仍然是错误的列表显示，你看下原因）—— 1) 现状：v1.7.99.215 修复时误删了表单的 page-header 和 4 个区块内容（line 43-118 整段包含 page-header + 8 个 sidemenu-group），保留 left-sidemenu 容器后只剩 7 字段的简化版（追保函号 / 客户 / 追保类型 / 触发原因 / 追保金额 / 生效日期 / 到期日期），完全不是 user 图 1 的 新增线下追保函 4 区块表单（合同信息 + 业务线信息 + 追保函信息 + 附件）；2) v1.7.99.216 修复：a) 找回正确源文件 bond-letter-new-offline.html（v1.7.99.191 时代 14171 bytes，4 区块齐全 + 正确的 left-sidemenu 容器 + left-sidemenu.js 引用），作为重做基础；b) 完整重做 bond-letter-new.html：topbar + leftSidemenu 容器 + page-body 主体（breadcrumb 追保函管理 / 新增线下追保函 + page-h1 新增线下追保函）；c) 4 个区块 = 区块 1 合同信息（只读 3 行表格：合同编号带链接+复制 / 卖方 / 买方 / 品名 / 基准价格 / 数量 / 签订日期 / 交货期限 / 运输方式）+ 区块 2 业务线信息（radio 单选 2 行：业务线号 + 业务线名称 + 上游采购合同编号）+ 区块 3 追保函信息（表单 6 字段 3 列：追保函编号 / 追保金额 / 签发日期 / 追保截止日期 / 签章状态 / 空白格）+ 区块 4 附件（待盖章附件 + 其他附件 2 行 + 上传要求 tip）；d) footer 按钮：取消 + 提交（取消返回 bond-letter.html，提交 toast + 跳转）；e) CSS 完整保留：.bl-form-card / .bl-form-card-header / .bl-info-table / .bl-radio-row / .bl-radio-header / .bl-uploaded-row / .bl-upload-tips / .bl-footer-bar / .bl-form-grid-3 全部从 offline 版拷贝；3) 教训（v1.7.99.215 翻车复盘）：v1.7.99.215 删 inline sidemenu 模板时没分清哪部分是模板哪部分是表单内容，把 line 43-118 整段（含 page-header 面包屑/标题/4 区块）一起 delete 了——正确做法是只删 ~75 行 inline 模板（sidemenu-items + 8 个 sidemenu-group），保留其他内容；4) bond-letter-new.html 线上 size：v1.7.99.215 错误版 5371 bytes → v1.7.99.216 正确版 14776 bytes（+9405 bytes / +175%）。',
+          changes: [
+            { type: 'modify', location: 'pages/bond-letter-new.html 全部内容（v1.7.99.215 错误版重做）', before: 'v1.7.99.215：5371 bytes，只有 1 个简化 基本信息 区块（7 字段）+ 错误的 page-header（v1.7.99.85 inline sidemenu 模板残留）', after: 'v1.7.99.216：14776 bytes，按 user 图 1 完整 4 区块表单（合同信息 + 业务线信息 + 追保函信息 + 附件）+ 正确的 left-sidemenu 容器 + left-sidemenu.js 引用 + 取消 / 提交按钮 JS' },
+            { type: 'modify', location: 'pages/bond-letter-new.html <title>', before: '新增/编辑追保函 - 豫港通 v1.7.99.215', after: '新增线下追保函 - 豫港通 v1.7.99.216' },
+            { type: 'add', location: 'pages/bond-letter-new.html footer 按钮 JS', before: '无（v1.7.99.215 错误版）', after: 'v1.7.99.216：取消按钮 → 跳转 bond-letter.html；提交按钮 → toast 成功 + 800ms 后跳转 bond-letter.html' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.215', after: '豫港通原型 v.1.7.99.216' }
+          ]
+        },
+        {
+          ts: '2026-08-11T11:00:00',
+          version: 'v1.7.99.215',
+          module: '追保函新增页 - sidemenu 重复修复',
+          summary: '追保函新增页（pages/bond-letter-new.html）删除 main-content 里的 inline sidemenu 模板（user 2026-08-11 反馈"追保函新增页面的顶部仍然是错误的列表显示，你看下原因"）—— 1) **现状**：跟 v1.7.99.211 修过的 bond-letter-detail.html 同样的 bug——main-content 顶部有 ~75 行 inline sidemenu 模板（sidemenu-items 9 处 + sidemenu-group 16 处），left-sidemenu.js 动态生成的 sidemenu 跟 inline 模板同时显示，整个 main-content 被挤掉；2) **修复**：删 main-content 里的所有 inline 模板（line 43-118 整段：page-header + 8 个 sidemenu-group：项目准入 + 6 个数字供应链 + 仓储 + 预警 + 数据中心），保留 `<div class="sidemenu" id="leftSidemenu"></div>` 容器 + left-sidemenu.js 引用；3) **v1.7.99.215 顺手扫了一下还有 5 个同 bug 页面**（按 memory 10.1 教训）：business-line-relate.html / margin-record.html / shipment-in-detail.html / shipment-in-new.html / warning-detail.html（每个 sidemenu-items 9 处 + sidemenu-group 16 处）——等 user 决定是否一起修（没修，只列出来）；4) title 升级 v1.7.99.214 → v1.7.99.215。',
+          changes: [
+            { type: 'delete', location: 'pages/bond-letter-new.html main-content 顶部 inline sidemenu 模板 line 43-118', before: '<div class="page-header"><div class="sidemenu-items">...sidemenu-group × 8...</div></div>', after: 'v1.7.99.215：删除（按 memory 10.1 教训，跟 v1.7.99.211 修过的 bond-letter-detail.html 同模式）' },
+            { type: 'modify', location: 'pages/bond-letter-new.html <title>', before: '新增/编辑追保函 - 豫港通', after: '新增/编辑追保函 - 豫港通 v1.7.99.215' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.214', after: '豫港通原型 v.1.7.99.215' }
+          ]
+        },
+        {
           ts: '2026-08-10T18:50:00',
           version: 'v1.7.99.214',
           module: '追保函列表 - 状态机 tab 切换过滤数据',
