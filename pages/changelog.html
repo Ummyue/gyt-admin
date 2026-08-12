@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-12T18:30:00',
+          version: 'v1.7.99.222',
+          module: '资金占压表 - 16 → 8 列重构 + 资金占压合并单元格（按列组合 货款/保证金/退款 3 子组）',
+          summary: '资金占压表（pages/report-fund.html）按 user 2026-08-12 反馈「你并没有按照我的要求将单元格进行合并啊。我看了仍然是旧的」+ user 第 1 轮原话 资金占压 为合并 货款/保证金/退款 的合并单元格 + Q1 user 选 16 → 8 列 + Q2 user 选 按列组合 完全重构 —— 1) 现状：v1.7.99.221 误判（我看到 user 截图 2 是 16 列就改主意保持 16 列 + 改数据，没做合并）—— user 反馈仍然是旧的，实际是 user 仍然要 16 → 8 列重构 + 资金占压合并单元格；2) v1.7.99.222 修复（按 user 最初 Q1+Q2 选 + 第 1 轮原话）：a) 表格 16 列 → 8 列（业务线信息 7 列 + 资金占压 1 大列）；b) 资金占压 1 大列 = 1 个合并单元格（每行 1 业务线 1 行）内分 3 子组（货款 / 保证金 / 退款）—— 按列组合横向排列，每子组含日期+方式+金额 3 子字段；c) CSS 加 .fund-occupy-cell（grid 3 列布局）+ .occupy-sub-group（紫色边框卡片样式）+ .occupy-sub-empty（占位 —）+ .occupy-sub-label（紫色子组标题）+ .occupy-sub-detail（flex 列布局）+ .occupy-date（灰色日期）+ .occupy-way（灰色方式）+ .occupy-amount（粗体黑色金额）8 个新类；d) 表头 3 行简化为 2 行（业务线信息 colspan=7 + 资金占压 colspan=3，子列名 货款/保证金/退款）；e) colgroup 8 列（5%/11%/7%/7%/6%/6%/6%/52% 业务线 7 + 资金占压 52%）；f) 8 条业务线枚举（YWX2023090601~0608）按 user 截图 1 模板 —— 去掉 v1.7.99.150 旧版 价差 类型（user 第 1 轮原话只关心 货款/保证金/退款 3 种），只保留 货款/保证金/退款 3 种；3) 8 条数据设计：a) 0601 全款 / 货款 12-01 现金 30,000 + 12-07 银行汇款 10,000；b) 0602 全款 / 货款 12-09 现金 10,000 + 保证金 12-20 银行汇款 10,000；c) 0603 全款 / 货款 12-04 银票 10,000 + 退款 12-21 银行汇款 10,000；d) 0604 总代 / 货款 12-15 银行汇款 20,000（高金额差异）；e) 0605 总代 / 货款 12-30 现金 10,000 + 保证金 12-06 银票 10,000；f) 0606 全款 / 货款 12-22 商票 15,000 + 退款 12-25 银行汇款 15,000；g) 0607 全款 / 货款 12-08 银行汇款 40,000 + 退款 12-18 银行汇款 20,000；h) 0608 总代 / 货款 12-12 现金 25,000（最小化 1 个子组）；4) 资金占压大列背景 #FAF5FF 淡紫（v1.7.99.220 应收应付明细表资金占压列同色），表头资金占压 3 子列也用同色 保持视觉一致；5) title 升级 v1.7.99.221 → v1.7.99.222；6) 资金占压表页面 size：v1.7.99.221 27865 bytes → v1.7.99.222 29617 bytes（+1752 bytes / +6%，因 合并单元格内 3 子组 div + 8 个新 CSS 类）。',
+          changes: [
+            { type: 'modify', location: 'pages/report-fund.html <title>', before: '资金占压表 - 豫港通 v1.7.99.221', after: '资金占压表 - 豫港通 v1.7.99.222' },
+            { type: 'rewrite', location: 'pages/report-fund.html <colgroup> 16 → 8 列', before: 'v1.7.99.221 16 列（5%+10%+7%+7%+5%+6%+6%+5%+5%+4%+4%+5%+5%+4%+4%+5% = 100%）', after: 'v1.7.99.222 8 列（5%+11%+7%+7%+6%+6%+6%+52% = 100%——业务线 7 列 48% + 资金占压 1 大列 52%）' },
+            { type: 'rewrite', location: 'pages/report-fund.html <thead> 16 → 8 列 + 资金占压下 3 子列', before: 'v1.7.99.221 16 列表头（业务线信息 7 colspan=7 + 上游款项 4 colspan=4 + 下游款项 4 colspan=4 + 资金占压 1 rowspan=2）', after: 'v1.7.99.222 8 列表头（业务线信息 7 colspan=7 + 资金占压 colspan=3 含 货款/保证金/退款 3 子列）' },
+            { type: 'rewrite', location: 'pages/report-fund.html <tbody> 8 行 × 8 列 + 资金占压合并单元格', before: 'v1.7.99.221 8 行 × 16 列（每行 1 业务线 + 1 上游款项 4 子列 + 1 下游款项 4 子列 + 1 资金占压值）', after: 'v1.7.99.222 8 行 × 8 列（每行 1 业务线 + 1 资金占压合并单元格内含 3 子组 货款/保证金/退款）' },
+            { type: 'add', location: 'pages/report-fund.html <style> 8 个新 CSS 类', before: '无（v1.7.99.221 无合并单元格 CSS）', after: 'v1.7.99.222：.fund-occupy-cell (grid 3 列布局) + .occupy-sub-group (紫色边框卡片) + .occupy-sub-empty (占位 —) + .occupy-sub-label (紫色子组标题) + .occupy-sub-detail (flex 列布局) + .occupy-date (灰色日期 mono) + .occupy-way (灰色方式) + .occupy-amount (粗体金额 mono)' },
+            { type: 'modify', location: 'pages/report-fund.html 8 条业务线数据', before: 'v1.7.99.221 8 行 16 列展开（YWX2023090601~0608）', after: 'v1.7.99.222 8 行 8 列 + 资金占压合并 3 子组（YWX2023090601~0608）—— 去掉 v1.7.99.150 旧版 价差 类型（user 第 1 轮原话只关心 货款/保证金/退款 3 种）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.221', after: '豫港通原型 v.1.7.99.222' }
+          ]
+        },
+        {
           ts: '2026-08-12T18:00:00',
           version: 'v1.7.99.221',
           module: '资金占压表 - 改数据：按 user 截图 1 模板枚举 8 条业务线（保持 16 列布局）',
