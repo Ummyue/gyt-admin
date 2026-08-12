@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>资金占压表 - 豫港通 v1.7.99.221</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 0; }
+
+    /* v1.7.99.150 KPI 容器（2 卡片 + 工具提示气泡 + 公式说明） */
+    .report-kpi-row { padding: 16px 24px 0 24px; background: var(--bg-page); }
+    .fund-kpi-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .fund-kpi-card { background: #ECFDF5; border: 1px solid #A7F3D0; border-radius: 6px; padding: 16px 20px; position: relative; }
+    .fund-kpi-card.right { background: #FFF7ED; border-color: #FED7AA; }
+    .fund-kpi-card .kpi-title { font-size: 13px; color: var(--text-secondary); margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+    .fund-kpi-card .kpi-icon { width: 20px; height: 20px; background: #DC2626; border-radius: 4px; color: #fff; display: inline-flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 700; }
+    .fund-kpi-card .kpi-icon.right { background: #DC2626; }
+    .fund-kpi-card .kpi-value { font-size: 20px; font-weight: 600; color: var(--text-primary); display: inline-block; margin-right: 4px; }
+    .fund-kpi-card .kpi-suffix { font-size: 14px; color: var(--text-secondary); }
+    .fund-kpi-card .kpi-formula { font-size: 12px; color: var(--text-secondary); margin-top: 8px; line-height: 1.7; }
+    .fund-kpi-card .kpi-tip { position: absolute; top: 16px; right: 16px; background: #1F2937; color: #fff; font-size: 11px; padding: 6px 10px; border-radius: 4px; max-width: 200px; line-height: 1.4; }
+    .fund-kpi-card .kpi-tip::after { content: ''; position: absolute; bottom: -4px; left: 20px; width: 8px; height: 8px; background: #1F2937; transform: rotate(45deg); }
+
+    /* v1.7.99.150 复杂表头（业务线信息 7 列 + 上游款项 4 列 + 下游款项 4 列 + 资金占压 1 列） */
+    .fund-table-wrap { overflow-x: auto; }
+    .fund-table { width: 100%; min-width: 1800px; border-collapse: separate; border-spacing: 0; table-layout: fixed; }
+    .fund-table th, .fund-table td { padding: 10px 12px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .fund-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .fund-table th:last-child, .fund-table td:last-child { border-right: 0; }
+    .fund-table tr:last-child td { border-bottom: 0; }
+    .fund-table .group-header { text-align: center !important; font-weight: 600; color: var(--text-secondary) !important; }
+    .fund-table .col-num { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; text-align: right; white-space: nowrap; }
+    .fund-table .col-money { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; text-align: right; white-space: nowrap; }
+    .fund-table .bizline-name { font-size: 12px; line-height: 1.5; color: var(--text-primary); }
+    .fund-table .col-bizline-no { width: 5%; }
+    .fund-table .col-bizline-name { width: 10%; }
+    .fund-table .col-purchase { width: 7%; }
+    .fund-table .col-sales { width: 7%; }
+    .fund-table .col-biztype { width: 5%; }
+    .fund-table .col-seller { width: 6%; }
+    .fund-table .col-buyer { width: 6%; }
+    .fund-table .col-date { width: 5%; }
+    .fund-table .col-type { width: 5%; }
+    .fund-table .col-way { width: 4%; }
+    .fund-table .col-amount { width: 4%; }
+    .fund-table .col-occupy { width: 5%; }
+
+    /* 筛选区 */
+    .fund-filter-section { padding: 16px 20px; }
+    .fund-filter-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; margin-bottom: 12px; }
+    .fund-filter-item { display: flex; align-items: center; gap: 8px; }
+    .fund-filter-item .label { font-size: 13px; color: var(--text-tertiary); white-space: nowrap; }
+    .fund-filter-item .input, .fund-filter-item .select { flex: 1; }
+
+    /* 工具按钮 */
+    .fund-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item active" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <div class="breadcrumb-inline" style="padding: 16px 24px 0 24px;">
+          <a href="./cockpit.html">数据中心</a>
+          <span class="sep">/</span>
+          <span class="current">资金占压表</span>
+        </div>
+
+        <div style="padding: 8px 24px 0 24px;">
+          <h1 class="page-h1" style="margin: 0;">资金占压表</h1>
+        </div>
+
+        <!-- 顶部 2 个 KPI 卡片（v1.7.99.150 按 user 图 1：上游/下游 资金流水 + 工具提示气泡 + 公式说明） -->
+        <div class="report-kpi-row">
+          <div class="fund-kpi-grid">
+            <div class="fund-kpi-card">
+              <div class="kpi-tip">上游供应商资金流水=上游货款+上游价差-上游退款</div>
+              <div class="kpi-title">
+                <span class="kpi-icon">¥</span>
+                <span>上游供应商资金流水：</span>
+                <span class="kpi-value">20,000</span>
+                <span class="kpi-suffix">元</span>
+              </div>
+              <div class="kpi-formula">货款:20,000元；上游价差:10,000元；上游退款:10,000元</div>
+            </div>
+            <div class="fund-kpi-card right">
+              <div class="kpi-tip">下游采购商资金流水=下游货款+下游保证金+下游价差-下游退款</div>
+              <div class="kpi-title">
+                <span class="kpi-icon right">¥</span>
+                <span>下游采购商资金流水：</span>
+                <span class="kpi-value">20,000.88</span>
+                <span class="kpi-suffix">元</span>
+              </div>
+              <div class="kpi-formula">货款:10,000元；保证金:10,000元；下游价差:10,000元；下游退款:10,000元</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="cp-panel" style="margin: 16px 24px;">
+          <div class="cp-block">
+            <div class="fund-filter-section">
+              <div class="fund-filter-row">
+                <div class="fund-filter-item">
+                  <span class="label">采购商名称：</span>
+                  <input type="text" class="input" placeholder="请输入">
+                </div>
+                <div class="fund-filter-item">
+                  <span class="label">供应商名称：</span>
+                  <input type="text" class="input" placeholder="请输入">
+                </div>
+                <div class="fund-filter-item">
+                  <span class="label">业务单元：</span>
+                  <select class="select"><option>请选择</option><option>全款业务</option><option>预付业务</option><option>账期业务</option><option>总代业务</option></select>
+                </div>
+                <div class="fund-filter-item">
+                  <span class="label">上游款项日期：</span>
+                  <input type="date" class="input">
+                </div>
+                <div class="fund-filter-item">
+                  <span class="label">下游款项日期：</span>
+                  <input type="date" class="input">
+                </div>
+                <div class="fund-filter-item">
+                  <span class="label">支付方式：</span>
+                  <select class="select"><option>请选择</option><option>现金</option><option>商票</option><option>银票</option></select>
+                </div>
+                <div class="fund-filter-item">
+                  <span class="label">款项类型：</span>
+                  <select class="select"><option>请选择</option><option>货款</option><option>价差</option><option>退款</option><option>保证金</option></select>
+                </div>
+              </div>
+            </div>
+            <div class="fund-actions">
+              <button class="btn btn-default" onclick="Utils.toast('已查询', 'info')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+                查询
+              </button>
+              <button class="btn btn-default" onclick="Utils.toast('已重置', 'info')">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><path d="M3 4v5h5"/></svg>
+                重置
+              </button>
+              <button class="btn btn-text btn-sm" style="margin-left: auto;" onclick="openExportModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+          </div>
+
+          <div class="cp-block" style="padding: 0;">
+            <div class="fund-table-wrap">
+              <table class="fund-table">
+                <colgroup>
+                  <col style="width: 5%;">
+                  <col style="width: 10%;">
+                  <col style="width: 7%;">
+                  <col style="width: 7%;">
+                  <col style="width: 5%;">
+                  <col style="width: 6%;">
+                  <col style="width: 6%;">
+                  <col style="width: 5%;">
+                  <col style="width: 5%;">
+                  <col style="width: 4%;">
+                  <col style="width: 4%;">
+                  <col style="width: 5%;">
+                  <col style="width: 5%;">
+                  <col style="width: 4%;">
+                  <col style="width: 4%;">
+                  <col style="width: 5%;">
+                </colgroup>
+                <thead>
+                  <tr>
+                    <th colspan="7" class="group-header">业务线信息</th>
+                    <th colspan="4" class="group-header">上游款项</th>
+                    <th colspan="4" class="group-header">下游款项</th>
+                    <th rowspan="2" class="group-header" style="vertical-align: middle;">资金占压(元)</th>
+                  </tr>
+                  <tr>
+                    <th>业务线号</th>
+                    <th>业务线名称</th>
+                    <th>采购合同编号</th>
+                    <th>销售合同编号</th>
+                    <th>业务类型</th>
+                    <th>卖方企业</th>
+                    <th>买方企业</th>
+                    <th>日期</th>
+                    <th>类型</th>
+                    <th>方式</th>
+                    <th>金额(元)</th>
+                    <th>日期</th>
+                    <th>类型</th>
+                    <th>方式</th>
+                    <th>金额(元)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <!-- v1.7.99.221 按 user 截图 1 模板枚举 8 条业务线（每行 1 个完整数据链） -->
+                  <tr>
+                    <td class="col-num">YWX2023090601</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230901</td>
+                    <td class="col-num">XSHT20230901</td>
+                    <td>全款业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-01</td>
+                    <td>上游货款</td>
+                    <td>现金</td>
+                    <td class="col-money">30,000</td>
+                    <td>2024-12-07</td>
+                    <td>下游货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money">10,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090602</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230901</td>
+                    <td class="col-num">XSHT20230902</td>
+                    <td>全款业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-01</td>
+                    <td>上游价差</td>
+                    <td>商票</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-20</td>
+                    <td>下游保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money">10,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090603</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230901</td>
+                    <td class="col-num">XSHT20230903</td>
+                    <td>全款业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-04</td>
+                    <td>上游退款</td>
+                    <td>银票</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-21</td>
+                    <td>下游价差</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money">10,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090604</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230901</td>
+                    <td class="col-num">XSHT20230904</td>
+                    <td>总代业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-09</td>
+                    <td>上游货款</td>
+                    <td>现金</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-05</td>
+                    <td>下游货款</td>
+                    <td>银票</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money" style="color: #DC2626;">-10,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090605</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230902</td>
+                    <td class="col-num">XSHT20230905</td>
+                    <td>总代业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-30</td>
+                    <td>上游价差</td>
+                    <td>现金</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-06</td>
+                    <td>下游保证金</td>
+                    <td>银票</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money" style="color: var(--text-tertiary);">-</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090606</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230902</td>
+                    <td class="col-num">XSHT20230906</td>
+                    <td>全款业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-06</td>
+                    <td>上游退款</td>
+                    <td>现金</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-02</td>
+                    <td>下游退款</td>
+                    <td>现金</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money" style="color: var(--text-tertiary);">-</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090607</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230902</td>
+                    <td class="col-num">XSHT20230907</td>
+                    <td>全款业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-15</td>
+                    <td>上游货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">50,000</td>
+                    <td>2024-12-18</td>
+                    <td>下游货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">30,000</td>
+                    <td class="col-money">20,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">YWX2023090608</td>
+                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num">CGHT20230902</td>
+                    <td class="col-num">XSHT20230908</td>
+                    <td>总代业务</td>
+                    <td>xxx公司</td>
+                    <td>xxx公司</td>
+                    <td>2024-12-22</td>
+                    <td>上游价差</td>
+                    <td>商票</td>
+                    <td class="col-money">30,000</td>
+                    <td>2024-12-25</td>
+                    <td>下游保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">30,000</td>
+                    <td class="col-money">0</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 400 条记录 第 1 / 80 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">4</div>
+                  <div class="cp-pagination-page">5</div>
+                  <div class="cp-pagination-page">6</div>
+                  <div class="cp-pagination-page">7</div>
+                  <div class="cp-pagination-page">8</div>
+                  <div class="cp-pagination-page">9</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    window.Utils = window.Utils || { toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} } };
+  </script>
+
+  <!-- v1.7.99.163 数据导出弹窗（按 user 图1：4 组字段 checkbox + 全选联动） -->
+  <div class="modal-backdrop" id="exportModalBackdrop" style="display: none;" onclick="if (event.target === this) closeExportModal()"></div>
+  <div class="modal" id="exportModal" style="display: none; width: 600px; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); z-index: 1001;">
+    <div class="modal-header">
+      <div class="modal-title">数据导出</div>
+      <button class="modal-close" onclick="closeExportModal()" title="关闭" style="width: 24px; height: 24px; border: none; background: transparent; cursor: pointer; color: var(--text-tertiary);">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size: 13px; color: #EA580C; background: #FFF7ED; padding: 8px 12px; border-radius: 4px; margin-bottom: 16px;">提示：请按需勾选需要导出的字段，未勾选的字段不会导出哦</div>
+
+      <!-- 业务线信息字段 -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+          <input type="checkbox" data-group="biz" checked> 全选业务线信息字段
+        </label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 16px; margin-top: 8px; margin-left: 24px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 业务线号</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 业务线名称</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 采购合同编号</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 销售合同编号</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 业务类型</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 卖方企业</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="biz" checked> 买方企业</label>
+        </div>
+      </div>
+
+      <!-- 上游款项字段 -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+          <input type="checkbox" data-group="up" checked> 全选上游款项字段
+        </label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 16px; margin-top: 8px; margin-left: 24px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="up" checked> 日期</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="up" checked> 类型</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="up" checked> 方式</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="up" checked> 金额(元)</label>
+        </div>
+      </div>
+
+      <!-- 下游款项字段 -->
+      <div style="margin-bottom: 16px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+          <input type="checkbox" data-group="down" checked> 全选下游款项字段
+        </label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 16px; margin-top: 8px; margin-left: 24px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="down" checked> 日期</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="down" checked> 类型</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="down" checked> 方式</label>
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="down" checked> 金额(元)</label>
+        </div>
+      </div>
+
+      <!-- 其他字段 -->
+      <div style="margin-bottom: 8px;">
+        <label style="display: flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 500; cursor: pointer;">
+          <input type="checkbox" data-group="other" checked> 全选其他字段
+        </label>
+        <div style="display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px 16px; margin-top: 8px; margin-left: 24px;">
+          <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="checkbox" data-group="other" checked> 资金占压</label>
+        </div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeExportModal()">取消</button>
+      <button class="btn btn-primary" onclick="confirmExport()">确定</button>
+    </div>
+  </div>
+
+  <script>
+    // v1.7.99.163 数据导出弹窗：开/关 + 全选联动 + 取消/确定
+    (function() {
+      var groupNames = ['biz', 'up', 'down', 'other'];
+      groupNames.forEach(function(g) {
+        var all = document.querySelector('input[data-group="' + g + '"][data-all]');
+        var children = document.querySelectorAll('input[data-group="' + g + '"]');
+        // 第一个 checkbox 是"全选"
+        var first = children[0];
+        if (first) {
+          first.addEventListener('change', function() {
+            children.forEach(function(c) { c.checked = first.checked; });
+          });
+          // 子 checkbox 变化时联动全选
+          Array.prototype.forEach.call(children, function(c) {
+            c.addEventListener('change', function() {
+              var allChecked = true;
+              Array.prototype.forEach.call(children, function(x) { if (!x.checked) allChecked = false; });
+              first.checked = allChecked;
+            });
+          });
+        }
+      });
+    })();
+    function openExportModal() {
+      document.getElementById('exportModalBackdrop').style.display = 'flex';
+      document.getElementById('exportModal').style.display = 'block';
+    }
+    function closeExportModal() {
+      document.getElementById('exportModalBackdrop').style.display = 'none';
+      document.getElementById('exportModal').style.display = 'none';
+    }
+    function confirmExport() {
+      var count = document.querySelectorAll('#exportModal input[type="checkbox"]:checked').length - 4; // 减 4 个全选
+      if (count <= 0) {
+        window.Utils.toast('请至少勾选一个字段', 'warning');
+        return;
+      }
+      closeExportModal();
+      window.Utils.toast('已导出 ' + count + ' 个字段', 'success');
+    }
+  </script>
+</html>
