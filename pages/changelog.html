@@ -108,6 +108,20 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-12T20:30:00',
+          version: 'v1.7.99.224',
+          module: '资金占压表 - hotfix: 删 0601 第 4 行"—/—" 全空行（避免"—" 上行连续视觉串行）',
+          summary: '资金占压表（pages/report-fund.html）hotfix —— 删 YWX2023090601 业务线第 4 行"—/—" 全空行 + 改 业务线 7 列 rowspan=4→3 + 资金占压 1 列 rowspan=4→3（避免"—" 上行连续视觉串行到下一组 YWX2023090602）。1) user 反馈 2026-08-12 21:36"后边串行了，我画红框的是一部分"——0601 业务线下挂 4 行子明细，但第 4 行"— — — 0 | — — — 0"全是空（既无上数据也无下数据），与 0602 第 1 行"— — — 0 | 2024-12-15 退款 5,000" 形成"—" 上行连续视觉串行；2) 修法（v1.7.99.224）：a) 删 0601 第 4 行全空行（保留 3 行有数据的子明细：货款 30,000/退款 10,000/退款 10,000 + 货款 10,000/保证金 10,000/退款 10,000）；b) 0601 业务线 7 列 rowspan=4→3（业务线号/名称/采购合同/销售合同/类型/卖方/买方）；c) 0601 资金占压 1 列 rowspan=4→3；d) 资金占压值不变 = (30,000-10,000) - (10,000+10,000-10,000) = 10,000（删除空行不影响公式计算）；3) 其他 7 条业务线（0602-0608）不修改；4) 资金占压表页面 size：v1.7.99.223 34009 bytes → v1.7.99.224 33678 bytes（-331 bytes / -1%，因 删 1 行 tr）。',
+          changes: [
+            { type: 'modify', location: 'pages/report-fund.html <title>', before: '资金占压表 - 豫港通 v1.7.99.223', after: '资金占压表 - 豫港通 v1.7.99.224' },
+            { type: 'modify', location: 'pages/report-fund.html YWX2023090601 业务线 7 列 rowspan', before: 'v1.7.99.223 rowspan=4（4 行子明细）', after: 'v1.7.99.224 rowspan=3（删 1 行全空行后 3 行子明细）' },
+            { type: 'modify', location: 'pages/report-fund.html YWX2023090601 第 4 行全空行', before: 'v1.7.99.223 <tr>...8 个 <td>—</td> + 0 + 0 + rowspan=4 资金占压 10,000... 全空行', after: 'v1.7.99.224 整行删除（保留 3 行有数据子明细，资金占压 10,000 rowspan=3 单元格移到 row 3 末尾）' },
+            { type: 'modify', location: 'pages/report-fund.html YWX2023090601 资金占压 1 列 rowspan', before: 'v1.7.99.223 rowspan=4', after: 'v1.7.99.224 rowspan=3' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.223', after: '豫港通原型 v.1.7.99.224' }
+          ]
+        },
+
+        {
           ts: '2026-08-12T19:00:00',
           version: 'v1.7.99.223',
           module: '资金占压表 - 按 user 公式重做：16 列 + 1 业务线多行 + 业务线 7 列+资金占压 1 列合并',
