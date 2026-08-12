@@ -344,58 +344,58 @@
     // 注：用户复盘 v1.7.99.57 留的 10 行硬编码，按 v1.7.99.187 重新分配状态
     var MOCK_up = {
       'all': [
-        { contract: 'QY-LG-20250317-063',                       gtNo: 'SKBT202507240002-202601090004', buyer: '许昌龙岗发电有限责任公司',         seller: '许昌龙岗发电有限责任公司',         receiver: '许昌龙岗发电有限责任公司',         date: '2025-03-28' },
-        { contract: 'NMGZHCG202505015001',                      gtNo: 'SKBT202505280002-202601090002', buyer: '内蒙古中基科技有限公司',           seller: '内蒙古中基科技有限公司',           receiver: '内蒙古中基科技有限公司',           date: '2025-05-19' },
-        { contract: '燃料公司-2025-燃煤-0162',                  gtNo: 'SKBT202511280002-202601080003', buyer: '国能河南燃料有限公司',               seller: '国家能源集团焦作电厂有限公司',     receiver: '国家能源集团焦作电厂有限公司',     date: '2025-09-19' },
-        { contract: 'HNCIEGYLB25(销)H10-04',                    gtNo: 'SKBT202511270003-202601080001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-24' },
-        { contract: 'HNCIEMTB25(销)H07-03',                     gtNo: 'SKBT202508010006-202601040002', buyer: '陕西通途物资有限公司',               seller: '陕西通途物资有限公司',               receiver: '陕西通途物资有限公司',               date: '2025-07-18' },
-        { contract: 'HNCIEGYLB25(销)H10-06',                    gtNo: 'SKBT202511270006-202512300001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-11-06' },
-        { contract: 'HNCIEGYLB25(销)H10-05',                    gtNo: 'SKBT202511270004-202512290001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-17' },
-        { contract: 'HNJCK(销)20251215',                        gtNo: 'SKBT202512230002-202512250001', buyer: '重庆基创建设开发有限公司',           seller: '重庆基创建设开发有限公司',           receiver: '重庆基创建设开发有限公司',           date: '2025-12-18' },
-        { contract: '燃料公司-2025-燃煤-0238(濮阳)',           gtNo: 'SKBT202512020001-202512180003', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-23' },
-        { contract: '燃料公司-2025-燃煤-0234(济源)',           gtNo: 'SKBT202512110004-202512180001', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-15' }
+        { contract: 'QY-LG-20250317-063', status: 'effective',                       gtNo: 'SKBT202507240002-202601090004', buyer: '许昌龙岗发电有限责任公司',         seller: '许昌龙岗发电有限责任公司',         receiver: '许昌龙岗发电有限责任公司',         date: '2025-03-28' },
+        { contract: 'NMGZHCG202505015001', status: 'effective',                      gtNo: 'SKBT202505280002-202601090002', buyer: '内蒙古中基科技有限公司',           seller: '内蒙古中基科技有限公司',           receiver: '内蒙古中基科技有限公司',           date: '2025-05-19' },
+        { contract: '燃料公司-2025-燃煤-0162', status: 'effective',                  gtNo: 'SKBT202511280002-202601080003', buyer: '国能河南燃料有限公司',               seller: '国家能源集团焦作电厂有限公司',     receiver: '国家能源集团焦作电厂有限公司',     date: '2025-09-19' },
+        { contract: 'HNCIEGYLB25(销)H10-04', status: 'effective',                    gtNo: 'SKBT202511270003-202601080001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-24' },
+        { contract: 'HNCIEMTB25(销)H07-03', status: 'effective',                     gtNo: 'SKBT202508010006-202601040002', buyer: '陕西通途物资有限公司',               seller: '陕西通途物资有限公司',               receiver: '陕西通途物资有限公司',               date: '2025-07-18' },
+        { contract: 'HNCIEGYLB25(销)H10-06', status: 'awaiting-effect-voucher',                    gtNo: 'SKBT202511270006-202512300001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-11-06' },
+        { contract: 'HNCIEGYLB25(销)H10-05', status: 'rejected',                    gtNo: 'SKBT202511270004-202512290001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-17' },
+        { contract: 'HNJCK(销)20251215', status: 'voided',                        gtNo: 'SKBT202512230002-202512250001', buyer: '重庆基创建设开发有限公司',           seller: '重庆基创建设开发有限公司',           receiver: '重庆基创建设开发有限公司',           date: '2025-12-18' },
+        { contract: '燃料公司-2025-燃煤-0238(濮阳)', status: 'approving',           gtNo: 'SKBT202512020001-202512180003', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-23' },
+        { contract: '燃料公司-2025-燃煤-0234(济源)', status: 'approving',           gtNo: 'SKBT202512110004-202512180001', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-15' }
       ],
       'approving': [
-        { contract: '燃料公司-2025-燃煤-0238(濮阳)',           gtNo: 'SKBT202512020001-202512180003', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-23' },
-        { contract: '燃料公司-2025-燃煤-0234(济源)',           gtNo: 'SKBT202512110004-202512180001', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-15' }
+        { contract: '燃料公司-2025-燃煤-0238(濮阳)',           status: 'approving', gtNo: 'SKBT202512020001-202512180003', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-23' },
+        { contract: '燃料公司-2025-燃煤-0234(济源)',           status: 'approving', gtNo: 'SKBT202512110004-202512180001', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-15' }
       ],
       'awaiting-effect-voucher': [
-        { contract: 'HNCIEGYLB25(销)H10-06',                    gtNo: 'SKBT202511270006-202512300001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-11-06' }
+        { contract: 'HNCIEGYLB25(销)H10-06', status: 'awaiting-effect-voucher', gtNo: 'SKBT202511270006-202512300001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-11-06' }
       ],
       'effective': [
-        { contract: 'QY-LG-20250317-063',                       gtNo: 'SKBT202507240002-202601090004', buyer: '许昌龙岗发电有限责任公司',         seller: '许昌龙岗发电有限责任公司',         receiver: '许昌龙岗发电有限责任公司',         date: '2025-03-28' },
-        { contract: 'NMGZHCG202505015001',                      gtNo: 'SKBT202505280002-202601090002', buyer: '内蒙古中基科技有限公司',           seller: '内蒙古中基科技有限公司',           receiver: '内蒙古中基科技有限公司',           date: '2025-05-19' },
-        { contract: '燃料公司-2025-燃煤-0162',                  gtNo: 'SKBT202511280002-202601080003', buyer: '国能河南燃料有限公司',               seller: '国家能源集团焦作电厂有限公司',     receiver: '国家能源集团焦作电厂有限公司',     date: '2025-09-19' },
-        { contract: 'HNCIEGYLB25(销)H10-04',                    gtNo: 'SKBT202511270003-202601080001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-24' },
-        { contract: 'HNCIEMTB25(销)H07-03',                     gtNo: 'SKBT202508010006-202601040002', buyer: '陕西通途物资有限公司',               seller: '陕西通途物资有限公司',               receiver: '陕西通途物资有限公司',               date: '2025-07-18' }
+        { contract: 'QY-LG-20250317-063',                       status: 'effective', gtNo: 'SKBT202507240002-202601090004', buyer: '许昌龙岗发电有限责任公司',         seller: '许昌龙岗发电有限责任公司',         receiver: '许昌龙岗发电有限责任公司',         date: '2025-03-28' },
+        { contract: 'NMGZHCG202505015001',                      status: 'effective', gtNo: 'SKBT202505280002-202601090002', buyer: '内蒙古中基科技有限公司',           seller: '内蒙古中基科技有限公司',           receiver: '内蒙古中基科技有限公司',           date: '2025-05-19' },
+        { contract: '燃料公司-2025-燃煤-0162',                  status: 'effective', gtNo: 'SKBT202511280002-202601080003', buyer: '国能河南燃料有限公司',               seller: '国家能源集团焦作电厂有限公司',     receiver: '国家能源集团焦作电厂有限公司',     date: '2025-09-19' },
+        { contract: 'HNCIEGYLB25(销)H10-04',                    status: 'effective', gtNo: 'SKBT202511270003-202601080001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-24' },
+        { contract: 'HNCIEMTB25(销)H07-03',                     status: 'effective', gtNo: 'SKBT202508010006-202601040002', buyer: '陕西通途物资有限公司',               seller: '陕西通途物资有限公司',               receiver: '陕西通途物资有限公司',               date: '2025-07-18' }
       ],
       'rejected': [
-        { contract: 'HNCIEGYLB25(销)H10-05',                    gtNo: 'SKBT202511270004-202512290001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-17' }
+        { contract: 'HNCIEGYLB25(销)H10-05',                    status: 'rejected', gtNo: 'SKBT202511270004-202512290001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-17' }
       ],
       'voided': [
-        { contract: 'HNJCK(销)20251215',                        gtNo: 'SKBT202512230002-202512250001', buyer: '重庆基创建设开发有限公司',           seller: '重庆基创建设开发有限公司',           receiver: '重庆基创建设开发有限公司',           date: '2025-12-18' }
+        { contract: 'HNJCK(销)20251215',                        status: 'voided', gtNo: 'SKBT202512230002-202512250001', buyer: '重庆基创建设开发有限公司',           seller: '重庆基创建设开发有限公司',           receiver: '重庆基创建设开发有限公司',           date: '2025-12-18' }
       ]
     };
 
     // 下游货转 MOCK（4 条 = 1 审批中 + 2 已生效 + 1 已作废）
     var MOCK_down = {
       'all': [
-        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607300001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-01-31', qty: '50',     transport: '中欧班列-东星线路' },
-        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607290005', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-04-02', qty: '474.9',  transport: '中欧班列-东星线路' },
-        { contract: 'HNZZ-XZH-20260215-001', gtNo: 'SKBT202602200001-202603050001', buyer: '徐州中汉物流有限公司',             seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-20', qty: '1,200',  transport: '中欧班列-东星线路' },
-        { contract: 'YL-MSXS-20260218-002', gtNo: 'SKBT202602250001-202603010001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-25', qty: '85.5',   transport: '中欧班列-东星线路' }
+        { contract: 'YL-MSXS-20260127-s', status: 'effective', gtNo: 'SKBT202607040003-202607300001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-01-31', qty: '50',     transport: '中欧班列-东星线路' },
+        { contract: 'YL-MSXS-20260127-s', status: 'voided', gtNo: 'SKBT202607040003-202607290005', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-04-02', qty: '474.9',  transport: '中欧班列-东星线路' },
+        { contract: 'HNZZ-XZH-20260215-001', status: 'approving', gtNo: 'SKBT202602200001-202603050001', buyer: '徐州中汉物流有限公司',             seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-20', qty: '1,200',  transport: '中欧班列-东星线路' },
+        { contract: 'YL-MSXS-20260218-002', status: 'effective', gtNo: 'SKBT202602250001-202603010001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-25', qty: '85.5',   transport: '中欧班列-东星线路' }
       ],
       'approving': [
-        { contract: 'HNZZ-XZH-20260215-001', gtNo: 'SKBT202602200001-202603050001', buyer: '徐州中汉物流有限公司',             seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-20', qty: '1,200',  transport: '中欧班列-东星线路' }
+        { contract: 'HNZZ-XZH-20260215-001', status: 'approving', gtNo: 'SKBT202602200001-202603050001', buyer: '徐州中汉物流有限公司',             seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-20', qty: '1,200',  transport: '中欧班列-东星线路' }
       ],
       'awaiting-effect-voucher': [],
       'effective': [
-        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607300001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-01-31', qty: '50',     transport: '中欧班列-东星线路' },
-        { contract: 'YL-MSXS-20260218-002', gtNo: 'SKBT202602250001-202603010001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-25', qty: '85.5',   transport: '中欧班列-东星线路' }
+        { contract: 'YL-MSXS-20260127-s', status: 'effective', gtNo: 'SKBT202607040003-202607300001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-01-31', qty: '50',     transport: '中欧班列-东星线路' },
+        { contract: 'YL-MSXS-20260218-002', status: 'effective', gtNo: 'SKBT202602250001-202603010001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-25', qty: '85.5',   transport: '中欧班列-东星线路' }
       ],
       'rejected': [],
       'voided': [
-        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607290005', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-04-02', qty: '474.9',  transport: '中欧班列-东星线路' }
+        { contract: 'YL-MSXS-20260127-s', status: 'voided', gtNo: 'SKBT202607040003-202607290005', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-04-02', qty: '474.9',  transport: '中欧班列-东星线路' }
       ]
     };
 
@@ -429,7 +429,7 @@
             '<td>' + r.date + '</td>' +
             '<td class="col-action" style="text-align: right;">' +
               '<a href="./goods-transfer-up-detail.html?status=' + key + '">查看</a>' +
-              (key === "awaiting-effect-voucher" ? '<a href="javascript:void(0);" style="color: #1E40AF;" onclick="openUploadDrawer(this)">上传已生效单据</a>' : "") +
+              (r.status === "awaiting-effect-voucher" ? '<a href="javascript:void(0);" style="color: #1E40AF;" onclick="openUploadDrawer(this)">上传已生效单据</a>' : "") +
               '<a href="javascript:void(0);" style="color: #dc2626;" onclick="confirmVoid(this)">作废</a>' +
               '<a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>' +
             '</td>' +
@@ -451,7 +451,7 @@
             '<td><span class="tag ' + st.color + '">' + st.tag + '</span></td>' +
             '<td class="col-action" style="text-align: right;">' +
               '<a href="./goods-transfer-down-detail.html?status=' + key + '">查看</a>' +
-              (key === "awaiting-effect-voucher" ? '<a href="javascript:void(0);" style="color: #1E40AF;" onclick="openUploadDrawer(this)">上传已生效单据</a>' : "") +
+              (r.status === "awaiting-effect-voucher" ? '<a href="javascript:void(0);" style="color: #1E40AF;" onclick="openUploadDrawer(this)">上传已生效单据</a>' : "") +
               (key !== 'voided' ? '<a href="javascript:void(0);" style="color: #dc2626;" onclick="confirmVoid(this)">作废</a>' : '') +
             '</td>' +
           '</tr>';
