@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>货转管理 - 豫港通 v1.7.99.218</title>
+  <title>货转管理 - 豫港通 v1.7.99.219</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/list-page.css">
   <style>
@@ -40,38 +40,42 @@
       background: var(--color-primary);
     }
 
-    /* v1.7.99.218 上传已生效单据 - 右侧抽屉（按 payment-list.html cp-drawer 模式） */
-    .cp-drawer-overlay {
+    /* v1.7.99.219 上传已生效单据 - 居中弹窗（v1.7.99.218 drawer 改 modal） */
+    .cp-modal-overlay {
       position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
       z-index: 999; display: none;
     }
-    .cp-drawer-overlay.open { display: block; }
-    .cp-drawer {
-      position: fixed; top: 0; right: 0; bottom: 0;
-      width: 560px; max-width: 95vw;
-      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12);
+    .cp-modal-overlay.open { display: block; }
+    .cp-modal {
+      position: fixed; top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      width: 720px; max-width: 95vw;
+      max-height: 90vh; overflow-y: auto;
+      background: #fff; border-radius: 8px; box-shadow: 0 10px 40px rgba(0,0,0,0.18);
       z-index: 1000; display: none; flex-direction: column;
     }
-    .cp-drawer.open { display: flex; }
-    .cp-drawer-header {
-      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+    .cp-modal.open { display: flex; }
+    .cp-modal-header {
+      padding: 18px 28px; border-bottom: 1px solid var(--border-color);
       display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
-    .cp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-    .cp-drawer-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
-    .cp-drawer-close:hover { color: var(--text-primary); }
-    .cp-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
-    .cp-drawer-footer {
-      padding: 12px 24px; border-top: 1px solid var(--border-color);
-      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    .cp-modal-title { font-size: 17px; font-weight: 600; color: var(--text-primary); }
+    .cp-modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 22px; line-height: 1; padding: 4px 8px; }
+    .cp-modal-close:hover { color: var(--text-primary); }
+    .cp-modal-body { flex: 1; padding: 24px 28px; overflow-y: auto; }
+    .cp-modal-footer {
+      padding: 16px 28px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 12px; flex-shrink: 0;
     }
-    .upload-tip { background: #EEF4FF; border: 1px solid #C7DBFF; border-radius: 4px; padding: 12px 16px; font-size: 12px; color: var(--text-secondary); margin-top: 12px; }
+    .upload-tip { background: #EEF4FF; border: 1px solid #C7DBFF; border-radius: 4px; padding: 12px 16px; font-size: 12px; color: var(--text-secondary); margin-top: 16px; }
     .upload-tip .label { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
     .upload-file-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--border-color); font-size: 13px; }
     .upload-file-row:last-child { border-bottom: none; }
     .upload-file-row .file-name { color: var(--color-primary); flex: 1; }
     .upload-file-row .file-remove { color: var(--text-tertiary); cursor: pointer; }
     .upload-file-row .file-remove:hover { color: var(--color-danger); }
+    /* v1.7.99.219 上传按钮居中（按 user 图 1） */
+    .upload-file-trigger { display: flex; justify-content: center; padding: 4px 0; }
   </style>
 </head>
 <body>
@@ -520,17 +524,17 @@
   </div>
   <!-- /main-content -->
 
-  <!-- v1.7.99.218 上传已生效单据 弹窗 -->
-  <div class="cp-drawer-overlay" id="uploadDrawerOverlay" onclick="closeUploadDrawer()"></div>
-  <div class="cp-drawer" id="uploadDrawer" role="dialog" aria-labelledby="uploadDrawerTitle">
-    <div class="cp-drawer-header">
-      <div class="cp-drawer-title" id="uploadDrawerTitle">上传已生效单据</div>
-      <span class="cp-drawer-close" onclick="closeUploadDrawer()" title="关闭">×</span>
+  <!-- v1.7.99.219 上传已生效单据 居中弹窗（v1.7.99.218 drawer 改 modal + 删单据类型字段） -->
+  <div class="cp-modal-overlay" id="uploadModalOverlay" onclick="closeUploadModal()"></div>
+  <div class="cp-modal" id="uploadModal" role="dialog" aria-labelledby="uploadModalTitle">
+    <div class="cp-modal-header">
+      <div class="cp-modal-title" id="uploadModalTitle">上传已生效单据</div>
+      <span class="cp-modal-close" onclick="closeUploadModal()" title="关闭">×</span>
     </div>
-    <div class="cp-drawer-body">
+    <div class="cp-modal-body">
       <!-- 货转基本信息（只读展示） -->
-      <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px;">
-        <div style="display: flex; margin-bottom: 6px;">
+      <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 6px; padding: 14px 18px; margin-bottom: 24px; font-size: 13px;">
+        <div style="display: flex; margin-bottom: 8px;">
           <span style="color: var(--text-tertiary); width: 80px; flex-shrink: 0;">货转编号</span>
           <span id="uploadGtNo" style="color: var(--text-primary); font-weight: 500;"></span>
         </div>
@@ -540,22 +544,12 @@
         </div>
       </div>
 
-      <!-- 单据类型（v1.7.99.218 锁定：4 种类型） -->
-      <div class="form-field" style="margin-bottom: 16px;">
-        <label class="form-label" style="display: block; margin-bottom: 6px;"><span style="color: var(--color-danger);">*</span> 单据类型</label>
-        <select class="select" id="uploadDocType" style="width: 100%;">
-          <option value="">请选择单据类型</option>
-          <option value="已生效合同">已生效合同</option>
-          <option value="已生效发票">已生效发票</option>
-          <option value="已生效运单">已生效运单</option>
-          <option value="其他">其他</option>
-        </select>
-      </div>
-
-      <!-- 上传文件 -->
-      <div class="form-field" style="margin-bottom: 16px;">
-        <label class="form-label" style="display: block; margin-bottom: 6px;"><span style="color: var(--color-danger);">*</span> 上传文件</label>
-        <button type="button" class="btn btn-default" onclick="mockUploadFile()">+ 上传</button>
+      <!-- 上传文件（v1.7.99.219 删掉"单据类型"字段） -->
+      <div class="form-field" style="margin-bottom: 0;">
+        <label class="form-label" style="display: block; margin-bottom: 12px;"><span style="color: var(--color-danger);">*</span> 上传文件</label>
+        <div class="upload-file-trigger">
+          <button type="button" class="btn btn-default" style="min-width: 200px;" onclick="mockUploadFile()">+ 上传</button>
+        </div>
         <div id="uploadFileList" style="margin-top: 8px;"></div>
       </div>
 
@@ -565,14 +559,14 @@
         <div>可支持格式为 png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100M 的文件。</div>
       </div>
     </div>
-    <div class="cp-drawer-footer">
-      <button type="button" class="btn btn-secondary" onclick="closeUploadDrawer()">取消</button>
+    <div class="cp-modal-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeUploadModal()">取消</button>
       <button type="button" class="btn btn-primary" onclick="submitUpload()">确认上传</button>
     </div>
   </div>
 
   <script>
-    // v1.7.99.218 上传已生效单据 弹窗
+    // v1.7.99.219 上传已生效单据 居中弹窗（v1.7.99.218 drawer 改 modal + 删单据类型字段）
     var currentUploadRow = null;
     var uploadedFiles = [];
 
@@ -588,20 +582,19 @@
       var gtNo = cells[1] ? cells[1].innerText.trim() : '';
       document.getElementById('uploadGtNo').innerText = gtNo;
       document.getElementById('uploadContractNo').innerText = contractNo;
-      document.getElementById('uploadDocType').value = '';
       uploadedFiles = [];
       renderUploadedFiles();
-      document.getElementById('uploadDrawerOverlay').classList.add('open');
-      document.getElementById('uploadDrawer').classList.add('open');
+      document.getElementById('uploadModalOverlay').classList.add('open');
+      document.getElementById('uploadModal').classList.add('open');
     }
 
-    function closeUploadDrawer() {
-      document.getElementById('uploadDrawerOverlay').classList.remove('open');
-      document.getElementById('uploadDrawer').classList.remove('open');
+    function closeUploadModal() {
+      document.getElementById('uploadModalOverlay').classList.remove('open');
+      document.getElementById('uploadModal').classList.remove('open');
     }
 
     function mockUploadFile() {
-      // v1.7.99.218 mock 上传：弹窗选文件后 mock 一个文件名
+      // v1.7.99.219 mock 上传：弹窗选文件后 mock 一个文件名
       var mockNames = ['已生效合同_001.pdf', '已生效发票_002.pdf', '运单_20251127.pdf', '补充协议.docx'];
       var name = mockNames[Math.floor(Math.random() * mockNames.length)] + ' (' + (uploadedFiles.length + 1) + ')';
       uploadedFiles.push(name);
@@ -628,18 +621,14 @@
     }
 
     function submitUpload() {
-      var docType = document.getElementById('uploadDocType').value;
-      if (!docType) {
-        window.Utils.toast('请选择单据类型', 'error');
-        return;
-      }
+      // v1.7.99.219 去掉"单据类型"字段，校验只剩"至少 1 个文件"
       if (uploadedFiles.length === 0) {
         window.Utils.toast('请上传文件', 'error');
         return;
       }
       // mock：成功 toast + 关闭弹窗
       window.Utils.toast('已提交上传，' + uploadedFiles.length + ' 个文件待审核', 'success');
-      closeUploadDrawer();
+      closeUploadModal();
     }
   </script>
 </body>

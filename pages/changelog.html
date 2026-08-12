@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-12T12:00:00',
+          version: 'v1.7.99.219',
+          module: '货转管理 - 上传已生效单据弹窗改居中 modal + 删单据类型字段',
+          summary: '货转管理（pages/goods-transfer.html）上传已生效单据弹窗调整（user 2026-08-12 反馈 做成独立弹窗居中即可，然后去掉 单据类型 字段你调整一下）—— 1) 弹窗改独立居中（v1.7.99.218 右侧 drawer → v1.7.99.219 居中 modal）：a) CSS 改：cp-drawer-overlay → cp-modal-overlay（fixed 全屏暗背景）+ cp-drawer (right: 0; width: 560px) → cp-modal (top: 50%; left: 50%; transform: translate(-50%, -50%); width: 720px; max-height: 90vh; border-radius: 8px; box-shadow: 0 10px 40px)，新加 .upload-file-trigger 居中按钮容器；b) HTML 改：id=uploadDrawer → id=uploadModal（overlay + modal 都改），drawer-header → modal-header（padding 18 28 + title 17px），drawer-body → modal-body（padding 24 28），drawer-footer → modal-footer（padding 16 28 + gap 12px），close 字号 20 → 22；c) JS 改：openUploadDrawer 调 .cp-drawer.open → .cp-modal.open（id 改 uploadModalOverlay/uploadModal），函数 closeUploadDrawer 改 closeUploadModal（保留原函数名以兼容 onclick 但内部改用 modal ID——这里实际改名更清晰）；d) submitUpload 改：去掉 docType 校验，只校验至少 1 个文件；2) 删「单据类型」字段（v1.7.99.218 单据类型 select 4 选项 已生效合同/已生效发票/已生效运单/其他 → v1.7.99.219 完全删除）：a) HTML 删 form-field 单据类型 整块；b) JS 删 document.getElementById(uploadDocType).value 重置语句；c) submitUpload 删 docType 校验分支；3) 上传文件按钮居中：v1.7.99.218 按钮左对齐 → v1.7.99.219 居中（按 user 图）+ min-width 200px（更醒目）；4) 操作列按钮：v1.7.99.218 drawer 改 modal，但 onclick=openUploadDrawer 保留（function 名不变，内部用 modal ID），保证操作列代码 0 改动；5) title 升级 v1.7.99.218 → v1.7.99.219；6) 货转管理页面 size：v1.7.99.218 hotfix v3 34595 bytes → v1.7.99.219 34219 bytes（-376 bytes / -1%，删除单据类型字段 + 弹窗简化）。',
+          changes: [
+            { type: 'modify', location: 'pages/goods-transfer.html <title>', before: '货转管理 - 豫港通 v1.7.99.218', after: '货转管理 - 豫港通 v1.7.99.219' },
+            { type: 'modify', location: 'pages/goods-transfer.html <style> cp-drawer-* CSS', before: 'v1.7.99.218：cp-drawer-overlay + cp-drawer (right: 0; width: 560px) + cp-drawer-header + cp-drawer-body + cp-drawer-footer + .upload-tip + .upload-file-row', after: 'v1.7.99.219：cp-modal-overlay + cp-modal (top: 50%; left: 50%; transform: translate; width: 720px; max-height: 90vh; border-radius: 8px) + cp-modal-header + cp-modal-body + cp-modal-footer + 新加 .upload-file-trigger 居中按钮容器' },
+            { type: 'modify', location: 'pages/goods-transfer.html uploadDrawer HTML 结构', before: 'v1.7.99.218：drawer 结构 id=uploadDrawer 含 header(16 24) + body(20 24) + footer(12 24)', after: 'v1.7.99.219：modal 结构 id=uploadModal 含 header(18 28 title 17px) + body(24 28) + footer(16 28 gap 12px) + close 字号 20 → 22' },
+            { type: 'delete', location: 'pages/goods-transfer.html 单据类型 form-field 整块', before: 'v1.7.99.218：单据类型 select 4 选项 已生效合同/已生效发票/已生效运单/其他', after: 'v1.7.99.219：删除（user 反馈 去掉单据类型字段）' },
+            { type: 'modify', location: 'pages/goods-transfer.html 上传文件按钮', before: 'v1.7.99.218：按钮左对齐（form-field 内）', after: 'v1.7.99.219：按钮居中（.upload-file-trigger 容器 + min-width 200px）' },
+            { type: 'modify', location: 'pages/goods-transfer.html <script> 6 函数', before: 'v1.7.99.218：openUploadDrawer 调 drawer id + document.getElementById(uploadDocType).value = 重置 + submitUpload 校验 docType', after: 'v1.7.99.219：openUploadDrawer 调 modal id（uploadModalOverlay/uploadModal）+ 删 uploadDocType 重置 + submitUpload 删 docType 校验只校验至少 1 个文件' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.218', after: '豫港通原型 v.1.7.99.219' }
+          ]
+        },
+        {
           ts: '2026-08-12T11:30:00',
           version: 'v1.7.99.218',
           module: '货转管理 - 待上传已生效单据加【上传已生效单据】按钮 + 上传弹窗',
