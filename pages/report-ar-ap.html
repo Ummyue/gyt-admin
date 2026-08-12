@@ -3,26 +3,37 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>应收应付表 - 豫港通 v1.7.99.217</title>
+  <title>应收应付明细表（按业务线汇总） - 豫港通 v1.7.99.220</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/list-page.css">
   <style>
     .page-body { padding: 0; }
 
-    /* v1.7.99.97 顶部 KPI 容器：与设计系统 metric-cards 一致 */
+    /* v1.7.99.220 顶部 KPI 容器 */
     .report-kpi-row { padding: 16px 24px 0 24px; background: var(--bg-page); }
     .report-kpi-row .metric-cards { padding: 0; }
 
-    /* v1.7.99.97 表格行点击样式 */
-    .cp-row-clickable { cursor: pointer; transition: background 0.15s; }
-    .cp-row-clickable:hover { background: #F0F7FF !important; }
+    /* v1.7.99.220 3 大分组背景色（按 user 图 1：上游淡绿 / 下游淡粉 / 资金占压淡紫） */
+    .arap-group-up { background: #ECFDF5; }
+    .arap-group-down { background: #FEF2F2; }
+    .arap-group-occupy { background: #FAF5FF; }
 
-    /* v1.7.99.97 进度条小条（库存表） */
-    .bar-mini { display: inline-block; vertical-align: middle; width: 50px; height: 6px; background: #E2E8F0; border-radius: 3px; margin-right: 6px; position: relative; }
-    .bar-mini::after { content: ''; position: absolute; left: 0; top: 0; height: 100%; border-radius: 3px; }
-    .bar-mini.warn::after { background: #F59E0B; }
-    .bar-mini.danger::after { background: #DC2626; }
-    .bar-mini.ok::after { background: #15803D; }
+    /* v1.7.99.220 上下游客户列双行展示 */
+    .bizline-customer-cell { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; font-size: 12px; }
+    .bizline-customer-up { color: #15803D; }
+    .bizline-customer-down { color: #B91C1C; }
+    .bizline-customer-link { text-decoration: underline; text-decoration-style: dashed; text-underline-offset: 2px; }
+
+    /* v1.7.99.220 采购合同编号列双行展示 */
+    .bizline-contract-cell { display: flex; flex-direction: column; gap: 2px; padding: 6px 0; font-size: 12px; }
+    .bizline-contract-pc { color: #1E40AF; }
+    .bizline-contract-sc { color: #7E22CE; }
+
+    /* v1.7.99.220 金额列右对齐 + 绿/红色字 */
+    .arap-num { text-align: right; font-variant-numeric: tabular-nums; }
+    .arap-paid { color: #15803D; }
+    .arap-unpaid { color: #B91C1C; }
+    .arap-occupy { color: #B91C1C; }
   </style>
 </head>
 <body>
@@ -34,9 +45,9 @@
     <div class="topbar-menu">
       <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
       <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
-      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
       <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
-      <a class="topbar-menu-item active" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
       <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
       <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
       <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
@@ -65,13 +76,13 @@
         <div class="breadcrumb-inline" style="padding: 16px 24px 0 24px;">
           <a href="./cockpit.html">数据中心</a>
           <span class="sep">/</span>
-          <span class="current">应收应付表</span>
+          <span class="current">应收应付明细表</span>
         </div>
 
         <div style="display: flex; align-items: baseline; justify-content: space-between; padding: 8px 24px 12px 24px;">
           <div>
-            <h1 class="page-h1" style="margin: 0;">应收应付表</h1>
-            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">所有应收/应付单据按合同维度展开（合同号 / 客户或供应商 / 应收/付金额 / 已收/付 / 未收/付），数据来源于回款 + 付款管理</div>
+            <h1 class="page-h1" style="margin: 0;">应收应付明细表（按业务线汇总）</h1>
+            <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">按业务线维度汇总应收 / 应付 / 资金占压数据，数据来源 = 上游结算单 + 下游结算单 + 付款记录 + 回款流水 + 退款记录 + 入库/出库单</div>
           </div>
           <div style="display: flex; gap: 8px;">
             <button class="btn btn-default">
@@ -81,98 +92,338 @@
           </div>
         </div>
 
+        <!-- v1.7.99.220 顶部 4 KPI 卡片（按 8 行数据汇总） -->
         <div class="report-kpi-row">
           <div class="metric-cards">
-        <div class="metric-card">
-          <div class="metric-icon blue">📥</div>
-          <div class="metric-content">
-            <div class="metric-label">应收总额</div>
-            <div class="metric-value">¥ 8.65<span class="metric-suffix">亿</span></div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon green">✅</div>
-          <div class="metric-content">
-            <div class="metric-label">已收金额</div>
-            <div class="metric-value">¥ 7.20<span class="metric-suffix">亿</span></div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon orange">⏰</div>
-          <div class="metric-content">
-            <div class="metric-label">未收金额</div>
-            <div class="metric-value">¥ 1.45<span class="metric-suffix">亿</span></div>
-          </div>
-        </div>
-        <div class="metric-card">
-          <div class="metric-icon purple">📤</div>
-          <div class="metric-content">
-            <div class="metric-label">应付总额</div>
-            <div class="metric-value">¥ 5.30<span class="metric-suffix">亿</span></div>
-          </div>
-        </div>
+            <div class="metric-card">
+              <div class="metric-icon blue">📤</div>
+              <div class="metric-content">
+                <div class="metric-label">应付总额</div>
+                <div class="metric-value">¥ 2,760<span class="metric-suffix">万</span></div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon orange">📥</div>
+              <div class="metric-content">
+                <div class="metric-label">应收总额</div>
+                <div class="metric-value">¥ 3,863<span class="metric-suffix">万</span></div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon purple">📦</div>
+              <div class="metric-content">
+                <div class="metric-label">库存资金占压</div>
+                <div class="metric-value">¥ 344<span class="metric-suffix">万</span></div>
+              </div>
+            </div>
+            <div class="metric-card">
+              <div class="metric-icon red">⚠️</div>
+              <div class="metric-content">
+                <div class="metric-label">净占压金额</div>
+                <div class="metric-value">¥ 908<span class="metric-suffix">万</span></div>
+              </div>
+            </div>
           </div>
         </div>
 
         <div class="cp-panel" style="margin: 16px 24px;">
 
+          <!-- v1.7.99.220 筛选区（6 字段，3 列 grid，无"操作"列无"查询/重置"按钮） -->
           <div class="cp-block">
             <div class="cp-filter-summary">
               <div class="cp-filter-summary-left">
                 当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
                 <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
               </div>
+              <button class="btn btn-text btn-sm">数据导出</button>
             </div>
-            <div class="cp-filter">
+            <div class="cp-filter" style="grid-template-columns: repeat(3, 1fr);">
               <div class="cp-filter-item">
-                <span class="cp-filter-label">类型</span>
-                <select class="select"><option>全部</option><option>应收</option><option>应付</option></select>
+                <span class="cp-filter-label">业务线号</span>
+                <input type="text" class="input" placeholder="请输入业务线号（模糊）">
               </div>
               <div class="cp-filter-item">
-                <span class="cp-filter-label">客户/供应商</span>
-                <input type="text" class="input" placeholder="请输入客户或供应商">
+                <span class="cp-filter-label">采购合同编号</span>
+                <input type="text" class="input" placeholder="PC-YYYY-NNN（模糊）">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">上下游客户</span>
+                <input type="text" class="input" placeholder="上游采购方/下游销售方（模糊）">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">进项发票状态</span>
+                <select class="select">
+                  <option>全部</option>
+                  <option>已开</option>
+                  <option>部分</option>
+                  <option>未开</option>
+                  <option>待开</option>
+                </select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">销项发票状态</span>
+                <select class="select">
+                  <option>全部</option>
+                  <option>已开</option>
+                  <option>部分</option>
+                  <option>未开</option>
+                  <option>待开</option>
+                </select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">资金占压</span>
+                <select class="select">
+                  <option>全部</option>
+                  <option>有占压</option>
+                  <option>无占压</option>
+                </select>
               </div>
             </div>
           </div>
 
+          <!-- v1.7.99.220 13 列表格（按 user 图 1：3 大分组 = 上游 4 列 + 下游 4 列 + 资金占压 2 列 + 业务线 3 列） -->
           <div class="cp-block" style="padding: 0;">
             <div class="cp-table-wrap">
-              <table class="cp-table" style="table-layout: fixed; width: 100%; min-width: 100%;">
+              <table class="cp-table" style="table-layout: fixed; width: 100%; min-width: 1620px;">
                 <thead>
+                  <!-- 第一行：3 大分组表头 -->
                   <tr>
-                    <th style="width: 11%;">单据编号</th>
-                    <th style="width: 6%;">类型</th>
-                    <th style="width: 12%;">关联合同</th>
-                    <th style="width: 10%;">客户/供应商</th>
-                    <th style="width: 10%;">应收/付金额</th>
-                    <th style="width: 9%;">已收/付</th>
-                    <th style="width: 8%;">未收/付</th>
-                    <th style="width: 7%;">操作</th>
+                    <th colspan="3" style="background: var(--bg-page); border-right: 2px solid var(--border-color);">业务线信息</th>
+                    <th colspan="4" class="arap-group-up" style="border-right: 2px solid var(--border-color);">上游（采购/应付）</th>
+                    <th colspan="4" class="arap-group-down" style="border-right: 2px solid var(--border-color);">下游（销售/应收）</th>
+                    <th colspan="2" class="arap-group-occupy">资金占压</th>
+                  </tr>
+                  <!-- 第二行：13 列明细表头 -->
+                  <tr>
+                    <th style="width: 110px;">业务线号</th>
+                    <th style="width: 180px;">采购合同编号</th>
+                    <th style="width: 200px; border-right: 2px solid var(--border-color);">上下游客户</th>
+                    <th style="width: 130px;" class="arap-group-up">上游应付（元）</th>
+                    <th style="width: 130px;" class="arap-group-up">上游已付（元）</th>
+                    <th style="width: 130px;" class="arap-group-up">上游未付（元）</th>
+                    <th style="width: 90px; border-right: 2px solid var(--border-color);" class="arap-group-up">进项发票</th>
+                    <th style="width: 130px;" class="arap-group-down">下游应收（元）</th>
+                    <th style="width: 130px;" class="arap-group-down">下游已收（元）</th>
+                    <th style="width: 130px;" class="arap-group-down">下游未收（元）</th>
+                    <th style="width: 90px; border-right: 2px solid var(--border-color);" class="arap-group-down">销项发票</th>
+                    <th style="width: 130px;" class="arap-group-occupy">库存资金占压</th>
+                    <th style="width: 130px;" class="arap-group-occupy">净占压金额</th>
                   </tr>
                 </thead>
                 <tbody>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKJSD202601150001</td><td>DLXLC-DSRMT-202601-0011</td><td>陕煤物流</td><td style="text-align: right;" class="col-num">¥ 250,000,000</td><td style="text-align: right;" class="col-num">¥ 180,000,000</td><td style="text-align: right;" class="col-num">¥ 70,000,000</td><td><span class="tag tag-orange">逾期</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKJSD202602100002</td><td>DLXLC-DSRMT-202602-0022</td><td>郑州信必达</td><td style="text-align: right;" class="col-num">¥ 380,000,000</td><td style="text-align: right;" class="col-num">¥ 380,000,000</td><td style="text-align: right;" class="col-num">¥ 0</td><td><span class="tag tag-green">已清</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">FKD-2026-001</td><td>DLXLC-DSRMT-202603-0033</td><td>荣厚实业</td><td style="text-align: right;" class="col-num">¥ 120,000,000</td><td style="text-align: right;" class="col-num">¥ 80,000,000</td><td style="text-align: right;" class="col-num">¥ 40,000,000</td><td><span class="tag tag-orange">逾期</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">FKD-2025-018</td><td>DLXLC-DSRMT-202509-0044</td><td>河钢承德</td><td style="text-align: right;" class="col-num">¥ 580,000,000</td><td style="text-align: right;" class="col-num">¥ 580,000,000</td><td style="text-align: right;" class="col-num">¥ 0</td><td><span class="tag tag-green">已清</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKJSD202408210001</td><td>YL-MSXS-202408-0055</td><td>天宇源国际</td><td style="text-align: right;" class="col-num">¥ 95,000,000</td><td style="text-align: right;" class="col-num">¥ 0</td><td style="text-align: right;" class="col-num">¥ 95,000,000</td><td><span class="tag tag-red">严重逾期</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">FKD-2024-105</td><td>DLXLC-DSRMT-202411-0066</td><td>中豫港通</td><td style="text-align: right;" class="col-num">¥ 240,000,000</td><td style="text-align: right;" class="col-num">¥ 240,000,000</td><td style="text-align: right;" class="col-num">¥ 0</td><td><span class="tag tag-green">已清</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
-<tr class="cp-row-clickable"><td class="col-num" style="font-weight: 600;">SKJSD202411100001</td><td>YL-MSXS-202411-0077</td><td>神火铝业</td><td style="text-align: right;" class="col-num">¥ 420,000,000</td><td style="text-align: right;" class="col-num">¥ 420,000,000</td><td style="text-align: right;" class="col-num">¥ 0</td><td><span class="tag tag-green">已清</span></td><td class="col-action" style="text-align: right;"><a href="#">查看</a></td></tr>
+                  <!-- 8 行业务线（按 user 图 1） -->
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-001</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-001</span>
+                        <span class="bizline-contract-sc">SC-2025-001</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">河南木豪实业</span>
+                        <span class="bizline-customer-down bizline-customer-link">郑州车务段</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">7,000,000.00</td>
+                    <td class="arap-num arap-paid">4,550,000.00</td>
+                    <td class="arap-num arap-unpaid">2,450,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-orange">部分</span></td>
+                    <td class="arap-num">9,800,000.00</td>
+                    <td class="arap-num arap-paid">5,880,000.00</td>
+                    <td class="arap-num arap-unpaid">3,920,000.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-orange">部分</span></td>
+                    <td class="arap-num arap-occupy">1,050,000.00</td>
+                    <td class="arap-num arap-occupy">1,470,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-002</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-003</span>
+                        <span class="bizline-contract-sc">SC-2025-003</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">泰国 Sugar Co.</span>
+                        <span class="bizline-customer-down bizline-customer-link">河南恒源食品</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">5,200,000.00</td>
+                    <td class="arap-num arap-paid">5,200,000.00</td>
+                    <td class="arap-num">0.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-green">已开</span></td>
+                    <td class="arap-num">7,200,000.00</td>
+                    <td class="arap-num arap-paid">7,200,000.00</td>
+                    <td class="arap-num">0.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-green">已开</span></td>
+                    <td class="arap-num">0.00</td>
+                    <td class="arap-num arap-occupy">2,000,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-003</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-005</span>
+                        <span class="bizline-contract-sc">SC-2025-005</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">越南丰德贸易</span>
+                        <span class="bizline-customer-down bizline-customer-link">（无下游客户）</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">4,000,000.00</td>
+                    <td class="arap-num arap-paid">2,000,000.00</td>
+                    <td class="arap-num arap-unpaid">2,000,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-orange">部分</span></td>
+                    <td class="arap-num">5,600,000.00</td>
+                    <td class="arap-num arap-paid">2,800,000.00</td>
+                    <td class="arap-num arap-unpaid">2,800,000.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-orange">部分</span></td>
+                    <td class="arap-num arap-occupy">560,000.00</td>
+                    <td class="arap-num arap-occupy">1,360,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-004</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-008</span>
+                        <span class="bizline-contract-sc">SC-2025-008</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">中亚金属集团</span>
+                        <span class="bizline-customer-down bizline-customer-link">长沙鑫荣实业</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">3,200,000.00</td>
+                    <td class="arap-num arap-paid">960,000.00</td>
+                    <td class="arap-num arap-unpaid">2,240,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-red">未开</span></td>
+                    <td class="arap-num">4,500,000.00</td>
+                    <td class="arap-num arap-paid">1,350,000.00</td>
+                    <td class="arap-num arap-unpaid">3,150,000.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-red">未开</span></td>
+                    <td class="arap-num arap-occupy">780,000.00</td>
+                    <td class="arap-num arap-occupy">1,690,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-005</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-010</span>
+                        <span class="bizline-contract-sc">SC-2025-010</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">泰国 Sugar Co.</span>
+                        <span class="bizline-customer-down bizline-customer-link">合肥联动物流</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">2,700,000.00</td>
+                    <td class="arap-num arap-paid">1,620,000.00</td>
+                    <td class="arap-num arap-unpaid">1,080,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-orange">部分</span></td>
+                    <td class="arap-num">3,800,000.00</td>
+                    <td class="arap-num arap-paid">2,280,000.00</td>
+                    <td class="arap-num arap-unpaid">1,520,000.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-orange">部分</span></td>
+                    <td class="arap-num">0.00</td>
+                    <td class="arap-num arap-occupy">440,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-006</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-012</span>
+                        <span class="bizline-contract-sc">SC-2025-012</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">河南木豪实业</span>
+                        <span class="bizline-customer-down bizline-customer-link">青岛港前批发</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">3,000,000.00</td>
+                    <td class="arap-num arap-paid">2,100,000.00</td>
+                    <td class="arap-num arap-unpaid">900,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-green">已开</span></td>
+                    <td class="arap-num">4,200,000.00</td>
+                    <td class="arap-num arap-paid">2,940,000.00</td>
+                    <td class="arap-num arap-unpaid">1,260,000.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-green">已开</span></td>
+                    <td class="arap-num">0.00</td>
+                    <td class="arap-num arap-occupy">360,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-007</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-015</span>
+                        <span class="bizline-contract-sc">SC-2025-015</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">陕西煤业集团</span>
+                        <span class="bizline-customer-down bizline-customer-link">广州物流城</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">1,500,000.00</td>
+                    <td class="arap-num arap-paid">450,000.00</td>
+                    <td class="arap-num arap-unpaid">1,050,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-gray">待开</span></td>
+                    <td class="arap-num">2,100,000.00</td>
+                    <td class="arap-num arap-paid">630,000.00</td>
+                    <td class="arap-num arap-unpaid">1,470,000.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-gray">待开</span></td>
+                    <td class="arap-num arap-occupy">630,000.00</td>
+                    <td class="arap-num arap-occupy">1,050,000.00</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" style="font-weight: 600;"><a href="#" style="color: var(--color-primary);">YGT-2025-008</a></td>
+                    <td>
+                      <div class="bizline-contract-cell">
+                        <span class="bizline-contract-pc">PC-2025-018</span>
+                        <span class="bizline-contract-sc">SC-2025-018</span>
+                      </div>
+                    </td>
+                    <td style="border-right: 2px solid var(--border-color);">
+                      <div class="bizline-customer-cell">
+                        <span class="bizline-customer-up bizline-customer-link">蒙古国物资</span>
+                        <span class="bizline-customer-down bizline-customer-link">成都西部商贸</span>
+                      </div>
+                    </td>
+                    <td class="arap-num">1,000,000.00</td>
+                    <td class="arap-num arap-paid">300,000.00</td>
+                    <td class="arap-num arap-unpaid">700,000.00</td>
+                    <td class="arap-group-up" style="border-right: 2px solid var(--border-color);"><span class="tag tag-gray">待开</span></td>
+                    <td class="arap-num">1,405,200.00</td>
+                    <td class="arap-num arap-paid">420,000.00</td>
+                    <td class="arap-num arap-unpaid">985,200.00</td>
+                    <td class="arap-group-down" style="border-right: 2px solid var(--border-color);"><span class="tag tag-gray">待开</span></td>
+                    <td class="arap-num arap-occupy">420,000.00</td>
+                    <td class="arap-num arap-occupy">705,200.00</td>
+                  </tr>
                 </tbody>
               </table>
             </div>
           </div>
 
+          <!-- 分页 -->
           <div class="cp-block">
             <div class="cp-pagination">
-              <div>共 68 条记录 · 第 1 / 7 页</div>
+              <div>共 8 条业务线 · 第 1 / 1 页</div>
               <div style="display: flex; align-items: center; gap: 14px;">
                 <div class="cp-pagination-pages">
-                  <div class="cp-pagination-page">‹</div>
                   <div class="cp-pagination-page active">1</div>
-                  <div class="cp-pagination-page">2</div>
-                  <div class="cp-pagination-page">3</div>
-                  <div class="cp-pagination-page">›</div>
                 </div>
                 <select class="cp-pagination-size">
                   <option>10 条/页</option>
@@ -192,9 +443,9 @@
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
   <script src="../shared/js/filter-chips.js"></script>
-  <script>// v1.7.99.97 inline Utils fallback（v1.7.99.80 模式）
+  <script>
+    // v1.7.99.220 inline Utils fallback
     window.Utils = window.Utils || { toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} } };
   </script>
-  </div>
 </body>
 </html>
