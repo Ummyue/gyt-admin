@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-12T11:30:00',
+          version: 'v1.7.99.218',
+          module: '货转管理 - 待上传已生效单据加【上传已生效单据】按钮 + 上传弹窗',
+          summary: '货转管理（pages/goods-transfer.html）状态机为「待上传已生效单据」（awaiting-effect-voucher）的行操作项中增加【上传已生效单据】按钮，并且点击后跳出上传弹窗（user 2026-08-12 反馈「上游/下游货转，状态机为「待上传已生效单据」的操作项中增加「上传已生效单据」按钮，并且点击后跳出上传弹窗」）—— 1) 现状：v1.7.99.176 旧版货转管理 6 状态机（全部/审批中/待上传已生效单据/已生效/驳回/已作废），操作列只有【查看/作废/下载】3 个链接——「待上传已生效单据」状态行跟其他状态行操作列一样，没有「上传已生效单据」入口；2) v1.7.99.218 修复：a) CSS 加 drawer 样式（按 payment-list.html cp-drawer 模式：cp-drawer-overlay + cp-drawer + cp-drawer-header + cp-drawer-title + cp-drawer-close + cp-drawer-body + cp-drawer-footer + .upload-tip + .upload-file-row，width 560px）；b) HTML 加 drawer 结构（id=uploadDrawer，含 overlay + drawer + header「上传已生效单据」+ 关闭× + body + footer 取消/确认按钮）；c) 弹窗 body 4 块：(1) 货转基本信息只读展示（货转编号 + 关联合同，从 tr 抓 cells[0]/cells[1]）+ (2) 单据类型 select（4 种：已生效合同/已生效发票/已生效运单/其他，必填）+ (3) 上传文件 button（mockUploadFile 随机选文件名）+ (4) 上传要求 tip（png/jpeg/jpg/gif/pdf/doc/docx/xlsx/xls，单个 ≤ 100M，按 v1.7.99.191 追保函模式）；d) 操作列模板改：上游 line 397-401 + 下游 line 418-421——在 key === awaiting-effect-voucher 状态下追加「上传已生效单据」链接（蓝字 #1E40AF + onclick=openUploadDrawer(this)），位置在「查看」和「作废」之间；e) JS 加 4 函数：openUploadDrawer(el)（拿 tr → 抓 cells[0]/cells[1] 显示到弹窗 → 重置单据类型 + uploadedFiles + 打开 drawer）/ closeUploadDrawer()（关闭 drawer + overlay）/ mockUploadFile()（mock 4 个文件名随机 + uploadedFiles.push + renderUploadedFiles）/ removeUploadedFile(idx) + renderUploadedFiles()（动态渲染文件列表 + 删按钮）/ submitUpload()（校验单据类型 + 至少 1 个文件 → 成功 toast「已提交上传，N 个文件待审核」 + 关闭弹窗）；3) 弹窗内已上传文件支持「× 删除」逐个移除；4) 弹窗内单据类型和文件必填校验——校验失败 toast error；5) title 升级 v.1.7.99.217 → v.1.7.99.218；6) 货转管理页面 size：26536 → 34002 bytes（+7466 bytes / +28%）。',
+          changes: [
+            { type: 'modify', location: 'pages/goods-transfer.html <title>', before: '货转管理 - 豫港通', after: '货转管理 - 豫港通 v1.7.99.218' },
+            { type: 'add', location: 'pages/goods-transfer.html <style> drawer CSS（按 payment-list.html cp-drawer 模式 + .upload-tip + .upload-file-row）', before: '无（v1.7.99.176 旧版无 drawer 样式）', after: 'v1.7.99.218：加 .cp-drawer-overlay + .cp-drawer (width 560px) + .cp-drawer-header + .cp-drawer-body + .cp-drawer-footer + .upload-tip + .upload-file-row' },
+            { type: 'add', location: 'pages/goods-transfer.html drawer HTML 结构（id=uploadDrawer，overlay + drawer + header + body + footer）', before: '无（v1.7.99.176 旧版无 drawer DOM）', after: 'v1.7.99.218：弹窗含 4 块 — 货转基本信息只读 + 单据类型 select + 上传文件 button + 上传要求 tip + footer 取消/确认按钮' },
+            { type: 'modify', location: 'pages/goods-transfer.html 上游操作列模板（renderGoodsTransfer 内部 line 397-401）', before: '查看/作废/下载 3 链接，所有状态都一样', after: 'v1.7.99.218：在 key === awaiting-effect-voucher 状态下，【查看】和【作废】之间加【上传已生效单据】链接（蓝字 #1E40AF + onclick=openUploadDrawer(this)）' },
+            { type: 'modify', location: 'pages/goods-transfer.html 下游操作列模板（renderGoodsTransfer 内部 line 418-421）', before: '查看/作废 2 链接（已作废只有查看）', after: 'v1.7.99.218：在 key === awaiting-effect-voucher 状态下，【查看】和【作废】之间加【上传已生效单据】链接（跟上游同模式）' },
+            { type: 'add', location: 'pages/goods-transfer.html <script> openUploadDrawer / closeUploadDrawer / mockUploadFile / removeUploadedFile / renderUploadedFiles / submitUpload 6 函数', before: '无（v1.7.99.176 旧版只有 confirmVoid / downloadCert / toggleCreateDropdown / goCreate 4 函数）', after: 'v1.7.99.218：加 6 函数（弹窗打开/关闭/文件上传 mock/单文件删除/列表渲染/提交校验）+ submittedFiles 全局变量' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.217', after: '豫港通原型 v.1.7.99.218' }
+          ]
+        },
+        {
           ts: '2026-08-12T10:30:00',
           version: 'v1.7.99.217',
           module: '应收应付表 - 删除账期到期日/逾期天数/状态 3 字段',

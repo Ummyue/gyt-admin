@@ -1,0 +1,646 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>货转管理 - 豫港通 v1.7.99.218</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 上游/下游 切换 tap（v1.7.99.57 新增） */
+    .gt-direction-tap {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .gt-direction-tap-item {
+      padding: 10px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s;
+    }
+    .gt-direction-tap-item:hover { color: var(--color-primary); }
+    .gt-direction-tap-item.active {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+    .gt-direction-tap-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--color-primary);
+    }
+
+    /* v1.7.99.218 上传已生效单据 - 右侧抽屉（按 payment-list.html cp-drawer 模式） */
+    .cp-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 999; display: none;
+    }
+    .cp-drawer-overlay.open { display: block; }
+    .cp-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 560px; max-width: 95vw;
+      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12);
+      z-index: 1000; display: none; flex-direction: column;
+    }
+    .cp-drawer.open { display: flex; }
+    .cp-drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .cp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .cp-drawer-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .cp-drawer-close:hover { color: var(--text-primary); }
+    .cp-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
+    .cp-drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .upload-tip { background: #EEF4FF; border: 1px solid #C7DBFF; border-radius: 4px; padding: 12px 16px; font-size: 12px; color: var(--text-secondary); margin-top: 12px; }
+    .upload-tip .label { font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
+    .upload-file-row { display: flex; align-items: center; gap: 8px; padding: 8px 0; border-bottom: 1px dashed var(--border-color); font-size: 13px; }
+    .upload-file-row:last-child { border-bottom: none; }
+    .upload-file-row .file-name { color: var(--color-primary); flex: 1; }
+    .upload-file-row .file-remove { color: var(--text-tertiary); cursor: pointer; }
+    .upload-file-row .file-remove:hover { color: var(--color-danger); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="#">收发货管理</a>
+          <span class="sep">/</span>
+          <span class="current">货转管理</span>
+        </div>
+
+        <!-- 标题 + 顶部 tap + 按钮（v1.7.99.57：上游货转/下游货转 切换；v1.7.99.61 开具货转下拉） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">货转管理</h1>
+          <div style="position: relative;">
+            <button class="btn btn-primary" onclick="toggleCreateDropdown(event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              开具货转
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <!-- v1.7.99.61 下拉选项：上传上游货转 / 新增下游货转 -->
+            <div id="createDropdown" style="display: none; position: absolute; top: 100%; right: 0; margin-top: 4px; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 4px 16px rgba(0,0,0,0.12); min-width: 160px; z-index: 100;">
+              <a href="javascript:void(0)" onclick="goCreate('up')" style="display: block; padding: 10px 16px; font-size: 13px; color: var(--text-primary); border-bottom: 1px solid var(--border-color);">↑ 上传上游货转</a>
+              <a href="javascript:void(0)" onclick="goCreate('down')" style="display: block; padding: 10px 16px; font-size: 13px; color: var(--text-primary);">↓ 新增下游货转</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 上游/下游 切换 tap（v1.7.99.57） -->
+        <div class="gt-direction-tap">
+          <div class="gt-direction-tap-item active" data-direction="up" onclick="switchDirection('up')">上游货转</div>
+          <div class="gt-direction-tap-item" data-direction="down" onclick="switchDirection('down')">下游货转</div>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区（v1.7.99.57 按图 1：6 字段） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入订单或合同编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货转编号</span>
+                <input type="text" class="input" placeholder="请输入货转编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">买方企业</span>
+                <input type="text" class="input" placeholder="请输入买方企业">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">卖方企业</span>
+                <input type="text" class="input" placeholder="请输入卖方企业">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货转开具日期</span>
+                <input type="text" class="input" placeholder="开始时间 ~ 结束时间">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">状态</span>
+                <select class="select">
+                  <option>请选择状态</option>
+                  <option>审批中</option>
+                  <option>待上传已生效单据</option>
+                  <option>已生效</option>
+                  <option>驳回</option>
+                  <option>已作废</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.176：按 user 图 2 简化为 6 状态 = 全部 + 审批中 + 待上传已生效单据 + 已生效 + 驳回 + 已作废） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" data-gt-status="all">全部 <span class="count">100</span></div>
+                <div class="cp-tab" data-gt-status="approving" style="color: #1e40af;">审批中 <span class="count" style="color: #1e40af; font-weight: 600;">10</span></div>
+                <div class="cp-tab" data-gt-status="awaiting-effect-voucher" style="color: #a16207;">待上传已生效单据 <span class="count" style="color: #a16207; font-weight: 600;">10</span></div>
+                <div class="cp-tab" data-gt-status="effective" style="color: #15803d;">已生效 <span class="count" style="color: #15803d; font-weight: 600;">10</span></div>
+                <div class="cp-tab" data-gt-status="rejected" style="color: #dc2626;">驳回 <span class="count" style="color: #dc2626; font-weight: 600;">10</span></div>
+                <div class="cp-tab" data-gt-status="voided" style="color: #6b7280;">已作废 <span class="count" style="color: #6b7280; font-weight: 600;">10</span></div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <button class="btn btn-text btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  批量下载
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格 - 上游货转（v1.7.99.57 按图 1：7 列表格 + 10 行 mock） -->
+          <div class="cp-block" style="padding: 0;" id="gtTableUp">
+            <div class="cp-table-wrap">
+              <table class="cp-table" style="min-width: 1300px;">
+                <thead>
+                  <tr>
+                    <th style="width: 200px;">合同编号</th>
+                    <th style="width: 200px;">货转编号</th>
+                    <th style="width: 200px;">买方企业</th>
+                    <th style="width: 200px;">卖方企业</th>
+                    <th style="width: 180px;">收货人</th>
+                    <th style="width: 140px;">货转开具日</th>
+                    <th class="col-action" style="width: 180px;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="gtTbodyUp"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格 - 下游货转（v1.7.99.57 按图 2：10 列表格 + 2 行 mock） -->
+          <div class="cp-block" style="padding: 0; display: none;" id="gtTableDown">
+            <div class="cp-table-wrap">
+              <table class="cp-table" style="min-width: 1500px;">
+                <thead>
+                  <tr>
+                    <th style="width: 130px;">合同编号</th>
+                    <th style="width: 130px;">货转编号</th>
+                    <th style="width: 180px;">买方企业</th>
+                    <th style="width: 160px;">卖方企业</th>
+                    <th style="width: 160px;">收货人</th>
+                    <th style="width: 130px;">货转开具日</th>
+                    <th style="width: 110px;text-align: right;">货转数量(吨)</th>
+                    <th style="width: 130px;">发运方式</th>
+                    <th style="width: 90px;">状态</th>
+                    <th class="col-action" style="width: 130px;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="gtTbodyDown"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div id="gtPaginationHint">共有 63 条信息</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">4</div>
+                  <div class="cp-pagination-page">5</div>
+                  <div class="cp-pagination-page">6</div>
+                  <div class="cp-pagination-page">7</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 上游货转/下游货转 切换（v1.7.99.57 + v1.7.99.187 联动数据 + v1.7.99.187b 切方向时重置 key=all）
+    function switchDirection(dir) {
+      var taps = document.querySelectorAll('.gt-direction-tap-item');
+      taps.forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-direction') === dir);
+      });
+      var upTable = document.getElementById('gtTableUp');
+      var downTable = document.getElementById('gtTableDown');
+      if (dir === 'up') {
+        if (upTable) upTable.style.display = '';
+        if (downTable) downTable.style.display = 'none';
+      } else {
+        if (upTable) upTable.style.display = 'none';
+        if (downTable) downTable.style.display = '';
+      }
+      // v1.7.99.187b 切方向 → 重置 tab key='all' + active class 切到"全部"（避免下游看到上游的子状态）
+      currentKey = 'all';
+      var tabs = document.querySelectorAll('.cp-tab-bar-tabs .cp-tab');
+      tabs.forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-gt-status') === 'all');
+      });
+      // v1.7.99.187 联动：方向切换 → 重新渲染 + 更新 tab count + 更新分页 hint
+      if (typeof renderGoodsTransfer === 'function') {
+        renderGoodsTransfer(dir, 'all');
+      }
+      if (typeof updateTabCounts === 'function') {
+        updateTabCounts();
+      }
+      var hint = document.getElementById('gtPaginationHint');
+      if (hint) {
+        var total = getMock(dir, 'all').length;
+        hint.textContent = '共有 ' + total + ' 条记录';
+      }
+    }
+
+    // ===== 6 状态 tab 切换 + 表格数据联动（v1.7.99.187 修复 v1.7.99.57 bug） =====
+    // 之前只切 active class 不过滤数据；现在 MOCK 按 status 分组，renderGoodsTransfer 重渲染 tbody
+    // 同时支持 方向切换（上游/下游），MOCK.up + MOCK.down
+
+    var GT_STATUS = {
+      'all':                         { tag: '',                    color: '' },
+      'approving':                   { tag: '●平台运营审核中',     color: 'tag-yellow' },
+      'awaiting-effect-voucher':     { tag: '●待上传已生效单据',   color: 'tag-orange' },
+      'effective':                   { tag: '●已生效',             color: 'tag-green' },
+      'rejected':                    { tag: '●平台审批驳回',       color: 'tag-red' },
+      'voided':                      { tag: '已作废',              color: 'tag-gray' }
+    };
+
+    // 上游货转 MOCK（12 条 = 2 审批中 + 1 待上传 + 5 已生效 + 1 驳回 + 1 已作废 = 10）
+    // 注：用户复盘 v1.7.99.57 留的 10 行硬编码，按 v1.7.99.187 重新分配状态
+    var MOCK_up = {
+      'all': [
+        { contract: 'QY-LG-20250317-063',                       gtNo: 'SKBT202507240002-202601090004', buyer: '许昌龙岗发电有限责任公司',         seller: '许昌龙岗发电有限责任公司',         receiver: '许昌龙岗发电有限责任公司',         date: '2025-03-28' },
+        { contract: 'NMGZHCG202505015001',                      gtNo: 'SKBT202505280002-202601090002', buyer: '内蒙古中基科技有限公司',           seller: '内蒙古中基科技有限公司',           receiver: '内蒙古中基科技有限公司',           date: '2025-05-19' },
+        { contract: '燃料公司-2025-燃煤-0162',                  gtNo: 'SKBT202511280002-202601080003', buyer: '国能河南燃料有限公司',               seller: '国家能源集团焦作电厂有限公司',     receiver: '国家能源集团焦作电厂有限公司',     date: '2025-09-19' },
+        { contract: 'HNCIEGYLB25(销)H10-04',                    gtNo: 'SKBT202511270003-202601080001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-24' },
+        { contract: 'HNCIEMTB25(销)H07-03',                     gtNo: 'SKBT202508010006-202601040002', buyer: '陕西通途物资有限公司',               seller: '陕西通途物资有限公司',               receiver: '陕西通途物资有限公司',               date: '2025-07-18' },
+        { contract: 'HNCIEGYLB25(销)H10-06',                    gtNo: 'SKBT202511270006-202512300001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-11-06' },
+        { contract: 'HNCIEGYLB25(销)H10-05',                    gtNo: 'SKBT202511270004-202512290001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-17' },
+        { contract: 'HNJCK(销)20251215',                        gtNo: 'SKBT202512230002-202512250001', buyer: '重庆基创建设开发有限公司',           seller: '重庆基创建设开发有限公司',           receiver: '重庆基创建设开发有限公司',           date: '2025-12-18' },
+        { contract: '燃料公司-2025-燃煤-0238(濮阳)',           gtNo: 'SKBT202512020001-202512180003', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-23' },
+        { contract: '燃料公司-2025-燃煤-0234(济源)',           gtNo: 'SKBT202512110004-202512180001', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-15' }
+      ],
+      'approving': [
+        { contract: '燃料公司-2025-燃煤-0238(濮阳)',           gtNo: 'SKBT202512020001-202512180003', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-23' },
+        { contract: '燃料公司-2025-燃煤-0234(济源)',           gtNo: 'SKBT202512110004-202512180001', buyer: '国能河南燃料有限公司',               seller: '国能河南燃料有限公司',               receiver: '国能河南燃料有限公司',               date: '2025-11-15' }
+      ],
+      'awaiting-effect-voucher': [
+        { contract: 'HNCIEGYLB25(销)H10-06',                    gtNo: 'SKBT202511270006-202512300001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-11-06' }
+      ],
+      'effective': [
+        { contract: 'QY-LG-20250317-063',                       gtNo: 'SKBT202507240002-202601090004', buyer: '许昌龙岗发电有限责任公司',         seller: '许昌龙岗发电有限责任公司',         receiver: '许昌龙岗发电有限责任公司',         date: '2025-03-28' },
+        { contract: 'NMGZHCG202505015001',                      gtNo: 'SKBT202505280002-202601090002', buyer: '内蒙古中基科技有限公司',           seller: '内蒙古中基科技有限公司',           receiver: '内蒙古中基科技有限公司',           date: '2025-05-19' },
+        { contract: '燃料公司-2025-燃煤-0162',                  gtNo: 'SKBT202511280002-202601080003', buyer: '国能河南燃料有限公司',               seller: '国家能源集团焦作电厂有限公司',     receiver: '国家能源集团焦作电厂有限公司',     date: '2025-09-19' },
+        { contract: 'HNCIEGYLB25(销)H10-04',                    gtNo: 'SKBT202511270003-202601080001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-24' },
+        { contract: 'HNCIEMTB25(销)H07-03',                     gtNo: 'SKBT202508010006-202601040002', buyer: '陕西通途物资有限公司',               seller: '陕西通途物资有限公司',               receiver: '陕西通途物资有限公司',               date: '2025-07-18' }
+      ],
+      'rejected': [
+        { contract: 'HNCIEGYLB25(销)H10-05',                    gtNo: 'SKBT202511270004-202512290001', buyer: '重庆运力煤炭销售有限公司',           seller: '重庆运力煤炭销售有限公司货场',     receiver: '重庆运力煤炭销售有限公司货场',     date: '2025-10-17' }
+      ],
+      'voided': [
+        { contract: 'HNJCK(销)20251215',                        gtNo: 'SKBT202512230002-202512250001', buyer: '重庆基创建设开发有限公司',           seller: '重庆基创建设开发有限公司',           receiver: '重庆基创建设开发有限公司',           date: '2025-12-18' }
+      ]
+    };
+
+    // 下游货转 MOCK（4 条 = 1 审批中 + 2 已生效 + 1 已作废）
+    var MOCK_down = {
+      'all': [
+        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607300001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-01-31', qty: '50',     transport: '中欧班列-东星线路' },
+        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607290005', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-04-02', qty: '474.9',  transport: '中欧班列-东星线路' },
+        { contract: 'HNZZ-XZH-20260215-001', gtNo: 'SKBT202602200001-202603050001', buyer: '徐州中汉物流有限公司',             seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-20', qty: '1,200',  transport: '中欧班列-东星线路' },
+        { contract: 'YL-MSXS-20260218-002', gtNo: 'SKBT202602250001-202603010001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-25', qty: '85.5',   transport: '中欧班列-东星线路' }
+      ],
+      'approving': [
+        { contract: 'HNZZ-XZH-20260215-001', gtNo: 'SKBT202602200001-202603050001', buyer: '徐州中汉物流有限公司',             seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-20', qty: '1,200',  transport: '中欧班列-东星线路' }
+      ],
+      'awaiting-effect-voucher': [],
+      'effective': [
+        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607300001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-01-31', qty: '50',     transport: '中欧班列-东星线路' },
+        { contract: 'YL-MSXS-20260218-002', gtNo: 'SKBT202602250001-202603010001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-02-25', qty: '85.5',   transport: '中欧班列-东星线路' }
+      ],
+      'rejected': [],
+      'voided': [
+        { contract: 'YL-MSXS-20260127-s', gtNo: 'SKBT202607040003-202607290005', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', receiver: '河南中豫港通供应链管理有限公司', date: '2026-04-02', qty: '474.9',  transport: '中欧班列-东星线路' }
+      ]
+    };
+
+    var currentDirection = 'up';
+    var currentKey = 'all';
+
+    function getMock(direction, key) {
+      var M = direction === 'up' ? MOCK_up : MOCK_down;
+      return M[key] || [];
+    }
+
+    function renderGoodsTransfer(direction, key) {
+      currentDirection = direction;
+      currentKey = key;
+      var data = getMock(direction, key);
+      var isUp = direction === 'up';
+      var tbody = document.getElementById(isUp ? 'gtTbodyUp' : 'gtTbodyDown');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="' + (isUp ? 7 : 10) + '" style="text-align: center; padding: 80px 0; color: var(--text-tertiary);"><div style="display: flex; flex-direction: column; align-items: center; gap: 12px;"><svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #D1D5DB;"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V7z"/></svg><span style="font-size: 13px;">暂无数据</span></div></td></tr>';
+        return;
+      }
+      if (isUp) {
+        // 上游 7 列表格（合同/货转/买方/卖方/收货人/开具日/操作）
+        tbody.innerHTML = data.map(function(r) {
+          return '<tr>' +
+            '<td class="col-num">' + r.contract + '</td>' +
+            '<td class="col-num">' + r.gtNo + '</td>' +
+            '<td>' + r.buyer + '</td>' +
+            '<td>' + r.seller + '</td>' +
+            '<td>' + r.receiver + '</td>' +
+            '<td>' + r.date + '</td>' +
+            '<td class="col-action" style="text-align: right;">' +
+              '<a href="./goods-transfer-up-detail.html?status=' + key + '">查看</a>' +
+              (key === "awaiting-effect-voucher" ? '<a href="javascript:void(0);" style="color: #1E40AF;" onclick="openUploadDrawer(this)">上传已生效单据</a>' : "") +
+              '<a href="javascript:void(0);" style="color: #dc2626;" onclick="confirmVoid(this)">作废</a>' +
+              '<a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>' +
+            '</td>' +
+          '</tr>';
+        }).join('');
+      } else {
+        // 下游 10 列表格（合同/货转/买方/卖方/收货人/开具日/数量/吨/发运方式/状态/操作）
+        tbody.innerHTML = data.map(function(r) {
+          var st = GT_STATUS[key] || GT_STATUS['effective'];
+          return '<tr>' +
+            '<td class="col-num">' + r.contract + '</td>' +
+            '<td class="col-num">' + r.gtNo + '</td>' +
+            '<td>' + r.buyer + '</td>' +
+            '<td>' + r.seller + '</td>' +
+            '<td>' + r.receiver + '</td>' +
+            '<td>' + r.date + '</td>' +
+            '<td style="text-align: right;" class="col-num">' + r.qty + '</td>' +
+            '<td>' + r.transport + '</td>' +
+            '<td><span class="tag ' + st.color + '">' + st.tag + '</span></td>' +
+            '<td class="col-action" style="text-align: right;">' +
+              '<a href="./goods-transfer-down-detail.html?status=' + key + '">查看</a>' +
+              (key === "awaiting-effect-voucher" ? '<a href="javascript:void(0);" style="color: #1E40AF;" onclick="openUploadDrawer(this)">上传已生效单据</a>' : "") +
+              (key !== 'voided' ? '<a href="javascript:void(0);" style="color: #dc2626;" onclick="confirmVoid(this)">作废</a>' : '') +
+            '</td>' +
+          '</tr>';
+        }).join('');
+      }
+    }
+
+    function updateTabCounts() {
+      var tabs = document.querySelectorAll('.cp-tab-bar-tabs .cp-tab');
+      tabs.forEach(function(tab) {
+        var status = tab.getAttribute('data-gt-status');
+        var count = tab.querySelector('.count');
+        if (!count) return;
+        count.textContent = getMock(currentDirection, status).length;
+      });
+    }
+
+    (function() {
+      // 6 状态 tab 点击 → 切 active + render + 更新 count
+      var tabs = document.querySelectorAll('.cp-tab-bar-tabs .cp-tab');
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+          currentKey = tab.getAttribute('data-gt-status');
+          renderGoodsTransfer(currentDirection, currentKey);
+        });
+      });
+      // 初始渲染
+      updateTabCounts();
+      renderGoodsTransfer('up', 'all');
+    })();
+
+    // 作废二次确认（v1.7.99.57）
+    function confirmVoid(el) {
+      if (confirm('确定要作废此货转单据吗？此操作不可恢复。')) {
+        alert('已作废（mock）');
+      }
+    }
+
+    // 下载凭证（v1.7.99.57）
+    function downloadCert(el) {
+      alert('开始下载凭证（mock）');
+    }
+
+    // v1.7.99.61 「开具货转」下拉菜单
+    function toggleCreateDropdown(e) {
+      e.stopPropagation();
+      var dd = document.getElementById('createDropdown');
+      dd.style.display = dd.style.display === 'block' ? 'none' : 'block';
+    }
+    function goCreate(dir) {
+      document.getElementById('createDropdown').style.display = 'none';
+      if (dir === 'up') {
+        window.location.href = './goods-transfer-up-new.html';
+      } else {
+        window.location.href = './goods-transfer-down-new.html';
+      }
+    }
+    // 点击其他位置关闭下拉
+    document.addEventListener('click', function() {
+      var dd = document.getElementById('createDropdown');
+      if (dd) dd.style.display = 'none';
+    });
+  </script>
+  </div>
+  <!-- /main-content -->
+
+  <!-- v1.7.99.218 上传已生效单据 弹窗 -->
+  <div class="cp-drawer-overlay" id="uploadDrawerOverlay" onclick="closeUploadDrawer()"></div>
+  <div class="cp-drawer" id="uploadDrawer" role="dialog" aria-labelledby="uploadDrawerTitle">
+    <div class="cp-drawer-header">
+      <div class="cp-drawer-title" id="uploadDrawerTitle">上传已生效单据</div>
+      <span class="cp-drawer-close" onclick="closeUploadDrawer()" title="关闭">×</span>
+    </div>
+    <div class="cp-drawer-body">
+      <!-- 货转基本信息（只读展示） -->
+      <div style="background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px; margin-bottom: 20px; font-size: 13px;">
+        <div style="display: flex; margin-bottom: 6px;">
+          <span style="color: var(--text-tertiary); width: 80px; flex-shrink: 0;">货转编号</span>
+          <span id="uploadGtNo" style="color: var(--text-primary); font-weight: 500;"></span>
+        </div>
+        <div style="display: flex;">
+          <span style="color: var(--text-tertiary); width: 80px; flex-shrink: 0;">关联合同</span>
+          <span id="uploadContractNo" style="color: var(--text-primary);"></span>
+        </div>
+      </div>
+
+      <!-- 单据类型（v1.7.99.218 锁定：4 种类型） -->
+      <div class="form-field" style="margin-bottom: 16px;">
+        <label class="form-label" style="display: block; margin-bottom: 6px;"><span style="color: var(--color-danger);">*</span> 单据类型</label>
+        <select class="select" id="uploadDocType" style="width: 100%;">
+          <option value="">请选择单据类型</option>
+          <option value="已生效合同">已生效合同</option>
+          <option value="已生效发票">已生效发票</option>
+          <option value="已生效运单">已生效运单</option>
+          <option value="其他">其他</option>
+        </select>
+      </div>
+
+      <!-- 上传文件 -->
+      <div class="form-field" style="margin-bottom: 16px;">
+        <label class="form-label" style="display: block; margin-bottom: 6px;"><span style="color: var(--color-danger);">*</span> 上传文件</label>
+        <button type="button" class="btn btn-default" onclick="mockUploadFile()">+ 上传</button>
+        <div id="uploadFileList" style="margin-top: 8px;"></div>
+      </div>
+
+      <!-- 上传要求 -->
+      <div class="upload-tip">
+        <div class="label">附件上传要求：</div>
+        <div>可支持格式为 png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100M 的文件。</div>
+      </div>
+    </div>
+    <div class="cp-drawer-footer">
+      <button type="button" class="btn btn-secondary" onclick="closeUploadDrawer()">取消</button>
+      <button type="button" class="btn btn-primary" onclick="submitUpload()">确认上传</button>
+    </div>
+  </div>
+
+  <script>
+    // v1.7.99.218 上传已生效单据 弹窗
+    var currentUploadRow = null;
+    var uploadedFiles = [];
+
+    function openUploadDrawer(el) {
+      var tr = el.closest('tr');
+      if (!tr) return;
+      currentUploadRow = tr;
+      var cells = tr.querySelectorAll('td');
+      // 上游: [0]合同 [1]货转 [2]买方 [3]卖方 ...
+      // 下游: [0]合同 [1]货转 [2]买方 [3]卖方 ...
+      // 都一样：第 0 列是合同、第 1 列是货转编号
+      var contractNo = cells[0] ? cells[0].innerText.trim() : '';
+      var gtNo = cells[1] ? cells[1].innerText.trim() : '';
+      document.getElementById('uploadGtNo').innerText = gtNo;
+      document.getElementById('uploadContractNo').innerText = contractNo;
+      document.getElementById('uploadDocType').value = '';
+      uploadedFiles = [];
+      renderUploadedFiles();
+      document.getElementById('uploadDrawerOverlay').classList.add('open');
+      document.getElementById('uploadDrawer').classList.add('open');
+    }
+
+    function closeUploadDrawer() {
+      document.getElementById('uploadDrawerOverlay').classList.remove('open');
+      document.getElementById('uploadDrawer').classList.remove('open');
+    }
+
+    function mockUploadFile() {
+      // v1.7.99.218 mock 上传：弹窗选文件后 mock 一个文件名
+      var mockNames = ['已生效合同_001.pdf', '已生效发票_002.pdf', '运单_20251127.pdf', '补充协议.docx'];
+      var name = mockNames[Math.floor(Math.random() * mockNames.length)] + ' (' + (uploadedFiles.length + 1) + ')';
+      uploadedFiles.push(name);
+      renderUploadedFiles();
+    }
+
+    function renderUploadedFiles() {
+      var list = document.getElementById('uploadFileList');
+      if (uploadedFiles.length === 0) {
+        list.innerHTML = '<div style="color: var(--text-tertiary); font-size: 12px; padding: 4px 0;">（未上传文件）</div>';
+        return;
+      }
+      list.innerHTML = uploadedFiles.map(function(f, i) {
+        return '<div class="upload-file-row">' +
+          '<span class="file-name">' + f + '</span>' +
+          '<span class="file-remove" onclick="removeUploadedFile(' + i + ')">× 删除</span>' +
+        '</div>';
+      }).join('');
+    }
+
+    function removeUploadedFile(idx) {
+      uploadedFiles.splice(idx, 1);
+      renderUploadedFiles();
+    }
+
+    function submitUpload() {
+      var docType = document.getElementById('uploadDocType').value;
+      if (!docType) {
+        window.Utils.toast('请选择单据类型', 'error');
+        return;
+      }
+      if (uploadedFiles.length === 0) {
+        window.Utils.toast('请上传文件', 'error');
+        return;
+      }
+      // mock：成功 toast + 关闭弹窗
+      window.Utils.toast('已提交上传，' + uploadedFiles.length + ' 个文件待审核', 'success');
+      closeUploadDrawer();
+    }
+  </script>
+</body>
+</html>
