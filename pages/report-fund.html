@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>资金占压表 - 豫港通 v1.7.99.222</title>
+  <title>资金占压表 - 豫港通 v1.7.99.223</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/list-page.css">
   <style>
@@ -53,16 +53,6 @@
     .fund-filter-item { display: flex; align-items: center; gap: 8px; }
     .fund-filter-item .label { font-size: 13px; color: var(--text-tertiary); white-space: nowrap; }
     .fund-filter-item .input, .fund-filter-item .select { flex: 1; }
-
-    /* v1.7.99.222 资金占压合并单元格（按列组合 货款/保证金/退款 3 子组） */
-    .fund-occupy-cell { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; padding: 8px 12px; min-height: 60px; }
-    .occupy-sub-group { display: flex; flex-direction: column; gap: 4px; padding: 8px 10px; background: #fff; border: 1px solid #E9D5FF; border-radius: 4px; }
-    .occupy-sub-empty { display: flex; align-items: center; justify-content: center; color: var(--text-tertiary); font-size: 12px; padding: 8px 0; min-height: 50px; border: 1px dashed #E9D5FF; border-radius: 4px; }
-    .occupy-sub-label { font-size: 11px; color: #7E22CE; font-weight: 600; padding-bottom: 4px; border-bottom: 1px dashed #E9D5FF; }
-    .occupy-sub-detail { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
-    .occupy-date { color: var(--text-tertiary); font-family: 'SF Mono', Menlo, monospace; font-size: 11px; }
-    .occupy-way { color: var(--text-secondary); }
-    .occupy-amount { color: var(--text-primary); font-weight: 600; font-family: 'SF Mono', Menlo, monospace; font-size: 13px; }
 
     /* 工具按钮 */
     .fund-actions { display: flex; justify-content: flex-end; gap: 8px; padding: 12px 20px; }
@@ -196,18 +186,28 @@
               <table class="fund-table">
                 <colgroup>
                   <col style="width: 5%;">
-                  <col style="width: 11%;">
+                  <col style="width: 10%;">
                   <col style="width: 7%;">
                   <col style="width: 7%;">
+                  <col style="width: 5%;">
                   <col style="width: 6%;">
                   <col style="width: 6%;">
-                  <col style="width: 6%;">
-                  <col style="width: 52%;">
+                  <col style="width: 5%;">
+                  <col style="width: 5%;">
+                  <col style="width: 4%;">
+                  <col style="width: 4%;">
+                  <col style="width: 5%;">
+                  <col style="width: 5%;">
+                  <col style="width: 4%;">
+                  <col style="width: 4%;">
+                  <col style="width: 5%;">
                 </colgroup>
                 <thead>
                   <tr>
                     <th colspan="7" class="group-header">业务线信息</th>
-                    <th colspan="3" class="group-header" style="background: #FAF5FF;">资金占压（合并 货款 / 保证金 / 退款）</th>
+                    <th colspan="4" class="group-header">上游款项</th>
+                    <th colspan="4" class="group-header">下游款项</th>
+                    <th rowspan="2" class="group-header" style="vertical-align: middle;">资金占压(元)</th>
                   </tr>
                   <tr>
                     <th>业务线号</th>
@@ -217,92 +217,291 @@
                     <th>业务类型</th>
                     <th>卖方企业</th>
                     <th>买方企业</th>
-                    <th style="background: #FAF5FF;">货款</th>
-                    <th style="background: #FAF5FF;">保证金</th>
-                    <th style="background: #FAF5FF;">退款</th>
+                    <th>日期</th>
+                    <th>类型</th>
+                    <th>方式</th>
+                    <th>金额(元)</th>
+                    <th>日期</th>
+                    <th>类型</th>
+                    <th>方式</th>
+                    <th>金额(元)</th>
                   </tr>
                 </thead>
-                                <tbody>
-                  <!-- v1.7.99.222 按 user 截图 1 模板枚举 8 条业务线（16 → 8 列 + 资金占压合并 货款/保证金/退款 3 子组） -->
+                                                <tbody>
+                  <!-- v1.7.99.223 按 user 公式 + 截图 1 模板 8 行业务线（每行 1 业务线多行 + 业务线 7 列 rowspan + 资金占压 1 列 rowspan） -->
                   <tr>
-                    <td class="col-num">YWX2023090601</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230901</td>
-                    <td class="col-num">XSHT20230901</td>
-                    <td>全款业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-01</span><span class="occupy-way">现金</span><span class="occupy-amount">30,000</span></div></div><div class="occupy-sub-group"><div class="occupy-sub-label">保证金</div><div class="occupy-sub-detail"><span class="occupy-date">12-07</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">10,000</span></div></div><div class="occupy-sub-empty">—</div></div></td>
+                    <td class="col-num" rowspan="4">YWX2023090601</td>
+                    <td rowspan="4"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="4">CGHT20230901</td>
+                    <td class="col-num" rowspan="4">XSHT20230901</td>
+                    <td rowspan="4">全款业务</td>
+                    <td rowspan="4">xxx公司</td>
+                    <td rowspan="4">xxx公司</td>
+                    <td>2024-12-01</td>
+                    <td>货款</td>
+                    <td>现金</td>
+                    <td class="col-money">30,000</td>
+                    <td>2024-12-07</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090602</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230901</td>
-                    <td class="col-num">XSHT20230902</td>
-                    <td>全款业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-09</span><span class="occupy-way">现金</span><span class="occupy-amount">10,000</span></div></div><div class="occupy-sub-group"><div class="occupy-sub-label">保证金</div><div class="occupy-sub-detail"><span class="occupy-date">12-20</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">10,000</span></div></div><div class="occupy-sub-empty">—</div></div></td>
+                    <td>2024-12-01</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-07</td>
+                    <td>保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090603</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230901</td>
-                    <td class="col-num">XSHT20230903</td>
-                    <td>全款业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-04</span><span class="occupy-way">银票</span><span class="occupy-amount">10,000</span></div></div><div class="occupy-sub-empty">—</div><div class="occupy-sub-group"><div class="occupy-sub-label">退款</div><div class="occupy-sub-detail"><span class="occupy-date">12-21</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">10,000</span></div></div></div></td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="col-money">0</td>
+                    <td>2024-12-07</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090604</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230901</td>
-                    <td class="col-num">XSHT20230904</td>
-                    <td>总代业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-15</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">20,000</span></div></div><div class="occupy-sub-empty">—</div><div class="occupy-sub-empty">—</div></div></td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="col-money">0</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="col-money">0</td>
+                    <td class="col-money" rowspan="4" style="vertical-align: middle; text-align: center; font-weight: 600;">10,000</td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090605</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230902</td>
-                    <td class="col-num">XSHT20230905</td>
-                    <td>总代业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-30</span><span class="occupy-way">现金</span><span class="occupy-amount">10,000</span></div></div><div class="occupy-sub-group"><div class="occupy-sub-label">保证金</div><div class="occupy-sub-detail"><span class="occupy-date">12-06</span><span class="occupy-way">银票</span><span class="occupy-amount">10,000</span></div></div><div class="occupy-sub-empty">—</div></div></td>
+                    <td class="col-num" rowspan="3">YWX2023090602</td>
+                    <td rowspan="3"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="3">CGHT20230901</td>
+                    <td class="col-num" rowspan="3">XSHT20230902</td>
+                    <td rowspan="3">全款业务</td>
+                    <td rowspan="3">xxx公司</td>
+                    <td rowspan="3">xxx公司</td>
+                    <td>2024-12-04</td>
+                    <td>货款</td>
+                    <td>现金</td>
+                    <td class="col-money">20,000</td>
+                    <td>2024-12-08</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">15,000</td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090606</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230902</td>
-                    <td class="col-num">XSHT20230906</td>
-                    <td>全款业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-22</span><span class="occupy-way">商票</span><span class="occupy-amount">15,000</span></div></div><div class="occupy-sub-empty">—</div><div class="occupy-sub-group"><div class="occupy-sub-label">退款</div><div class="occupy-sub-detail"><span class="occupy-date">12-25</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">15,000</span></div></div></div></td>
+                    <td>2024-12-10</td>
+                    <td>退款</td>
+                    <td>银票</td>
+                    <td class="col-money">5,000</td>
+                    <td>2024-12-12</td>
+                    <td>保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090607</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230902</td>
-                    <td class="col-num">XSHT20230907</td>
-                    <td>全款业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-08</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">40,000</span></div></div><div class="occupy-sub-empty">—</div><div class="occupy-sub-group"><div class="occupy-sub-label">退款</div><div class="occupy-sub-detail"><span class="occupy-date">12-18</span><span class="occupy-way">银行汇款</span><span class="occupy-amount">20,000</span></div></div></div></td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="col-money">0</td>
+                    <td>2024-12-15</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">5,000</td>
+                    <td class="col-money" rowspan="3" style="vertical-align: middle; text-align: center; font-weight: 600;"><span style="color: #DC2626;">-5,000</span></td>
                   </tr>
                   <tr>
-                    <td class="col-num">YWX2023090608</td>
-                    <td><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
-                    <td class="col-num">CGHT20230902</td>
-                    <td class="col-num">XSHT20230908</td>
-                    <td>总代业务</td>
-                    <td>xxx公司</td>
-                    <td>xxx公司</td>
-                    <td style="background: #FAF5FF;"><div class="fund-occupy-cell"><div class="occupy-sub-group"><div class="occupy-sub-label">货款</div><div class="occupy-sub-detail"><span class="occupy-date">12-12</span><span class="occupy-way">现金</span><span class="occupy-amount">25,000</span></div></div><div class="occupy-sub-empty">—</div><div class="occupy-sub-empty">—</div></div></td>
+                    <td class="col-num" rowspan="2">YWX2023090603</td>
+                    <td rowspan="2"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="2">CGHT20230901</td>
+                    <td class="col-num" rowspan="2">XSHT20230903</td>
+                    <td rowspan="2">全款业务</td>
+                    <td rowspan="2">xxx公司</td>
+                    <td rowspan="2">xxx公司</td>
+                    <td>2024-12-15</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">30,000</td>
+                    <td>2024-12-20</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">25,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-20</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">5,000</td>
+                    <td>2024-12-25</td>
+                    <td>保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">15,000</td>
+                    <td class="col-money" rowspan="2" style="vertical-align: middle; text-align: center; font-weight: 600;"><span style="color: #DC2626;">-15,000</span></td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" rowspan="1">YWX2023090604</td>
+                    <td rowspan="1"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="1">CGHT20230902</td>
+                    <td class="col-num" rowspan="1">XSHT20230904</td>
+                    <td rowspan="1">总代业务</td>
+                    <td rowspan="1">xxx公司</td>
+                    <td rowspan="1">xxx公司</td>
+                    <td>2024-12-15</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">50,000</td>
+                    <td>2024-12-22</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">40,000</td>
+                    <td class="col-money" rowspan="1" style="vertical-align: middle; text-align: center; font-weight: 600;">10,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" rowspan="3">YWX2023090605</td>
+                    <td rowspan="3"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="3">CGHT20230902</td>
+                    <td class="col-num" rowspan="3">XSHT20230905</td>
+                    <td rowspan="3">总代业务</td>
+                    <td rowspan="3">xxx公司</td>
+                    <td rowspan="3">xxx公司</td>
+                    <td>2024-12-05</td>
+                    <td>货款</td>
+                    <td>现金</td>
+                    <td class="col-money">15,000</td>
+                    <td>2024-12-10</td>
+                    <td>货款</td>
+                    <td>现金</td>
+                    <td class="col-money">10,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-10</td>
+                    <td>退款</td>
+                    <td>银票</td>
+                    <td class="col-money">5,000</td>
+                    <td>2024-12-15</td>
+                    <td>保证金</td>
+                    <td>商票</td>
+                    <td class="col-money">8,000</td>
+                  </tr>
+                  <tr>
+                    <td>—</td>
+                    <td>—</td>
+                    <td>—</td>
+                    <td class="col-money">0</td>
+                    <td>2024-12-20</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">5,000</td>
+                    <td class="col-money" rowspan="3" style="vertical-align: middle; text-align: center; font-weight: 600;"><span style="color: #DC2626;">-3,000</span></td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" rowspan="2">YWX2023090606</td>
+                    <td rowspan="2"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="2">CGHT20230902</td>
+                    <td class="col-num" rowspan="2">XSHT20230906</td>
+                    <td rowspan="2">全款业务</td>
+                    <td rowspan="2">xxx公司</td>
+                    <td rowspan="2">xxx公司</td>
+                    <td>2024-12-12</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">25,000</td>
+                    <td>2024-12-18</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">20,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-18</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">5,000</td>
+                    <td>2024-12-25</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">10,000</td>
+                    <td class="col-money" rowspan="2" style="vertical-align: middle; text-align: center; font-weight: 600;">10,000</td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" rowspan="4">YWX2023090607</td>
+                    <td rowspan="4"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="4">CGHT20230902</td>
+                    <td class="col-num" rowspan="4">XSHT20230907</td>
+                    <td rowspan="4">全款业务</td>
+                    <td rowspan="4">xxx公司</td>
+                    <td rowspan="4">xxx公司</td>
+                    <td>2024-12-08</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">40,000</td>
+                    <td>2024-12-15</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">30,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-12</td>
+                    <td>退款</td>
+                    <td>银票</td>
+                    <td class="col-money">10,000</td>
+                    <td>2024-12-18</td>
+                    <td>保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">15,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-20</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">5,000</td>
+                    <td>2024-12-22</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">8,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-25</td>
+                    <td>货款</td>
+                    <td>现金</td>
+                    <td class="col-money">20,000</td>
+                    <td>2024-12-28</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">15,000</td>
+                    <td class="col-money" rowspan="4" style="vertical-align: middle; text-align: center; font-weight: 600;"><span style="color: #DC2626;">-7,000</span></td>
+                  </tr>
+                  <tr>
+                    <td class="col-num" rowspan="2">YWX2023090608</td>
+                    <td rowspan="2"><span class="bizline-name">业务线名称: 河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></td>
+                    <td class="col-num" rowspan="2">CGHT20230902</td>
+                    <td class="col-num" rowspan="2">XSHT20230908</td>
+                    <td rowspan="2">总代业务</td>
+                    <td rowspan="2">xxx公司</td>
+                    <td rowspan="2">xxx公司</td>
+                    <td>2024-12-22</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">15,000</td>
+                    <td>2024-12-26</td>
+                    <td>货款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">12,000</td>
+                  </tr>
+                  <tr>
+                    <td>2024-12-26</td>
+                    <td>退款</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">3,000</td>
+                    <td>2024-12-30</td>
+                    <td>保证金</td>
+                    <td>银行汇款</td>
+                    <td class="col-money">8,000</td>
+                    <td class="col-money" rowspan="2" style="vertical-align: middle; text-align: center; font-weight: 600;"><span style="color: #DC2626;">-8,000</span></td>
                   </tr>
                 </tbody>
               </table>
