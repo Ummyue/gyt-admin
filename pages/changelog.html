@@ -108,6 +108,18 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T11:49:00',
+          version: 'v1.7.99.229',
+          module: '付款管理 - 新增付款页「预付款」模式简化表单（按 user 2026-08-13 11:49 图 2）',
+          summary: '付款管理 - 新增付款（pages/payment-new.html）按 user 2026-08-13 11:49 图 2 简化预付款模式表单。1) 现状：v1.7.99.228 预付款模式沿用结算付款默认值（收款账号名称「重庆运煤煤炭销售有限公司」/ 收款账号开户行「中国农业银行股份有限公司重庆铜梁龙都支行」/ 收款账号「3118 1501 0400 0755 9」/ 资金来源「自有资金」/ 付款金额「1000000」/ 付款日期 placeholder），与 user 实际预付款场景不符；2) 改造方案（v1.7.99.229）：a) 付款金额 + 付款日期 2 个 form-field 加 class="prepay-field"（CSS display:none 隐藏）；b) togglePaymentSections prepay 分支扩展：清空 4 字段值（收款账号名称 select → selectedIndex=0 / 收款账号开户行 input → value="" / 收款账号 input → value="" / 资金来源 select → selectedIndex=0）+ 取消「是否有票」所有 radio checked；c) 顶部 4 个统计卡片（已付款/已结算/已开票/业务线货款回款）保留显示；d) 切回结算付款/预结算付款模式不恢复清空值（user 自己重新填）；3) 防翻车：JS 字符串无 <\/script> + 仅清空不删除 HTML 元素（保证可切回）。',
+          changes: [
+            { type: 'modify', location: 'pages/payment-new.html 付款金额 + 付款日期 form-field', before: 'v1.7.99.228 预付款模式下仍显示（v1.7.99.58 旧默认值）', after: 'v1.7.99.229 加 class="prepay-field" + CSS .prepay-field { display: none; } 预付款模式自动隐藏' },
+            { type: 'modify', location: 'pages/payment-new.html togglePaymentSections 函数 prepay 分支', before: 'v1.7.99.228 prepay 分支仅隐藏 4 个结算付款区块 + 隐藏付款金额/付款日期', after: 'v1.7.99.229 prepay 分支扩展：清空 4 字段值（收款账号名称/开户行/账号/资金来源 → selectedIndex=0 或 value=""）+ 取消「是否有票」所有 radio checked' },
+            { type: 'modify', location: 'pages/payment-new.html 顶部 4 个统计卡片', before: 'v1.7.99.228 默认显示（已付款 80,000 / 已结算 0 / 已开票 0 / 业务线货款回款 0）', after: 'v1.7.99.229 保留显示（不变，预付款模式依然展示这 4 个数据卡）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.228', after: 'v1.7.99.229' },
+          ],
+        },
+        {
           ts: '2026-08-13T11:30:00',
           version: 'v1.7.99.228',
           module: '付款管理 - 新增付款页「结算付款」模式字段默认值 + 4 个新区块（上游/下游结算单 + 税务凭证 + 附件 3 行单据）',

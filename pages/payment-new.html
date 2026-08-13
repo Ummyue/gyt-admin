@@ -98,6 +98,9 @@
     #upstreamSettleSection.hidden,
     #downstreamSettleSection.hidden,
     #taxVoucherSection.hidden { display: none; }
+
+    /* ===== v1.7.99.229 预付款模式隐藏付款金额 + 付款日期 ===== */
+    .prepay-field { display: none; }
     .empty-row { padding: 60px 20px !important; text-align: center; border-bottom: none !important; }
     .empty-icon { color: #D1D5DB; margin-bottom: 12px; display: flex; justify-content: center; }
     .empty-icon svg { width: 48px; height: 48px; }
@@ -267,7 +270,7 @@
               <div class="form-field">
                 <label class="form-label"><span class="required">*</span>是否有票</label>
                 <div class="radio-group">
-                  <label class="radio-item"><input type="radio" name="hasInvoice" value="no" checked> <span>无票</span></label>
+                  <label class="radio-item"><input type="radio" name="hasInvoice" value="no"> <span>无票</span></label>
                   <label class="radio-item"><input type="radio" name="hasInvoice" value="yes"> <span>有票</span></label>
                 </div>
               </div>
@@ -309,11 +312,11 @@
                   <option>保理融资</option>
                 </select>
               </div>
-              <div class="form-field">
+              <div class="form-field prepay-field">
                 <label class="form-label"><span class="required">*</span>付款金额</label>
                 <input type="text" class="form-input" value="1000000">
               </div>
-              <div class="form-field">
+              <div class="form-field prepay-field">
                 <label class="form-label"><span class="required">*</span>付款日期</label>
                 <input type="text" class="form-input" placeholder="请选择付款日期">
               </div>
@@ -511,14 +514,15 @@
 
     // v1.7.99.228 付款类型切换 → 3 种模式显示不同区块组合
     // 结算付款: 显示上游/下游结算单 + 税务凭证 + 附件, 隐藏货物批次
-    // 预结算付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证
-    // 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证
+    // 预结算付款: 显示货物批次 + 付款金额/付款日期, 隐藏上游/下游结算单 + 税务凭证
+    // 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证 + 付款金额 + 付款日期
     function togglePaymentSections() {
       var selected = document.querySelector('input[name="payType"]:checked');
       var batchSection = document.getElementById('batchSection');
       var upstreamSettleSection = document.getElementById('upstreamSettleSection');
       var downstreamSettleSection = document.getElementById('downstreamSettleSection');
       var taxVoucherSection = document.getElementById('taxVoucherSection');
+      var prepayFields = document.querySelectorAll('.prepay-field');
       if (!selected) return;
       if (selected.value === 'settle') {
         // 结算付款模式
@@ -526,12 +530,36 @@
         if (upstreamSettleSection) upstreamSettleSection.classList.remove('hidden');
         if (downstreamSettleSection) downstreamSettleSection.classList.remove('hidden');
         if (taxVoucherSection) taxVoucherSection.classList.remove('hidden');
-      } else {
-        // 预结算/预付款模式
+        prepayFields.forEach(function(f) { f.style.display = ''; });
+      } else if (selected.value === 'prepay') {
+        // 预付款模式 (v1.7.99.229): 显示货物批次 + 隐藏 4 个结算付款区块 + 隐藏付款金额 + 付款日期
         if (batchSection) batchSection.classList.remove('hidden');
         if (upstreamSettleSection) upstreamSettleSection.classList.add('hidden');
         if (downstreamSettleSection) downstreamSettleSection.classList.add('hidden');
         if (taxVoucherSection) taxVoucherSection.classList.add('hidden');
+        prepayFields.forEach(function(f) { f.style.display = 'none'; });
+        // v1.7.99.229 预付款模式 placeholder 状态：清空 4 字段值 + 取消"是否有票" radio checked（按 user 2026-08-13 11:49 图 2）
+        var formSelects = document.querySelectorAll('.form-grid-3 select.form-select');
+        if (formSelects.length >= 3) {
+          // formSelects[0]=付款方式, [1]=收款账号名称, [2]=资金来源
+          formSelects[0].selectedIndex = 0;
+          formSelects[1].selectedIndex = 0;
+          formSelects[2].selectedIndex = 0;
+        }
+        var formInputs = document.querySelectorAll('.form-grid-3 input.form-input');
+        if (formInputs.length >= 2) {
+          // formInputs[0]=收款账号开户行, [1]=收款账号, [2]=付款金额, [3]=付款日期
+          formInputs[0].value = '';
+          formInputs[1].value = '';
+        }
+        document.querySelectorAll('input[name="hasInvoice"]').forEach(function(r) { r.checked = false; });
+      } else {
+        // 预结算付款模式
+        if (batchSection) batchSection.classList.remove('hidden');
+        if (upstreamSettleSection) upstreamSettleSection.classList.add('hidden');
+        if (downstreamSettleSection) downstreamSettleSection.classList.add('hidden');
+        if (taxVoucherSection) taxVoucherSection.classList.add('hidden');
+        prepayFields.forEach(function(f) { f.style.display = ''; });
       }
     }
 
