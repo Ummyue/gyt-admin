@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>收货信息详情 - 豫港通 v1.7.99.227</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .info-table { width: 100%; border-collapse: collapse; }
+    .info-table td { padding: 12px 16px; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+    .info-label { color: var(--text-secondary); width: 14%; background: #F9FAFB; }
+    .info-value { color: var(--text-primary); }
+    .cp-table { width: 100%; border-collapse: collapse; }
+    .cp-table thead th { padding: 12px; background: #F9FAFB; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border-default); text-align: left; font-size: 13px; }
+    .cp-table tbody td { padding: 12px; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+    .card { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: var(--radius-lg); }
+    .card-header { padding: 14px 24px; border-bottom: 1px solid var(--border-light); }
+    .card-title { font-size: 15px; font-weight: 600; }
+    .expand-icon { color: var(--text-tertiary); font-size: 12px; cursor: pointer; user-select: none; display: inline-block; width: 16px; }
+    .expand-icon::before { content: '\25BC'; display: inline-block; transition: transform 0.2s; }
+    .expand-icon.collapsed::before { transform: rotate(-90deg); }
+    .btn { padding: 6px 14px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 1px solid transparent; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-text { background: #fff; color: var(--color-primary); border-color: var(--color-primary); }
+    .btn-text:hover { background: var(--color-primary-lighter); }
+    .btn-sm { padding: 4px 10px; font-size: 12px; }
+    .breadcrumb { font-size: 13px; color: var(--text-tertiary); display: flex; align-items: center; gap: 6px; }
+    .breadcrumb .separator { color: var(--text-tertiary); }
+    .breadcrumb .current { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <!-- 顶部 topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; min-height: calc(100vh - 60px);">
+    <!-- 左侧 sidemenu（由 left-sidemenu.js 动态加载） -->
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <!-- 主内容区 -->
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-header">
+        <div class="breadcrumb">
+          <span>数字供应链</span><span class="separator">/</span>
+          <span>收发货管理</span><span class="separator">/</span>
+          <span>收货管理</span><span class="separator">/</span>
+          <span class="current">收货信息详情</span>
+        </div>
+      </div>
+
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+
+        <!-- ===== 顶部标题 ===== -->
+        <div class="card" style="margin-bottom: 16px; padding: 18px 24px;">
+          <div style="display: flex; align-items: center; gap: 12px;">
+            <h1 style="font-size: 18px; font-weight: 600; margin: 0;">收货信息详情</h1>
+            <a href="./shipment-in.html" style="font-size: 13px; color: var(--color-primary); margin-left: auto;">&lt; 返回收货管理</a>
+          </div>
+        </div>
+
+        <!-- ===== 区块 1：合同信息 ===== -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header" style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 4px; height: 16px; background: var(--color-primary); border-radius: 2px;"></span>
+            <div class="card-title">合同信息</div>
+          </div>
+          <div style="padding: 0;">
+            <table class="info-table">
+              <tbody>
+                <tr>
+                  <td class="info-label">合同编号</td>
+                  <td class="info-value">GTGYL-MSXS-20260127-s</td>
+                  <td class="info-label">订单编号</td>
+                  <td class="info-value">SKBT202607050001</td>
+                </tr>
+                <tr>
+                  <td class="info-label">数量</td>
+                  <td class="info-value">20000 吨</td>
+                  <td class="info-label">基准价格</td>
+                  <td class="info-value">3400元/吨</td>
+                </tr>
+                <tr>
+                  <td class="info-label">交货期限</td>
+                  <td class="info-value">2026-01-27 ~ 2026-12-31</td>
+                  <td class="info-label">运输方式</td>
+                  <td class="info-value">火运</td>
+                </tr>
+                <tr>
+                  <td class="info-label">交货方式</td>
+                  <td class="info-value" colspan="3">—</td>
+                </tr>
+                <tr>
+                  <td class="info-label">收货人</td>
+                  <td class="info-value" colspan="3">河南中豫港通供应链管理有限公司</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===== 区块 2：发货信息（可折叠） ===== -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header" style="display: flex; align-items: center; justify-content: space-between; cursor: pointer;" onclick="toggleShipmentCard()">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span style="width: 4px; height: 16px; background: var(--color-primary); border-radius: 2px;"></span>
+              <div class="card-title">发货信息</div>
+            </div>
+            <span id="shipmentToggleIcon" class="expand-icon"></span>
+          </div>
+          <div id="shipmentCardBody" style="padding: 20px 24px; display: block;">
+            <table class="info-table" style="margin-bottom: 16px;">
+              <tbody>
+                <tr>
+                  <td class="info-label">发货批次号</td>
+                  <td class="info-value">BN202608070001</td>
+                  <td class="info-label">发货数量(吨)</td>
+                  <td class="info-value">343</td>
+                  <td class="info-label">已收货数量(吨)</td>
+                  <td class="info-value">0</td>
+                </tr>
+                <tr>
+                  <td class="info-label">发货日期</td>
+                  <td class="info-value">2026-08-07</td>
+                  <td class="info-label">收货完成时间</td>
+                  <td class="info-value">—</td>
+                  <td class="info-label"></td>
+                  <td class="info-value"></td>
+                </tr>
+                <tr>
+                  <td class="info-label">发货数量(吨)</td>
+                  <td class="info-value">343</td>
+                  <td class="info-label">发货日期</td>
+                  <td class="info-value">2026-08-07</td>
+                  <td class="info-label">托运人</td>
+                  <td class="info-value">风格</td>
+                </tr>
+                <tr>
+                  <td class="info-label">车数</td>
+                  <td class="info-value">40</td>
+                  <td class="info-label">发站</td>
+                  <td class="info-value">霍尔木兹</td>
+                  <td class="info-label">到站</td>
+                  <td class="info-value">八达岭</td>
+                </tr>
+                <tr>
+                  <td class="info-label">运单号</td>
+                  <td class="info-value">123212331111</td>
+                  <td class="info-label">铁路计划号</td>
+                  <td class="info-value" colspan="3">—</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px; padding-top: 12px; border-top: 1px dashed var(--border-light);">
+              <span style="font-size: 13px; font-weight: 500; color: var(--text-secondary);">运输信息</span>
+              <button class="btn btn-text btn-sm" onclick="alert('查看运输轨迹（v1.7.99.227 mock）')">查看运输轨迹</button>
+            </div>
+            <table class="info-table" style="margin-bottom: 16px;">
+              <thead>
+                <tr>
+                  <th style="width: 25%; padding: 10px 12px; background: #F9FAFB; font-weight: 500; color: var(--text-secondary); font-size: 13px; text-align: left;">运单号</th>
+                  <th style="width: 25%; padding: 10px 12px; background: #F9FAFB; font-weight: 500; color: var(--text-secondary); font-size: 13px; text-align: left;">车种</th>
+                  <th style="width: 25%; padding: 10px 12px; background: #F9FAFB; font-weight: 500; color: var(--text-secondary); font-size: 13px; text-align: left;">车号</th>
+                  <th style="width: 25%; padding: 10px 12px; background: #F9FAFB; font-weight: 500; color: var(--text-secondary); font-size: 13px; text-align: left;">票重(吨)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="info-value" style="padding: 12px;">123212331111</td>
+                  <td class="info-value" style="padding: 12px;">CSX</td>
+                  <td class="info-value" style="padding: 12px;">CXA</td>
+                  <td class="info-value" style="padding: 12px;">22</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div style="padding-top: 12px; border-top: 1px dashed var(--border-light);">
+              <div style="font-size: 13px; font-weight: 500; color: var(--text-secondary); margin-bottom: 10px;">附件信息</div>
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">类型</th>
+                    <th>文件名称</th>
+                    <th style="width: 120px; text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>车号表</td>
+                    <td>APP_IN_企业名称2_20260709_0002.pdf</td>
+                    <td style="text-align: right;"><a href="javascript:void(0)" style="color: var(--color-primary);">下载</a></td>
+                  </tr>
+                  <tr>
+                    <td>大票</td>
+                    <td>APP_IN_企业名称2_20260708_0001.pdf</td>
+                    <td style="text-align: right;"><a href="javascript:void(0)" style="color: var(--color-primary);">下载</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== 区块 3：收货信息（17 行表格） ===== -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header" style="display: flex; align-items: center; gap: 8px;">
+            <span style="width: 4px; height: 16px; background: var(--color-primary); border-radius: 2px;"></span>
+            <div class="card-title">收货信息</div>
+          </div>
+          <div style="padding: 0;">
+            <table class="cp-table">
+              <thead>
+                <tr>
+                  <th style="width: 14%;">收货编号</th>
+                  <th style="width: 14%;">关联发货批次</th>
+                  <th style="width: 14%;">收货方式</th>
+                  <th style="width: 14%; text-align: right;">收货数量(吨)</th>
+                  <th style="width: 14%;">收货日期</th>
+                  <th style="width: 20%;">附件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>BN202607290017</td><td>BN202607290017</td><td>铁路</td><td style="text-align: right;">1143.2</td><td>2026-06-30</td><td>—</td></tr>
+                <tr><td>BN202607290016</td><td>BN202607290016</td><td>铁路</td><td style="text-align: right;">1192</td><td>2026-05-31</td><td>—</td></tr>
+                <tr><td>BN202607290015</td><td>BN202607290015</td><td>铁路</td><td style="text-align: right;">1192</td><td>2026-05-25</td><td>—</td></tr>
+                <tr><td>BN202607290014</td><td>BN202607290014</td><td>铁路</td><td style="text-align: right;">927.5</td><td>2026-05-13</td><td>—</td></tr>
+                <tr><td>BN202607290013</td><td>BN202607290013</td><td>铁路</td><td style="text-align: right;">618</td><td>2026-05-07</td><td>—</td></tr>
+                <tr><td>BN202607290012</td><td>BN202607290012</td><td>铁路</td><td style="text-align: right;">927.5</td><td>2026-04-29</td><td>—</td></tr>
+                <tr><td>BN202607290011</td><td>BN202607290011</td><td>铁路</td><td style="text-align: right;">32</td><td>2026-04-28</td><td>—</td></tr>
+                <tr><td>BN202607290009</td><td>BN202607290009</td><td>铁路</td><td style="text-align: right;">922.25</td><td>2026-04-20</td><td>—</td></tr>
+                <tr><td>BN202607290008</td><td>BN202607290008</td><td>铁路</td><td style="text-align: right;">922.25</td><td>2026-04-13</td><td>—</td></tr>
+                <tr><td>BN202607290007</td><td>BN202607290007</td><td>铁路</td><td style="text-align: right;">474.9</td><td>2026-04-02</td><td>—</td></tr>
+                <tr><td>BN202607290006</td><td>BN202607290006</td><td>铁路</td><td style="text-align: right;">973.25</td><td>2026-03-24</td><td>—</td></tr>
+                <tr><td>BN202607290003</td><td>BN202607290003</td><td>铁路</td><td style="text-align: right;">942.5</td><td>2026-03-13</td><td>—</td></tr>
+                <tr><td>BN202607290002</td><td>BN202607290002</td><td>铁路</td><td style="text-align: right;">1355.45</td><td>2026-03-04</td><td>—</td></tr>
+                <tr><td>BN202607290001</td><td>BN202607290001</td><td>铁路</td><td style="text-align: right;">918</td><td>2026-03-03</td><td>—</td></tr>
+                <tr><td>BN202607070005</td><td>BN202607070005</td><td>铁路</td><td style="text-align: right;">612</td><td>2026-02-24</td><td>—</td></tr>
+                <tr><td>BN202607070004</td><td>BN202607070004</td><td>铁路</td><td style="text-align: right;">918</td><td>2026-02-04</td><td>—</td></tr>
+                <tr><td>BN202607070003</td><td>BN202607070003</td><td>铁路</td><td style="text-align: right;">527</td><td>2026-01-31</td><td>—</td></tr>
+                <tr><td>BN202607070002</td><td>BN202607070002</td><td>铁路</td><td style="text-align: right;">980</td><td>2026-01-27</td><td>—</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"><\/script>
+  <script src="../shared/js/left-sidemenu.js"><\/script>
+  <script>
+    // v1.7.99.227 发货信息折叠切换
+    function toggleShipmentCard() {
+      var body = document.getElementById('shipmentCardBody');
+      var icon = document.getElementById('shipmentToggleIcon');
+      if (!body || !icon) return;
+      if (body.style.display === 'none') {
+        body.style.display = 'block';
+        icon.classList.remove('collapsed');
+      } else {
+        body.style.display = 'none';
+        icon.classList.add('collapsed');
+      }
+    }
+  <\/script>
+</body>
+</html>

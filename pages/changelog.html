@@ -108,6 +108,22 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T10:32:00',
+          version: 'v1.7.99.227',
+          module: '收发货管理 - 发货管理抽屉复选改单选 + 收货信息详情页重做',
+          summary: '收发货管理（pages/shipment-out.html + pages/shipment-in-detail.html）按 user 2026-08-13 10:32 反馈改造。1) 任务 1：发货管理「登记订单发货数据」弹窗（选择采购订单 + 选择销售订单 2 个抽屉）的 20 行复选框全部改单选（type="radio" + name 区分），删表头复选框（全选不需要了），toggleSelectAll 函数改 noop，confirmDrawer 函数改单选校验逻辑（从「多选」变「单选」，selected.length>1 提示「每次只能选 1 个」）；2) 任务 2：收货信息详情页（pages/shipment-in-detail.html）按 user 2026-08-13 10:32 图 2 完全重做——v1.7.99.85 旧版是 placeholder（"基本信息 编号 待补充"），新版按 user 图分 3 大区块：a) 合同信息（合同编号/订单编号/数量/基准价格/交货期限/运输方式/交货方式/收货人 8 字段 2-3 列网格）；b) 发货信息（可折叠面板，6 字段基础信息 + 运输信息子表 1 行 + 附件信息 2 行：车号表/大票 PDF）；c) 收货信息（17 行表格 BN20260729001~BN202608070001 系列，含收货编号/关联发货批次/收货方式/收货数量/收货日期/附件 6 列）；3) title 升级 v1.7.99.226 → v1.7.99.227；4) 保留原 topbar + sidemenu + left-sidemenu.js（v1.7.99.85 旧版基础结构），只重做 main-content body 区域；5) docs/p-shipment-in-detail.md 不改（v1.0 终版已含 3 子模块架构 + 8 实体表 + 3 子状态机，不涉及 v1.7.99.227 UI 改造）；6) 防翻车（10.2 教训）：JS 字符串无 <\/script> 已 node --check 验证。',
+          changes: [
+            { type: 'modify', location: 'pages/shipment-out.html 「选择采购订单」抽屉 10 行复选框', before: 'v1.7.99.226 type="checkbox" + class="row-checkbox-purchase"（多选）', after: 'v1.7.99.227 type="radio" + name="purchase-select" + class="row-radio-purchase"（单选）' },
+            { type: 'modify', location: 'pages/shipment-out.html 「选择销售订单」抽屉 10 行复选框', before: 'v1.7.99.226 type="checkbox" + class="row-checkbox-sales"（多选）', after: 'v1.7.99.227 type="radio" + name="sales-select" + class="row-radio-sales"（单选）' },
+            { type: 'modify', location: 'pages/shipment-out.html 表头复选框（全选）', before: 'v1.7.99.226 headerCheckboxPurchase + headerCheckboxSales 表头全选复选框', after: 'v1.7.99.227 删表头复选框（单选不需要全选，保留空 <th style="width: 40px;"></th> 占位）' },
+            { type: 'modify', location: 'pages/shipment-out.html toggleSelectAll + confirmDrawer 函数', before: 'v1.7.99.226 toggleSelectAll 遍历 row-checkbox 全选/反选 + confirmDrawer 校验至少 1 个且最多 1 个', after: 'v1.7.99.227 toggleSelectAll 改 noop + confirmDrawer 改单选校验（querySelector(".row-radio-" + type + ":checked") 只能选 1 个）' },
+            { type: 'rewrite', location: 'pages/shipment-in-detail.html 整个 main-content body 区域', before: 'v1.7.99.85 旧版 placeholder（合同编号/订单编号/数量 等 9 字段 + 「基本信息 编号 待补充」+ 4 tab + 4 底部按钮）', after: 'v1.7.99.227 按 user 2026-08-13 10:32 图 2 重做 3 大区块：合同信息（8 字段 2-3 列网格）+ 发货信息（可折叠面板：6 字段基础 + 运输信息子表 1 行 + 附件信息 2 行：车号表/大票 PDF）+ 收货信息（17 行表格：BN20260729001~BN202608070001 系列）' },
+            { type: 'add', location: 'pages/shipment-in-detail.html 折叠切换 JS', before: 'v1.7.99.85 旧版无折叠功能', after: 'v1.7.99.227 toggleShipmentCard() 函数 + .expand-icon CSS（点击发货信息 header 切换 card-body display）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.226', after: '豫港通原型 v.1.7.99.227' }
+          ]
+        },
+
+        {
           ts: '2026-08-13T10:20:00',
           version: 'v1.7.99.226',
           module: '补充合同详情页 - 加「操作」按钮抽屉式下拉 + 真路由跳转',

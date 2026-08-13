@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>发货管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 顶部按钮区：登记订单发货数据 下拉 */
+    .btn-dropdown { position: relative; display: inline-block; }
+    .btn-dropdown-menu {
+      position: absolute; top: calc(100% + 4px); right: 0; min-width: 220px;
+      background: #fff; border: 1px solid var(--border-color); border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.1); z-index: 100; display: none; padding: 4px 0;
+    }
+    .btn-dropdown-menu.open { display: block; }
+    .btn-dropdown-menu a {
+      display: block; padding: 10px 16px; font-size: 13px; color: var(--text-primary);
+      text-decoration: none; transition: background 0.15s;
+    }
+    .btn-dropdown-menu a:hover { background: var(--bg-hover); color: var(--color-primary); }
+
+    /* 右侧抽屉弹窗（v1.7.99.54 新增：选择采购/销售订单） */
+    .cp-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 999; display: none;
+    }
+    .cp-drawer-overlay.open { display: block; }
+    .cp-drawer {
+      position: fixed; top: 0; right: 0; height: 100vh; width: 1440px; max-width: 95vw;
+      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      z-index: 1000; display: none; flex-direction: column;
+    }
+    .cp-drawer.open { display: flex; }
+    .cp-drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .cp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .cp-drawer-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .cp-drawer-close:hover { color: var(--text-primary); }
+    .cp-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
+    .cp-drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .cp-drawer-filter {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;
+    }
+    .cp-drawer-filter-item { display: flex; align-items: center; gap: 8px; }
+    .cp-drawer-filter-item label { color: var(--text-tertiary); font-size: 12px; min-width: 64px; }
+    .cp-drawer-filter-buttons { display: flex; gap: 8px; align-items: flex-end; }
+    .cp-drawer-filter-buttons button { height: 30px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">收发货管理</a>
+          <span class="sep">/</span>
+          <span class="current">发货管理</span>
+        </div>
+
+        <!-- 标题 + 顶部按钮区（v1.7.99.54："登记订单发货数据"按钮 + 下拉菜单） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">发货管理</h1>
+          <div class="btn-dropdown">
+            <button class="btn btn-primary" onclick="toggleRegisterDropdown(event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              登记订单发货数据
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-left: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="btn-dropdown-menu" id="registerDropdown">
+              <a href="javascript:void(0)" onclick="openDrawer('purchase')">登记采购订单发运数据</a>
+              <a href="javascript:void(0)" onclick="openDrawer('sales')">登记销售订单发运数据</a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区（v1.7.99.54 按图 1：7 字段） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入订单或合同编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">发货批次号</span>
+                <input type="text" class="input" placeholder="请输入">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">买方企业</span>
+                <input type="text" class="input" placeholder="请输入">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">卖方企业</span>
+                <input type="text" class="input" placeholder="请输入">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">收货人</span>
+                <input type="text" class="input" placeholder="请输入">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">发货日期</span>
+                <input type="text" class="input" placeholder="开始时间 ~ 结束时间">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货转开具状态</span>
+                <select class="select"><option>请选择货转开具状态</option><option>未开具</option><option>已开具</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.162 按 user 反馈：4 状态 全部/待收货/已收货/已作废） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" data-tab-key="all">全部 <span class="count">10</span></div>
+                <div class="cp-tab" data-tab-key="pending-receipt">待收货 <span class="count">3</span></div>
+                <div class="cp-tab" data-tab-key="received">已收货 <span class="count">5</span></div>
+                <div class="cp-tab" data-tab-key="voided">已作废 <span class="count">2</span></div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <button class="btn btn-text btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  数据导出
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格（v1.7.99.54 按图 1：10 列表格） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 14%;">合同编号</th>
+                    <th style="width: 12%;">发货批次号</th>
+                    <th style="width: 14%;">卖方企业</th>
+                    <th style="width: 14%;">买方企业</th>
+                    <th style="width: 14%;">收货人</th>
+                    <th style="width: 9%;">发货日期</th>
+                    <th style="width: 8%;">发货数量(吨)</th>
+                    <th style="width: 7%;">运输方式</th>
+                    <th style="width: 7%;">货转开具标识</th>
+                    <th style="width: 6%;">状态</th>
+                    <th class="col-action" style="text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+
+                  <tr data-status="pending-receipt">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290013</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-05-07</td>
+                    <td style="text-align: right;">618</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-blue">待收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：发起货转（mock）')">发起货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="pending-receipt">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290012</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-29</td>
+                    <td style="text-align: right;">927.5</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-blue">待收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：发起货转（mock）')">发起货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="pending-receipt">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290011</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-28</td>
+                    <td style="text-align: right;">32</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-blue">待收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：发起货转（mock）')">发起货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="received">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290009</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-20</td>
+                    <td style="text-align: right;">922.25</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-green">已收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：查看货转（mock）')">查看货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="received">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290008</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-13</td>
+                    <td style="text-align: right;">922.25</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-green">已收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：查看货转（mock）')">查看货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="received">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290007</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-02</td>
+                    <td style="text-align: right;">474.9</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-green">已收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：查看货转（mock）')">查看货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="received">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290006</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-03-24</td>
+                    <td style="text-align: right;">973.25</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-green">已收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：查看货转（mock）')">查看货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="received">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290003</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-03-13</td>
+                    <td style="text-align: right;">942.5</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-green">已收货</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：作废（mock）')">作废</a>
+                      <a href="javascript:void(0)" onclick="alert('操作：查看货转（mock）')">查看货转</a>
+                    </td>
+                  </tr>
+                  <tr data-status="voided">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290002</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-03-04</td>
+                    <td style="text-align: right;">1,355.45</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-red">已作废</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                    </td>
+                  </tr>
+                  <tr data-status="voided">
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">BN202607290001</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-03-03</td>
+                    <td style="text-align: right;">918</td>
+                    <td>火运</td>
+                    <td>未开具</td>
+                    <td><span class="tag tag-red">已作废</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./shipment-out-detail.html">查看</a>
+                    </td>
+                  </tr>                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 10 条记录 · 第 1 / 1 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 右侧抽屉：选择采购订单（v1.7.99.54 新增） ==================== -->
+  <div class="cp-drawer-overlay" id="drawerPurchaseOverlay" onclick="closeDrawer('purchase')"></div>
+  <div class="cp-drawer" id="drawerPurchase" role="dialog">
+    <div class="cp-drawer-header">
+      <div class="cp-drawer-title">选择采购订单</div>
+      <span class="cp-drawer-close" onclick="closeDrawer('purchase')" title="关闭">×</span>
+    </div>
+    <div class="cp-drawer-body">
+      <!-- 当前搜索条件 chips -->
+      <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">
+        当前搜索：<span style="background: #DBEAFE; color: #1E40AF; padding: 2px 8px; border-radius: 3px; margin-right: 4px;">合同编号：LX20260122001</span><span>清除全部</span>
+      </div>
+      <!-- 4 字段筛选 + 查询/重置 -->
+      <div class="cp-drawer-filter" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="cp-drawer-filter-item"><label>合同编号</label><input type="text" class="input" placeholder="请输入合同编号"></div>
+        <div class="cp-drawer-filter-item"><label>企业名称</label><input type="text" class="input" placeholder="请输入企业名称"></div>
+        <div class="cp-drawer-filter-item"><label>品名</label><input type="text" class="input" placeholder="请输入品名"></div>
+        <div class="cp-drawer-filter-item"><label>签订日期</label><input type="text" class="input" placeholder="请选择合同日期范围"></div>
+        <div class="cp-drawer-filter-buttons">
+          <button class="btn btn-default btn-sm">重置</button>
+          <button class="btn btn-primary btn-sm">查询</button>
+        </div>
+      </div>
+      <!-- 10 列表格 -->
+      <div class="cp-table-wrap">
+        <table class="cp-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>订单/单批次合同编号</th>
+              <th>卖方企业</th>
+              <th>业务类型</th>
+              <th>品类</th>
+              <th>合同数量</th>
+              <th>合同单价</th>
+              <th>合同总价</th>
+              <th>交货期限</th>
+              <th>签订日期</th>
+              <th>业务负责人</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>预付业务</td>
+              <td>糖粉</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>账期业务</td>
+              <td>谷物</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>购销业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>预付业务</td>
+              <td>糖粉</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>账期业务</td>
+              <td>谷物</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>购销业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="purchase-select" class="row-radio-purchase"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州承泽运输有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="cp-pagination" style="margin-top: 12px;">
+        <div>共 400 条记录 · 第 1 / 80 页</div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="cp-pagination-pages">
+            <div class="cp-pagination-page">‹</div>
+            <div class="cp-pagination-page active">1</div>
+            <div class="cp-pagination-page">2</div>
+            <div class="cp-pagination-page">3</div>
+            <div class="cp-pagination-page">4</div>
+            <div class="cp-pagination-page">5</div>
+            <div class="cp-pagination-page">6</div>
+            <div class="cp-pagination-page">7</div>
+            <div class="cp-pagination-page">8</div>
+            <div class="cp-pagination-page">9</div>
+            <div class="cp-pagination-page">›</div>
+          </div>
+          <select class="cp-pagination-size">
+            <option>10 条/页</option>
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+          </select>
+          <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+        </div>
+      </div>
+    </div>
+    <div class="cp-drawer-footer">
+      <button class="btn btn-default" onclick="closeDrawer('purchase')">取消</button>
+      <button class="btn btn-primary" onclick="confirmDrawer('purchase')">确定</button>
+    </div>
+  </div>
+
+  <!-- ==================== 右侧抽屉：选择销售订单（v1.7.99.54 新增） ==================== -->
+  <div class="cp-drawer-overlay" id="drawerSalesOverlay" onclick="closeDrawer('sales')"></div>
+  <div class="cp-drawer" id="drawerSales" role="dialog">
+    <div class="cp-drawer-header">
+      <div class="cp-drawer-title">选择销售订单</div>
+      <span class="cp-drawer-close" onclick="closeDrawer('sales')" title="关闭">×</span>
+    </div>
+    <div class="cp-drawer-body">
+      <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">
+        当前搜索：<span style="background: #DBEAFE; color: #1E40AF; padding: 2px 8px; border-radius: 3px; margin-right: 4px;">合同编号：LX20260122001</span><span>清除全部</span>
+      </div>
+      <div class="cp-drawer-filter" style="grid-template-columns: 1fr 1fr 1fr;">
+        <div class="cp-drawer-filter-item"><label>合同编号</label><input type="text" class="input" placeholder="请输入合同编号"></div>
+        <div class="cp-drawer-filter-item"><label>企业名称</label><input type="text" class="input" placeholder="请输入企业名称"></div>
+        <div class="cp-drawer-filter-item"><label>品名</label><input type="text" class="input" placeholder="请输入品名"></div>
+        <div class="cp-drawer-filter-item"><label>签订日期</label><input type="text" class="input" placeholder="请选择合同日期范围"></div>
+        <div class="cp-drawer-filter-buttons">
+          <button class="btn btn-default btn-sm">重置</button>
+          <button class="btn btn-primary btn-sm">查询</button>
+        </div>
+      </div>
+      <div class="cp-table-wrap">
+        <table class="cp-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>订单/单批次合同编号</th>
+              <th>卖方企业</th>
+              <th>业务类型</th>
+              <th>品类</th>
+              <th>合同数量</th>
+              <th>合同单价</th>
+              <th>合同总价</th>
+              <th>交货期限</th>
+              <th>签订日期</th>
+              <th>业务负责人</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>预付业务</td>
+              <td>糖粉</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>账期业务</td>
+              <td>谷物</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>购销业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>预付业务</td>
+              <td>糖粉</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>账期业务</td>
+              <td>谷物</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>购销业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+            <tr>
+              <td><input type="radio" name="sales-select" class="row-radio-sales"></td>
+              <td class="col-num">GTGYL-MSXS-20260127-s</td>
+              <td>郑州信必达供应链管理有限公司</td>
+              <td>存货业务</td>
+              <td>淀粉制品</td>
+              <td style="text-align: right;">20,000.00 吨</td>
+              <td style="text-align: right;">3400.00 元/吨</td>
+              <td style="text-align: right;">68,000,000.00 元</td>
+              <td>2026-01-01~2026-12-31</td>
+              <td>2026-09-17</td>
+              <td>张三</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="cp-pagination" style="margin-top: 12px;">
+        <div>共 400 条记录 · 第 1 / 80 页</div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="cp-pagination-pages">
+            <div class="cp-pagination-page">‹</div>
+            <div class="cp-pagination-page active">1</div>
+            <div class="cp-pagination-page">2</div>
+            <div class="cp-pagination-page">3</div>
+            <div class="cp-pagination-page">4</div>
+            <div class="cp-pagination-page">5</div>
+            <div class="cp-pagination-page">6</div>
+            <div class="cp-pagination-page">7</div>
+            <div class="cp-pagination-page">8</div>
+            <div class="cp-pagination-page">9</div>
+            <div class="cp-pagination-page">›</div>
+          </div>
+          <select class="cp-pagination-size">
+            <option>10 条/页</option>
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+          </select>
+          <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+        </div>
+      </div>
+    </div>
+    <div class="cp-drawer-footer">
+      <button class="btn btn-default" onclick="closeDrawer('sales')">取消</button>
+      <button class="btn btn-primary" onclick="confirmDrawer('sales')">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 「登记订单发货数据」按钮下拉（v1.7.99.54）
+    function toggleRegisterDropdown(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('registerDropdown').classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var dropdown = document.getElementById('registerDropdown');
+      if (dropdown && dropdown.classList.contains('open') && !e.target.closest('.btn-dropdown')) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // 抽屉：打开/关闭（v1.7.99.54）
+    function openDrawer(type) {
+      document.getElementById('registerDropdown').classList.remove('open');
+      document.getElementById('drawer' + (type === 'purchase' ? 'Purchase' : 'Sales')).classList.add('open');
+      document.getElementById('drawer' + (type === 'purchase' ? 'Purchase' : 'Sales') + 'Overlay').classList.add('open');
+    }
+    function closeDrawer(type) {
+      var id = type === 'purchase' ? 'drawerPurchase' : 'drawerSales';
+      document.getElementById(id).classList.remove('open');
+      document.getElementById(id + 'Overlay').classList.remove('open');
+    }
+    function confirmDrawer(type) {
+      // v1.7.99.227 单选模式：从 .row-checkbox- 改 .row-radio-
+      var selected = document.querySelector('.row-radio-' + type + ':checked');
+      var typeText = type === 'purchase' ? '采购' : '销售';
+      if (!selected) {
+        alert('请先选择 1 个订单（v1.7.99.227 单选模式）');
+        return;
+      }
+      var tr = selected.closest('tr');
+      var contractNo = tr ? tr.querySelector('.col-num')?.textContent.trim() : '';
+      alert('操作：已选择 1 个' + typeText + '订单 ' + contractNo + '（mock：实际会跳到填写发货信息页）');
+      // 跳到填写发货信息页
+      window.location.href = './shipment-out-new.html?type=' + type;
+    }
+
+    // v1.7.99.227 单选模式不需要全选，函数保留为 noop（避免外部调用错）
+    function toggleSelectAll(type) {
+      // noop: single select
+    }
+
+    // v1.7.99.162 状态机切换：4 tab（全部/待收货/已收货/已作废）
+    (function() {
+      var tabs = document.querySelectorAll('.cp-tab[data-tab-key]');
+      var rows = document.querySelectorAll('tbody tr[data-status]');
+      function switchTab(key) {
+        // 切换 tab active
+        tabs.forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-tab-key') === key); });
+        // 过滤行
+        rows.forEach(function(r) {
+          if (key === 'all' || r.getAttribute('data-status') === key) {
+            r.style.display = '';
+          } else {
+            r.style.display = 'none';
+          }
+        });
+      }
+      tabs.forEach(function(t) {
+        t.addEventListener('click', function() { switchTab(t.getAttribute('data-tab-key')); });
+      });
+    })();
+  </script>
+</body>
+</html>
