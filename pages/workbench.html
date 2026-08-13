@@ -1,0 +1,922 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>工作台 - 豫港通 v1.7.99.225</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <style>
+    /* ========================================
+     * 工作台 v1.7.97（恢复原版）
+     * 5 区块独立：数据概览 / 业务概览 / 预警+公告 / 待办事项
+     * ======================================== */
+
+    .workbench-page {
+      background: var(--bg-page);
+      min-height: calc(100vh - 60px);
+      padding: 20px 24px 24px;
+    }
+    .workbench-section { margin-bottom: 16px; }
+    .workbench-section:last-child { margin-bottom: 0; }
+
+    /* ===== Section 通用：卡片头 ===== */
+    .wb-section-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 20px 24px;
+      box-shadow: var(--shadow-sm);
+      transition: box-shadow 0.2s;
+    }
+    .wb-section-card:hover { box-shadow: var(--shadow-md); }
+
+    .wb-section-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 16px;
+    }
+    .wb-section-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .wb-section-title .red-dot {
+      width: 6px; height: 6px; border-radius: 50%;
+      background: var(--color-danger);
+      box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
+    }
+    .wb-section-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 12px;
+      color: var(--text-tertiary);
+    }
+    .wb-section-meta .meta-time {
+      padding: 4px 10px;
+      background: var(--bg-page);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-default);
+      color: var(--text-secondary);
+      font-size: 12px;
+    }
+    .wb-section-action {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      transition: color 0.15s;
+    }
+    .wb-section-action:hover { color: var(--color-primary); }
+    .wb-section-action::after { content: '›'; font-size: 14px; }
+
+    /* ===== 区块 1：数据概览（5 卡） ===== */
+    .kpi-overview {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 12px;
+    }
+    .kpi-overview-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 18px 20px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      transition: all 0.2s;
+      box-shadow: var(--shadow-sm);
+    }
+    .kpi-overview-card:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--border-strong);
+    }
+    .kpi-overview-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: var(--radius-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 18px;
+      color: white;
+    }
+    .kpi-overview-icon.blue   { background: linear-gradient(135deg, #3B82F6 0%, #1D4ED8 100%); }
+    .kpi-overview-icon.orange { background: linear-gradient(135deg, #FB923C 0%, #EA580C 100%); }
+    .kpi-overview-icon.green  { background: linear-gradient(135deg, #34D399 0%, #059669 100%); }
+    .kpi-overview-icon.purple { background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+    .kpi-overview-icon.red    { background: linear-gradient(135deg, #F87171 0%, #DC2626 100%); }
+    .kpi-overview-body { flex: 1; min-width: 0; }
+    .kpi-overview-label {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-bottom: 4px;
+    }
+    .kpi-overview-value {
+      font-size: 22px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      line-height: 1.2;
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .kpi-overview-value .unit {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      font-weight: 400;
+    }
+
+    /* ===== 区块 2：合同签署 + 发运 + 资金（3 列独立 card） ===== */
+    .biz-row {
+      display: grid;
+      grid-template-columns: 1.1fr 1.1fr 360px;
+      gap: 16px;
+    }
+    .donut {
+      position: relative;
+      width: 168px;
+      height: 168px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+    .donut-fire   { background: conic-gradient(#FB923C 0% 100%, #FEE2E2 100% 100%); }
+    .donut-others { background: conic-gradient(#94A3B8 0% 100%, #F1F5F9 100% 100%); }
+    .donut-inner {
+      width: 110px;
+      height: 110px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 2px;
+    }
+    .donut-value { font-size: 18px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+    .donut-unit  { font-size: 11px; color: var(--text-tertiary); }
+    .donut-list {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      flex: 1;
+    }
+    .donut-list-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .donut-list-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+    .donut-list-text { flex: 1; }
+    .donut-list-value { font-family: var(--font-mono); color: var(--text-primary); font-weight: 500; }
+    .donut-list-pct  { color: var(--text-tertiary); margin-left: 4px; }
+
+    .biz-donut-wrap {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 4px 0 0;
+    }
+    .biz-summary-text {
+      font-size: 14px;
+      color: var(--text-secondary);
+      margin-bottom: 14px;
+    }
+    .biz-summary-text strong {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      margin: 0 4px;
+    }
+
+    .fund-stack { display: flex; flex-direction: column; gap: 14px; }
+    .fund-block {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 14px 16px;
+      background: var(--bg-page);
+    }
+    .fund-block-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+    }
+    .fund-block-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .fund-block-filter {
+      font-size: 11px;
+      color: var(--text-tertiary);
+      padding: 2px 8px;
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-default);
+    }
+    .fund-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 8px 0;
+    }
+    .fund-row + .fund-row { border-top: 1px solid var(--border-light); }
+    .fund-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: var(--radius-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      color: white;
+      flex-shrink: 0;
+    }
+    .fund-icon.pay     { background: linear-gradient(135deg, #60A5FA 0%, #2563EB 100%); }
+    .fund-icon.collect { background: linear-gradient(135deg, #34D399 0%, #059669 100%); }
+    .fund-icon.disburse{ background: linear-gradient(135deg, #A78BFA 0%, #7C3AED 100%); }
+    .fund-icon.repay   { background: linear-gradient(135deg, #FB923C 0%, #EA580C 100%); }
+    .fund-body { flex: 1; }
+    .fund-label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 2px; }
+    .fund-value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      display: flex;
+      align-items: baseline;
+      gap: 4px;
+    }
+    .fund-value .unit { font-size: 12px; color: var(--text-tertiary); font-weight: 400; }
+
+    /* ===== 区块 3：预警 + 公告（2 列独立 card） ===== */
+    .notice-row {
+      display: grid;
+      grid-template-columns: 1.5fr 1fr;
+      gap: 16px;
+    }
+    .warning-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 12px;
+    }
+    .warning-card {
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      padding: 20px 16px;
+      text-align: center;
+      background: var(--bg-page);
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .warning-card:hover {
+      background: var(--bg-card);
+      box-shadow: var(--shadow-sm);
+      transform: translateY(-1px);
+    }
+    .warning-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 16px;
+      font-weight: 600;
+      margin: 0 auto 12px;
+    }
+    .warning-icon.high { background: #FEE2E2; color: #DC2626; box-shadow: 0 0 0 4px rgba(220, 38, 38, 0.08); }
+    .warning-icon.mid  { background: #FEF3C7; color: #F59E0B; box-shadow: 0 0 0 4px rgba(245, 158, 11, 0.08); }
+    .warning-icon.low  { background: #DBEAFE; color: #3B82F6; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.08); }
+    .warning-count {
+      font-size: 24px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+    .warning-count-unit { font-size: 12px; color: var(--text-tertiary); font-weight: 400; }
+    .warning-tag {
+      display: inline-block;
+      margin-top: 8px;
+      padding: 2px 10px;
+      border-radius: var(--radius-full);
+      font-size: 11px;
+      font-weight: 500;
+    }
+    .warning-tag.high { background: #FEE2E2; color: #DC2626; }
+    .warning-tag.mid  { background: #FEF3C7; color: #F59E0B; }
+    .warning-tag.low  { background: #DBEAFE; color: #3B82F6; }
+    .warning-desc {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      margin-top: 8px;
+      min-height: 16px;
+    }
+    .warning-action {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      margin-top: 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      transition: color 0.15s;
+    }
+    .warning-action:hover { color: var(--color-primary); }
+    .warning-action .arrow {
+      display: inline-block;
+      width: 14px; height: 14px;
+      line-height: 14px; text-align: center;
+      background: #F1F5F9; border-radius: 3px;
+      font-size: 11px; color: var(--text-tertiary);
+    }
+    .notice-empty {
+      min-height: 240px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-tertiary);
+      font-size: 13px;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .notice-empty-icon { font-size: 32px; color: var(--border-strong); }
+
+    /* ===== 区块 4：待办事项（独立 card，v1.7.96 规范） ===== */
+    .todo-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      padding: 0;
+      box-shadow: var(--shadow-sm);
+      overflow: hidden;
+    }
+    .todo-header {
+      padding: 18px 24px 12px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .todo-title {
+      font-size: 15px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .todo-tabs {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 4px;
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--border-light);
+      background: var(--bg-page);
+    }
+    .todo-tab {
+      padding: 6px 14px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: var(--radius-default);
+      transition: all 0.15s;
+      border: 1px solid transparent;
+    }
+    .todo-tab:hover { background: var(--bg-card); color: var(--text-primary); }
+    .todo-tab.active {
+      background: var(--color-primary-lighter);
+      color: var(--color-primary);
+      font-weight: 500;
+      border-color: var(--color-primary-light);
+    }
+    .todo-table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    .todo-table thead th {
+      text-align: left;
+      padding: 12px 24px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .todo-table tbody td {
+      padding: 16px 24px;
+      font-size: 13px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .todo-table tbody tr:last-child td { border-bottom: none; }
+    .todo-table tbody tr:hover { background: var(--bg-page); }
+    .todo-table .col-num { font-family: var(--font-mono); color: var(--text-secondary); }
+    .todo-table .col-action { text-align: right; }
+    .todo-table .col-action a { color: var(--color-primary); font-size: 13px; }
+    .todo-table .col-action a:hover { text-decoration: underline; }
+
+    /* ===== v1.7.99.225 买卖方徽章 ===== */
+    .party-cell { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .party-badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 32px;
+      height: 20px;
+      padding: 0 8px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 500;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .party-badge-seller {
+      background: #ECFDF5;
+      color: #047857;
+      border: 1px solid #A7F3D0;
+    }
+    .party-badge-buyer {
+      background: #EFF6FF;
+      color: #1E40AF;
+      border: 1px solid #BFDBFE;
+    }
+    .party-name {
+      color: var(--text-primary);
+      font-size: 13px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ===== 回到顶部 ===== */
+    .back-to-top {
+      position: fixed;
+      right: 32px;
+      bottom: 32px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      transition: all 0.2s;
+      z-index: 100;
+    }
+    .back-to-top:hover {
+      color: var(--color-primary);
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+  </style>
+</head>
+<body>
+  <!-- 顶部 topbar -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item active" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html','_blank')">📋 版本变更记录</button>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 主体 -->
+  <div class="workbench-page">
+
+    <!-- ===== 区块 1：数据概览（5 KPI 卡） ===== -->
+    <div class="workbench-section">
+      <div class="kpi-overview">
+        <div class="kpi-overview-card">
+          <div class="kpi-overview-icon blue">🏭</div>
+          <div class="kpi-overview-body">
+            <div class="kpi-overview-label">上游供应商</div>
+            <div class="kpi-overview-value">0</div>
+          </div>
+        </div>
+        <div class="kpi-overview-card">
+          <div class="kpi-overview-icon orange">🏦</div>
+          <div class="kpi-overview-body">
+            <div class="kpi-overview-label">金融机构</div>
+            <div class="kpi-overview-value">0</div>
+          </div>
+        </div>
+        <div class="kpi-overview-card">
+          <div class="kpi-overview-icon green">🏢</div>
+          <div class="kpi-overview-body">
+            <div class="kpi-overview-label">下游客户</div>
+            <div class="kpi-overview-value">1</div>
+          </div>
+        </div>
+        <div class="kpi-overview-card">
+          <div class="kpi-overview-icon purple">📋</div>
+          <div class="kpi-overview-body">
+            <div class="kpi-overview-label">执行中业务线数</div>
+            <div class="kpi-overview-value">1</div>
+          </div>
+        </div>
+        <div class="kpi-overview-card">
+          <div class="kpi-overview-icon red">💰</div>
+          <div class="kpi-overview-body">
+            <div class="kpi-overview-label">累计放款金额</div>
+            <div class="kpi-overview-value">0<span class="unit">元</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 区块 2：业务概览（3 个独立 card） ===== -->
+    <div class="workbench-section">
+      <div class="biz-row">
+        <!-- 合同签署情况 -->
+        <div class="wb-section-card">
+          <div class="wb-section-header">
+            <div class="wb-section-title">合同签署情况</div>
+            <div class="wb-section-meta">
+              <span class="meta-time">2026-01-01 ~ 2026-07-27</span>
+            </div>
+          </div>
+          <div class="biz-summary-text">新增采购合同量 <strong>2</strong> 万(吨)</div>
+          <div class="biz-donut-wrap">
+            <div class="donut donut-others">
+              <div class="donut-inner">
+                <div class="donut-value">20,000</div>
+                <div class="donut-unit">吨</div>
+              </div>
+            </div>
+            <div class="donut-list">
+              <div class="donut-list-item">
+                <span class="donut-list-dot" style="background: #94A3B8;"></span>
+                <span class="donut-list-text">其他</span>
+                <span class="donut-list-value">20,000 吨<span class="donut-list-pct">100%</span></span>
+              </div>
+              <div class="donut-list-item">
+                <span class="donut-list-dot" style="background: #FB923C;"></span>
+                <span class="donut-list-text">火运</span>
+                <span class="donut-list-value">20,000 吨<span class="donut-list-pct">100%</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 发运情况 -->
+        <div class="wb-section-card">
+          <div class="wb-section-header">
+            <div class="wb-section-title">发运情况</div>
+            <div class="wb-section-meta">
+              <span class="meta-time">2026-01-01 ~ 2026-07-27</span>
+            </div>
+          </div>
+          <div class="biz-summary-text">发运量 <strong>3,037</strong> (吨)</div>
+          <div class="biz-donut-wrap">
+            <div class="donut donut-others">
+              <div class="donut-inner">
+                <div class="donut-value">3,037</div>
+                <div class="donut-unit">吨</div>
+              </div>
+            </div>
+            <div class="donut-list">
+              <div class="donut-list-item">
+                <span class="donut-list-dot" style="background: #94A3B8;"></span>
+                <span class="donut-list-text">其他</span>
+                <span class="donut-list-value">3,037 吨<span class="donut-list-pct">100%</span></span>
+              </div>
+              <div class="donut-list-item">
+                <span class="donut-list-dot" style="background: #FB923C;"></span>
+                <span class="donut-list-text">火运</span>
+                <span class="donut-list-value">3,037 吨<span class="donut-list-pct">100%</span></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 资金 -->
+        <div class="wb-section-card">
+          <div class="fund-stack">
+            <div class="fund-block">
+              <div class="fund-block-header">
+                <div class="fund-block-title">自有资金</div>
+                <div class="fund-block-filter">本年 ▾</div>
+              </div>
+              <div class="fund-row">
+                <div class="fund-icon pay">付</div>
+                <div class="fund-body">
+                  <div class="fund-label">付款金额</div>
+                  <div class="fund-value">1,032.58<span class="unit">万元</span></div>
+                </div>
+              </div>
+              <div class="fund-row">
+                <div class="fund-icon collect">收</div>
+                <div class="fund-body">
+                  <div class="fund-label">回款金额</div>
+                  <div class="fund-value">1,054.14<span class="unit">万元</span></div>
+                </div>
+              </div>
+            </div>
+            <div class="fund-block">
+              <div class="fund-block-header">
+                <div class="fund-block-title">融资资金</div>
+                <div class="fund-block-filter">全部 · 本年 ▾</div>
+              </div>
+              <div class="fund-row">
+                <div class="fund-icon disburse">放</div>
+                <div class="fund-body">
+                  <div class="fund-label">放款金额</div>
+                  <div class="fund-value">0<span class="unit">元</span></div>
+                </div>
+              </div>
+              <div class="fund-row">
+                <div class="fund-icon repay">还</div>
+                <div class="fund-body">
+                  <div class="fund-label">还款金额</div>
+                  <div class="fund-value">0<span class="unit">元</span></div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 区块 3：预警提醒 + 公告（2 个独立 card） ===== -->
+    <div class="workbench-section">
+      <div class="notice-row">
+        <div class="wb-section-card">
+          <div class="wb-section-header">
+            <div class="wb-section-title">预警提醒<span class="red-dot"></span></div>
+            <div class="wb-section-action">查看全部</div>
+          </div>
+          <div class="warning-grid">
+            <div class="warning-card">
+              <div class="warning-icon high">高</div>
+              <div class="warning-count">0<span class="warning-count-unit"> / 项</span></div>
+              <span class="warning-tag high">高风险</span>
+              <div class="warning-desc">有风险记得要及时处理</div>
+              <div class="warning-action">立即处理 <span class="arrow">›</span></div>
+            </div>
+            <div class="warning-card">
+              <div class="warning-icon mid">中</div>
+              <div class="warning-count">0<span class="warning-count-unit"> / 项</span></div>
+              <span class="warning-tag mid">中风险</span>
+              <div class="warning-desc">有风险记得要及时处理</div>
+              <div class="warning-action">立即处理 <span class="arrow">›</span></div>
+            </div>
+            <div class="warning-card">
+              <div class="warning-icon low">低</div>
+              <div class="warning-count">0<span class="warning-count-unit"> / 项</span></div>
+              <span class="warning-tag low">低风险</span>
+              <div class="warning-desc">很棒!目前暂无风险存在</div>
+              <div class="warning-action">立即处理 <span class="arrow">›</span></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="wb-section-card">
+          <div class="wb-section-header">
+            <div class="wb-section-title">公告</div>
+            <div class="wb-section-action">更多</div>
+          </div>
+          <div class="notice-empty">
+            <div class="notice-empty-icon">📭</div>
+            <div>暂无公告</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== 区块 4：待办事项（独立 card） ===== -->
+    <div class="workbench-section">
+      <div class="todo-card">
+        <div class="todo-header">
+          <div class="todo-title">待办事项</div>
+          <div class="wb-section-action">查看全部</div>
+        </div>
+        <div class="todo-tabs" id="todoTabs">
+          <div class="todo-tab active" data-tab="contract-approval">上下游合同审批</div>
+          <div class="todo-tab" data-tab="contract-dual-sign">上下游双签合同上传</div>
+          <div class="todo-tab" data-tab="bizline-pending-link">待关联业务线</div>
+          <div class="todo-tab" data-tab="recv-confirm">待收货确认</div>
+          <div class="todo-tab" data-tab="goods-transfer-approval">货转待审批</div>
+          <div class="todo-tab" data-tab="goods-transfer-voucher">待上传上下游货转生效单据</div>
+          <div class="todo-tab" data-tab="settlement-approval">待审批结算单</div>
+          <div class="todo-tab" data-tab="payment-approval">待付款审批</div>
+          <div class="todo-tab" data-tab="receipt-claim">回款待认领</div>
+          <div class="todo-tab" data-tab="invoice-upload">待上传发票</div>
+        </div>
+        <table class="todo-table">
+          <thead>
+            <tr>
+              <th style="width: 18%;">合同编号</th>
+              <th style="width: 28%;">买/卖方企业名称</th>
+              <th style="width: 14%;">收货人</th>
+              <th style="width: 8%;">数量(吨)</th>
+              <th style="width: 14%;">基准价格(元)</th>
+              <th style="width: 10%;">运输方式</th>
+              <th style="width: 8%;" class="col-action">操作</th>
+            </tr>
+          </thead>
+          <tbody id="todoTbody">
+            <!-- v1.7.99.225 由 renderTodoTable(tab) 动态渲染 -->
+          </tbody>
+        </table>
+        <div class="pagination-bar">
+          <div class="pagination-info">共 <span id="todoCount">0</span> 条信息</div>
+          <div class="pagination-controls">
+            <div class="pagination-pages">
+              <div class="pagination-page">‹</div>
+              <div class="pagination-page active">1</div>
+              <div class="pagination-page">›</div>
+            </div>
+            <div class="pagination-size">10 条/页</div>
+            <div class="pagination-jump">跳至 <input type="text" value="1"> 页</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- 回到顶部 -->
+  <div class="back-to-top" id="backToTop" title="回到顶部" style="display: none;">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <polyline points="18 15 12 9 6 15"></polyline>
+    </svg>
+  </div>
+
+  <script>
+    // ========== v1.7.99.225 待办事项 MOCK 数据（按 10 个 tab 切分，每 tab 2-3 条） ==========
+    var TODO_MOCK = {
+      'contract-approval': [
+        { code: 'SKHT202608010001', party: 'seller', name: '河南诚泽运输有限公司', receiver: '郑州信必达国际供应链有限公司', qty: 15000, price: 3450.50, transport: '火运', href: './contract-purchase-order-detail.html' },
+        { code: 'SKHT202608010002', party: 'buyer',  name: '河南中豫港通供应链管理有限公司', receiver: '陕西延长石油销售公司',     qty: 22000, price: 3680.00, transport: '汽运', href: './contract-sales-order-detail.html' },
+        { code: 'SKHT202608020003', party: 'seller', name: '内蒙古煤炭交易中心',                receiver: '武汉钢铁集团有限公司',       qty: 35000, price: 3120.75, transport: '火运', href: './contract-purchase-order-detail.html' }
+      ],
+      'contract-dual-sign': [
+        { code: 'SKHT202608030001', party: 'seller', name: '郑州信必达国际供应链有限公司',  receiver: '—', qty: 18000, price: 3280.00, transport: '汽运', href: './contract-purchase-order-detail.html' },
+        { code: 'SKHT202608030002', party: 'buyer',  name: '河南中豫港通供应链管理有限公司', receiver: '宝山钢铁股份有限公司', qty: 28000, price: 3560.50, transport: '水运', href: './contract-sales-order-detail.html' }
+      ],
+      'bizline-pending-link': [
+        { code: 'YWX20230805001',  party: 'seller', name: '河南诚泽运输有限公司',  receiver: '中铁特货运输有限责任公司', qty: 12500, price: 3420.00, transport: '火运', href: './business-line-detail.html' },
+        { code: 'YWX20230805002',  party: 'buyer',  name: '中铁特货运输有限责任公司', receiver: '河南中豫港通供应链管理有限公司', qty: 16800, price: 3380.25, transport: '联运', href: './business-line-detail.html' },
+        { code: 'YWX20230805003',  party: 'seller', name: '陕西延长石油销售公司',  receiver: '陕西煤业化工集团',       qty: 42000, price: 2890.00, transport: '火运', href: './business-line-detail.html' }
+      ],
+      'recv-confirm': [
+        { code: 'SKBT202608050001', party: 'seller', name: '内蒙古鄂尔多斯煤炭有限公司',  receiver: '河南中豫港通供应链管理有限公司', qty: 25000, price: 3200.00, transport: '火运', href: './shipment-in-detail.html' },
+        { code: 'SKBT202608050002', party: 'buyer',  name: '河北唐山曹妃甸港务公司',     receiver: '武汉钢铁集团有限公司',       qty: 18000, price: 3450.75, transport: '水运', href: './shipment-in-detail.html' },
+        { code: 'SKBT202608050003', party: 'seller', name: '山西焦煤集团有限责任公司',   receiver: '宝山钢铁股份有限公司',       qty: 32000, price: 3680.50, transport: '火运', href: './shipment-in-detail.html' }
+      ],
+      'goods-transfer-approval': [
+        { code: 'HZ202608060001',  party: 'seller', name: '河南诚泽运输有限公司',  receiver: '郑州信必达国际供应链有限公司', qty: 8500,  price: 3450.00, transport: '汽运', href: './goods-transfer.html' },
+        { code: 'HZ202608060002',  party: 'buyer',  name: '中铁特货运输有限责任公司', receiver: '河南中豫港通供应链管理有限公司', qty: 12000, price: 3380.50, transport: '火运', href: './goods-transfer.html' }
+      ],
+      'goods-transfer-voucher': [
+        { code: 'HZ202608070001',  party: 'seller', name: '郑州信必达国际供应链有限公司',  receiver: '—', qty: 6000,  price: 3420.00, transport: '汽运', href: './goods-transfer.html' },
+        { code: 'HZ202608070002',  party: 'buyer',  name: '河南中豫港通供应链管理有限公司', receiver: '中铁特货运输有限责任公司', qty: 9500,  price: 3360.25, transport: '联运', href: './goods-transfer.html' },
+        { code: 'HZ202608070003',  party: 'seller', name: '陕西延长石油销售公司',          receiver: '—', qty: 15000, price: 2950.00, transport: '火运', href: './goods-transfer.html' }
+      ],
+      'settlement-approval': [
+        { code: 'JSD202608080001', party: 'seller', name: '河南诚泽运输有限公司',  receiver: '郑州信必达国际供应链有限公司', qty: 22000, price: 3480.00, transport: '火运', href: './settlement-purchase.html' },
+        { code: 'JSD202608080002', party: 'buyer',  name: '宝山钢铁股份有限公司',  receiver: '河南中豫港通供应链管理有限公司', qty: 28000, price: 3650.50, transport: '水运', href: './settlement-sales.html' }
+      ],
+      'payment-approval': [
+        { code: 'FK202608090001',  party: 'seller', name: '内蒙古煤炭交易中心',              receiver: '河南中豫港通供应链管理有限公司', qty: 30000, price: 3120.00, transport: '火运', href: './payment-list.html' },
+        { code: 'FK202608090002',  party: 'buyer',  name: '武汉钢铁集团有限公司',            receiver: '河南中豫港通供应链管理有限公司', qty: 25000, price: 3580.75, transport: '火运', href: './payment-list.html' },
+        { code: 'FK202608090003',  party: 'seller', name: '郑州信必达国际供应链有限公司',   receiver: '陕西煤业化工集团',             qty: 15000, price: 3320.00, transport: '汽运', href: './payment-list.html' }
+      ],
+      'receipt-claim': [
+        { code: 'HK202608100001',  party: 'buyer',  name: '陕西延长石油销售公司',            receiver: '—', qty: 18000, price: 3420.50, transport: '火运', href: './receipt-claim-detail.html' },
+        { code: 'HK202608100002',  party: 'buyer',  name: '河北唐山曹妃甸港务公司',         receiver: '—', qty: 12000, price: 3560.00, transport: '水运', href: './receipt-claim-detail.html' }
+      ],
+      'invoice-upload': [
+        { code: 'FP202608110001',  party: 'seller', name: '河南诚泽运输有限公司',  receiver: '郑州信必达国际供应链有限公司', qty: 20000, price: 3380.00, transport: '火运', href: './invoice-list.html' },
+        { code: 'FP202608110002',  party: 'buyer',  name: '中铁特货运输有限责任公司', receiver: '河南中豫港通供应链管理有限公司', qty: 26000, price: 3520.50, transport: '联运', href: './invoice-list.html' },
+        { code: 'FP202608110003',  party: 'seller', name: '山西焦煤集团有限责任公司', receiver: '宝山钢铁股份有限公司',     qty: 33000, price: 3680.00, transport: '火运', href: './invoice-list.html' }
+      ]
+    };
+
+    var TODO_TAB_LABELS = {
+      'contract-approval': '上下游合同审批',
+      'contract-dual-sign': '上下游双签合同上传',
+      'bizline-pending-link': '待关联业务线',
+      'recv-confirm': '待收货确认',
+      'goods-transfer-approval': '货转待审批',
+      'goods-transfer-voucher': '待上传上下游货转生效单据',
+      'settlement-approval': '待审批结算单',
+      'payment-approval': '待付款审批',
+      'receipt-claim': '回款待认领',
+      'invoice-upload': '待上传发票'
+    };
+
+    // ========== v1.7.99.225 待办表格渲染函数 ==========
+    function renderTodoTable(tabKey) {
+      var tbody = document.getElementById('todoTbody');
+      var countEl = document.getElementById('todoCount');
+      if (!tbody || !countEl) return;
+
+      var rows = TODO_MOCK[tabKey] || [];
+      countEl.textContent = rows.length;
+
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="7" style="text-align: center; padding: 32px 16px; color: var(--text-tertiary); font-size: 13px;">暂无待办</td></tr>';
+        return;
+      }
+
+      var html = '';
+      for (var i = 0; i < rows.length; i++) {
+        var r = rows[i];
+        var badgeClass = r.party === 'seller' ? 'party-badge-seller' : 'party-badge-buyer';
+        var badgeText = r.party === 'seller' ? '卖方' : '买方';
+        var priceStr = r.price.toFixed(2);
+        var qtyStr = r.qty.toLocaleString('en-US');
+        html += '<tr>' +
+          '<td class="col-num">' + r.code + '</td>' +
+          '<td><div class="party-cell">' +
+            '<span class="party-badge ' + badgeClass + '">' + badgeText + '</span>' +
+            '<span class="party-name" title="' + r.name + '">' + r.name + '</span>' +
+          '</div></td>' +
+          '<td>' + r.receiver + '</td>' +
+          '<td class="col-num">' + qtyStr + '</td>' +
+          '<td class="col-num">' + priceStr + '</td>' +
+          '<td>' + r.transport + '</td>' +
+          '<td class="col-action"><a href="' + r.href + '">查看</a></td>' +
+        '</tr>';
+      }
+      tbody.innerHTML = html;
+    }
+
+    // ========== 待办 tabs 切换 + 重渲染（v1.7.99.225 强化） ==========
+    document.querySelectorAll('#todoTabs .todo-tab').forEach(function(t) {
+      t.addEventListener('click', function() {
+        document.querySelectorAll('#todoTabs .todo-tab').forEach(function(x) { x.classList.remove('active'); });
+        t.classList.add('active');
+        var key = t.getAttribute('data-tab');
+        renderTodoTable(key);
+      });
+    });
+
+    // 初始渲染（默认 tab = 上下游合同审批）
+    var initialActive = document.querySelector('#todoTabs .todo-tab.active');
+    if (initialActive) {
+      renderTodoTable(initialActive.getAttribute('data-tab'));
+    }
+
+    // 回到顶部
+    var backBtn = document.getElementById('backToTop');
+    window.addEventListener('scroll', function() {
+      backBtn.style.display = window.scrollY > 200 ? 'flex' : 'none';
+    });
+    backBtn.addEventListener('click', function() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  </script>
+  <script src="../shared/js/topnav-drawer.js"></script>
+</body>
+</html>

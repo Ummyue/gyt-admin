@@ -108,6 +108,24 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T09:38:00',
+          version: 'v1.7.99.225',
+          module: '工作台 - 待办事项改造：10 个新 tab + 买卖方徽章 + MOCK 多数据 + tab 切换重渲染',
+          summary: '工作台（pages/workbench.html）底部"待办事项"区按 user 2026-08-13 09:38 截图重做。1) user 反馈原 11 个 tab + 7 列硬编码 1 行数据 + 切换只切 active class 不切数据，跟不上业务；2) 改造方案（v1.7.99.225）：a) 11 个旧 tab → 10 个新 tab（按 user 截图 1 顺序：上下游合同审批/上下游双签合同上传/待关联业务线/待收货确认/货转待审批/待上传上下游货转生效单据/待审批结算单/待付款审批/回款待认领/待上传发票）；b) "卖方名称"列 → "买/卖方企业名称"列（加 .party-cell flex 布局 + .party-badge 徽章），卖方绿底 #ECFDF5/#047857/边框 #A7F3D0 + 买方蓝底 #EFF6FF/#1E40AF/边框 #BFDBFE + .party-name 公司名省略号 + title 提示；c) "收货人简称"列 → "收货人"列（去掉"简称"）；d) 7 列宽度调整：合同编号 18% + 买/卖方企业名称 28% + 收货人 14% + 数量(吨) 8% + 基准价格(元) 14% + 运输方式 10% + 操作 8%；e) 加 MOCK 数据 TODO_MOCK[10 个 key]，每 key 2-3 条（20+ 行）—— 全部使用脱敏中文公司名（v1.7.99.7 起脱敏规范）；f) 加 renderTodoTable(tabKey) 函数（按 tab key 查 MOCK → 渲染 tbody + 更新 #todoCount 数字 + 空状态"暂无待办"）；g) tab 切换 = 切 active class + renderTodoTable(key) 重渲染（防 v1.7.99.179/180 那种"只切 active 不切数据"翻车）；h) "共 X 条信息"加 id="todoCount" span 让 JS 更新数字；i) title 升级 v1.7.99.224 → v1.7.99.225；3) docs/p-workbench.md 4.4 区块 11 → 10 个新 tab + 7 列 + 徽章样式表 + 切换交互说明（v1.7.99.225 重做章节）；4) 防翻车（10.2 教训）：TODO_MOCK 字符串无 <\/script> 已 node --check 验证；5) 防假切（10.8 教训）：tab onclick 真的调 renderTodoTable(key)，不只是 active class。',
+          changes: [
+            { type: 'modify', location: 'pages/workbench.html <title>', before: '工作台 - 豫港通 v1.7.99.224', after: '工作台 - 豫港通 v1.7.99.225' },
+            { type: 'modify', location: 'pages/workbench.html 待办事项 11 → 10 个 tab', before: 'v1.7.99.224 11 个 tab：上游合同签署/上游合同确认/收货确认/业务线完善/待回款认领/缴权发/待完善资产/出仓单管理/仓单管理/确认单开具/商品确认', after: 'v1.7.99.225 10 个新 tab（按 user 2026-08-13 09:38 截图）：上下游合同审批/上下游双签合同上传/待关联业务线/待收货确认/货转待审批/待上传上下游货转生效单据/待审批结算单/待付款审批/回款待认领/待上传发票' },
+            { type: 'modify', location: 'pages/workbench.html <style> 加 .party-cell + .party-badge-seller + .party-badge-buyer + .party-name', before: 'v1.7.99.224 仅 1 行硬编码 tbody + tab 切换只切 active class', after: 'v1.7.99.225 卖方绿底 #ECFDF5/#047857/边框 #A7F3D0 + 买方蓝底 #EFF6FF/#1E40AF/边框 #BFDBFE + .party-cell flex 布局 + .party-name 省略号 + title 提示' },
+            { type: 'modify', location: 'pages/workbench.html thead 7 列 + 列宽', before: 'v1.7.99.224 合同编号 20% + 卖方名称 24% + 收货人简称 14% + 数量(吨) 10% + 基准价格(元) 12% + 运输方式 10% + 操作 10%', after: 'v1.7.99.225 合同编号 18% + 买/卖方企业名称 28% + 收货人 14% + 数量(吨) 8% + 基准价格(元) 14% + 运输方式 10% + 操作 8%' },
+            { type: 'modify', location: 'pages/workbench.html <tbody id="todoTbody">', before: 'v1.7.99.224 硬编码 1 行 SKBT202607040003 + 河南中豫港通供应链管理有限公司 + — + 20,000 + 3,444.83 + 火运 + 查看', after: 'v1.7.99.225 空 tbody（由 renderTodoTable(tabKey) 动态渲染，TODO_MOCK 10 个 key 各 2-3 条）' },
+            { type: 'add', location: 'pages/workbench.html <script> TODO_MOCK + renderTodoTable(tabKey)', before: 'v1.7.99.224 仅有 tab onclick = 切 active class，无数据切换', after: 'v1.7.99.225 TODO_MOCK[10 个 key] + renderTodoTable(tabKey)（按 key 查 MOCK → 渲染 tbody + 更新 #todoCount + 空状态"暂无待办"）+ 初始 renderTodoTable("contract-approval")' },
+            { type: 'modify', location: 'pages/workbench.html pagination "共 X 条信息"', before: 'v1.7.99.224 硬编码 "共 1 条信息"', after: 'v1.7.99.225 动态 span id="todoCount" 让 JS 渲染数字' },
+            { type: 'modify', location: 'docs/p-workbench.md 4.4 区块', before: 'v1.7.99.224 11 个 tab + 7 列（合同编号/卖方名称/收货人简称/数量/基准价/运输方式/操作）', after: 'v1.7.99.225 10 个新 tab + 7 列（合同编号/买/卖方企业名称-带徽章/收货人/数量/基准价/运输方式/操作）+ 徽章样式表 + 切换交互说明' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.224', after: '豫港通原型 v.1.7.99.225' }
+          ]
+        },
+
+        {
           ts: '2026-08-12T20:30:00',
           version: 'v1.7.99.224',
           module: '资金占压表 - hotfix: 删 0601 第 4 行"—/—" 全空行（避免"—" 上行连续视觉串行）',
