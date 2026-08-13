@@ -108,6 +108,23 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T21:05:00',
+          version: 'v1.7.99.231',
+          module: '合同管理 - 新增合同页「合同签署状态」切换 → 附件「单据类型」名称联动（按 user 2026-08-13 21:04 反馈）',
+          summary: '合同管理 - 新增合同（6 个页面）按 user 2026-08-13 21:04 反馈统一检查合同签署状态切换 + 附件「单据类型」名称联动。1) 现状：6 个新增合同页（contract-purchase-new / contract-purchase-order-new / contract-sales-new / contract-sales-order-new / contract-supplement-new / contract-supplement-order-new）「合同签署状态」select/input 变化时，附件「单据类型」第一行名称固定为「待盖章合同附件」/「待盖章订单/合同附件」/「待盖章补协附件」，没有根据签署状态切换；2) 改造方案（v1.7.99.231）：a) 6 个页面「合同签署状态」select/input 加 id（signStatus / fieldStatus）+ data-base（合同/订单/合同/补协）+ onchange 触发器；b) 附件第一行 td 加 class="attach-name-required"；c) 加 JS 函数 updateAttachName(baseName, status)：待盖章 → 「待盖章{baseName}附件」/ 已双签 → 「已盖章{baseName}附件」/ 其他（未选）→ 「待盖章{baseName}附件」；d) contract-supplement-new 是 input readonly（从关联合同自动带入），所以 onchange 触发器附加在 input 上；e) contract-supplement-order-new 无签署状态字段（附件默认「待盖章补协附件」，不影响）；3) playwright 验证（待跑）：默认待盖章 → 「待盖章合同附件」/ 切到已双签 → 「已盖章合同附件」/ 切回待盖章 → 「待盖章合同附件」。',
+          changes: [
+            { type: 'modify', location: 'pages/contract-purchase-new.html「合同签署状态」select', before: 'v1.7.99.x 无 id/data-base/onchange', after: 'v1.7.99.231 id="signStatus" data-base="合同" onchange="updateAttachName(\'合同\', this.value)"' },
+            { type: 'modify', location: 'pages/contract-purchase-new.html 附件 td', before: 'v1.7.99.x 固定「待盖章合同附件」', after: 'v1.7.99.231 加 class="attach-name-required"（JS 动态切换）' },
+            { type: 'add', location: 'pages/contract-purchase-new.html updateAttachName JS 函数', before: 'v1.7.99.x 无', after: 'v1.7.99.231 新增：待盖章→待盖章{base}附件 / 已双签→已盖章{base}附件' },
+            { type: 'modify', location: 'pages/contract-purchase-order-new.html「合同签署状态」select', before: 'v1.7.99.x 无联动', after: 'v1.7.99.231 data-base="订单/合同" onchange 触发 updateAttachName' },
+            { type: 'modify', location: 'pages/contract-sales-new.html「合同签署状态」select', before: 'v1.7.99.x 无联动', after: 'v1.7.99.231 data-base="合同" onchange 触发 updateAttachName' },
+            { type: 'modify', location: 'pages/contract-sales-order-new.html「合同签署状态」select', before: 'v1.7.99.x 无联动', after: 'v1.7.99.231 data-base="订单/合同" onchange 触发 updateAttachName' },
+            { type: 'modify', location: 'pages/contract-supplement-new.html「合同签署状态」input readonly', before: 'v1.7.99.x 无 onchange（自动带入不联动）', after: 'v1.7.99.231 id="fieldStatus" data-base="补协" onchange 触发 updateAttachName' },
+            { type: 'modify', location: 'pages/contract-supplement-order-new.html 附件 td', before: 'v1.7.99.x 固定「待盖章补协附件」', after: 'v1.7.99.231 加 class="attach-name-required"（预留联动，签署状态字段缺失）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.230', after: 'v1.7.99.231' },
+          ],
+        },
+        {
           ts: '2026-08-13T14:40:00',
           version: 'v1.7.99.230',
           module: '付款管理 - 新增付款页底部「取消/保存/提交」按钮 fixed 固定底栏（按 user 2026-08-13 14:36 反馈）',

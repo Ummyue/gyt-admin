@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增补协-框架合同 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <style>
+    .page-body {
+      padding: 20px 24px 80px;
+    }
+    /* 合同信息 section 中的搜索框（v1.7.99.19 新增：input + mock 下拉） */
+    .contract-search {
+      position: relative;
+    }
+    .contract-search-input {
+      width: 100%;
+      padding: 8px 12px;
+      border: 1px solid var(--border-light);
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--text-primary);
+      background: #fff;
+      transition: border-color 0.15s, box-shadow 0.15s;
+    }
+    .contract-search-input:focus {
+      outline: none;
+      border-color: #1e40af;
+      box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1);
+    }
+    .contract-search-input.has-value {
+      color: #1e40af;
+      font-weight: 500;
+    }
+    .contract-search-dropdown {
+      position: absolute;
+      top: calc(100% + 4px);
+      left: 0;
+      right: 0;
+      max-height: 280px;
+      overflow-y: auto;
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+      z-index: 50;
+      display: none;
+    }
+    .contract-search-dropdown.open {
+      display: block;
+    }
+    .contract-search-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-light);
+      transition: background 0.15s;
+    }
+    .contract-search-item:last-child {
+      border-bottom: none;
+    }
+    .contract-search-item:hover {
+      background: #f0f7ff;
+    }
+    .contract-search-item-code {
+      font-size: 12px;
+      font-weight: 600;
+      color: #1e40af;
+      margin-bottom: 4px;
+    }
+    .contract-search-item-meta {
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    /* 补协信息 红色提示 */
+    .risk-notice-inline {
+      color: #b91c1c;
+      font-size: 12px;
+      font-weight: 500;
+    }
+    /* 复选框 */
+    .checkbox-row {
+      display: flex;
+      gap: 24px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+    }
+    .checkbox-item input[type="checkbox"] {
+      width: 14px;
+      height: 14px;
+      cursor: pointer;
+    }
+    /* 灰底字段（自动带出后只读） */
+    .readonly-field {
+      background: #f3f4f6 !important;
+      color: var(--text-primary) !important;
+      border-color: #e5e7eb !important;
+      cursor: not-allowed;
+    }
+    /* 底部按钮 - 重置 design-system.css 全局 .footer-actions 冲突 */
+    .footer-actions {
+      position: static;
+      box-shadow: none;
+      background: #fff;
+      border-top: 1px solid var(--border-light);
+      padding: 12px 24px;
+      margin: 24px -24px -80px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="#">合同管理</a>
+          <span class="sep">/</span>
+          <a href="./contract-supplement.html">补充协议</a>
+          <span class="sep">/</span>
+          <span class="current">新增补充协议</span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="page-h1" style="margin: 0 0 14px 0;">新增补充协议</h1>
+
+        <!-- Section 1：合同信息（顶部，搜索 + 自动带出 11 字段） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">合同信息</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">通过下方搜索框选择需要补充的合同</div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid form-grid-3">
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span> 框架合同编号</label>
+                <div class="contract-search">
+                  <input type="text" class="contract-search-input" id="contractSearch" placeholder="请输入合同编号（支持模糊搜索）" autocomplete="off">
+                  <div class="contract-search-dropdown" id="contractDropdown">
+                    <div class="contract-search-item" data-code="GTGYL-MSXS-20260122-001" data-seller="河南诚泽运输有限公司" data-buyer="河南中豫港通供应链管理有限公司" data-category="淀粉" data-unit="吨" data-price="3,400" data-quantity="20,000" data-status="待盖章" data-signdate="2026-01-22" data-deadline="2026-01-22~2026-12-31" data-biztype="存贷业务">
+                      <div class="contract-search-item-code">GTGYL-MSXS-20260122-001</div>
+                      <div class="contract-search-item-meta">河南诚泽运输有限公司 · 淀粉 · 20,000 吨</div>
+                    </div>
+                    <div class="contract-search-item" data-code="GTGYL-MSXS-20260118-002" data-seller="杞县广润贸易有限公司" data-buyer="河南中豫港通供应链管理有限公司" data-category="淀粉" data-unit="吨" data-price="2,800" data-quantity="15,000" data-status="已签署" data-signdate="2026-01-18" data-deadline="2026-01-18~2026-12-31" data-biztype="存贷业务">
+                      <div class="contract-search-item-code">GTGYL-MSXS-20260118-002</div>
+                      <div class="contract-search-item-meta">杞县广润贸易有限公司 · 钢材 · 15,000 吨</div>
+                    </div>
+                    <div class="contract-search-item" data-code="GTGYL-MSXS-20260110-003" data-seller="中粮贸易有限公司" data-buyer="河南中豫港通供应链管理有限公司" data-category="谷物" data-unit="吨" data-price="3,200" data-quantity="18,000" data-status="已签署" data-signdate="2026-01-10" data-deadline="2026-01-10~2026-12-31" data-biztype="存贷业务">
+                      <div class="contract-search-item-code">GTGYL-MSXS-20260110-003</div>
+                      <div class="contract-search-item-meta">中粮贸易有限公司 · 螺纹钢 · 18,000 吨</div>
+                    </div>
+                    <div class="contract-search-item" data-code="GTGYL-MSXS-20260105-004" data-seller="河北粮食产业集团" data-buyer="河南中豫港通供应链管理有限公司" data-category="谷物" data-unit="吨" data-price="3,150" data-quantity="22,000" data-status="已签署" data-signdate="2026-01-05" data-deadline="2026-01-05~2026-12-31" data-biztype="存贷业务">
+                      <div class="contract-search-item-code">GTGYL-MSXS-20260105-004</div>
+                      <div class="contract-search-item-meta">河北粮食产业集团 · 螺纹钢 · 22,000 吨</div>
+                    </div>
+                    <div class="contract-search-item" data-code="GTGYL-MSXS-20251228-005" data-seller="山东金粮农业有限公司" data-buyer="河南中豫港通供应链管理有限公司" data-category="淀粉" data-unit="吨" data-price="2,900" data-quantity="16,000" data-status="已签署" data-signdate="2025-12-28" data-deadline="2025-12-28~2026-12-31" data-biztype="存贷业务">
+                      <div class="contract-search-item-code">GTGYL-MSXS-20251228-005</div>
+                      <div class="contract-search-item-meta">山东金粮农业有限公司 · 淀粉 · 16,000 吨</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">卖方企业</label>
+                <input type="text" class="input readonly-field" id="fieldSeller" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">买方企业</label>
+                <input type="text" class="input readonly-field" id="fieldBuyer" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">品类</label>
+                <input type="text" class="input readonly-field" id="fieldCategory" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">计量单位</label>
+                <input type="text" class="input readonly-field" id="fieldUnit" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同单价（元/吨）</label>
+                <input type="text" class="input readonly-field" id="fieldPrice" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同数量（吨）</label>
+                <input type="text" class="input readonly-field" id="fieldQuantity" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同签署状态</label>
+                <input type="text" class="input readonly-field" id="fieldStatus" data-base="补协" placeholder="选择合同后自动带出" readonly onchange="updateAttachName('补协', this.value)">
+              </div>
+              <div class="form-field">
+                <label class="form-label">签订日期</label>
+                <input type="text" class="input readonly-field" id="fieldSignDate" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同交货期限</label>
+                <input type="text" class="input readonly-field" id="fieldDeadline" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label">业务类型</label>
+                <input type="text" class="input readonly-field" id="fieldBizType" placeholder="选择合同后自动带出" readonly>
+              </div>
+              <div class="form-field">
+                <!-- 占位，保持 3 列对齐 -->
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 2：基本信息 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">基本信息</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">带 <span style="color: var(--color-danger);">*</span> 为必填项</div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid form-grid-3">
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span> 补协名称</label>
+                <input type="text" class="input" placeholder="请输入补协名称">
+              </div>
+              <div class="form-field">
+                <label class="form-label">补协编号</label>
+                <input type="text" class="input readonly-field" placeholder="该编号由云商生成，无需填写" readonly>
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span> 补协签订日期</label>
+                <input type="text" class="input" placeholder="请选择签订日期">
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label class="form-label"><span class="required">*</span> 情况说明</label>
+                <textarea class="textarea" rows="3" placeholder="请输入情况说明"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 3：补协信息（变更项 3 项） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">补协信息 <span class="risk-notice-inline">（如有变动，请先勾选变更的字段；如无变动，则无需勾选）</span></div>
+          </div>
+          <div class="card-body">
+            <div class="checkbox-row" style="margin-bottom: 16px;">
+              <label class="checkbox-item"><input type="checkbox" data-change-field="quantity"> 合同数量</label>
+              <label class="checkbox-item"><input type="checkbox" data-change-field="price"> 合同单价</label>
+              <label class="checkbox-item"><input type="checkbox" data-change-field="deadline"> 合同有效期</label>
+            </div>
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 60px;">序号</th>
+                    <th style="width: 200px;">字段名称</th>
+                    <th style="width: 180px;">变更前内容</th>
+                    <th style="width: 240px;"><span class="required">*</span> 变更后内容</th>
+                    <th>变更说明</th>
+                  </tr>
+                </thead>
+                <tbody id="changeTableBody">
+                  <tr>
+                    <td>1</td>
+                    <td>合同数量(吨)</td>
+                    <td>20,000</td>
+                    <td><input type="text" class="input" placeholder="请输入合同采购数量" disabled></td>
+                    <td><input type="text" class="input" placeholder="非必填，如有，请输入变更说明" disabled></td>
+                  </tr>
+                  <tr>
+                    <td>2</td>
+                    <td>合同单价(元/吨)</td>
+                    <td>3,400</td>
+                    <td><input type="text" class="input" placeholder="请输入合同单价" disabled></td>
+                    <td><input type="text" class="input" placeholder="非必填，如有，请输入变更说明" disabled></td>
+                  </tr>
+                  <tr>
+                    <td>3</td>
+                    <td>合同有效期</td>
+                    <td>2026-01-22~2026-12-31</td>
+                    <td><input type="text" class="input" placeholder="请选择合同有效期" disabled></td>
+                    <td><input type="text" class="input" placeholder="非必填，如有，请输入变更说明" disabled></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- Section 4：补协附件 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">补协附件</div>
+          </div>
+          <div class="card-body">
+            <div style="background: #f0f7ff; border: 1px solid #dbeafe; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px;">
+              <div style="font-weight: 600; color: #1e40af; font-size: 13px; margin-bottom: 4px;">附件上传要求：</div>
+              <div style="color: var(--text-secondary); font-size: 12px;">可支持格式为 png、jpeg、jpg、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100M 的文件。</div>
+            </div>
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 200px;">单据类型</th>
+                    <th style="width: 240px;">上传时间</th>
+                    <th>附件</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="attach-name-required"><span class="required">*</span> 待盖章补协附件</td>
+                    <td>2023-12-12 12:23:32</td>
+                    <td>
+                      <span style="color: #1e40af;">44354657687.pdf</span>
+                      <span style="margin-left: 8px; color: #b91c1c;">×</span>
+                      <button class="btn btn-text btn-sm" style="margin-left: 16px;">+ 上传</button>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td>其他附件</td>
+                    <td></td>
+                    <td>
+                      <button class="btn btn-text btn-sm">+ 上传</button>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="footer-actions">
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary">取消</button>
+          <button class="btn btn-primary">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script>
+
+    // v1.7.99.231 合同签署状态切换 → 附件「单据类型」名称联动
+    // 待盖章 → 待盖章{baseName}附件
+    // 已双签 → 已盖章{baseName}附件
+    function updateAttachName(baseName, status) {
+      var label = (status === '已双签' ? '已盖章' : '待盖章') + (baseName || '合同') + '附件';
+      document.querySelectorAll('.attach-name-required').forEach(function(row) {
+        row.innerHTML = '<span class="required">*</span> ' + label;
+      });
+    }
+
+    </script>
+    <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // 顶部合同信息搜索交互（v1.7.99.19 新增功能：input + mock 下拉）
+    // 关键决策：采购版表单只搜采购合同
+
+    var searchInput = document.getElementById('contractSearch');
+    var dropdown = document.getElementById('contractDropdown');
+    var items = dropdown.querySelectorAll('.contract-search-item');
+
+    // 输入框 focus → 显示下拉
+    searchInput.addEventListener('focus', function() {
+      dropdown.classList.add('open');
+    });
+
+    // 输入框 input → 过滤下拉
+    searchInput.addEventListener('input', function() {
+      var q = this.value.trim().toLowerCase();
+      var hasMatch = false;
+      items.forEach(function(item) {
+        var code = item.getAttribute('data-code').toLowerCase();
+        var meta = item.querySelector('.contract-search-item-meta').textContent.toLowerCase();
+        var match = !q || code.indexOf(q) !== -1 || meta.indexOf(q) !== -1;
+        item.style.display = match ? '' : 'none';
+        if (match) hasMatch = true;
+      });
+      dropdown.classList.add('open');
+      searchInput.classList.remove('has-value');
+    });
+
+    // 点击下拉项 → 自动填充 11 字段
+    items.forEach(function(item) {
+      item.addEventListener('click', function() {
+        document.getElementById('fieldSeller').value = this.getAttribute('data-seller');
+        document.getElementById('fieldBuyer').value = this.getAttribute('data-buyer');
+        document.getElementById('fieldCategory').value = this.getAttribute('data-category');
+        document.getElementById('fieldUnit').value = this.getAttribute('data-unit');
+        document.getElementById('fieldPrice').value = this.getAttribute('data-price');
+        document.getElementById('fieldQuantity').value = this.getAttribute('data-quantity');
+        document.getElementById('fieldStatus').value = this.getAttribute('data-status');
+        document.getElementById('fieldSignDate').value = this.getAttribute('data-signdate');
+        document.getElementById('fieldDeadline').value = this.getAttribute('data-deadline');
+        document.getElementById('fieldBizType').value = this.getAttribute('data-biztype');
+
+        // 输入框显示合同编号 + 蓝色
+        searchInput.value = this.getAttribute('data-code');
+        searchInput.classList.add('has-value');
+        // 关闭下拉
+        dropdown.classList.remove('open');
+
+        // 同步更新变更前内容（前 3 行）
+        var tbody = document.getElementById('changeTableBody');
+        var rows = tbody.querySelectorAll('tr');
+        if (rows.length >= 3) {
+          rows[0].cells[2].textContent = this.getAttribute('data-quantity');
+          rows[1].cells[2].textContent = this.getAttribute('data-price');
+          rows[2].cells[2].textContent = this.getAttribute('data-deadline');
+        }
+      });
+    });
+
+    // 点击外部关闭下拉
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.contract-search')) {
+        dropdown.classList.remove('open');
+      }
+    });
+
+    // 补协信息变更项 checkbox → 启用/禁用对应行的"变更后内容"
+    document.querySelectorAll('.checkbox-item input[type="checkbox"]').forEach(function(cb) {
+      cb.addEventListener('change', function() {
+        var field = this.getAttribute('data-change-field');
+        var rowMap = { quantity: 0, price: 1, deadline: 2 };
+        var rowIdx = rowMap[field];
+        if (rowIdx === undefined) return;
+        var row = document.getElementById('changeTableBody').querySelectorAll('tr')[rowIdx];
+        var inputs = row.querySelectorAll('input.input');
+        inputs.forEach(function(inp) {
+          inp.disabled = !cb.checked;
+        });
+      });
+    });
+
+    // v1.7.99.45 新增：从 URL 参数读取 contractId，自动预填合同信息
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var contractId = params.get('contractId');
+      var contractType = params.get('contractType');
+      if (contractId) {
+        // 在 mock 数据中查找匹配的合同项
+        var matchedItem = null;
+        items.forEach(function(item) {
+          if (item.getAttribute('data-code') === contractId) {
+            matchedItem = item;
+          }
+        });
+        if (matchedItem) {
+          // 触发该合同项的 click 事件，自动预填 11 字段
+          matchedItem.click();
+        } else {
+          // 没找到，仅预填合同号到 input
+          searchInput.value = contractId;
+          searchInput.classList.add('has-value');
+        }
+        console.log('[v1.7.99.45] 从抽屉带入合同：' + contractId + '（type=' + (contractType || 'framework') + '）');
+      }
+    })();
+  </script>
+  </div>
+  <!-- /main-content -->
+</body>
+</html>

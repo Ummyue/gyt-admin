@@ -1,0 +1,570 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增采购框架合同 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px 60px; background: var(--bg-page); }
+    .breadcrumb-inline { font-size: 13px; color: var(--text-tertiary); margin-bottom: 12px; }
+    .breadcrumb-inline a { color: var(--text-tertiary); text-decoration: none; }
+    .breadcrumb-inline a:hover { color: var(--color-primary); }
+    .breadcrumb-inline .sep { margin: 0 6px; }
+    .breadcrumb-inline .current { color: var(--text-primary); }
+    .page-h1 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0 0 16px; }
+
+    /* 风险提示条 */
+    .risk-bars { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+    .risk-bar {
+      display: flex; align-items: flex-start; gap: 8px;
+      background: var(--color-warning-light);
+      border: 1px solid #FCD34D;
+      border-radius: var(--radius-default);
+      padding: 10px 14px;
+      font-size: 13px;
+      color: #92400E;
+    }
+    .risk-bar .ico { font-size: 14px; line-height: 1. flex-shrink: 0; }
+    .risk-bar .tag-name {
+      background: #FDE68A; color: #92400E;
+      padding: 1px 6px; border-radius: 3px; font-weight: 600; font-size: 12px;
+      margin-right: 4px; flex-shrink: 0;
+    }
+    .risk-bar .body { flex: 1; line-height: 1.6; }
+
+    /* 卡片 */
+    .form-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-default);
+      margin-bottom: 16px;
+    }
+    .form-card-head {
+      padding: 14px 20px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 15px; font-weight: 600; color: var(--text-primary);
+    }
+    .form-card-body { padding: 20px; }
+
+    /* 关联项目按钮 */
+    .relation-trigger {
+      display: flex; align-items: center; gap: 6px;
+      padding: 6px 14px;
+      background: var(--color-primary);
+      color: #fff; border: none; border-radius: var(--radius-default);
+      cursor: pointer; font-size: 13px; font-weight: 500;
+    }
+    .relation-trigger:hover { background: var(--color-primary-hover); }
+    .relation-hint {
+      font-size: 13px; color: var(--text-tertiary); line-height: 1.6; margin-top: 12px;
+    }
+
+    /* 表单 grid */
+    .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 24px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .form-label .required { color: var(--color-danger); margin-left: 2px; }
+    .form-label .flash {
+      display: inline-block; width: 16px; height: 16px;
+      background: #FEF3C7; color: #F59E0B;
+      border-radius: 3px; text-align: center; line-height: 16px;
+      font-size: 11px; margin-left: 4px; vertical-align: middle;
+    }
+    .input-with-flash { position: relative; }
+    .input-with-flash .flash {
+      position: absolute; right: 6px; top: 50%; transform: translateY(-50%);
+      width: 16px; height: 16px;
+      background: #FEF3C7; color: #F59E0B;
+      border-radius: 3px; text-align: center; line-height: 16px;
+      font-size: 11px; pointer-events: none;
+    }
+    .input-with-suffix { display: flex; align-items: center; gap: 6px; }
+    .input-with-suffix .input { flex: 1; min-width: 0; }
+    .input-with-suffix .suffix { color: var(--text-tertiary); font-size: 13px; }
+
+    /* radio group */
+    .radio-group { display: flex; gap: 20px; align-items: center; height: 36px; }
+    .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; }
+    .radio-item input { width: 14px; height: 14px; cursor: pointer; }
+
+    /* checkbox + suffix */
+    .inline-check {
+      display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-secondary);
+      margin-left: 12px; cursor: pointer; white-space: nowrap;
+    }
+    .inline-check input { width: 14px; height: 14px; cursor: pointer; }
+
+    /* 灰底字段（系统自动填充） */
+    .input[disabled],
+    .select[disabled] { background: #F3F4F6; color: var(--text-primary); cursor: not-allowed; }
+
+    /* v1.7.99.30 关联主体 + 禁用态 */
+    .link-card .form-grid { grid-template-columns: 1fr 1fr; gap: 20px 24px; }
+    .link-card .form-field { gap: 6px; }
+    .card-locked { opacity: 0.5; pointer-events: none; }
+    .card-locked input, .card-locked select, .card-locked button,
+    .card-locked .upload-btn, .card-locked .bank-cell, .card-locked .attach-table { pointer-events: none; }
+
+    /* 银行账号 */
+    .bank-cell {
+      background: #F9FAFB; border: 1px solid var(--border-light);
+      border-radius: var(--radius-default); padding: 8px 12px;
+      display: flex; flex-direction: column; gap: 2px;
+      cursor: pointer; min-height: 36px;
+    }
+    .bank-cell .bank-label { font-size: 12px; color: var(--text-tertiary); }
+    .bank-cell .bank-num { font-family: var(--font-mono); font-size: 13px; color: var(--text-primary); }
+
+    /* 附件 */
+    .attach-hint {
+      background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: var(--radius-default); padding: 12px 16px;
+      font-size: 13px; color: #1E40AF; margin-bottom: 12px;
+    }
+    .attach-hint .h { font-weight: 600; margin-bottom: 4px; }
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td {
+      padding: 10px 12px; text-align: left; font-size: 13px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .attach-table th { color: var(--text-tertiary); font-weight: 500; background: #F9FAFB; }
+    .attach-table .upload-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 12px; border: 1px solid var(--color-primary);
+      color: var(--color-primary); background: #fff; border-radius: 4px;
+      font-size: 13px; cursor: pointer;
+    }
+    .attach-table .upload-btn:hover { background: var(--color-primary-light); }
+    .attach-file {
+      display: inline-flex; align-items: center; gap: 6px;
+      color: var(--color-primary); font-size: 13px; text-decoration: none;
+    }
+    .attach-file:hover { text-decoration: underline; }
+    .attach-file .x {
+      width: 14px; height: 14px; background: #E5E7EB; color: var(--text-tertiary);
+      border-radius: 50%; text-align: center; line-height: 14px; font-size: 10px;
+      cursor: pointer;
+    }
+    .attach-time {
+      display: inline-block; padding: 4px 10px; background: #1F2937; color: #fff;
+      border-radius: 4px; font-size: 12px; font-family: var(--font-mono);
+    }
+
+    /* 底部按钮（重置 design-system.css 里的 position: sticky） */
+    .footer-actions {
+      position: static;
+      background: var(--bg-card);
+      border-top: 1px solid var(--border-light);
+      border-radius: var(--radius-default);
+      padding: 14px 24px;
+      display: flex; gap: 12px; justify-content: center;
+      margin-top: 8px;
+      margin-bottom: 16px;
+      box-shadow: none;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./contract-purchase.html">合同管理</a>
+          <span class="sep">/</span>
+          <a href="./contract-purchase.html">采购合同管理</a>
+          <span class="sep">/</span>
+          <span class="current">新增采购框架合同</span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="page-h1" id="pageH1">新增采购框架合同</h1>
+
+        <!-- 编辑模式标识 banner（v1.7.99.43 新增） -->
+        <div id="editModeBanner" style="display: none; padding: 12px 16px; background: #FEF3C7; border-left: 3px solid #F59E0B; border-radius: 4px; margin-bottom: 16px; font-size: 13px; color: #92400E;">
+          <strong>✏️ 编辑模式</strong>：已载入合同 <span id="editContractId" style="font-family: var(--font-mono); font-weight: 600;"></span> 的已录入信息。请根据驳回原因/审批意见修改后重新提交。
+        </div>
+
+        <!-- 风险提示 -->
+        <div class="risk-bars">
+          <div class="risk-bar">
+            <span class="ico">⚠️</span>
+            <div class="body"><span class="tag-name">【高风险】</span>供应商风控台：供应商风险等级为高风险，原因：XXX公司已被列为失信被执行人</div>
+          </div>
+          <div class="risk-bar">
+            <span class="ico">⚠️</span>
+            <div class="body"><span class="tag-name">【高风险】</span>XXX公司可用额度仅剩1000万，低于当前合同金额</div>
+          </div>
+          <div class="risk-bar">
+            <span class="ico">⚠️</span>
+            <div class="body"><span class="tag-name">【中风险】</span>XXX公司存在超期未发货的情况，涉及合同编号：XXXXXXXXXXXX</div>
+          </div>
+        </div>
+
+        <!-- 关联主体（v1.7.99.30：项目必填） -->
+        <div class="form-card link-card">
+          <div class="form-card-head">关联主体 <span style="font-size: 12px; color: var(--text-tertiary); font-weight: 400; margin-left: 8px;">（先选项目，下方合同信息才能填写）</span></div>
+          <div class="form-card-body">
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">关联项目 <span class="required">*</span></label>
+                <select class="select" id="projectSelect">
+                  <option value="">请选择关联项目（立项审批通过）</option>
+                  <option value="LX20260122001">河南军牧原国际贸易有限公司（LX20260122001）</option>
+                  <option value="LX20260115002">郑州铁龙物流有限公司（LX20260115002）</option>
+                  <option value="LX20260108003">河南豫粮农业发展有限公司（LX20260108003）</option>
+                  <option value="LX20260105004">中原粮食集团有限公司（LX20260105004）</option>
+                  <option value="LX20251228005">河南双汇投资发展有限公司（LX20251228005）</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="lockableArea">
+        <!-- 合同信息 -->
+        <div class="form-card">
+          <div class="form-card-head">合同信息</div>
+          <div class="form-card-body">
+            <div class="form-grid">
+              <div class="form-field">
+                <label class="form-label">卖方企业 <span class="required">*</span></label>
+                <select class="select" id="sellerSelect" disabled>
+                  <option value="">请先选择关联项目</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">买方企业 <span class="required">*</span></label>
+                <select class="select" id="buyerSelect" disabled>
+                  <option value="GTGYL">港通供应链（我方）</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">框架合同编号 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入合同编号">
+              </div>
+              <div class="form-field">
+                <label class="form-label">品类 <span class="required">*</span></label>
+                <select class="select"><option>淀粉</option><option>谷物</option><option>糖粉</option></select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">计量单位 <span class="required">*</span> <span class="flash">⚡</span></label>
+                <div class="radio-group">
+                  <label class="radio-item"><input type="radio" name="unit" checked> 吨</label>
+                  <label class="radio-item"><input type="radio" name="unit"> 件</label>
+                  <label class="radio-item"><input type="radio" name="unit"> 支</label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同单价（元/吨） <span class="required">*</span> <span class="flash">⚡</span></label>
+                <div style="display: flex; align-items: center;">
+                  <input type="text" class="input" placeholder="请输入合同单价">
+                  <label class="inline-check"><input type="checkbox"> 随行就市</label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同数量（吨） <span class="required">*</span> <span class="flash">⚡</span></label>
+                <div class="input-with-suffix">
+                  <input type="text" class="input" placeholder="请输入合同数量">
+                  <span class="suffix">±</span>
+                  <input type="text" class="input" placeholder="请输入" style="max-width: 100px;">
+                  <span class="suffix">%</span>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同签署状态 <span class="required">*</span></label>
+                <select id="signStatus" class="select" data-base="合同" onchange="updateAttachName('合同', this.value)"><option value="">请选择合同签署状态</option><option>待盖章</option><option>已双签</option></select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">签订日期 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请选择合同签订日期">
+              </div>
+              <div class="form-field">
+                <label class="form-label">合同交货期限 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请选择交货期限">
+              </div>
+              <div class="form-field">
+                <label class="form-label">业务类型 <span class="required">*</span></label>
+                <select class="select"><option>请选择</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">业务实际负责人 <span class="required">*</span></label>
+                <select class="select"><option value="">请选择业务类型</option><option>张爽</option><option>李伟</option></select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 银行账户信息 -->
+        <div class="form-card">
+          <div class="form-card-head">银行账户信息</div>
+          <div class="form-card-body">
+            <div class="form-grid form-grid-2" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="form-field">
+                <label class="form-label">卖方银行账号 <span class="required">*</span></label>
+                <div class="bank-cell" id="sellerBankCell">
+                  <div class="bank-label">请先选择卖方企业</div>
+                  <div class="bank-num">—</div>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">买方银行账号 <span class="required">*</span></label>
+                <div class="bank-cell" id="buyerBankCell">
+                  <div class="bank-label">中国工商银行郑州金水支行</div>
+                  <div class="bank-num">6222 8888 0000 1234 567</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 联系人信息 -->
+        <div class="form-card">
+          <div class="form-card-head">联系人信息</div>
+          <div class="form-card-body">
+            <div class="form-grid" style="grid-template-columns: repeat(2, 1fr);">
+              <div class="form-field">
+                <label class="form-label">卖方联系人 <span class="required">*</span></label>
+                <select class="select" id="sellerContactSelect" disabled>
+                  <option value="">请先选择卖方企业</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">买方联系人 <span class="required">*</span></label>
+                <select class="select" id="buyerContactSelect">
+                  <option value="张爽">张爽（港通供应链）</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 附件 -->
+        <div class="form-card">
+          <div class="form-card-head">附件</div>
+          <div class="form-card-body">
+            <div class="attach-hint">
+              <div class="h">附件上传要求：</div>
+              <div>可支持格式为 png，jpeg，jpg，pdf，doc，docx，xlsx，xls 的附件，单个附件大小不得超过100M 的文件。</div>
+            </div>
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">单据类型</th>
+                  <th style="width: 25%;">上传时间</th>
+                  <th>附件</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="attach-name-required"><span class="required">*</span> 待盖章合同附件</td>
+                  <td><span class="attach-time">2023-12-12 12:23:32</span></td>
+                  <td>
+                    <a class="attach-file" href="#">44354657687.pdf <span class="x">×</span></a>
+                    <button class="upload-btn" type="button" style="margin-left: 12px;">+ 上传</button>
+                  </td>
+                </tr>
+                <tr>
+                  <td>其他附件</td>
+                  <td></td>
+                  <td><button class="upload-btn" type="button">+ 上传</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        </div><!-- /lockableArea -->
+
+        <!-- 底部按钮 -->
+        <div class="footer-actions">
+          <button class="btn btn-secondary" type="button">取 消</button>
+          <button class="btn btn-secondary" type="button">保 存</button>
+          <button class="btn btn-primary" type="button" id="btnSubmit" disabled>提 交</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+
+    // v1.7.99.231 合同签署状态切换 → 附件「单据类型」名称联动
+    // 待盖章 → 待盖章{XXX}附件
+    // 已双签 → 已盖章{XXX}附件
+
+    // v1.7.99.231 合同签署状态切换 → 附件「单据类型」名称联动
+    // 待盖章 → 待盖章{baseName}附件
+    // 已双签 → 已盖章{baseName}附件
+    function updateAttachName(baseName, status) {
+      var label = (status === '已双签' ? '已盖章' : '待盖章') + (baseName || '合同') + '附件';
+      document.querySelectorAll('.attach-name-required').forEach(function(row) {
+        row.innerHTML = '<span class="required">*</span> ' + label;
+      });
+    }
+      rows.forEach(function(row) {
+        row.innerHTML = '<span class="required">*</span> ' + newLabel;
+      });
+    }
+
+    </script>
+    <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.30 + v1.7.99.32 关联主体 + 禁用态 + 卖方/买方联动（采购框架：h1 不动态改，框架合同 select 始终 disabled）
+    (function() {
+      var projectSelect = document.getElementById('projectSelect');
+      var lockableArea = document.getElementById('lockableArea');
+      var btnSubmit = document.getElementById('btnSubmit');
+      var sellerSelect = document.getElementById('sellerSelect');
+      var buyerSelect = document.getElementById('buyerSelect');
+      var sellerBankCell = document.getElementById('sellerBankCell');
+      var buyerBankCell = document.getElementById('buyerBankCell');
+      var sellerContactSelect = document.getElementById('sellerContactSelect');
+      var buyerContactSelect = document.getElementById('buyerContactSelect');
+      if (!projectSelect || !lockableArea) return;
+
+      // v1.7.99.32 项目下关联企业（采购合同：卖方 = 项目下上游+物流）
+      var mockProjectCompanies = {
+        'LX20260122001': { upstream: [
+          { name: '河南军牧原国际贸易有限公司', contact: '陈安生', bank: '中国工商银行郑州金水支行', account: '6222 0211 0000 1234 567' },
+          { name: '郑州铁龙物流有限公司', contact: '陈伟', bank: '中国建设银行郑州花园支行', account: '6217 1234 5678 9012 345' }
+        ]},
+        'LX20260115002': { upstream: [
+          { name: '郑州铁龙国际货运代理有限公司', contact: '陈伟', bank: '中国银行郑州建设路支行', account: '6216 1234 5678 9012 345' }
+        ]},
+        'LX20260108003': { upstream: [
+          { name: '河南豫粮粮油有限公司', contact: '何世军', bank: '中国农业银行郑州东风支行', account: '6228 2345 6789 0123 456' },
+          { name: '河南军牧原食品集团股份有限公司', contact: '王志强', bank: '中国工商银行郑州建设路支行', account: '6222 1234 5678 9012 345' }
+        ]},
+        'LX20260105004': { upstream: [
+          { name: '中原粮食集团有限公司', contact: '孙建辉', bank: '中国建设银行郑州郑东支行', account: '6217 3456 7890 1234 567' }
+        ]},
+        'LX20251228005': { upstream: [
+          { name: '河南双汇投资有限公司', contact: '张磊', bank: '中国建设银行漯河支行', account: '6217 4567 8901 2345 678' }
+        ]}
+      };
+      var OUR_COMPANY = { name: '港通供应链', contact: '张爽', bank: '中国工商银行郑州金水支行', account: '6222 8888 0000 1234 567' };
+
+      function setLocked(locked) {
+        if (locked) {
+          lockableArea.classList.add('card-locked');
+          btnSubmit.disabled = true;
+        } else {
+          lockableArea.classList.remove('card-locked');
+          btnSubmit.disabled = false;
+        }
+      }
+
+      function resetSellerByProject(pid) {
+        sellerSelect.innerHTML = '';
+        if (!pid) {
+          sellerSelect.innerHTML = '<option value="">请先选择关联项目</option>';
+          sellerSelect.disabled = true;
+          sellerBankCell.querySelector('.bank-label').textContent = '请先选择卖方企业';
+          sellerBankCell.querySelector('.bank-num').textContent = '—';
+          sellerContactSelect.innerHTML = '<option value="">请先选择卖方企业</option>';
+          sellerContactSelect.disabled = true;
+          return;
+        }
+        var ups = (mockProjectCompanies[pid] && mockProjectCompanies[pid].upstream) || [];
+        sellerSelect.innerHTML = '<option value="">请选择卖方企业（项目下' + ups.length + '家）</option>';
+        ups.forEach(function(u) {
+          var opt = document.createElement('option');
+          opt.value = u.name; opt.textContent = u.name;
+          sellerSelect.appendChild(opt);
+        });
+        sellerSelect.disabled = false;
+        sellerBankCell.querySelector('.bank-label').textContent = '请选择卖方企业后自动带入';
+        sellerBankCell.querySelector('.bank-num').textContent = '—';
+        sellerContactSelect.innerHTML = '<option value="">请先选择卖方企业</option>';
+        sellerContactSelect.disabled = true;
+      }
+
+      sellerSelect.addEventListener('change', function() {
+        var name = this.value;
+        var pid = projectSelect.value;
+        if (!name || !pid) return;
+        var ups = (mockProjectCompanies[pid] && mockProjectCompanies[pid].upstream) || [];
+        var c = ups.find(function(u) { return u.name === name; });
+        if (!c) return;
+        sellerBankCell.querySelector('.bank-label').textContent = c.bank;
+        sellerBankCell.querySelector('.bank-num').textContent = c.account;
+        sellerContactSelect.innerHTML = '';
+        var opt = document.createElement('option');
+        opt.value = c.contact; opt.textContent = c.contact;
+        sellerContactSelect.appendChild(opt);
+        sellerContactSelect.disabled = true;
+      });
+
+      projectSelect.addEventListener('change', function() {
+        var pid = this.value;
+        setLocked(!pid);
+        resetSellerByProject(pid);
+        // 买方固定为我方
+        buyerSelect.innerHTML = '<option value="GTGYL">' + OUR_COMPANY.name + '（我方）</option>';
+        buyerSelect.disabled = true;
+        buyerBankCell.querySelector('.bank-label').textContent = OUR_COMPANY.bank;
+        buyerBankCell.querySelector('.bank-num').textContent = OUR_COMPANY.account;
+        buyerContactSelect.innerHTML = '<option value="' + OUR_COMPANY.contact + '">' + OUR_COMPANY.contact + '（' + OUR_COMPANY.name + '）</option>';
+      });
+
+      // 初始状态
+      setLocked(true);
+    })();
+
+    // v1.7.99.43 编辑模式：读取 URL 参数，载入合同已录入信息
+    (function() {
+      var params = new URLSearchParams(window.location.search);
+      var mode = params.get('mode');
+      var contractId = params.get('contractId');
+      if (mode === 'edit' && contractId) {
+        document.getElementById('editModeBanner').style.display = 'block';
+        document.getElementById('editContractId').textContent = contractId;
+        var h1 = document.getElementById('pageH1');
+        if (h1) h1.textContent = '编辑采购框架合同';
+        // 面包屑当前文字
+        var currentSpan = document.querySelector('.breadcrumb-inline .current');
+        if (currentSpan) currentSpan.textContent = '编辑采购框架合同';
+        document.title = '编辑采购框架合同 - 豫港通';
+        // mock：实际生产应调用接口载入合同已录入字段
+        console.log('[v1.7.99.43 编辑模式] 载入合同', contractId, '的已录入字段...');
+      }
+    })();
+  </script>
+</body>
+</html>
