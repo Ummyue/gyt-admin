@@ -108,6 +108,19 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T10:20:00',
+          version: 'v1.7.99.226',
+          module: '补充合同详情页 - 加「操作」按钮抽屉式下拉 + 真路由跳转',
+          summary: '补充合同详情（contract-supplement-order-detail.html + contract-supplement-framework-detail.html）按 user 2026-08-13 10:15 反馈补做。1) user 反馈合同管理详情页审批中状态下应有审批按钮（参考图 1 contract-purchase-order-detail.html 现有 v1.7.99.160 审批中固定底栏 + v1.7.99.88 操作抽屉下拉），并检查所有合同详情页是否都加了「操作」按钮抽屉下拉；2) 摸底现状：6 个合同详情页（contract-purchase-order/framework + contract-sales-order/framework + contract-supplement-order/framework），4 个（purchase/sales）已有完整「操作」抽屉 + 审批底栏，2 个（supplement-order/framework）只有底栏缺「操作」抽屉；3) user 决策 2026-08-13 10:20：仅补 2 个补充合同详情页 + 下拉项接真路由跳转（不是 mock alert）；4) v1.7.99.226 实施：a) 2 个补充合同详情页状态 tag 后面加「操作」按钮（detail-action-btn + actionDropdown + actionMenu）；b) 加 ACTION_RULES.supplement 5 状态机（approving/unsigned/executing/completed/rejected/voided）可操作项（按 4 个现有详情页 v1.7.99.88 ACTION_RULES 模式，但针对补充合同语义：unsigned/executing 加 uploadDoubleStamp + goods + settle + invoice + edit）；c) 加 renderActionMenu() + toggleActionMenu() + 点击外部关闭抽屉；d) **真路由跳转**（不是 mock alert）：edit → 跳 contract-supplement-order-new.html（或 contract-supplement-new.html）?mode=edit&contractId=...&contractType=...; uploadDoubleStamp → 跳 contract-supplement.html; goods → 跳 goods-transfer-up.html?source=contract&contractId=...; settle → 跳 settlement-purchase.html?source=contract&contractId=...; invoice → 跳 invoice.html?source=contract&contractId=...; void → confirm 弹窗确认 + 跳 contract-supplement.html; exportDetail → 触发浏览器下载（生成 CSV blob + 自动点击 a.download）；e) currentStatus 默认 executing（v1.7.99.159 supplement 页面固定已生效），初始 renderActionMenu()；5) 防翻车（10.2 教训）：actionScript 字符串无 <\/script> 已 node --check 验证；6) 4 个现有详情页（purchase/sales）不动——user 决策仅补 2 个补充详情页；7) docs 不改（v1.7.99.226 改造纯前端交互，未涉及 PRD 业务流程变更）。',
+          changes: [
+            { type: 'modify', location: 'pages/contract-supplement-order-detail.html <span class="tag tag-green"> 状态 tag 后面', before: 'v1.7.99.225 仅有状态 tag + 返回按钮，无操作按钮', after: 'v1.7.99.226 加 detail-action-btn 按钮 + actionDropdown 容器 + actionMenu 空 div（由 renderActionMenu() 动态填充）' },
+            { type: 'add', location: 'pages/contract-supplement-order-detail.html <script> ACTION_RULES + renderActionMenu + toggleActionMenu + click handler', before: 'v1.7.99.225 无操作菜单逻辑', after: 'v1.7.99.226 ACTION_RULES.supplement 5 状态机（approving/unsigned/executing/completed/rejected/voided）共 14 个可操作项 + renderActionMenu + toggleActionMenu + 点击外部关闭 + 7 种下拉项真路由跳转（edit/new/uploadDoubleStamp/goods/settle/invoice/void/exportDetail 全接，不 mock alert）' },
+            { type: 'modify', location: 'pages/contract-supplement-framework-detail.html 状态 tag 后面', before: 'v1.7.99.225 仅有状态 tag + 返回按钮，无操作按钮', after: 'v1.7.99.226 同样加 detail-action-btn + ACTION_RULES + renderActionMenu + toggleActionMenu + 真路由跳转（区别：edit 跳 contract-supplement-new.html 而非 contract-supplement-order-new.html）' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.225', after: '豫港通原型 v.1.7.99.226' }
+          ]
+        },
+
+        {
           ts: '2026-08-13T09:38:00',
           version: 'v1.7.99.225',
           module: '工作台 - 待办事项改造：10 个新 tab + 买卖方徽章 + MOCK 多数据 + tab 切换重渲染',

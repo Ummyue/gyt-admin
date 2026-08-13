@@ -1,0 +1,758 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>补协详情 - 订单/单批次合同补充协议 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
+  <style>
+    .page-body { padding: 20px 24px; background: var(--bg-page); }
+    .detail-card { background: #fff; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .detail-no-row { display: flex; align-items: center; gap: 12px; padding: 4px 0 16px; border-bottom: 1px dashed var(--border-color); margin-bottom: 16px; }
+    .detail-no-icon { width: 28px; height: 28px; border-radius: 6px; background: #DBEAFE; color: #1E40AF; display: inline-flex; align-items: center; justify-content: center; font-weight: 700; font-size: 13px; flex-shrink: 0; }
+    .detail-no-text { font-size: 16px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+    .detail-no-copy { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; border-radius: 4px; font-size: 12px; cursor: pointer; color: var(--color-primary); background: var(--bg-hover); }
+    .detail-no-copy:hover { background: var(--color-primary); color: #fff; }
+
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+    .tag-green { background: #DCFCE7; color: #16A34A; }
+    .tag-blue { background: #DBEAFE; color: #1E40AF; }
+    .tag-orange { background: #FFEDD5; color: #EA580C; }
+    .tag-yellow { background: #FEF3C7; color: #CA8A04; }
+    .tag-red { background: #FEE2E2; color: #DC2626; }
+
+    .detail-info-row { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 12px; column-gap: 24px; font-size: 13px; }
+    .detail-info-item .info-label { color: var(--text-tertiary); margin-right: 8px; }
+    .detail-info-item .info-value { color: var(--text-primary); font-weight: 500; }
+    .detail-info-item a.info-value { color: var(--color-primary); text-decoration: none; font-family: var(--font-mono); }
+
+    .section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    .section-badge { display: inline-flex; align-items: center; justify-content: center; min-width: 22px; height: 20px; padding: 0 6px; background: #F3F4F6; color: var(--text-secondary); font-size: 12px; font-weight: 500; border-radius: 10px; }
+    .section-action { margin-left: auto; color: var(--color-primary); font-size: 13px; text-decoration: none; }
+
+    .detail-tabs { display: flex; align-items: center; gap: 4px; margin-bottom: 16px; border-bottom: 1px solid var(--border-color); }
+    .detail-tab { padding: 10px 18px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+    .detail-tab:hover { color: var(--color-primary); }
+    .detail-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+
+    .detail-tab-panel { display: none; }
+    .detail-tab-panel.active { display: block; }
+
+    .info-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); row-gap: 12px; column-gap: 24px; font-size: 13px; }
+    .info-grid-3 .info-item { display: flex; }
+    .info-grid-3 .info-label { color: var(--text-tertiary); white-space: nowrap; }
+    .info-grid-3 .info-value { color: var(--text-primary); font-weight: 500; }
+
+    .detail-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .detail-table th { text-align: left; padding: 10px 12px; background: #F9FAFB; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border-color); }
+    .detail-table td { padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    .detail-table tr:last-child td { border-bottom: none; }
+    .detail-table a.file-link { color: var(--color-primary); text-decoration: none; }
+    .detail-table a.file-link:hover { text-decoration: underline; }
+
+    .file-timestamp { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 4px; font-size: 11px; color: var(--text-tertiary); background: var(--bg-hover); margin-left: 2px; cursor: help; position: relative; vertical-align: middle; }
+    .file-timestamp-tip { display: none; position: absolute; bottom: 130%; left: 50%; transform: translateX(-50%); background: rgba(15, 23, 42, 0.92); color: #fff; padding: 4px 8px; border-radius: 4px; font-size: 11px; white-space: nowrap; z-index: 100; pointer-events: none; }
+    .file-timestamp:hover { background: var(--color-primary); color: #fff; }
+    .file-timestamp:hover .file-timestamp-tip { display: block; }
+
+    .change-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .change-table th { text-align: left; padding: 10px 12px; background: #F9FAFB; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border-color); }
+    .change-table td { padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    .change-table tr:last-child td { border-bottom: none; }
+    .change-checkbox-row { display: flex; align-items: center; gap: 24px; padding: 12px 0; margin-bottom: 8px; }
+    .change-checkbox-row label { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-primary); cursor: pointer; }
+
+    .op-log-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .op-log-table th { text-align: left; padding: 12px; background: #F9FAFB; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border-color); }
+    .op-log-table td { padding: 14px 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    .op-log-table tr:last-child td { border-bottom: none; }
+
+    /* ===== v1.7.99.226 操作按钮 + 抽屉式下拉 ===== */
+    .detail-action-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 6px 14px;
+      background: #fff;
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .detail-action-btn:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .detail-action-menu {
+      display: none;
+      position: fixed;
+      min-width: 140px;
+      background: #fff;
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.15);
+      padding: 4px 0;
+      z-index: 9999;
+    }
+    .detail-action-menu.open { display: block; }
+    .detail-action-menu a {
+      display: block;
+      padding: 8px 14px;
+      color: var(--text-primary);
+      font-size: 13px;
+      white-space: nowrap;
+      text-decoration: none;
+      cursor: pointer;
+    }
+    .detail-action-menu a:hover { background: #F3F4F6; }
+    .detail-action-menu a.danger { color: var(--color-danger); }
+    .detail-action-menu a.danger:hover { background: #FEE2E2; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto;">
+
+        <!-- 面包屑 + 返回按钮 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <div class="breadcrumb-inline">
+            <a href="#">合同管理</a><span class="sep">/</span>
+            <a href="./contract-supplement.html">补充协议</a><span class="sep">/</span>
+            <span class="current">补充协议详情</span>
+          </div>
+          <button class="btn btn-secondary" onclick="window.history.back()">← 返回</button>
+        </div>
+
+        <!-- 头部：补协编号 + 状态 tag -->
+        <div class="detail-card">
+          <div class="detail-no-row">
+            <span class="detail-no-icon">补</span>
+            <span class="detail-no-text">补协编号_我方：DLXLC-DSRMT-202203-001-补001</span>
+            <span class="detail-no-copy" title="复制补协编号">📋</span>
+            <span class="tag tag-green" style="margin-left: 8px;">已生效</span>
+            <div style="position: relative; margin-left: auto;" id="actionDropdown">
+              <button class="detail-action-btn" onclick="toggleActionMenu(event)">
+                操作
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="detail-action-menu" id="actionMenu"></div>
+            </div>
+          </div>
+          <div class="detail-info-row">
+            <div class="detail-info-item"><span class="info-label">订单/单批次合同编号：</span><span class="info-value" style="font-family: var(--font-mono);">DLXLC-DSRMT-202203-001</span></div>
+            <div class="detail-info-item"><span class="info-label">合同类型：</span><span class="info-value">采购订单/单批次合同</span></div>
+            <div class="detail-info-item"><span class="info-label">卖方企业：</span><span class="info-value">XXXX有限公司</span></div>
+            <div class="detail-info-item"><span class="info-label">买方企业：</span><span class="info-value">陕建物流</span></div>
+            <div class="detail-info-item"><span class="info-label">创建人：</span><span class="info-value">业务一部　张三</span></div>
+            <div class="detail-info-item"><span class="info-label">创建时间：</span><span class="info-value">2022-08-12 12:22:32</span></div>
+          </div>
+        </div>
+
+        <!-- 2 tap：补协信息 / 操作记录 -->
+        <div class="detail-tabs">
+          <div class="detail-tab active" data-tap="info">补协信息</div>
+          <div class="detail-tab" data-tap="approval" id="approvalTab">审批管理</div>
+          <div class="detail-tab" data-tap="log">操作记录</div>
+        </div>
+
+        <!-- Tap 1：补协信息 -->
+        <div class="detail-tab-panel active" data-tap-panel="info">
+
+          <!-- 区块 1：关联订单/单批次合同编号（v1.7.99.45-fix4 锁定：第一字段为「框架合同编号」） -->
+          <div class="detail-card">
+            <h3 class="section-title">关联订单/单批次合同编号 <span class="section-badge">1</span></h3>
+            <div class="info-grid-3">
+              <div class="info-item"><span class="info-label">框架合同编号：</span><span class="info-value" style="font-family: var(--font-mono);"><a href="./contract-purchase-framework-detail.html" style="color: var(--color-primary); text-decoration: none;">GTGYL-MSXS-20</a></span></div>
+              <div class="info-item"><span class="info-label">卖方企业：</span><span class="info-value">河南诚泽运输有限公司</span></div>
+              <div class="info-item"><span class="info-label">买方企业：</span><span class="info-value">河南中豫港通供应链管理有限公司</span></div>
+              <div class="info-item"><span class="info-label">品类：</span><span class="info-value">淀粉</span></div>
+              <div class="info-item"><span class="info-label">品名：</span><span class="info-value">进口木薯淀粉</span></div>
+              <div class="info-item"><span class="info-label">计量单位：</span><span class="info-value">吨</span></div>
+              <div class="info-item"><span class="info-label">合同单价（元/吨）：</span><span class="info-value">3,400</span></div>
+              <div class="info-item"><span class="info-label">合同数量（吨）：</span><span class="info-value">20,000</span></div>
+              <div class="info-item"><span class="info-label">合同签章状态：</span><span class="info-value">待盖章</span></div>
+              <div class="info-item"><span class="info-label">签订日期：</span><span class="info-value">2026-01-22</span></div>
+              <div class="info-item"><span class="info-label">合同交货期限：</span><span class="info-value">2026-01-22~2026-12-31</span></div>
+              <div class="info-item"><span class="info-label">业务类型：</span><span class="info-value">存货业务</span></div>
+            </div>
+          </div>
+
+          <!-- 区块 2：基本信息 -->
+          <div class="detail-card">
+            <h3 class="section-title">基本信息</h3>
+            <div class="info-grid-3" style="row-gap: 14px;">
+              <div class="info-item"><span class="info-label">补协名称：</span><span class="info-value">xxxxxxxx</span></div>
+              <div class="info-item"><span class="info-label">补协签订日期：</span><span class="info-value">2024年11月11日</span></div>
+              <div class="info-item"><span class="info-label">签章状态：</span><span class="info-value">已双签</span></div>
+              <div class="info-item" style="grid-column: 1 / -1;"><span class="info-label">情况说明：</span><span class="info-value" style="line-height: 1.8;">这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明</span></div>
+            </div>
+          </div>
+
+          <!-- 区块 3：补协信息（变更项） - v1.7.99.45-fix4 锁定：详情页只展示 3 项（不含运输方式） -->
+          <div class="detail-card">
+            <h3 class="section-title">补协信息</h3>
+            <div class="change-checkbox-row">
+              <label><input type="checkbox" checked disabled style="accent-color: var(--color-primary);"> 合同数量</label>
+              <label><input type="checkbox" checked disabled style="accent-color: var(--color-primary);"> 合同单价</label>
+              <label><input type="checkbox" checked disabled style="accent-color: var(--color-primary);"> 合同有效期</label>
+            </div>
+            <table class="change-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">序号</th>
+                  <th style="width: 160px;">字段名称</th>
+                  <th>变更前内容</th>
+                  <th>变更后内容</th>
+                  <th>变更说明</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td>合同采购量(吨)</td>
+                  <td>500</td>
+                  <td>600</td>
+                  <td>xxxxxxxx</td>
+                </tr>
+                <tr>
+                  <td>2</td>
+                  <td>合同单价(元/吨)</td>
+                  <td>800</td>
+                  <td>800</td>
+                  <td>—</td>
+                </tr>
+                <tr>
+                  <td>3</td>
+                  <td>合同有效期</td>
+                  <td>2024-10-10至2024-12-10</td>
+                  <td>2024-10-10至2025-12-10</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- 区块 4：补协附件 -->
+          <div class="detail-card">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+              <h3 class="section-title" style="margin: 0;">补协附件</h3>
+              <a href="javascript:void(0)" style="color: var(--color-primary); font-size: 13px; text-decoration: none;">一键下载</a>
+            </div>
+            <table class="detail-table">
+              <thead>
+                <tr>
+                  <th style="width: 160px;">单据类型</th>
+                  <th>文件名</th>
+                  <th style="width: 80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>待盖章补协附件</td>
+                  <td>
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a>
+                    <span class="file-timestamp">📅<span class="file-timestamp-tip">2023-12-12 12:23:32</span></span>
+                  </td>
+                  <td><a href="javascript:void(0)" class="file-link">下载</a></td>
+                </tr>
+                <tr>
+                  <td>双签补协附件</td>
+                  <td>
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a><span class="file-timestamp">📅<span class="file-timestamp-tip">2023-12-13 10:15:00</span></span>、
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a><span class="file-timestamp">📅<span class="file-timestamp-tip">2023-12-13 10:16:30</span></span>、
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a><span class="file-timestamp">📅<span class="file-timestamp-tip">2023-12-13 10:18:00</span></span>
+                  </td>
+                  <td><a href="javascript:void(0)" class="file-link">下载</a></td>
+                </tr>
+                <tr>
+                  <td>其他附件</td>
+                  <td>
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a><span class="file-timestamp">📅<span class="file-timestamp-tip">2024-01-05 09:00:00</span></span>、
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a><span class="file-timestamp">📅<span class="file-timestamp-tip">2024-01-05 09:30:00</span></span>、
+                    <a href="javascript:void(0)" class="file-link">44354657687.pdf</a><span class="file-timestamp">📅<span class="file-timestamp-tip">2024-01-05 10:00:00</span></span>
+                  </td>
+                  <td><a href="javascript:void(0)" class="file-link">下载</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+        </div>
+
+                <!-- Tap 7：审批管理（v1.7.99.159，状态机为执行中/待上传双签时改"审批记录" + 只展示已通过节点） -->
+        <div class="detail-tab-panel" data-tap-panel="approval" id="approvalPanel" hidden>
+          <!-- 顶部状态卡 -->
+          <div class="approval-status-card" id="approvalStatusCard">
+            <div class="approval-status-icon" id="approvalStatusIcon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title" id="approvalStatusTitle">
+                <span id="approvalStatusLabel">审批进行中</span>
+                <div class="approval-status-chips" id="approvalStatusChips">
+                  <span class="chip chip-orange" id="approvalChipStatus">⏸ 待审批</span>
+                  <span class="chip chip-blue">外部 OA 系统</span>
+                </div>
+              </div>
+              <div class="approval-status-desc" id="approvalStatusDesc">
+                <strong style="color: var(--text-primary);" id="approvalContractNo">DLXLC-DSRMT-202203-0011</strong> 已提交至外部审批系统，当前在「<span class="link" id="approvalCurrentNode">财务部审批</span>」阶段。
+              </div>
+            </div>
+            <div class="approval-status-actions" id="approvalActions">
+              <button class="btn-cancel-approval" onclick="alert('已撤回申请')">↩ 撤回申请</button>
+            </div>
+          </div>
+
+          <!-- 摘要信息 -->
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请编号</div>
+              <div class="value" style="font-family: var(--font-mono);" id="approvalApplyNo">ADM-2026-0451</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value" id="approvalSubmitTime">2026-07-19 16:45</div>
+            </div>
+          </div>
+
+          <!-- 左右两栏：审批进度 + 关键指标/活动 -->
+          <div class="approval-grid">
+            <!-- 左：审批进度时间线 -->
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta" id="approvalHeaderMeta">共 5 个节点，已通过 1 个</div>
+              </div>
+              <div class="timeline" id="approvalTimeline">
+                <!-- 节点 1：提交申请（已完成） -->
+                <div class="timeline-item done" data-node="submit">
+                  <div class="timeline-dot"><span class="timeline-dot-num">①</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ① 提交申请
+                      <span class="chip chip-green">已通过</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" id="submitAvatar">张</div>
+                      <span><strong id="submitActor">张爽</strong>（业务部负责人）提交准入申请</span>
+                    </div>
+                    <div class="timeline-meta">
+                      <span>🕐 <span class="node-time">2026-07-19 16:45:23</span></span>
+                      <span>📎 附件 4 份</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点 2：一级审批·风控部 -->
+                <div class="timeline-item done" data-node="level1">
+                  <div class="timeline-dot"><span class="timeline-dot-num">②</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ② 一级审批 · 风控部
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 1/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;" id="level1Avatar">王</div>
+                      <span>审批人：<strong>王浩</strong> · 风控部负责人</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" class="node-opinion">✓ 同意，背景调查材料齐全，企业基本面良好，符合准入条件。 · <span class="node-time">2026-07-20 09:15</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 3：二级审批·财务部 -->
+                <div class="timeline-item done" data-node="level2">
+                  <div class="timeline-dot"><span class="timeline-dot-num">③</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ③ 二级审批 · 财务部
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 2/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;" id="level2Avatar">宋</div>
+                      <span>审批人：<strong>宋美玲</strong> · 财务总监</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" class="node-opinion">✓ 同意，财务审计已通过，资金流评估良好。 · <span class="node-time">2026-07-21 14:30</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 4：三级审批·总经理 -->
+                <div class="timeline-item done" data-node="level3">
+                  <div class="timeline-dot"><span class="timeline-dot-num">④</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ④ 三级审批 · 总经理
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 3/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;" id="level3Avatar">李</div>
+                      <span>审批人：<strong>李娜</strong> · 平台总经理</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" class="node-opinion">✓ 同意准入，合同可按计划推进。 · <span class="node-time">2026-07-22 10:15</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 5：准入完成 / 合同生效 -->
+                <div class="timeline-item done" data-node="finish">
+                  <div class="timeline-dot"><span class="timeline-dot-num">⑤</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ⑤ 准入完成
+                      <span class="chip chip-green">已通过</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">三级审批通过后自动归档，合同已生效，<strong style="color: var(--color-success);" id="approvalFinishResult">合同生效</strong>。</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右：关键指标 + 实时活动 + 催办 -->
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">关键指标</div>
+                </div>
+                <div class="metric-list">
+                  <div class="metric-row"><span class="metric-label">当前节点</span><span class="metric-tag" id="metricCurrentNode">准入完成</span></div>
+                  <div class="metric-row"><span class="metric-label">剩余节点</span><span class="metric-value" id="metricRemain">0 个（全部完成）</span></div>
+                  <div class="metric-row"><span class="metric-label">已耗时</span><span class="metric-value" id="metricElapsed">2 天 18 小时</span></div>
+                </div>
+              </div>
+
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">实时活动</div>
+                  <div class="approval-header-meta">最近 24h</div>
+                </div>
+                <div class="activity-list" id="activityList">
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">李</div><div class="activity-body"><div class="activity-text"><strong>李娜</strong>通过三级审批节点</div><div class="activity-time">2 小时前 · 10:15</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">宋</div><div class="activity-body"><div class="activity-text"><strong>宋美玲</strong>通过了「财务部审批节点 2/3」</div><div class="activity-time">昨天 14:30</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">王</div><div class="activity-body"><div class="activity-text"><strong>王浩</strong>通过了「风控部审批节点 1/3」</div><div class="activity-time">3 天前 · 09:15</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #1E40AF; color: #fff;">张</div><div class="activity-body"><div class="activity-text"><strong id="activitySubmitActor">张爽</strong>提交了准入申请</div><div class="activity-time">3 天前 · 16:45</div></div></div>
+                </div>
+              </div>
+
+              <!-- 催办卡（仅审批中显示） -->
+              <div class="urge-card" id="urgeCard" hidden>
+                <div class="urge-icon">🔔</div>
+                <div class="urge-body">
+                  <div class="urge-title" id="urgeTitle">宋美玲 已 2 小时未处理</div>
+                  <div class="urge-desc" id="urgeDesc">建议催办或 @该审批人 加速处理</div>
+                </div>
+                <button class="btn-urge" onclick="alert('已发送催办')">立即催办</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tap 2：操作记录 -->
+        <div class="detail-tab-panel" data-tap-panel="log">
+          <div class="detail-card" style="border: 2px dashed #C7D2FE;">
+            <table class="op-log-table">
+              <thead>
+                <tr>
+                  <th style="width: 140px;">操作类型</th>
+                  <th style="width: 120px;">操作人</th>
+                  <th style="width: 180px;">所属公司</th>
+                  <th>操作内容</th>
+                  <th style="width: 200px;">操作时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>新建</td>
+                  <td>张三</td>
+                  <td>XXXX公司</td>
+                  <td>创建补协成功</td>
+                  <td>2021-11-15 12:22:32</td>
+                </tr>
+                <tr>
+                  <td>提交审批</td>
+                  <td>张三</td>
+                  <td>XXXX公司</td>
+                  <td>提交补协到OA审批</td>
+                  <td>2021-11-15 12:22:32</td>
+                </tr>
+                <tr>
+                  <td>OA审批通过</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>OA审批通过</td>
+                  <td>2021-11-15 12:22:32</td>
+                </tr>
+                <tr>
+                  <td>OA审批驳回</td>
+                  <td>—</td>
+                  <td>—</td>
+                  <td>OA审批驳回，驳回人：XXX，驳回原因：XXXX</td>
+                  <td>2021-11-15 12:22:32</td>
+                </tr>
+                <tr>
+                  <td>补协作废</td>
+                  <td>张三</td>
+                  <td>XXXX公司</td>
+                  <td>补协作废，作废原因：XXX</td>
+                  <td>2021-11-15 12:22:32</td>
+                </tr>
+                <tr>
+                  <td>上传附件</td>
+                  <td>张三</td>
+                  <td>XXXX公司</td>
+                  <td>上传已生效补协附件</td>
+                  <td>2021-11-15 12:22:32</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // ========== v1.7.99.226 补充合同「操作」按钮 ACTION_RULES + renderActionMenu + 抽屉式下拉 ==========
+    // 5 状态机可操作项（参考 contract-purchase-order-detail.html v1.7.99.88 ACTION_RULES，但针对补充合同）
+    var ACTION_RULES = {
+      supplement: {
+        approving: [
+          { id: 'edit', label: '合同修改' }
+        ],
+        unsigned: [
+          { id: 'uploadDoubleStamp', label: '上传双签章合同' },
+          { id: 'edit',              label: '合同修改' },
+          { id: 'void',              label: '合同作废', danger: true }
+        ],
+        executing: [
+          { id: 'uploadDoubleStamp', label: '上传双签章合同' },
+          { id: 'goods',             label: '开具货转' },
+          { id: 'settle',            label: '发起结算' },
+          { id: 'invoice',           label: '开票申请' },
+          { id: 'edit',              label: '合同修改' }
+        ],
+        completed: [
+          { id: 'exportDetail', label: '导出明细' }
+        ],
+        rejected: [
+          { id: 'edit', label: '合同修改' },
+          { id: 'void', label: '合同作废', danger: true }
+        ],
+        voided: [
+          { id: 'exportDetail', label: '导出明细' }
+        ]
+      }
+    };
+
+    // 补充合同 currentStatus 默认固定"已生效"（v1.7.99.159 锁定）
+    var currentStatus = 'executing';
+
+    function renderActionMenu() {
+      var actions = ACTION_RULES.supplement[currentStatus] || [];
+      var html = '';
+      actions.forEach(function(a) {
+        html += '<a href="javascript:void(0)" data-action="' + a.id + '" class="' + (a.danger ? 'danger' : '') + '">' + a.label + '</a>';
+      });
+      document.getElementById('actionMenu').innerHTML = html;
+    }
+
+    function toggleActionMenu(e) {
+      if (e) e.stopPropagation();
+      var dd = document.getElementById('actionDropdown');
+      var menu = document.getElementById('actionMenu');
+      if (!dd || !menu) return;
+      if (menu.classList.contains('open')) {
+        menu.classList.remove('open');
+        return;
+      }
+      if (menu.parentElement !== document.body) {
+        document.body.appendChild(menu);
+      }
+      var rect = dd.getBoundingClientRect();
+      menu.style.top = (rect.bottom + 4) + 'px';
+      menu.style.left = (rect.right - 140) + 'px';
+      menu.classList.add('open');
+    }
+
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('actionMenu');
+      var dd = document.getElementById('actionDropdown');
+      if (menu && dd && !dd.contains(e.target) && !menu.contains(e.target)) {
+        menu.classList.remove('open');
+      }
+    });
+
+    document.body.addEventListener('click', function(e) {
+      var target = e.target;
+      if (target.tagName === 'A' && target.hasAttribute('data-action')) {
+        e.preventDefault();
+        var action = target.getAttribute('data-action');
+        var menuEl = document.getElementById('actionMenu');
+        if (menuEl) menuEl.classList.remove('open');
+        var contractId = 'DLXLC-DSRMT-202203-001-补001';
+        // v1.7.99.226 真路由跳转（user 要求：不能 mock alert）
+        if (action === 'edit') {
+          // 合同修改 → 跳新增/编辑页，带入合同已录入信息
+          window.location.href = './contract-supplement-order-new.html?mode=edit&contractId=' + encodeURIComponent(contractId) + '&contractType=order';
+        } else if (action === 'uploadDoubleStamp') {
+          // 上传双签章合同 → 跳补充合同列表页（v1.7.99.159 上下文：实际应在合同管理模块的上传附件弹窗，但作为 placeholder 跳列表）
+          window.location.href = './contract-supplement.html';
+        } else if (action === 'goods') {
+          // 开具货转 → 跳货转管理
+          window.location.href = './goods-transfer-up.html?source=contract&contractId=' + encodeURIComponent(contractId);
+        } else if (action === 'settle') {
+          // 发起结算 → 跳采购结算单
+          window.location.href = './settlement-purchase.html?source=contract&contractId=' + encodeURIComponent(contractId);
+        } else if (action === 'invoice') {
+          // 开票申请 → 跳发票管理
+          window.location.href = './invoice.html?source=contract&contractId=' + encodeURIComponent(contractId);
+        } else if (action === 'void') {
+          // 合同作废 → confirm 弹窗确认 → 跳列表
+          if (confirm('确定要作废补充合同 ' + contractId + ' 吗？此操作不可恢复。')) {
+            alert('补充合同作废成功（mock，v1.7.99.226）');
+            window.location.href = './contract-supplement.html';
+          }
+        } else if (action === 'exportDetail') {
+          // 导出明细 → 触发浏览器下载（用 data URL 模拟 Excel 导出）
+          var csv = '补协编号,卖方,买方,品类,数量,合同价,创建时间\n' + contractId + ',河南诚泽运输有限公司,河南中豫港通供应链管理有限公司,淀粉,20000,3.4,2022-08-12';
+          var blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+          var url = URL.createObjectURL(blob);
+          var a = document.createElement('a');
+          a.href = url;
+          a.download = contractId + '-明细.csv';
+          document.body.appendChild(a);
+          a.click();
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }
+      }
+    });
+
+    // 初始渲染操作菜单
+    renderActionMenu();
+
+    // v1.7.99.159 supplement 页面固定"已生效"状态 → 节点全部已通过
+    var currentStatus = 'approving';
+    // tap 切换
+    document.querySelectorAll('.detail-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        var key = this.getAttribute('data-tap');
+        document.querySelectorAll('.detail-tab').forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-tap') === key); });
+        document.querySelectorAll('.detail-tab-panel').forEach(function(p) { p.classList.toggle('active', p.getAttribute('data-tap-panel') === key); });
+      });
+
+    // v1.7.99.159 审批管理 / 审批记录 tab 状态机（supplement 状态固定"已生效"→ 走审批记录模式）
+    (function() {
+      var RECORD_STATUSES = ['executing', 'unsigned', 'completed', 'voided', 'rejected']; // 非"审批中"都走审批记录模式
+      function isRecordMode() {
+        return RECORD_STATUSES.indexOf(currentStatus) !== -1;
+      }
+      // 1. 改 tab 文本
+      var tab = document.getElementById('approvalTab');
+      if (tab) {
+        tab.textContent = isRecordMode() ? '审批记录' : '审批管理';
+      }
+      // 2. 加 .approval-record-mode 类
+      var panel = document.getElementById('approvalPanel');
+      if (panel) {
+        if (isRecordMode()) {
+          panel.classList.add('approval-record-mode');
+        } else {
+          panel.classList.remove('approval-record-mode');
+        }
+      }
+      // 3. 只展示已通过节点
+      if (isRecordMode()) {
+        // 隐藏未通过的节点（current / pending）
+        var items = panel ? panel.querySelectorAll('.timeline-item') : [];
+        items.forEach(function(item) {
+          if (item.classList.contains('done')) {
+            item.style.display = '';
+          } else {
+            item.style.display = 'none';
+          }
+        });
+        // 隐藏催办卡
+        var urge = document.getElementById('urgeCard');
+        if (urge) urge.hidden = true;
+        // 隐藏"撤回申请"按钮
+        var actions = document.getElementById('approvalActions');
+        if (actions) actions.style.display = 'none';
+        // 改顶部状态卡
+        var statusLabel = document.getElementById('approvalStatusLabel');
+        if (statusLabel) statusLabel.textContent = '审批已通过';
+        var statusIcon = document.getElementById('approvalStatusIcon');
+        if (statusIcon) statusIcon.textContent = '✅';
+        var chipStatus = document.getElementById('approvalChipStatus');
+        if (chipStatus) { chipStatus.textContent = '✓ 全部通过'; chipStatus.className = 'chip chip-green'; }
+        // 改描述
+        var desc = document.getElementById('approvalStatusDesc');
+        if (desc) {
+          desc.innerHTML = '<strong style="color: var(--text-primary);" id="approvalContractNo">DLXLC-DSRMT-202203-0011</strong> 已完成全部审批流程，5 个节点全部通过，合同<strong style="color: var(--color-success);">已生效</strong>。';
+        }
+        // 改 header meta
+        var headerMeta = document.getElementById('approvalHeaderMeta');
+        if (headerMeta) headerMeta.textContent = '共 5 个节点，全部通过';
+      } else {
+        // 审批中状态：完整展示 5 节点
+        var items = panel ? panel.querySelectorAll('.timeline-item') : [];
+        items.forEach(function(item) { item.style.display = ''; });
+      }
+    })();
+
+    });
+    // v1.7.99.160 审批中固定底栏（v1.7.99.175 修复：approving / rejected / unsigned 3 状态都显示 + 用 setTimeout 延后到 footer div 解析完之后执行）
+    function updateApprovalFooter() {
+      var footer = document.getElementById('contractApprovalFooter');
+      if (footer) {
+        footer.style.display = ['approving', 'rejected', 'unsigned'].includes(currentStatus) ? 'flex' : 'none';
+      }
+    }
+    setTimeout(updateApprovalFooter, 0);
+  </script>
+
+  <!-- v1.7.99.160 审批中固定底栏：approving 状态时显示（固定不滚动，右侧"审批通过/驳回审批"） -->
+  <div class="footer-actions" id="contractApprovalFooter" style="display: none;">
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="alert('审批通过（mock，v1.7.99.175）\n合同编号：' + (document.getElementById('contractNo')?.textContent || ''))">审批通过</button>
+    <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock，v1.7.99.175）\n合同编号：' + (document.getElementById('contractNo')?.textContent || ''))">驳回审批</button>
+  </div>
+</body>
+</html>
