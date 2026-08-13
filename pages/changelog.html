@@ -108,6 +108,17 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T14:40:00',
+          version: 'v1.7.99.230',
+          module: '付款管理 - 新增付款页底部「取消/保存/提交」按钮 fixed 固定底栏（按 user 2026-08-13 14:36 反馈）',
+          summary: '付款管理 - 新增付款（pages/payment-new.html）底部按钮位置调整。1) 现状：v1.7.99.58 旧版 .form-footer 用 position: sticky; bottom: 0，在长表单（结算付款模式有 4 个新区块）下 sticky 不生效，滚动时按钮会跟着内容往上滚出视口；2) 改造方案（v1.7.99.230）：a) .form-footer 改 position: sticky → fixed（bottom: 0; left: 0; right: 0; z-index: 100）；b) 加 box-shadow: 0 -2px 8px rgba(0,0,0,0.06) 增强视觉层次；c) body 加 padding-bottom: 80px 防止固定底栏遮挡底部内容；3) playwright 验证：默认结算付款 form-footer bottom=1000px（视口高度）= 固定 ✅ + 滚动 1500px 后 bottom 仍=1000px 固定 ✅ + 预付款模式 ✅。',
+          changes: [
+            { type: 'modify', location: 'pages/payment-new.html .form-footer CSS', before: 'v1.7.99.58 position: sticky; bottom: 0（长表单下不生效）', after: 'v1.7.99.230 position: fixed; bottom: 0; left: 0; right: 0; z-index: 100 + box-shadow 0 -2px 8px' },
+            { type: 'add', location: 'pages/payment-new.html body padding-bottom', before: 'v1.7.99.58 无 padding', after: 'v1.7.99.230 padding-bottom: 80px 防止固定底栏遮挡底部内容' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.229', after: 'v1.7.99.230' },
+          ],
+        },
+        {
           ts: '2026-08-13T11:49:00',
           version: 'v1.7.99.229',
           module: '付款管理 - 新增付款页「预付款」模式简化表单（按 user 2026-08-13 11:49 图 2）',
