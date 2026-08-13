@@ -424,20 +424,12 @@
   <script>
 
     // v1.7.99.231 合同签署状态切换 → 附件「单据类型」名称联动
-    // 待盖章 → 待盖章{XXX}附件
-    // 已双签 → 已盖章{XXX}附件
-
-    // v1.7.99.231 合同签署状态切换 → 附件「单据类型」名称联动
     // 待盖章 → 待盖章{baseName}附件
     // 已双签 → 已盖章{baseName}附件
     function updateAttachName(baseName, status) {
       var label = (status === '已双签' ? '已盖章' : '待盖章') + (baseName || '合同') + '附件';
       document.querySelectorAll('.attach-name-required').forEach(function(row) {
         row.innerHTML = '<span class="required">*</span> ' + label;
-      });
-    }
-      rows.forEach(function(row) {
-        row.innerHTML = '<span class="required">*</span> ' + newLabel;
       });
     }
 
