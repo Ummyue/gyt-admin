@@ -1,0 +1,701 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增付款申请 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 区块容器（v1.7.99.58 沿用 v1.7.99.56 模式） */
+    .info-section { background: #fff; border-radius: 6px; padding: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .info-section-title {
+      padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      border-left: 3px solid var(--color-primary); padding-left: 17px;
+    }
+    .info-section-body { padding: 16px 20px; }
+
+    /* 合同信息 5 行 4 列（v1.7.99.58 按图 2：合同编号/卖方企业/买方企业 + 品名/合同单价/合同数量 + 交货期限/运输方式/收货人） */
+    .info-grid-3 { display: grid; grid-template-columns: 100px 1fr 100px 1fr 100px 1fr; }
+    .info-grid-3 .label,
+    .info-grid-3 .value { padding: 10px 14px; font-size: 13px; }
+    .info-grid-3 .label { background: #F8FAFC; color: var(--text-tertiary); border-right: 1px solid var(--border-color); }
+    .info-grid-3 .value { color: var(--text-primary); }
+    .info-grid-3 .col-divider { border-right: 1px solid var(--border-color); }
+    .info-grid-3 .row-divider { border-bottom: 1px solid var(--border-color); }
+
+    /* 业务线 4 列（v1.7.99.58 按图 2：业务线号/业务线名称/采购合同编号/销售合同编号） */
+    .biz-table { width: 100%; border-collapse: collapse; }
+    .biz-table th, .biz-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .biz-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .biz-table tr.active-row { background: #F0F7FF; }
+    .biz-table tr:hover { background: #F8FAFC; cursor: pointer; }
+
+    /* 4 数据卡（v1.7.99.58：已付款金额/已结算金额/已开票金额/业务线货款回款金额） */
+    .kpi-row-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+    .kpi-card-3 { padding: 14px 16px; border-radius: 6px; }
+    .kpi-card-3 .label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .kpi-card-3 .value { font-size: 20px; font-weight: 600; color: var(--text-primary); }
+    .kpi-card-3.kpi-blue { background: #EFF6FF; }
+    .kpi-card-3.kpi-blue .value { color: #1E40AF; }
+    .kpi-card-3.kpi-grey { background: #F8FAFC; }
+    .kpi-card-3.kpi-green { background: #F0FDF4; }
+    .kpi-card-3.kpi-green .value { color: #15803D; }
+    .kpi-card-3.kpi-yellow { background: #FEFCE8; }
+    .kpi-card-3.kpi-yellow .value { color: #CA8A04; }
+
+    /* 表单 grid（v1.7.99.58 按图 2：3 列布局） */
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px 24px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 12px; color: var(--text-tertiary); }
+    .form-label .required { color: #DC2626; margin-right: 2px; }
+    .form-input, .form-select, .form-textarea {
+      padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px;
+      background: #fff; color: var(--text-primary);
+    }
+    .form-input:focus, .form-select:focus, .form-textarea:focus {
+      outline: none; border-color: var(--color-primary);
+    }
+    .form-textarea { resize: vertical; min-height: 60px; font-family: inherit; }
+
+    /* 单选组（v1.7.99.58 按图 2：付款类型 / 是否有票） */
+    .radio-group { display: flex; gap: 20px; align-items: center; padding-top: 4px; }
+    .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .radio-item input[type="radio"] { margin: 0; cursor: pointer; }
+    .radio-item span { font-size: 13px; color: var(--text-primary); }
+
+    /* 货物批次表（v1.7.99.58 按图 3：复选框/发货批次号/运输方式/发货数量/收货数量/发货日期/最后收货日期/货转开具标识/状态） */
+    .batch-table { width: 100%; border-collapse: collapse; }
+    .batch-table th, .batch-table td { padding: 10px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .batch-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .batch-table tr:last-child td { border-bottom: none; }
+
+    /* 附件信息（v1.7.99.58 按图 3：蓝底提示框 + 4 行单据类型） */
+    .upload-tip {
+      background: #F0F7FF; border: 1px solid #DBEAFE; border-radius: 4px;
+      padding: 10px 14px; font-size: 12px; color: #1E40AF;
+      margin-bottom: 12px;
+    }
+    .attach-row { display: flex; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border-color); }
+    .attach-row:last-child { border-bottom: none; }
+    .attach-label { width: 150px; color: var(--text-primary); font-size: 13px; }
+    .attach-name { flex: 1; color: var(--text-tertiary); font-size: 13px; }
+    .attach-btn { min-width: 60px; }
+
+    /* footer 按钮（v1.7.99.58 按图 2：取消/保存/提交） */
+    .form-footer {
+      padding: 16px 24px; background: #fff; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: center; gap: 12px;
+      position: sticky; bottom: 0;
+    }
+
+    /* 选择货物批次区块（默认隐藏，JS 控制显隐） */
+    #batchSection.hidden { display: none; }
+
+    /* ===== v1.7.99.228 结算付款 4 个新区块显隐 + empty state ===== */
+    #upstreamSettleSection.hidden,
+    #downstreamSettleSection.hidden,
+    #taxVoucherSection.hidden { display: none; }
+    .empty-row { padding: 60px 20px !important; text-align: center; border-bottom: none !important; }
+    .empty-icon { color: #D1D5DB; margin-bottom: 12px; display: flex; justify-content: center; }
+    .empty-icon svg { width: 48px; height: 48px; }
+    .empty-text { color: var(--text-tertiary); font-size: 13px; }
+    .attach-label-cell { width: 30%; color: var(--text-primary); font-size: 13px; }
+    .attach-name-cell { text-align: left; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">资金管理</a>
+          <span class="sep">/</span>
+          <a href="./payment-list.html">付款管理</a>
+          <span class="sep">/</span>
+          <span class="current">新增付款申请</span>
+        </div>
+
+        <h1 class="page-h1" style="margin: 0 0 16px 0;">新增付款申请</h1>
+
+        <!-- v1.7.99.60 来源信息条：从采购合同「执行中」点「付款申请」路由过来时显示 -->
+        <div id="sourceBar" style="background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 4px; padding: 10px 16px; margin: 0 0 16px 0; font-size: 13px; color: #1E40AF; display: flex; align-items: center; gap: 16px; display: none;">
+          <span>来源：</span>
+          <span><span style="color: var(--text-tertiary);">采购合同</span> · <span id="sourceContractNo" style="font-weight: 600;">—</span></span>
+          <span style="color: #BFDBFE;">|</span>
+          <span><span style="color: var(--text-tertiary);">业务线</span> · <span id="sourceLineNo" style="font-weight: 600;">—</span></span>
+          <span style="color: #BFDBFE;">|</span>
+          <span style="color: var(--text-tertiary); font-size: 12px;">已自动带入合同信息 / 业务线 / 货物批次，请补充付款方式与金额等信息后提交</span>
+        </div>
+
+        <!-- 区块 1：合同信息（v1.7.99.58 按图 2：5 行 4 列 readonly；v1.7.99.60 各 value 加 id 方便 JS 预填） -->
+        <div class="info-section">
+          <h3 class="info-section-title">合同信息</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <div class="info-grid-3">
+              <!-- Row 1：合同编号 / 卖方企业 / 买方企业 -->
+              <div class="label row-divider">合同编号</div>
+              <div class="value row-divider col-divider" id="ctNo">测试线下采购合同附件问题</div>
+              <div class="label row-divider">卖方企业</div>
+              <div class="value row-divider col-divider" id="ctSeller">首浪（北京）环境测试有限公司</div>
+              <div class="label row-divider">买方企业</div>
+              <div class="value row-divider" id="ctBuyer">河南荣厚实业有限公司</div>
+
+              <!-- Row 2：品名 / 合同单价 / 合同数量 -->
+              <div class="label row-divider">品名</div>
+              <div class="value row-divider col-divider" id="ctProduct">测试品名</div>
+              <div class="label row-divider">合同单价(元/吨)</div>
+              <div class="value row-divider col-divider" id="ctPrice">3,400</div>
+              <div class="label row-divider">合同数量(吨)</div>
+              <div class="value row-divider" id="ctQty">200</div>
+
+              <!-- Row 3：交货期限 / 运输方式 / 收货人 -->
+              <div class="label row-divider">交货期限</div>
+              <div class="value row-divider col-divider" id="ctDeadline">2024-11-01 ~ 2024-11-08</div>
+              <div class="label row-divider">运输方式</div>
+              <div class="value row-divider col-divider" id="ctTransport">汽运</div>
+              <div class="label row-divider">收货人</div>
+              <div class="value row-divider" id="ctReceiver">33</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：选择业务线（v1.7.99.58 按图 2：4 列表格 + radio；v1.7.99.60 用 id 标记 tbody 方便 JS 预填） -->
+        <div class="info-section">
+          <h3 class="info-section-title">选择业务线</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="biz-table">
+              <thead>
+                <tr>
+                  <th style="width: 50px;">&nbsp;</th>
+                  <th>业务线号</th>
+                  <th>业务线名称</th>
+                  <th>采购合同编号</th>
+                  <th>销售合同编号</th>
+                </tr>
+              </thead>
+              <tbody id="bizTbody">
+                <tr class="active-row" onclick="selectBiz(this)">
+                  <td><input type="radio" name="biz" checked onclick="event.stopPropagation()"></td>
+                  <td class="col-num" style="color: var(--color-primary);">SKYWX202412030004</td>
+                  <td>首浪（北京）环境测试有限公司-河南荣厚实业有限公司-天宇源国际</td>
+                  <td>测试线下采购合同附件问题</td>
+                  <td class="col-num">HNRH-TYYGJ-202409-001</td>
+                </tr>
+                <tr onclick="selectBiz(this)">
+                  <td><input type="radio" name="biz" onclick="event.stopPropagation()"></td>
+                  <td class="col-num" style="color: var(--color-primary);">SKYWX202412030005</td>
+                  <td>首浪（北京）环境测试有限公司-河南荣厚实业有限公司-陕煤</td>
+                  <td>测试线下采购合同附件问题</td>
+                  <td class="col-num">RHSY-SM-202407-003</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：基本信息（v1.7.99.58 按图 2：4 数据卡 + 3 列表单） -->
+        <div class="info-section">
+          <h3 class="info-section-title">基本信息</h3>
+          <div class="info-section-body">
+            <!-- 4 数据卡 -->
+            <div class="kpi-row-4">
+              <div class="kpi-card-3 kpi-blue">
+                <div class="label">已付款金额(元)</div>
+                <div class="value">80,000</div>
+              </div>
+              <div class="kpi-card-3 kpi-grey">
+                <div class="label">已结算金额(元)</div>
+                <div class="value">0</div>
+              </div>
+              <div class="kpi-card-3 kpi-green">
+                <div class="label">已开票金额(元)</div>
+                <div class="value">0</div>
+              </div>
+              <div class="kpi-card-3 kpi-yellow">
+                <div class="label">业务线货款回款金额(元)</div>
+                <div class="value">0</div>
+              </div>
+            </div>
+
+            <!-- 表单（v1.7.99.58 按图 2：3 列布局） -->
+            <div class="form-grid-3">
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>付款类型</label>
+                <div class="radio-group">
+                  <label class="radio-item"><input type="radio" name="payType" value="settle" checked onclick="togglePaymentSections()"> <span>结算付款</span></label>
+                  <label class="radio-item"><input type="radio" name="payType" value="preSettle" onclick="togglePaymentSections()"> <span>预结算付款</span></label>
+                  <label class="radio-item"><input type="radio" name="payType" value="prepay" onclick="togglePaymentSections()"> <span>预付款</span></label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>是否有票</label>
+                <div class="radio-group">
+                  <label class="radio-item"><input type="radio" name="hasInvoice" value="no" checked> <span>无票</span></label>
+                  <label class="radio-item"><input type="radio" name="hasInvoice" value="yes"> <span>有票</span></label>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>付款方式</label>
+                <select class="form-select">
+                  <option>请选择付款方式</option>
+                  <option>银行转账</option>
+                  <option>银行承兑</option>
+                  <option>商业汇票</option>
+                  <option>信用证</option>
+                  <option>现金</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>收款账号名称</label>
+                <select class="form-select">
+                  <option>请选择收款账号名称</option>
+                  <option>山西晋通天下供应链管理有限公司</option>
+                  <option>河南荣厚实业有限公司</option>
+                  <option>重庆运煤煤炭销售有限公司</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>收款账号开户行</label>
+                <input type="text" class="form-input" value="中国农业银行股份有限公司重庆铜梁龙都支行">
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>收款账号</label>
+                <input type="text" class="form-input" value="3118 1501 0400 0755 9">
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>资金来源</label>
+                <select class="form-select">
+                  <option>请选择资金来源</option>
+                  <option selected>自有资金</option>
+                  <option>供应链资金</option>
+                  <option>银行融资</option>
+                  <option>保理融资</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>付款金额</label>
+                <input type="text" class="form-input" value="1000000">
+              </div>
+              <div class="form-field">
+                <label class="form-label"><span class="required">*</span>付款日期</label>
+                <input type="text" class="form-input" placeholder="请选择付款日期">
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label class="form-label">备注</label>
+                <textarea class="form-textarea" placeholder="请输入备注"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ===== v1.7.99.228 区块 4：选择上游结算单（结算付款模式显示） ===== -->
+        <div class="info-section" id="upstreamSettleSection">
+          <h3 class="info-section-title">选择上游结算单</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox" id="headerUpstreamSettleCheckbox" onclick="toggleAllUpstreamSettle(this)"></th>
+                  <th>结算单编号</th>
+                  <th style="text-align: right;">结算金额(元)</th>
+                  <th style="text-align: right;">结算数量(吨)</th>
+                  <th style="text-align: right;">结算单价(元/吨)</th>
+                  <th>结算日期</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7" class="empty-row">
+                    <div class="empty-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="empty-text">当前合同缺少有效的结算单，无法进行结算付款</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===== v1.7.99.228 区块 5：选择下游结算单（结算付款模式显示） ===== -->
+        <div class="info-section" id="downstreamSettleSection">
+          <h3 class="info-section-title">选择下游结算单</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox" id="headerDownstreamSettleCheckbox" onclick="toggleAllDownstreamSettle(this)"></th>
+                  <th>结算单编号</th>
+                  <th style="text-align: right;">结算金额(元)</th>
+                  <th style="text-align: right;">结算数量(吨)</th>
+                  <th style="text-align: right;">结算单价(元/吨)</th>
+                  <th>结算日期</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="7" class="empty-row">
+                    <div class="empty-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="empty-text">当前合同缺少有效的结算单，无法进行结算付款</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ===== v1.7.99.228 区块 6：税务凭证（结算付款模式显示） ===== -->
+        <div class="info-section" id="taxVoucherSection">
+          <h3 class="info-section-title" style="display: flex; align-items: center;">
+            <span>税务凭证</span>
+            <button class="btn btn-text btn-sm" style="margin-left: 12px;" onclick="alert('上传凭证（v1.7.99.228 mock）')">上传凭证</button>
+          </h3>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th>类型</th>
+                  <th>税种</th>
+                  <th>税款所属期间</th>
+                  <th style="text-align: right;">实缴(退)金额(元)</th>
+                  <th>附件</th>
+                  <th style="width: 80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="6" class="empty-row">
+                    <div class="empty-icon">
+                      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                        <path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/>
+                      </svg>
+                    </div>
+                    <div class="empty-text">暂无数据</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 4：选择货物批次（v1.7.99.58 按图 3：仅预结算付款显示） -->
+        <div class="info-section hidden" id="batchSection">
+          <h3 class="info-section-title">选择货物批次</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox" id="headerBatchCheckbox" onclick="toggleAllBatch(this)"></th>
+                  <th>发货批次号</th>
+                  <th>运输方式</th>
+                  <th style="text-align: right;">发货数量（吨）</th>
+                  <th style="text-align: right;">收货数量（吨）</th>
+                  <th>发货日期</th>
+                  <th>最后收货日期</th>
+                  <th>货转开具标识</th>
+                  <th>状态</th>
+                </tr>
+              </thead>
+              <tbody id="batchTbody">
+                <tr>
+                  <td><input type="checkbox" class="batch-row-checkbox"></td>
+                  <td class="col-num" style="color: var(--color-primary);">BN202604280002</td>
+                  <td>火运</td>
+                  <td style="text-align: right;" class="col-num">1304</td>
+                  <td style="text-align: right;" class="col-num">1304</td>
+                  <td>2026-04-28</td>
+                  <td>2026-04-28</td>
+                  <td>已开具</td>
+                  <td><span class="tag tag-green">已收货</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 7：附件信息（v1.7.99.228 按 user 2026-08-13 图 1：蓝底提示框 + 3 行单据类型） -->
+        <div class="info-section">
+          <h3 class="info-section-title">附件信息</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <div style="padding: 16px 20px;">
+              <div class="upload-tip">可支持格式为png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls的附件，单个附件大小不得超过100M的文件</div>
+            </div>
+            <table class="batch-table">
+              <thead>
+                <tr>
+                  <th>单据类型</th>
+                  <th>文件名称</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="attach-label-cell">履约保证金凭证/转让保证金文件</td>
+                  <td class="attach-name-cell"><button class="btn btn-default btn-sm attach-btn">上传</button></td>
+                </tr>
+                <tr>
+                  <td class="attach-label-cell">保证金承诺函</td>
+                  <td class="attach-name-cell"><button class="btn btn-default btn-sm attach-btn">上传</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 底部按钮（v1.7.99.58 按图 2：取消/保存/提交） -->
+      <div class="form-footer">
+        <button class="btn btn-default" onclick="history.back()">取消</button>
+        <button class="btn btn-primary" onclick="savePayment('draft')">保存</button>
+        <button class="btn btn-primary" onclick="savePayment('submit')">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // 业务线选择（v1.7.99.58）
+    function selectBiz(row) {
+      var rows = document.querySelectorAll('.biz-table tbody tr');
+      rows.forEach(function(r) { r.classList.remove('active-row'); });
+      row.classList.add('active-row');
+      var radio = row.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+    }
+
+    // v1.7.99.228 付款类型切换 → 3 种模式显示不同区块组合
+    // 结算付款: 显示上游/下游结算单 + 税务凭证 + 附件, 隐藏货物批次
+    // 预结算付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证
+    // 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证
+    function togglePaymentSections() {
+      var selected = document.querySelector('input[name="payType"]:checked');
+      var batchSection = document.getElementById('batchSection');
+      var upstreamSettleSection = document.getElementById('upstreamSettleSection');
+      var downstreamSettleSection = document.getElementById('downstreamSettleSection');
+      var taxVoucherSection = document.getElementById('taxVoucherSection');
+      if (!selected) return;
+      if (selected.value === 'settle') {
+        // 结算付款模式
+        if (batchSection) batchSection.classList.add('hidden');
+        if (upstreamSettleSection) upstreamSettleSection.classList.remove('hidden');
+        if (downstreamSettleSection) downstreamSettleSection.classList.remove('hidden');
+        if (taxVoucherSection) taxVoucherSection.classList.remove('hidden');
+      } else {
+        // 预结算/预付款模式
+        if (batchSection) batchSection.classList.remove('hidden');
+        if (upstreamSettleSection) upstreamSettleSection.classList.add('hidden');
+        if (downstreamSettleSection) downstreamSettleSection.classList.add('hidden');
+        if (taxVoucherSection) taxVoucherSection.classList.add('hidden');
+      }
+    }
+
+    // v1.7.99.228 兼容旧名（v1.7.99.58 旧 radio 的 onclick 用 toggleBatchSection）
+    function toggleBatchSection() {
+      togglePaymentSections();
+    }
+
+    // 上下游结算单全选（v1.7.99.228 占位函数）
+    function toggleAllUpstreamSettle(master) {
+      var checked = master.checked;
+      document.querySelectorAll('.upstream-settle-row-checkbox').forEach(function(cb) { cb.checked = checked; });
+    }
+    function toggleAllDownstreamSettle(master) {
+      var checked = master.checked;
+      document.querySelectorAll('.downstream-settle-row-checkbox').forEach(function(cb) { cb.checked = checked; });
+    }
+
+    // 货物批次全选切换
+    function toggleAllBatch(master) {
+      var checked = master.checked;
+      document.querySelectorAll('.batch-row-checkbox').forEach(function(cb) {
+        cb.checked = checked;
+      });
+    }
+
+    // 保存/提交（v1.7.99.58 mock）
+    function savePayment(action) {
+      var msg = action === 'draft' ? '已保存草稿（mock）' : '已提交（mock）';
+      alert(msg);
+    }
+
+    // =====================================================
+    // v1.7.99.60 付款申请路由 - URL 参数解析 + 3 区块预填
+    // =====================================================
+
+    // 接收 URL 参数（从 contract-purchase.html 付款申请按钮带过来）
+    function getUrlParams() {
+      var p = new URLSearchParams(window.location.search);
+      return {
+        from:    p.get('from')    || '',   // 'purchase' / 'sales' / '' （无则视为从付款列表点 +）
+        contract:p.get('contract')|| '',   // 合同编号
+        line:    p.get('line')    || ''    // 业务线号
+      };
+    }
+
+    // mock 合同元数据（v1.7.99.60 按 contractNo 匹配）
+    // 与 contract-purchase.html 的 CONTRACT_BIZ_LINES_MOCK 配合
+    var CONTRACT_META = {
+      'PXDD-2024-001-004': { seller: '杞县广润贸易有限公司',    buyer: '河南中豫港通供应链管理有限公司', product: '进口木薯淀粉', price: '3,400', qty: '20,000', deadline: '2024-10-10 ~ 2024-12-10', transport: '火运', receiver: '河南中豫港通供应链管理有限公司' },
+      'PXDD-2024-001-005': { seller: '河南诚泽运输有限公司',    buyer: '河南中豫港通供应链管理有限公司', product: '糖粉',         price: '3,200', qty: '15,000', deadline: '2024-08-22 ~ 2025-02-22', transport: '汽运', receiver: '郑州信必达国际供应链有限公司' }
+    };
+
+    // mock 业务线列表（v1.7.99.60 按 lineNo 匹配 + 默认关联的合同号）
+    var BIZ_LINE_MOCK = [
+      { no: 'SKYWX202412030004', name: '杞县广润贸易有限公司-河南中豫港通-信必达国际', purchaseNo: 'PXDD-2024-001-004', salesNo: 'HNRH-TYYGJ-202409-001' },
+      { no: 'SKYWX202412030005', name: '杞县广润贸易有限公司-河南中豫港通-陕煤集团',     purchaseNo: 'PXDD-2024-001-004', salesNo: 'RHSY-SM-202407-003'   },
+      { no: 'SKYWX202412030006', name: '河南诚泽运输有限公司-河南中豫港通-信必达国际',   purchaseNo: 'PXDD-2024-001-005', salesNo: 'HNRH-XBD-202408-001'  }
+    ];
+
+    // mock 货物批次（v1.7.99.60 按 lineNo 匹配，每个业务线关联 1-2 批次）
+    var BATCH_MOCK = {
+      'SKYWX202412030004': [
+        { no: 'BN202604280002', transport: '火运', shipQty: '1304', recvQty: '1304', shipDate: '2026-04-28', lastRecvDate: '2026-04-28', certMark: '已开具', status: '已收货', statusTag: 'tag-green' }
+      ],
+      'SKYWX202412030005': [
+        { no: 'BN202605150003', transport: '汽运', shipQty: '850',  recvQty: '850',  shipDate: '2026-05-15', lastRecvDate: '2026-05-20', certMark: '已开具', status: '已收货', statusTag: 'tag-green' },
+        { no: 'BN202606080004', transport: '火运', shipQty: '620',  recvQty: '600',  shipDate: '2026-06-08', lastRecvDate: '2026-06-15', certMark: '部分开具', status: '收货中', statusTag: 'tag-yellow' }
+      ],
+      'SKYWX202412030006': [
+        { no: 'BN202607010005', transport: '汽运', shipQty: '1500', recvQty: '1500', shipDate: '2026-07-01', lastRecvDate: '2026-07-05', certMark: '已开具', status: '已收货', statusTag: 'tag-green' }
+      ]
+    };
+
+    // 预填合同信息（区块 1）
+    function fillContractInfo(contractNo) {
+      var meta = CONTRACT_META[contractNo];
+      if (!meta) return;  // 未匹配到 mock，保持 v1.7.99.58 默认值
+      document.getElementById('ctNo').textContent       = contractNo;
+      document.getElementById('ctSeller').textContent   = meta.seller;
+      document.getElementById('ctBuyer').textContent    = meta.buyer;
+      document.getElementById('ctProduct').textContent  = meta.product;
+      document.getElementById('ctPrice').textContent    = meta.price;
+      document.getElementById('ctQty').textContent      = meta.qty;
+      document.getElementById('ctDeadline').textContent = meta.deadline;
+      document.getElementById('ctTransport').textContent= meta.transport;
+      document.getElementById('ctReceiver').textContent = meta.receiver;
+    }
+
+    // 预填业务线区块（区块 2）：按合同号过滤业务线 + 默认选中 lineNo
+    function fillBizLines(contractNo, lineNo) {
+      // 过滤出关联到本合同号的业务线
+      var lines = BIZ_LINE_MOCK.filter(function(b) { return b.purchaseNo === contractNo; });
+      var tbody = document.getElementById('bizTbody');
+      if (lines.length === 0) {
+        // 兜底：保持 v1.7.99.58 默认 2 行
+        return;
+      }
+      var html = '';
+      lines.forEach(function(b, idx) {
+        var isActive = b.no === lineNo;
+        var checkedAttr = isActive ? 'checked' : '';
+        var activeClass = isActive ? ' active-row' : '';
+        html += '<tr class="' + activeClass.trim() + '" onclick="selectBiz(this)">'
+              + '  <td><input type="radio" name="biz" ' + checkedAttr + ' onclick="event.stopPropagation()"></td>'
+              + '  <td class="col-num" style="color: var(--color-primary);">' + b.no + '</td>'
+              + '  <td>' + b.name + '</td>'
+              + '  <td class="col-num">' + b.purchaseNo + '</td>'
+              + '  <td class="col-num">' + b.salesNo + '</td>'
+              + '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // 预填货物批次区块（区块 4）：按 lineNo mock
+    function fillBatchList(lineNo) {
+      var batches = BATCH_MOCK[lineNo] || [];
+      var tbody = document.getElementById('batchTbody');
+      if (batches.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; padding: 20px; color: var(--text-tertiary);">该业务线暂无货物批次</td></tr>';
+        return;
+      }
+      var html = '';
+      batches.forEach(function(b) {
+        html += '<tr>'
+              + '  <td><input type="checkbox" class="batch-row-checkbox"></td>'
+              + '  <td class="col-num" style="color: var(--color-primary);">' + b.no + '</td>'
+              + '  <td>' + b.transport + '</td>'
+              + '  <td style="text-align: right;" class="col-num">' + b.shipQty + '</td>'
+              + '  <td style="text-align: right;" class="col-num">' + b.recvQty + '</td>'
+              + '  <td>' + b.shipDate + '</td>'
+              + '  <td>' + b.lastRecvDate + '</td>'
+              + '  <td>' + b.certMark + '</td>'
+              + '  <td><span class="tag ' + b.statusTag + '">' + b.status + '</span></td>'
+              + '</tr>';
+      });
+      tbody.innerHTML = html;
+    }
+
+    // 显示来源信息条（v1.7.99.60：仅当 from=xxx 且有 contract/line 时显示）
+    function showSourceBar(params) {
+      if (!params.from || !params.contract || !params.line) return;
+      var bar = document.getElementById('sourceBar');
+      bar.style.display = 'flex';
+      document.getElementById('sourceContractNo').textContent = params.contract;
+      document.getElementById('sourceLineNo').textContent     = params.line;
+    }
+
+    // 初始化：默认"预结算付款"已选，自动显示批次区块
+    // v1.7.99.60：如果从合同路由过来，预填 3 区块 + 显示来源信息条
+    (function() {
+      var params = getUrlParams();
+      if (params.contract) {
+        fillContractInfo(params.contract);
+        fillBizLines(params.contract, params.line);
+        if (params.line) {
+          fillBatchList(params.line);
+        }
+        showSourceBar(params);
+      }
+      toggleBatchSection();
+    })();
+  </script>
+  </div>
+  <!-- /main-content -->
+</body>
+</html>

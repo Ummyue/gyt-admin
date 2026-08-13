@@ -108,6 +108,24 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-13T11:30:00',
+          version: 'v1.7.99.228',
+          module: '付款管理 - 新增付款页「结算付款」模式字段默认值 + 4 个新区块（上游/下游结算单 + 税务凭证 + 附件 3 行单据）',
+          summary: '付款管理 - 新增付款（pages/payment-new.html）按 user 2026-08-13 11:30 图 1 重做。1) 现状：v1.7.99.58 默认「预结算付款」模式 + 显示「选择货物批次」区块，缺少「结算付款」模式下的上游/下游结算单 + 税务凭证 + 附件 3 行单据；2) 改造方案（v1.7.99.228）：a) 默认付款类型：预结算付款 → 结算付款（按 user 图 1）；b) 改字段默认值（图 1 实际值）：收款账号名称 select 加「重庆运煤煤炭销售有限公司」选项 + 收款账号开户行预填「中国农业银行股份有限公司重庆铜梁龙都支行」+ 收款账号预填「3118 1501 0400 0755 9」+ 资金来源 select 默认「自有资金」+ 付款金额预填「1000000」+ 付款日期预填 → placeholder「请选择付款日期」+ 付款方式 select 加「现金」选项；c) 加 4 个新区块（v1.7.99.228 新增）：选择上游结算单（7 列表格：复选框 + 结算单编号 + 结算金额 + 结算数量 + 结算单价 + 结算日期 + 状态 + empty state「当前合同缺少有效的结算单，无法进行结算付款」）；选择下游结算单（同上）；税务凭证（带「上传凭证」按钮 + 6 列表格：类型 + 税种 + 税款所属期间 + 实缴(退)金额 + 附件 + 操作 + empty state「暂无数据」）；附件信息（3 行单据：履约保证金凭证/转让保证金文件 + 保证金承诺函）；d) 改 toggleBatchSection → togglePaymentSections（3 种付款类型切换不同区块组合）：结算付款显示 4 个新区块 + 隐藏货物批次；预结算/预付款显示货物批次 + 隐藏 4 个新区块；e) 加 .empty-row + .empty-icon + .empty-text + .attach-label-cell CSS（empty state 行高 60px + 灰色 SVG + 灰色文字）；3) 防翻车（10.2 教训）：JS 字符串无 <\/script> 已 node --check 验证。',
+          changes: [
+            { type: 'modify', location: 'pages/payment-new.html 付款类型 radio', before: 'v1.7.99.58 默认「预结算付款」', after: 'v1.7.99.228 默认「结算付款」+ 改 onclick = togglePaymentSections（3 种模式切换）' },
+            { type: 'modify', location: 'pages/payment-new.html 基本信息字段默认值', before: 'v1.7.99.58 收款账号名称 3 选项 / 收款账号开户行「中国工商银行」/ 收款账号「6222 1715 0067 3333」/ 资金来源默认空 / 付款金额「166600」/ 付款日期「2026-07-20」', after: 'v1.7.99.228 收款账号名称 4 选项（加「重庆运煤煤炭销售有限公司」）/ 收款账号开户行「中国农业银行股份有限公司重庆铜梁龙都支行」/ 收款账号「3118 1501 0400 0755 9」/ 资金来源默认「自有资金」/ 付款金额「1000000」/ 付款日期 placeholder「请选择付款日期」/ 付款方式加「现金」选项' },
+            { type: 'add', location: 'pages/payment-new.html 区块 4：选择上游结算单（结算付款模式）', before: 'v1.7.99.58 仅有「选择货物批次」区块', after: 'v1.7.99.228 新增：7 列表格（复选框 + 结算单编号/金额/数量/单价/日期/状态）+ empty state「当前合同缺少有效的结算单，无法进行结算付款」' },
+            { type: 'add', location: 'pages/payment-new.html 区块 5：选择下游结算单', before: 'v1.7.99.58 仅有「选择货物批次」区块', after: 'v1.7.99.228 新增：同上游结算单结构' },
+            { type: 'add', location: 'pages/payment-new.html 区块 6：税务凭证', before: 'v1.7.99.58 仅有「选择货物批次」区块', after: 'v1.7.99.228 新增：标题带「上传凭证」按钮 + 6 列表格（类型/税种/税款所属期间/实缴(退)金额/附件/操作）+ empty state「暂无数据」' },
+            { type: 'modify', location: 'pages/payment-new.html 区块 7：附件信息', before: 'v1.7.99.58 4 行 attach-row 上下游其他材料', after: 'v1.7.99.228 改 3 行单据类型表格：履约保证金凭证/转让保证金文件 + 保证金承诺函' },
+            { type: 'modify', location: 'pages/payment-new.html toggleBatchSection 函数', before: 'v1.7.99.58 仅切「选择货物批次」区块显隐（仅预结算付款显示）', after: 'v1.7.99.228 togglePaymentSections（3 种模式：结算付款显示 4 个新区块 + 隐藏货物批次；预结算/预付款显示货物批次 + 隐藏 4 个新区块）+ 兼容旧名 toggleBatchSection' },
+            { type: 'add', location: 'pages/payment-new.html .empty-row + .empty-icon + .empty-text + .attach-label-cell CSS', before: 'v1.7.99.58 无 empty state CSS', after: 'v1.7.99.228 新增：empty-row padding 60px 20px + 空 SVG 48×48 + 灰色文字 13px + attach-label-cell 30% 列宽' },
+            { type: 'modify', location: 'app.html <title>', before: '豫港通原型 v.1.7.99.227', after: '豫港通原型 v.1.7.99.228' }
+          ]
+        },
+
+        {
           ts: '2026-08-13T10:32:00',
           version: 'v1.7.99.227',
           module: '收发货管理 - 发货管理抽屉复选改单选 + 收货信息详情页重做',
