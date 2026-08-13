@@ -99,8 +99,9 @@
     #downstreamSettleSection.hidden,
     #taxVoucherSection.hidden { display: none; }
 
-    /* ===== v1.7.99.229 预付款模式隐藏付款金额 + 付款日期 ===== */
-    .prepay-field { display: none; }
+    /* ===== v1.7.99.229 预付款模式隐藏付款金额 + 付款日期（仅在 prepay 模式下由 JS 隐藏，默认不隐藏） ===== */
+    /* 不写全局 .prepay-field { display: none; } 因为会永久隐藏 prepay-field */
+    .prepay-field.prepay-hidden { display: none; }
     .empty-row { padding: 60px 20px !important; text-align: center; border-bottom: none !important; }
     .empty-icon { color: #D1D5DB; margin-bottom: 12px; display: flex; justify-content: center; }
     .empty-icon svg { width: 48px; height: 48px; }
@@ -530,14 +531,16 @@
         if (upstreamSettleSection) upstreamSettleSection.classList.remove('hidden');
         if (downstreamSettleSection) downstreamSettleSection.classList.remove('hidden');
         if (taxVoucherSection) taxVoucherSection.classList.remove('hidden');
-        prepayFields.forEach(function(f) { f.style.display = ''; });
+        // v1.7.99.229 hotfix: 移除 prepay-hidden class
+        prepayFields.forEach(function(f) { f.classList.remove('prepay-hidden'); });
       } else if (selected.value === 'prepay') {
         // 预付款模式 (v1.7.99.229): 显示货物批次 + 隐藏 4 个结算付款区块 + 隐藏付款金额 + 付款日期
         if (batchSection) batchSection.classList.remove('hidden');
         if (upstreamSettleSection) upstreamSettleSection.classList.add('hidden');
         if (downstreamSettleSection) downstreamSettleSection.classList.add('hidden');
         if (taxVoucherSection) taxVoucherSection.classList.add('hidden');
-        prepayFields.forEach(function(f) { f.style.display = 'none'; });
+        // v1.7.99.229 hotfix: 改用 class 切换（不再用 inline style，因为 .prepay-field class 永久 display:none）
+        prepayFields.forEach(function(f) { f.classList.add('prepay-hidden'); });
         // v1.7.99.229 预付款模式 placeholder 状态：清空 4 字段值 + 取消"是否有票" radio checked（按 user 2026-08-13 11:49 图 2）
         var formSelects = document.querySelectorAll('.form-grid-3 select.form-select');
         if (formSelects.length >= 3) {
@@ -559,7 +562,7 @@
         if (upstreamSettleSection) upstreamSettleSection.classList.add('hidden');
         if (downstreamSettleSection) downstreamSettleSection.classList.add('hidden');
         if (taxVoucherSection) taxVoucherSection.classList.add('hidden');
-        prepayFields.forEach(function(f) { f.style.display = ''; });
+        prepayFields.forEach(function(f) { f.classList.remove('prepay-hidden'); });
       }
     }
 
