@@ -88,8 +88,11 @@
     .form-footer {
       padding: 16px 24px; background: #fff; border-top: 1px solid var(--border-color);
       display: flex; align-items: center; justify-content: center; gap: 12px;
-      position: sticky; bottom: 0;
+      position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+      box-shadow: 0 -2px 8px rgba(0,0,0,0.06);
     }
+    /* 防止 fixed footer 遮挡页面底部内容 */
+    body { padding-bottom: 80px; }
 
     /* 选择货物批次区块（默认隐藏，JS 控制显隐） */
     #batchSection.hidden { display: none; }
