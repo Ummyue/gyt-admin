@@ -1,0 +1,691 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- v1.7.99.233 合规验证报告数据填充 -->
+  <title>合规验证报告详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 顶部信息条（v1.7.99.64 按图 2：流程图 + 4 元信息 + 4 标签 + 返回） */
+    .bizline-header { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; padding: 20px 24px; margin-bottom: 16px; }
+    .bizline-flow { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; margin-bottom: 14px; }
+    .flow-node { display: flex; align-items: center; gap: 6px; padding: 6px 14px; border: 1.5px solid var(--color-primary); border-radius: 4px; font-size: 13px; color: var(--color-primary); background: #fff; }
+    .flow-node .arrow-icon { width: 12px; height: 12px; color: var(--color-primary); }
+    .flow-arrow { color: var(--text-tertiary); font-size: 18px; }
+    .bizline-meta { display: flex; flex-wrap: wrap; gap: 18px 32px; font-size: 13px; color: var(--text-tertiary); margin-bottom: 12px; }
+    .bizline-meta .item { display: inline-flex; align-items: center; gap: 6px; }
+    .bizline-meta .label { color: var(--text-tertiary); }
+    .bizline-meta .value { color: var(--text-primary); }
+    .bizline-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bizline-tags .tag-info { display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 4px; font-size: 12px; color: var(--text-secondary); }
+    .bizline-tags .tag-info::before { content: '◇'; color: var(--text-tertiary); font-size: 10px; }
+
+    /* 关键信息块（v1.7.99.113 按 user 截图：立项申请编号/项目名称/总资金额 + 业务周期/立项日期/业务负责人 2 行 3 列） */
+    .bizline-keyinfo { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 32px; padding: 14px 16px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 6px; margin-top: 12px; }
+    .bizline-keyinfo .item { display: flex; flex-direction: column; gap: 4px; }
+    .bizline-keyinfo .label { font-size: 12px; color: var(--text-tertiary); }
+    .bizline-keyinfo .value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .bizline-keyinfo .value.mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+
+    /* 关联项目独立区块（v1.7.99.149：调整为白色跟其他模块色值统一 — user 反馈"背景颜色与底色一致了，导致模块分区不明显"） */
+    .related-project-section { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04); }
+    .related-project-section .related-project-title { margin: 0 0 14px 0; font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 6px; }
+    .related-project-section .related-project-title::before { content: '◇'; color: var(--color-primary); font-size: 12px; }
+    .related-project-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 32px; }
+    .related-project-grid .item { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 13px; }
+    .related-project-grid .label { color: var(--text-primary); white-space: nowrap; }
+    .related-project-grid .value { color: var(--text-primary); font-weight: 500; }
+    .related-project-grid .value.mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .related-project-grid .value a, .related-project-grid .value[style*="color: var(--color-primary)"] { color: var(--color-primary); }
+
+    /* 详情区块（v1.7.99.64 + v1.7.99.71 表格边框强化） */
+    .info-section { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+    .info-section-title { padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--border-default); border-left: 3px solid var(--color-primary); padding-left: 17px; }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 合作期间主体风险监控情况 - 风险类别行（v1.7.99.64 + v1.7.99.71 加外框 + 竖线 + 分组虚线） */
+    .risk-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .risk-table th, .risk-table td { padding: 10px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .risk-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .risk-table th:last-child, .risk-table td:last-child { border-right: 0; }
+    .risk-table tr:last-child td { border-bottom: 0; }
+    .risk-table .group-label { color: var(--text-primary); font-weight: 500; }
+    .risk-table .risk-link { color: var(--color-primary); cursor: pointer; }
+    .risk-table .num-zero { color: var(--text-tertiary); }
+    .risk-table tr.group-end td { border-bottom: 2px dashed var(--border-default); }
+    .risk-table tr.group-end:last-child td { border-bottom: 0; }
+
+    /* 业务完整性校验 - 大表（v1.7.99.140 按 user 图重制：6 列 = 模块/检验项/上游主体/双签/下游主体/单签 + 16 检验项 + 7 分组 + 黄色序号块） */
+    .integrity-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .integrity-table-wrap { overflow-x: auto; }
+    .integrity-table th, .integrity-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .integrity-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); vertical-align: middle; }
+    .integrity-table th:last-child, .integrity-table td:last-child { border-right: 0; }
+    .integrity-table tr:last-child td { border-bottom: 0; }
+    .integrity-table-wrap { overflow-x: auto; }
+    .integrity-table .col-module { width: 8%; }
+    .integrity-table .col-item { width: 18%; }
+    .integrity-table .col-party { width: 30%; }
+    .integrity-table .col-sign { width: 7%; text-align: center; vertical-align: middle; }
+    .integrity-table th, .integrity-table td { overflow: hidden; text-overflow: ellipsis; }
+
+    /* 黄色序号块（v1.7.99.140：左侧序号标签，黄底 36px×18px） */
+    .item-num { display: inline-block; min-width: 32px; padding: 2px 8px; background: #FEF3C7; color: #92400E; border-radius: 3px; font-size: 12px; font-weight: 500; text-align: center; margin-right: 8px; }
+
+    /* 双签/单签 圆圈绿色徽章（v1.7.99.140：仅在合同行显示） */
+    .sign-circle { display: inline-flex; align-items: center; justify-content: center; width: 56px; height: 36px; border-radius: 18px; color: #fff; font-size: 13px; font-weight: 600; }
+    .sign-circle.up { background: #059669; }
+    .sign-circle.down { background: #059669; }
+
+    /* 上游/下游主体徽章（v1.7.99.113：th 内 圆形 + 公司名 横向一行 + nowrap） */
+    .party-badge { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .party-badge.up { background: #1E40AF; }
+    .party-badge.down { background: #059669; }
+    .party-name { font-size: 12px; color: var(--text-secondary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .party-name.up { color: #1E40AF; font-weight: 500; }
+    .party-name.down { color: #059669; font-weight: 500; }
+    .integrity-table th .party-cell { display: flex; align-items: center; gap: 8px; justify-content: center; }
+
+    /* 模块分组 - 左侧 3px 蓝/绿/橙/红/紫/青竖条（v1.7.99.140 恢复：user 图保留模块列） */
+    .integrity-table .module-cell { font-weight: 500; color: var(--text-primary); border-left: 3px solid var(--color-primary); background: #FAFBFF; vertical-align: middle; text-align: center; border-right: 1px solid var(--border-default); }
+    .integrity-table .module-cell.contract { border-left-color: #1E40AF; }
+    .integrity-table .module-cell.shipping { border-left-color: #059669; }
+    .integrity-table .module-cell.settle { border-left-color: #D97706; }
+    .integrity-table .module-cell.invoice { border-left-color: #D97706; }
+    .integrity-table .module-cell.pay-up { border-left-color: #DC2626; }
+    .integrity-table .module-cell.pay-down { border-left-color: #4338CA; }
+    .integrity-table .module-cell.bizline { border-left-color: #7C3AED; }
+    /* 分组虚线分隔（v1.7.99.140 沿用：每个业务区块最后一行加粗虚线） */
+    .integrity-table tr.section-end td { border-bottom: 2px dashed var(--border-default); }
+    .integrity-table tr.section-end:last-child td { border-bottom: 0; }
+
+    /* 异常单元格高亮（v1.7.99.113 沿用 v1.7.99.64 模式：警告/不通过红黄底色） */
+    .integrity-table .cell-fail { background: #FEE2E2; color: #991B1B; }
+    .integrity-table .cell-warn { background: #FEF3C7; color: #92400E; }
+    .integrity-table .cell-empty { color: var(--text-tertiary); }
+    .integrity-table .cell-mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-size: 12px; }
+    .integrity-table .cell-red { color: #DC2626; font-weight: 500; }
+    .integrity-table .cell-orange { color: #D97706; font-weight: 500; }
+
+    /* 检验结果 tag（v1.7.99.113 沿用 v1.7.99.64 视觉：3 种颜色） */
+    .result-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+    .result-tag.pass { background: #D1FAE5; color: #059669; }
+    .result-tag.warn { background: #FEF3C7; color: #D97706; }
+    .result-tag.fail { background: #FEE2E2; color: #DC2626; }
+
+    /* 多行内容容器（v1.7.99.64 沿用：合同数/已发货/已收款等多行文本） */
+    .multi-line { display: flex; flex-direction: column; gap: 2px; }
+    .multi-line .row { display: flex; gap: 6px; font-size: 12px; line-height: 1.6; }
+    .multi-line .row .k { color: var(--text-tertiary); }
+
+    /* 蓝色审核按钮（v1.7.99.113：业务完整性校验-合同是否待审核 行下游列） */
+    .btn-mini-primary { display: inline-block; padding: 2px 10px; background: #1E40AF; color: #fff; border-radius: 4px; font-size: 12px; cursor: pointer; }
+
+    /* 十不准及四流一致性校验 - 大表（v1.7.99.113 新增：5 列 + 20 检查项 + 2 大分组） */
+    .forbidden-table-wrap { overflow-x: auto; }
+    .forbidden-table { width: 100%; min-width: 1100px; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; table-layout: fixed; }
+    .forbidden-table th, .forbidden-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .forbidden-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .forbidden-table th:last-child, .forbidden-table td:last-child { border-right: 0; }
+    .forbidden-table tr:last-child td { border-bottom: 0; }
+    .forbidden-table .col-category { width: 8%; }
+    .forbidden-table .col-item { width: 16%; }
+    .forbidden-table .col-rule { width: 22%; }
+    .forbidden-table .col-process { width: 36%; }
+    .forbidden-table .col-result { width: 18%; }
+    .forbidden-table th, .forbidden-table td { overflow: hidden; text-overflow: ellipsis; }
+    /* v1.7.99.197：检验结果列居中对齐（"通过/不通过" tag 统一居中） */
+    .forbidden-table .col-result, .forbidden-table td:last-child { text-align: center; }
+
+    /* 检验分类分组（v1.7.99.113：2 大类 + 左侧 3px 竖条 + 浅色背景 + 加粗右边框） */
+    .forbidden-table .category-cell { font-weight: 500; color: var(--text-primary); border-left: 3px solid var(--color-primary); background: #FAFBFF; vertical-align: middle; text-align: center; border-right: 1px solid var(--border-default); }
+    .forbidden-table .category-cell.qualification { border-left-color: #7C3AED; }
+    .forbidden-table .category-cell.substance { border-left-color: #D97706; }
+    .forbidden-table .category-cell.goods-control { border-left-color: #059669; }
+    .forbidden-table tr.category-end td { border-bottom: 2px dashed var(--border-default); }
+    .forbidden-table tr.category-end:last-child td { border-bottom: 0; }
+
+    /* 检验结果 tag（同 integrity-table） */
+    .forbidden-table .cell-mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; font-size: 11px; }
+
+    /* 页脚操作栏（v1.7.99.64 视觉优化：仅返回按钮，无业务变更） */
+    .detail-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item active" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数据中心</a>
+          <span class="sep">/</span>
+          <a href="./report-compliance.html">合规验证报告</a>
+          <span class="sep">/</span>
+          <span class="current">合规验证报告详情</span>
+        </div>
+
+        <!-- 标题 + 返回 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">合规验证报告详情</h1>
+          <button class="btn btn-secondary" onclick="history.back()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            返回
+          </button>
+        </div>
+
+        <!-- 区块 1：业务线基本信息（v1.7.99.64 流程图 + 4 元信息 + 4 标签 + v1.7.99.113 关键信息块） -->
+        <div class="info-section">
+          <h3 class="info-section-title">业务线基本信息</h3>
+          <div class="info-section-body">
+            <div class="bizline-flow">
+              <span class="flow-node">上游：河南诚泽运输有限公司</span>
+              <span class="flow-arrow">⇄</span>
+              <span class="flow-node" style="background: #EFF6FF;">河南中豫港通供应链管理有限公司</span>
+              <span class="flow-arrow">⇄</span>
+              <span class="flow-node">下游：郑州信必达国际供应链有限公司</span>
+            </div>
+            <div class="bizline-meta">
+              <span class="item"><span class="label">业务线号：</span><span class="value">SKYWX202607050001</span></span>
+              <span class="item"><span class="label">采购合同：</span><span class="value">GTGYL-MSXS-20260127-S</span></span>
+              <span class="item"><span class="label">销售合同：</span><span class="value">YL-MSXS-20260127-S</span></span>
+              <span class="item"><span class="label">创建时间：</span><span class="value">2026-07-05 09:50:24</span></span>
+            </div>
+            <div class="bizline-tags">
+              <span class="tag-info">2026-01-27 至 2026-12-31</span>
+              <span class="tag-info">火运</span>
+              <span class="tag-info">存货类</span>
+              <span class="tag-info">自有资金</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 1.5：关联项目（v1.7.99.144 跟"业务线基本信息"明确分开：轻量标题 + 浅灰底色 + 圆角，**不**用 .info-section 容器） -->
+        <div class="related-project-section">
+          <h3 class="related-project-title">关联项目</h3>
+          <div class="related-project-grid">
+            <span class="item"><span class="label">立项申请编号：</span><span class="value mono" style="color: var(--color-primary);">LX20260122001</span></span>
+            <span class="item"><span class="label">项目名称：</span><span class="value">木薯淀粉存货类供应链项目</span></span>
+            <span class="item"><span class="label">总投金额（万元）：</span><span class="value">10,000.00</span></span>
+            <span class="item"><span class="label">业务周期：</span><span class="value">2026-01-01~2026-12-31</span></span>
+            <span class="item"><span class="label">立项日期：</span><span class="value">2026-01-22</span></span>
+            <span class="item"><span class="label">业务负责人：</span><span class="value">张三</span></span>
+          </div>
+        </div>
+
+        <!-- 区块 2：合作期间主体风险监控情况（v1.7.99.141 按 user 图 1 重制：3 列 = 分类/信息类型/信息数量 + 3 分组 + 12 行） -->
+        <div class="info-section">
+          <h3 class="info-section-title">合作期间主体风险监控情况</h3>
+          <div class="info-section-body no-pad">
+            <table class="risk-table">
+              <thead>
+                <tr>
+                  <th style="width: 16%;">分类</th>
+                  <th>信息类型</th>
+                  <th style="width: 18%;text-align: right;">信息数量</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 工商变更 (3 行) -->
+                <tr>
+                  <td class="group-label" rowspan="3" style="vertical-align: top; padding-top: 16px;">工商变更</td>
+                  <td class="risk-link">工商信息变更</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">工商信息异常</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr class="group-end">
+                  <td class="risk-link">税务评级异常</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <!-- 司法诉讼 (7 行) -->
+                <tr>
+                  <td class="group-label" style="background: #F8FAFC; padding: 10px 14px; font-weight: 500; color: var(--text-primary);" rowspan="7">司法诉讼</td>
+                  <td class="risk-link">被执行人核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">被列入失信被执行人</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">被限制高消费</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">股权冻结核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">破产重整核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">严重违法核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr class="group-end">
+                  <td class="risk-link">税收违法核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <!-- 经营风险 (2 行) -->
+                <tr>
+                  <td class="group-label" rowspan="2" style="vertical-align: top; padding-top: 16px;">经营风险</td>
+                  <td class="risk-link">欠税公告核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+                <tr>
+                  <td class="risk-link">动产抵押核查</td>
+                  <td style="text-align: right;"><span class="num-zero">0</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：业务完整性校验（v1.7.99.140 按 user 图重制：6 列 = 模块/检验项/上游主体/双签/下游主体/单签 + 7 分组 + 16 检验项 + 黄色序号块） -->
+        <div class="info-section">
+          <h3 class="info-section-title">业务完整性校验</h3>
+          <div class="info-section-body no-pad">
+            <table class="integrity-table">
+              <colgroup>
+                <col style="width: 90px;">
+                <col style="width: 180px;">
+                <col style="width: 320px;">
+                <col style="width: 100px;">
+                <col style="width: 320px;">
+                <col style="width: 100px;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="col-module" rowspan="2">模块</th>
+                  <th class="col-item" rowspan="2">检验项</th>
+                  <th class="col-party">
+                    <div class="party-cell">
+                      <span class="party-badge up">上</span>
+                      <span class="party-name up">河南诚泽运输有限公司</span>
+                    </div>
+                  </th>
+                  <th class="col-sign" rowspan="2">双签</th>
+                  <th class="col-party">
+                    <div class="party-cell">
+                      <span class="party-badge down">下</span>
+                      <span class="party-name down">郑州信必达国际供应链有限公司</span>
+                    </div>
+                  </th>
+                  <th class="col-sign" rowspan="2">单签</th>
+                </tr>
+                <tr>
+                  <!-- 占位行：让上游主体 / 下游主体 列仅在 th row 1 显示徽章+公司名 -->
+                </tr>
+              </thead>
+                            <tbody>
+                <!-- 区块 1：合同 (v1.7.99.233 按 PDF SKYWX202607050001 数据填充) -->
+                <tr>
+                  <td class="module-cell contract" rowspan="2">合同</td>
+                  <td><span class="item-num">6</span>合同是否待审核</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="section-end">
+                  <td><span class="item-num">1</span>合同签章</td>
+                  <td class="multi-line cell-mono">
+                    <div class="row"><span class="k">合同数量(吨)</span><span>20000</span></div>
+                    <div class="row"><span class="k">已发货(吨)</span><span>3986</span></div>
+                    <div class="row"><span class="k">已收货(吨)</span><span>3049</span></div>
+                  </td>
+                  <td><span class="sign-circle up">双签</span></td>
+                  <td class="multi-line cell-mono cell-fail">
+                    <div class="row"><span class="k">合同数量(吨)</span><span>0</span></div>
+                    <div class="row"><span class="k">已发货(吨)</span><span>0</span></div>
+                    <div class="row"><span class="k">已收货(吨)</span><span>0</span></div>
+                  </td>
+                  <td><span class="sign-circle down">单签</span></td>
+                </tr>
+                <!-- 区块 2：收发货 (v1.7.99.233 PDF 无明确数据：已发货 3986/已收货 3049 已归入合同签章行) -->
+                <tr>
+                  <td class="module-cell shipping" rowspan="3">收发货</td>
+                  <td>收发货情况</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td><span class="item-num">4</span>结算单状态</td>
+                  <td class="multi-line cell-mono">
+                    <div class="row">线下结算单-20260127-001-已生效</div>
+                    <div class="row">线下结算单-20260210-001-已生效</div>
+                    <div class="row">线下结算单-20260212-001-已生效</div>
+                  </td>
+                  <td>&nbsp;</td>
+                  <td class="cell-fail">未开具</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="section-end">
+                  <td>结算总额（元）</td>
+                  <td>10,325,800</td>
+                  <td>&nbsp;</td>
+                  <td>0.00</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <!-- 区块 3：发票 (v1.7.99.233 按 PDF) -->
+                <tr>
+                  <td class="module-cell invoice" rowspan="4">发票</td>
+                  <td><span class="item-num">7</span>发票是否足额补充</td>
+                  <td class="cell-orange">部分补充（10,425,300 / 待完善）</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-fail">未补充</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>发票合计（元）</td>
+                  <td>10,464,435.71</td>
+                  <td>&nbsp;</td>
+                  <td>0.00</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td>发票金额是否足额</td>
+                  <td>足额</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-fail">不足额</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="section-end">
+                  <td>发票数量/附件数量</td>
+                  <td class="cell-mono">-/-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-fail cell-mono">0/0</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <!-- 区块 4：上游资金流 (v1.7.99.233 PDF 无明确数据：均显示 -) -->
+                <tr>
+                  <td class="module-cell pay-up" rowspan="4">上游资金流</td>
+                  <td><span class="item-num">10</span>已付款（元）</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td><span class="item-num">11</span>赎货总额（元）</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr>
+                  <td><span class="item-num">12</span>还款总额（元）</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="section-end">
+                  <td><span class="item-num">13</span>回款情况</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <!-- 区块 5：下游回款 (v1.7.99.233 PDF 无明确数据) -->
+                <tr>
+                  <td class="module-cell pay-down" rowspan="2">下游回款</td>
+                  <td><span class="item-num">14</span>回款总额</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <tr class="section-end">
+                  <td>回款是否足额</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                  <td class="cell-empty">-</td>
+                  <td>&nbsp;</td>
+                </tr>
+                <!-- 区块 6：业务线 (v1.7.99.233 PDF 显示"数据完善状态"待完善) -->
+                <tr>
+                  <td class="module-cell bizline">业务线</td>
+                  <td>数据完善状态</td>
+                  <td>待完善</td>
+                  <td>&nbsp;</td>
+                  <td>待审核</td>
+                  <td>&nbsp;</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 4：十不准及四流一致性校验（v1.7.99.113 新增：5 列 + 2 大类分组 + 20 检查项） -->
+        <div class="info-section">
+          <h3 class="info-section-title">十不准及四流一致性校验</h3>
+          <div class="info-section-body no-pad">
+            <table class="forbidden-table">
+              <colgroup>
+                <col style="width: 90px;">
+                <col style="width: 180px;">
+                <col style="width: 240px;">
+                <col style="width: 380px;">
+                <col style="width: 200px;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="col-category">检验分类</th>
+                  <th class="col-item">检验项</th>
+                  <th class="col-rule">检查规则</th>
+                  <th class="col-process">检查过程</th>
+                  <th class="col-result">检验结果</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 分类 1：主体准入类 -->
+                <tr>
+                  <td class="category-cell qualification" rowspan="5">主体准入类</td>
+                  <td>背景主业风险</td>
+                  <td>品名符合集团核定主业清单</td>
+                  <td>当前业务品类为[销售合同品名]、包含于公司准入品类[优势物品]、[谷物]等品类主业清单内</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>背景主业风险</td>
+                  <td>项目经过集团审批</td>
+                  <td>当前关联项目<a href="#" class="risk-link" style="color: var(--color-primary); text-decoration: underline;">[项目编号]</a>(项目名称)、已经过集团审核</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>空壳企业风险</td>
+                  <td>上下游客户是否流入（负面清单核验）</td>
+                  <td>上下游客户不在准入有效期内、非空壳企业</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>关联方交易风险</td>
+                  <td>上下游客户是否流入（负面清单核验）</td>
+                  <td>上下游客户不在准入有效期内、不存在关联方交易</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr class="category-end">
+                  <td>资质缺失风险</td>
+                  <td>上下游客户是否流入（负面清单核验）</td>
+                  <td>上下游客户不在准入有效期内、相关仓储、运输、贸易等专项资质齐全</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <!-- 分类 2：交易实质类 -->
+                <tr>
+                  <td class="category-cell substance" rowspan="15">交易实质类</td>
+                  <td>合同异常风险</td>
+                  <td>上下游合同签订是否双签</td>
+                  <td>上下游合同已双签</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>上下游经过内容审批</td>
+                  <td>上下游合同已关联审批流</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>上游卖方&gt;下游卖方（主体拆分）</td>
+                  <td class="multi-line cell-mono">
+                    <div class="row">上游卖方：（企业名称）</div>
+                    <div class="row">下游卖方：（企业名称）</div>
+                  </td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>采购合同有效期等于销售合同交期周期</td>
+                  <td>采购合同交期期限 = 销售合同交期期限</td>
+                  <td>采购合同交期期限:2026-01-27~2026-01-29<br>销售合同交期期限:2026-01-20~2026-01-30</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>上下游合同品名一致</td>
+                  <td>上下游合同品名一致</td>
+                  <td>上游品名：进口木薯淀粉<br>下游品名：玉米</td>
+                  <td><span class="result-tag fail">✗ 不通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>下游单价&gt;上游单价（毛利合规）</td>
+                  <td>下游单价 &gt; 上游单价（毛利合规）</td>
+                  <td>上游单价：3400 元/吨<br>下游单价：3000 元/吨</td>
+                  <td><span class="result-tag fail">✗ 不通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>上游合同数量&lt;下游合同数量</td>
+                  <td>上游合同数量 &lt; 下游合同数量</td>
+                  <td>上游合同数量：20000吨<br>下游合同数量：20000吨</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>合同异常风险</td>
+                  <td>合同签订日&lt;合同到期日（上下游较验）</td>
+                  <td>合同签订日 &lt; 合同到期日（上下游较验）</td>
+                  <td>上游合同签订日期：202601<br>下游合同数量：20000吨</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>价格公允性风险</td>
+                  <td>交易价格与同期同区域市场价偏离±10%</td>
+                  <td>交易价格与同期同区域市场价偏离 ±10%</td>
+                  <td>销售合同单价为合同价格元/吨、关联指数价格为合同签订日同区域的指数价格、偏差率为0%</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>交易真实性风险</td>
+                  <td>上游单据品名一致</td>
+                  <td>上游单据品名一致</td>
+                  <td>采购合同、上游货转、入库单、采购结算单、进货发票品名一致</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>交易真实性风险</td>
+                  <td>上游单据主体一致</td>
+                  <td>上游单据主体一致</td>
+                  <td>采购合同、上游货转、入库单、采购结算单、进货发票、付款单据交易对手为[XXX]</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>交易真实性风险</td>
+                  <td>下游单据品名一致</td>
+                  <td>下游单据品名一致</td>
+                  <td>销售合同、下游货转、出库单、销售结算单、销项发票品名一致</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>交易真实性风险</td>
+                  <td>下游单据主体一致</td>
+                  <td>下游单据主体一致</td>
+                  <td>销售合同、下游货转、出库单、销售结算单、销项发票、回款记录交易对手一致</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>交易真实性风险</td>
+                  <td>上游业务逻辑自洽</td>
+                  <td>上游业务逻辑自洽</td>
+                  <td>合计进货发票金额、合计采购结算金额、合计付款金额一致()</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <tr>
+                  <td>交易真实性风险</td>
+                  <td>下游业务逻辑自洽</td>
+                  <td>下游业务逻辑自洽</td>
+                  <td>合计销项发票金额、合计销售结算金额、合计回款一致 [233233.00]元</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+                <!-- 分类 3：货权管控类 (v1.7.99.143 按 user 图 3 新增) -->
+                <tr>
+                  <td class="category-cell goods-control">货权管控类</td>
+                  <td>货权转移风险</td>
+                  <td>出库需经过审核</td>
+                  <td>出库记录关联放货指令、且经过审核</td>
+                  <td><span class="result-tag pass">✓ 通过</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="detail-footer">
+          <span style="font-size: 12px; color: var(--text-tertiary);">数据更新频率 30 分钟，最新更新时间为 2026-08-14 15:44:19</span>
+          <button class="btn btn-secondary" onclick="Utils.toast('已生成报告', 'info')">下载报告 PDF</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script src="../assets/js/app.js"></script>
+</body>
+</html>

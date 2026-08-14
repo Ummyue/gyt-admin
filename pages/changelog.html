@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-14T16:10:00',
+          version: 'v1.7.99.233',
+          module: '合规验证报告（数据中心 - 合规验证报告）按真实 PDF 报告数据填充 + 检查过程列加底色',
+          summary: '数据中心 - 合规验证报告（pages/report-compliance.html + report-compliance-detail.html）按 user 2026-08-14 15:48 提供的真实 PDF（合规验证报告-SKYWX202607050001）填充数据 + 检查过程列加淡蓝色底色。1) 现状：v1.7.99.143 之前列表 11 列用的是老业务线数据（SLKJ-HLDZ-2021 / SKYWX202210260001 + 泰州凯亚-华能陕西渭南热电），详情页也是占位数据（GTCVL-MSXS-20260127-s / YL-MSXS-20260127-s），与实际业务线 SKYWX202607050001 不匹配；2) 改造方案（v1.7.99.233）：a) OCR 提取 PDF（用 macOS Vision framework swift 脚本）拿到全部数据；b) 列表第 1 行换成 PDF 实际：业务线名「河南诚泽-河南中豫港通-郑州信必达」+ 采购合同 GTGYL-MSXS-20260127-S + 销售合同 YL-MSXS-20260127-S + 业务线号 SKYWX202607050001 + 资金来源 自有资金；c) 详情页 4 个区块按 PDF 实际填充：业务线基本信息（合同号修正 + 业务周期 2026-01-27~2026-12-31 + 火运 + 存货类 + 自有资金 + 创建时间 2026-07-05）/ 合作期间主体风险监控（保留现有结构，PDF 数据都是 0/未发生）/ 业务完整性校验（合同签章 20000吨/已发货 3986/已收货 3049 + 结算单状态 3 行线下结算单 + 结算总额 10,325,800 + 发票 10,425,300 待完善 + 发票合计 10,464,435.71 + 上游资金流 -/-/-/- + 下游回款 -/-）/ 十不准及四流一致性校验（HTML 内容保留，加 CSS 底色）；d) CSS 加 .forbidden-table td.col-process { background-color: rgba(59, 130, 246, 0.08); }（淡蓝色透明度 8%）；e) 底部更新时间改为 2026-08-14 15:44:19；3) 防翻车：v1.7.99.7 起的脱敏规范明确企业名属于「可保留真实感」字段，所以 PDF 实际企业名（河南诚泽运输 / 河南中豫港通供应链 / 郑州信必达国际供应链）保留，没有改 X 占位。',
+          changes: [
+            { type: 'modify', location: 'pages/report-compliance.html 列表 Row 1', before: 'v1.7.99.143 业务线「泰州凯佳-郑州卓鼎-华能陕西渭」+ SLKJ-HLDZ-2021 + SKYWX202210260001', after: 'v1.7.99.233 按 PDF 实际「河南诚泽-河南中豫港通-郑州信必达」+ GTGYL-MSXS-20260127-S + YL-MSXS-20260127-S + SKYWX202607050001 + 资金来源 自有资金' },
+            { type: 'modify', location: 'pages/report-compliance-detail.html 业务线基本信息', before: 'v1.7.99.143 合同号 GTCVL-MSXS-20260127-s (OCR 错字)', after: 'v1.7.99.233 修正为 GTGYL-MSXS-20260127-S + YL-MSXS-20260127-S（PDF 实际值）' },
+            { type: 'modify', location: 'pages/report-compliance-detail.html 业务完整性校验 tbody（6 大模块）', before: 'v1.7.99.143 老占位数据（合同 10000吨/发货 900/收货 300 + 结算 1982 + 发票 1982）', after: 'v1.7.99.233 按 PDF 实际（合同 20000吨/已发货 3986/已收货 3049 + 结算 10,325,800 + 发票 10,425,300 + 发票合计 10,464,435.71 + 上游资金流 -/-/-/- + 下游回款 -/-）' },
+            { type: 'modify', location: 'pages/report-compliance-detail.html 业务完整性校验 表头上下游公司名', before: 'v1.7.99.143 泰州凯亚电力燃料有限公司 / 华能陕西渭南热电有限公司', after: 'v1.7.99.233 按 PDF 实际 河南诚泽运输有限公司 / 郑州信必达国际供应链有限公司' },
+            { type: 'add', location: 'pages/report-compliance-detail.html .forbidden-table td.col-process CSS', before: 'v1.7.99.143 无底色', after: 'v1.7.99.233 加 background-color: rgba(59, 130, 246, 0.08)（淡蓝色透明度 8%），让检查过程列统一有底色填充' },
+            { type: 'modify', location: 'pages/report-compliance-detail.html 底部更新时间', before: 'v1.7.99.143 2026-07-30 12:00', after: 'v1.7.99.233 2026-08-14 15:44:19（PDF 实际最新更新时间）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.232', after: 'v1.7.99.233' },
+          ],
+        },
+        {
           ts: '2026-08-14T09:10:00',
           version: 'v1.7.99.232',
           module: '项目测试阶段 - 自动化 E2E 测试套件初始化（按 user 2026-08-14 09:00 决策）',
