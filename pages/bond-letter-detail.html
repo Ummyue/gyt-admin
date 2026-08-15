@@ -6,6 +6,7 @@
   <title>追保函详情 - 豫港通 v1.7.99.211</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../shared/css/all-pages.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
   <style>
     /* v1.7.99.210 详情页样式（与保证金调整/采购结算详情同款） */
     .detail-back { color: var(--color-primary); cursor: pointer; font-size: 18px; font-weight: 600; line-height: 1; text-decoration: none; display: inline-flex; align-items: center; }
@@ -130,9 +131,10 @@
           </div>
         </div>
 
-        <!-- Tabs（v1.7.99.210：追保函信息 / 追保函操作记录(1)） -->
+        <!-- Tabs（v1.7.99.210 + v1.7.99.238：追保函信息 / 审批管理 / 追保函操作记录(1)，审批管理 tab 名按 status 切换） -->
         <div class="tabs">
           <div class="tab active" data-tab="info" onclick="switchTab('info')">追保函信息</div>
+          <div class="tab" data-tab="approval" id="approvalTab" onclick="switchTab('approval')">审批管理</div>
           <div class="tab" data-tab="log" onclick="switchTab('log')">追保函操作记录(1)</div>
         </div>
 
@@ -221,6 +223,108 @@
           </div>
         </div>
 
+
+        <!-- Tab 1.5：审批管理（v1.7.99.238 复用 v1.7.99.191 通用审批组件 + approval.css，按 status 切换 tab 名：已生效→审批详情，审批中→审批管理，其他→审批记录） -->
+        <div class="tab-content" id="tab-approval" style="display: none;">
+          <!-- 顶部状态卡 -->
+          <div class="approval-status-card" id="blApprovalStatusCard">
+            <div class="approval-status-icon" id="blApprovalStatusIcon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                <span id="blApprovalStatusLabel">审批进行中</span>
+                <div class="approval-status-chips">
+                  <span class="chip chip-yellow" id="blApprovalChipStatus">⏳ 待审批</span>
+                </div>
+              </div>
+              <div class="approval-status-desc" id="blApprovalStatusDesc">
+                <strong style="color: var(--text-primary);" id="blApprovalContractNo">ZBH234324</strong> 已提交至外部审批系统，当前在「<strong id="blApprovalCurrentNode">业务部审批</strong>」阶段。
+              </div>
+            </div>
+          </div>
+
+          <!-- 摘要 -->
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">追保函编号</div>
+              <div class="value" style="font-family: var(--font-mono);">ZBH234324</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2025-02-17 14:05:52</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交人</div>
+              <div class="value">张爽</div>
+            </div>
+          </div>
+
+          <!-- 时间线 + 关键指标 -->
+          <div class="approval-grid">
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta" id="blApprovalHeaderMeta">共 5 个节点，当前进行中 ①</div>
+              </div>
+              <div class="timeline">
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">① 提交申请</div>
+                    <div class="timeline-meta">张爽 · 2025-02-17 14:05</div>
+                    <div class="timeline-comment">追保函已生成，提交审批</div>
+                  </div>
+                </div>
+                <div class="timeline-item current">
+                  <div class="timeline-dot current">②</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">② 一级审批（业务部）</div>
+                    <div class="timeline-meta">审批人：张爽（业务部负责人）</div>
+                    <div class="timeline-comment">需在提交后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">③</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">③ 二级审批（财务部）</div>
+                    <div class="timeline-meta">需在一级审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">④</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">④ 三级审批（风控部）</div>
+                    <div class="timeline-meta">需在二级审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">⑤</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">⑤ 终审（总经理）</div>
+                    <div class="timeline-meta">追保函生效，需在三级审批通过后自动触发</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-aside-title">关键指标</div>
+                <div class="approval-aside-item">
+                  <span class="label">追保函编号</span>
+                  <span class="value" style="font-family: var(--font-mono);">ZBH234324</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">追保金额</span>
+                  <span class="value">¥111.00</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">当前已用时</span>
+                  <span class="value">2 小时 35 分</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         <!-- Tab 2：追保函操作记录(1) -->
         <div class="tab-content" id="tab-log" style="display: none;">
           <div class="block" style="margin-top: 12px;">
@@ -255,7 +359,7 @@
   <!-- /main-content -->
   <script src="../shared/js/left-sidemenu.js"></script>
   <script>
-    // v1.7.99.210 tab 切换
+    // v1.7.99.210 + v1.7.99.238 tab 切换（支持 info / approval / log）
     function switchTab(key) {
       var tabs = document.querySelectorAll('.tab');
       tabs.forEach(function(t) {
@@ -263,8 +367,52 @@
         else t.classList.remove('active');
       });
       document.getElementById('tab-info').style.display = (key === 'info') ? 'block' : 'none';
+      document.getElementById('tab-approval').style.display = (key === 'approval') ? 'block' : 'none';
       document.getElementById('tab-log').style.display = (key === 'log') ? 'block' : 'none';
     }
+
+    // v1.7.99.238：按 status 决定审批管理 tab 名（已生效→"审批详情" / 审批中→"审批管理" / 其他→"审批记录"）+ 审批组件内容
+    // URL ?status= 可覆盖默认状态（默认 status=已生效，匹配图 2）
+    (function() {
+      var keyToText = {
+        'all': '已生效',
+        'approving': '审批中',
+        'uploading': '待上传已生效单据',
+        'effective': '已生效',
+        'rejected': '驳回',
+        'voided': '已作废'
+      };
+      var statusMatch = location.search.match(/[?&]status=([^&]+)/);
+      var statusKey = statusMatch ? decodeURIComponent(statusMatch[1]) : 'effective';
+      var status = keyToText[statusKey] || '已生效';
+
+      // 1. tab 名：已生效→"审批详情" / 审批中→"审批管理" / 其他→"审批记录"
+      var tab = document.getElementById('approvalTab');
+      if (tab) {
+        if (status === '已生效') tab.textContent = '审批详情';
+        else if (status === '审批中') tab.textContent = '审批管理';
+        else tab.textContent = '审批记录';
+      }
+
+      // 2. 按 status 调整审批组件内容（已生效走"审批详情"模式，时间线全部 done；其他按原状）
+      if (status === '已生效') {
+        var icon = document.getElementById('blApprovalStatusIcon');
+        if (icon) icon.textContent = '✓';
+        var label = document.getElementById('blApprovalStatusLabel');
+        if (label) label.textContent = '审批已完成';
+        var chip = document.getElementById('blApprovalChipStatus');
+        if (chip) { chip.textContent = '✓ 已通过'; chip.className = 'chip chip-green'; }
+        var meta = document.getElementById('blApprovalHeaderMeta');
+        if (meta) meta.textContent = '共 5 个节点，全部完成';
+      } else if (status === '驳回' || status === '已作废') {
+        var icon = document.getElementById('blApprovalStatusIcon');
+        if (icon) icon.textContent = '✕';
+        var label = document.getElementById('blApprovalStatusLabel');
+        if (label) label.textContent = status + '，流程终止';
+        var chip = document.getElementById('blApprovalChipStatus');
+        if (chip) { chip.textContent = '✕ ' + status; chip.className = 'chip chip-red'; }
+      }
+    })();
 
     // 复制文字
     function copyText(txt) {

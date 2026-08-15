@@ -108,6 +108,20 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T11:55:00',
+          version: 'v1.7.99.238',
+          module: '追保函管理列表页「新增追保函」按钮 onclick 修复 + 详情页加「审批详情」tab（按 user 2026-08-15 11:51）',
+          summary: '追保函管理 2 处修复。1) bug：v1.7.99.85 加的「新增追保函」按钮（pages/bond-letter.html line 78-84）漏了 onclick，导致点击无任何响应，user 反馈"现在页面中点击「新增追保函」无任何响应"；2) 需求：v1.7.99.210 旧版详情页（pages/bond-letter-detail.html）只有 2 个 tab（追保函信息 / 追保函操作记录(1)），user 要求在中间位置加通用审批模块 tab（按 user 图 2），参考 v1.7.99.191 warehouse-release-detail.html + v1.7.99.159 approval.css 的通用审批组件；状态机为「已生效」时 tab 名改为「审批详情」（user 明确要求）；3) 改造方案（v1.7.99.238）：a) bond-letter.html 按钮加 onclick 跳 bond-letter-new.html（v1.7.99.216 已有的"新增线下追保函"原型页面，与 user 图 1 完全一致）；b) bond-letter-detail.html 引入 approval.css（v1.7.99.159 13 个页面通用 CSS）；c) tabs 加第 3 个 tab「审批管理」（位置在"追保函信息"和"追保函操作记录"之间）+ 给 id approvalTab；d) tab-content 加 #tab-approval panel（v1.7.99.191 简化版：状态卡 + 摘要 + 审批进度时间线 5 节点 + 关键指标 aside）；e) switchTab 函数扩展支持 approval key；f) JS 按 ?status= 切换 tab 名：已生效→"审批详情"（user 要求） / 审批中→"审批管理" / 其他→"审批记录"；g) 状态卡内容也按 status 动态调整：已生效→✓ "审批已完成" + "已通过"绿 chip，驳回/作废→✕ + 红 chip；4) 验证：4 项全 OK（按钮跳转成功 / 3 tab 切换 / 4 个 status 各自 tab 名正确）。',
+          changes: [
+            { type: 'modify', location: 'pages/bond-letter.html 「新增追保函」按钮', before: 'v1.7.99.85 按钮无 onclick，点击无响应', after: 'v1.7.99.238 加 onclick 跳 bond-letter-new.html（v1.7.99.216 已有的原型页面，与 user 图 1 完全一致）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html 引入 approval.css', before: 'v1.7.99.210 仅有 design-system.css + shared/css/all-pages.css', after: 'v1.7.99.238 加 ../assets/css/approval.css（v1.7.99.159 13 个页面通用审批组件 CSS）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html tabs 第 3 个 tab「审批管理」', before: 'v1.7.99.210 只有 2 个 tab（追保函信息 / 追保函操作记录(1)）', after: 'v1.7.99.238 加第 3 个 tab「审批管理」（id=approvalTab，位置在"追保函信息"和"追保函操作记录"之间）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html #tab-approval panel', before: 'v1.7.99.210 无审批管理 tab-content', after: 'v1.7.99.238 加 #tab-approval panel（v1.7.99.191 简化版：approval-status-card + approval-summary + approval-grid 5 节点 timeline + approval-aside 关键指标）' },
+            { type: 'modify', location: 'pages/bond-letter-detail.html switchTab 函数', before: 'v1.7.99.210 只支持 info / log', after: 'v1.7.99.238 扩展支持 approval + 加 URL ?status= 解析 + 按 status 切换 tab 名（已生效→"审批详情" / 审批中→"审批管理" / 其他→"审批记录"）+ 状态卡内容动态调整' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.237', after: 'v1.7.99.238' },
+          ],
+        },
+        {
           ts: '2026-08-15T11:00:00',
           version: 'v1.7.99.237',
           module: '新增合同页「合同交货期限」字段统一改为范围日期选择控件（按 user 2026-08-15 10:56）',
