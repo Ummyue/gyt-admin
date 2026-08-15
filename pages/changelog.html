@@ -108,6 +108,18 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T18:30:00',
+          version: 'v1.7.99.240',
+          module: '「资金来源」多选项统一改为单一选项「自有资金」（按 user 2026-08-15 18:24 反馈）',
+          summary: '通篇检查 6 个有「资金来源」字段的页面，发现 3 个 select 控件还是多选项状态（v1.7.99.228 + 之前的多选项历史遗留），user 反馈「新增付款申请「资金来源」修改为一个选项「自有资金」通篇检查还有没有多个选项的「资金来源」」。1) 现状：3 个 select 控件多选项——payment-new.html 4 选项（自有资金/供应链资金/银行融资/保理融资）+ payment-list.html 筛选区 4 选项（同上）+ refund-apply.html 2 选项（自有资金/银行融资）；其他 3 个「资金来源」位置（payment-detail / refund-detail / report-compliance / contract-purchase-order-detail 列表 / business-line-detail 列表）已经是单一值显示（如「自有资金」），不在用户当前需求范围。2) 改造方案（v1.7.99.240）：3 个 select 控件多选项全部统一为单一选项「自有资金」，a) payment-new.html: <option selected>自有资金</option> 保留，其他 3 选项删除；b) payment-list.html 筛选区: 同样改为单一「自有资金」选项；c) refund-apply.html: 保留「自有资金」选项，删除「银行融资」选项；3) 保留默认选中：3 个 select 都用 <option selected>自有资金</option>（payment-list 是筛选区默认选项不需要 selected 但保持一致）；4) 影响范围：仅 select 控件 options 列表，不影响其他「资金来源」文本展示（payment-detail / refund-detail / 合规报告 / 合同详情 / 业务线详情 等都是「资金来源」单值只读显示，不动）。',
+          changes: [
+            { type: 'modify', location: 'pages/payment-new.html 资金来源 select（基本信息区块）', before: 'v1.7.99.228 4 选项：自有资金/供应链资金/银行融资/保理融资', after: 'v1.7.99.240 单一选项「自有资金」' },
+            { type: 'modify', location: 'pages/payment-list.html 筛选区资金来源 select', before: 'v1.7.99.182 4 选项：自有资金/供应链资金/银行融资/保理融资', after: 'v1.7.99.240 单一选项「自有资金」' },
+            { type: 'modify', location: 'pages/refund-apply.html 资金来源 select', before: 'v1.7.99.211 2 选项：自有资金/银行融资', after: 'v1.7.99.240 单一选项「自有资金」' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.239', after: 'v1.7.99.240' },
+          ],
+        },
+        {
           ts: '2026-08-15T12:05:00',
           version: 'v1.7.99.239',
           module: '合同详情页 3 件事修复（按 user 2026-08-15 11:51）',
