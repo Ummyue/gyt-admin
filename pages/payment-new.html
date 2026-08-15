@@ -515,7 +515,7 @@
     // v1.7.99.228 付款类型切换 → 3 种模式显示不同区块组合
     // 结算付款: 显示上游/下游结算单 + 税务凭证 + 附件, 隐藏货物批次
     // 预结算付款: 显示货物批次 + 付款金额/付款日期, 隐藏上游/下游结算单 + 税务凭证
-    // 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证 + 付款金额 + 付款日期
+    // 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证（v1.7.99.241 不再隐藏付款金额 + 付款日期，与图 1 预结算付款一致）
     function togglePaymentSections() {
       var selected = document.querySelector('input[name="payType"]:checked');
       var batchSection = document.getElementById('batchSection');
@@ -538,8 +538,8 @@
         if (upstreamSettleSection) upstreamSettleSection.classList.add('hidden');
         if (downstreamSettleSection) downstreamSettleSection.classList.add('hidden');
         if (taxVoucherSection) taxVoucherSection.classList.add('hidden');
-        // v1.7.99.229 hotfix: 改用 class 切换（不再用 inline style，因为 .prepay-field class 永久 display:none）
-        prepayFields.forEach(function(f) { f.classList.add('prepay-hidden'); });
+        // v1.7.99.241 预付款模式付款金额 + 付款日期 也要显示（与图 1 预结算付款一致，user 2026-08-15 19:00）——删 prepay-hidden 添加逻辑
+        // v1.7.99.229 hotfix: 改用 class 切换（保留 remove 防御性逻辑）
         // v1.7.99.229 预付款模式 placeholder 状态：清空 4 字段值 + 取消"是否有票" radio checked（按 user 2026-08-13 11:49 图 2）
         var formSelects = document.querySelectorAll('.form-grid-3 select.form-select');
         if (formSelects.length >= 3) {

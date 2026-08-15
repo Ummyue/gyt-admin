@@ -108,6 +108,17 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T19:05:00',
+          version: 'v1.7.99.241',
+          module: '新增付款「预付款」模式补回付款金额 + 付款日期字段（与图 1 预结算付款一致，user 2026-08-15 19:00）',
+          summary: '新增付款（pages/payment-new.html）预付款模式补回付款金额 + 付款日期 2 个字段。1) 现状：v1.7.99.229 旧版按 user 2026-08-13 11:49 图 2 简化表单——预付款模式隐藏付款金额 + 付款日期 2 个 form-field（加 class="prepay-field" + CSS .prepay-field.prepay-hidden { display: none; } + JS prepay 分支 prepayFields.forEach add prepay-hidden）；2) 现在 user 2026-08-15 19:00 反馈「图 2 是预付款，图 2 少了付款金额与付款日期，字段需要与图 1 一致」——预付款模式也要保留付款金额 + 付款日期 2 字段，与预结算付款模式一致；3) 改造方案（v1.7.99.241）：a) 删 JS togglePaymentSections prepay 分支里的 prepayFields.forEach(f => f.classList.add(\'prepay-hidden\')) 隐藏逻辑（保留 settle/preSettle 分支的 remove 防御性逻辑）；b) 改函数注释「预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证 + 付款金额 + 付款日期」→「预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证（v1.7.99.241 不再隐藏付款金额 + 付款日期，与图 1 预结算付款一致）」；c) CSS .prepay-field.prepay-hidden { display: none; } 保留（防御性，无 prepay-hidden class 时不生效）；4) 验证：playwright 3 个付款模式（settle/preSettle/prepay）下「付款金额」+「付款日期」都 visible=True display=flex，与 user 要求一致。',
+          changes: [
+            { type: 'modify', location: 'pages/payment-new.html togglePaymentSections prepay 分支', before: 'v1.7.99.229 prepayFields.forEach(f => f.classList.add(\'prepay-hidden\')) 隐藏付款金额 + 付款日期', after: 'v1.7.99.241 删 prepay-hidden 添加逻辑（保留 remove 防御性逻辑）' },
+            { type: 'modify', location: 'pages/payment-new.html togglePaymentSections 注释', before: 'v1.7.99.228 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证 + 付款金额 + 付款日期', after: 'v1.7.99.241 预付款: 显示货物批次, 隐藏上游/下游结算单 + 税务凭证（不再隐藏付款金额 + 付款日期，与图 1 预结算付款一致）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.240', after: 'v1.7.99.241' },
+          ],
+        },
+        {
           ts: '2026-08-15T18:30:00',
           version: 'v1.7.99.240',
           module: '「资金来源」多选项统一改为单一选项「自有资金」（按 user 2026-08-15 18:24 反馈）',
