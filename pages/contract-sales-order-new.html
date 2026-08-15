@@ -180,6 +180,15 @@
       margin-bottom: 16px;
       box-shadow: none;
     }
+  
+    /* v1.7.99.237 合同交货期限 范围日期选择控件（左右 2 个 date input + 分隔符） */
+    .form-date-range {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .form-date-range input { flex: 1; min-width: 0; }
+    .form-date-range .date-sep { color: var(--text-tertiary); font-size: 12px; }
   </style>
 </head>
 <body>
@@ -347,7 +356,11 @@
               </div>
               <div class="form-field">
                 <label class="form-label">合同交货期限 <span class="required">*</span></label>
-                <input type="text" class="input" placeholder="请选择交货期限">
+                <div class="form-date-range">
+                  <input type="date" class="input" placeholder="开始日期">
+                  <span class="date-sep">~</span>
+                  <input type="date" class="input" placeholder="结束日期">
+                </div>
               </div>
               <div class="form-field">
                 <label class="form-label">业务线（关联销售订单/单批次合同）<span class="required">*</span> <span class="flash">⚡</span></label>
