@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <!-- v1.7.99.235 销售合同列表 4 列进度数据串行问题修复（按 user 2026-08-15 10:34 图 1）-->
+<title>销售合同 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    .contract-info {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      min-width: 280px;
+    }
+    .contract-info-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .contract-info-no {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    .contract-info-rows {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 2px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .contract-info-label { color: var(--text-tertiary); }
+    .contract-info-val { color: var(--text-primary); font-weight: 500; }
+    .progress-block {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+      min-width: 160px;
+    }
+    .progress-block-title {
+      font-size: 12px;
+      color: var(--text-tertiary);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    /* v1.7.99.235 4 列进度数据串行问题修复：grid 2 列 → 1 列（label/value 上下排列） */
+    .progress-block-rows {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 4px 0;
+      font-size: 11px;
+    }
+    .progress-block-label { color: var(--text-tertiary); }
+    .progress-block-val { color: var(--text-primary); font-weight: 500; }
+    .progress-block-val.highlight { color: var(--color-primary); font-weight: 600; }
+    .tab-action-tab {
+      padding: 10px 18px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab-action-tab:hover { color: var(--text-primary); }
+    .tab-action-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      font-weight: 500;
+    }
+    .customer-tap-panel { display: block; }
+    .customer-tap-panel[hidden] { display: none; }
+
+    /* v1.7.99.35：操作列按状态机展示 */
+    .col-action-list {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+      min-width: 120px;
+    }
+    .col-action-list a {
+      color: var(--color-primary);
+      text-decoration: none;
+      font-size: 12px;
+      cursor: pointer;
+      white-space: nowrap;
+    }
+    .col-action-list a:hover { text-decoration: underline; }
+    .col-action-list a.disabled {
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+      pointer-events: none;
+    }
+    .col-action-list a.danger { color: var(--color-danger); }
+    .col-action-list a.danger:hover { color: #B91C1C; }
+
+    .action-more {
+      position: relative;
+      display: inline-block;
+    }
+    .action-more-trigger { cursor: pointer; user-select: none; }
+    .action-more-menu {
+      display: none;
+      position: fixed;
+      min-width: 140px;
+      background: #fff;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+      padding: 4px 0;
+      z-index: 9999;
+    }
+    .action-more-menu.open { display: block; }
+    .action-more-menu a {
+      display: block;
+      padding: 8px 14px;
+      color: var(--text-primary);
+      font-size: 12px;
+      white-space: nowrap;
+      text-decoration: none;
+    }
+    .action-more-menu a:hover { background: #F3F4F6; }
+    .action-more-menu a.danger { color: var(--color-danger); }
+    .action-more-menu a.danger:hover { background: #FEE2E2; }
+
+    .tag-orange { background: #FFEDD5; color: #EA580C; }
+
+    .cp-modal-mask {
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.45);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 200;
+    }
+    .cp-modal-mask.open { display: flex; }
+    .cp-modal {
+      background: #fff;
+      border-radius: 8px;
+      width: 480px;
+      max-width: 90vw;
+      max-height: 80vh;
+      display: flex;
+      flex-direction: column;
+      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.2);
+    }
+    .cp-modal-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .cp-modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; }
+    .cp-modal-icon {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #F59E0B;
+      color: #fff;
+      text-align: center;
+      line-height: 20px;
+      font-size: 13px;
+      font-weight: bold;
+      margin-right: 8px;
+      flex-shrink: 0;
+    }
+    .cp-modal-close {
+      cursor: pointer;
+      color: var(--text-tertiary);
+      background: none;
+      border: 0;
+      font-size: 18px;
+      line-height: 1;
+    }
+    .cp-modal-body { padding: 20px; overflow-y: auto; flex: 1; }
+    .cp-modal-body p { margin: 0 0 10px 0; font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+    .cp-modal-body ol { margin: 0 0 14px 0; padding-left: 22px; font-size: 13px; line-height: 1.7; color: var(--text-secondary); }
+    .cp-modal-body ol.block-list { color: var(--text-primary); }
+    .cp-modal-body label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .cp-modal-body .required-star { color: var(--color-danger); margin-right: 2px; }
+    .cp-modal-body textarea {
+      width: 100%;
+      min-height: 90px;
+      padding: 8px 10px;
+      font-size: 13px;
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      box-sizing: border-box;
+      resize: vertical;
+      font-family: inherit;
+    }
+    .cp-modal-footer {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+    .orange-tip {
+      color: #EA580C;
+      font-size: 12px;
+      background: #FFEDD5;
+      padding: 8px 12px;
+      border-radius: 4px;
+      margin: 6px 0 12px 0;
+      line-height: 1.5;
+    }
+    .orange-tip-text { color: #EA580C !important; font-weight: 500; }
+    .upload-area-label { font-size: 13px; color: var(--text-primary); margin-bottom: 12px; font-weight: 500; }
+    .upload-area-btn {
+      border: 1px dashed #D1D5DB;
+      border-radius: 6px;
+      padding: 16px;
+      text-align: center;
+      cursor: pointer;
+      color: var(--color-primary);
+      font-size: 13px;
+      margin-bottom: 10px;
+    }
+    .upload-area-btn:hover { background: #F9FAFB; border-color: var(--color-primary); }
+    .upload-area-hint { font-size: 12px; color: var(--text-tertiary); line-height: 1.6; margin-bottom: 14px; }
+    .upload-file-list { display: flex; flex-direction: column; gap: 8px; }
+    .upload-file-item {
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      padding: 8px 12px;
+      position: relative;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .upload-file-icon { font-size: 14px; }
+    .upload-file-name { font-size: 12px; color: var(--text-primary); flex: 1; }
+    .upload-file-remove {
+      background: none;
+      border: 0;
+      color: var(--text-tertiary);
+      font-size: 16px;
+      cursor: pointer;
+      padding: 0 4px;
+      line-height: 1;
+    }
+    .upload-file-remove:hover { color: var(--color-danger); }
+    .upload-progress {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: #E5E7EB;
+      border-radius: 0 0 4px 4px;
+      overflow: hidden;
+    }
+    .upload-progress-bar { height: 100%; background: #10B981; width: 100%; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+                    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <div class="breadcrumb-inline">
+          <a href="#">合同管理</a>
+          <span class="sep">/</span>
+          <span class="current">销售合同管理</span>
+        </div>
+
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0; visibility: hidden;">销售合同</h1>
+          <div class="btn-dropdown" id="addBtnDropdown" style="margin-left: auto;">
+            <button class="btn btn-primary btn-dropdown-toggle" onclick="toggleAddDropdown(event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              新增合同
+              <svg class="caret" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="btn-dropdown-menu">
+              <a href="./contract-sales-new.html"><span class="ico">+</span>新增销售框架合同<span class="desc">框架</span></a>
+              <a href="./contract-sales-order-new.html"><span class="ico">+</span>新增销售订单/单批次合同<span class="desc">订单/单批次</span></a>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-action-bar" style="margin-bottom: 0;">
+          <div class="tab-action-bar-tabs">
+            <div class="tab-action-tab" data-tap="framework">销售框架合同</div>
+            <div class="tab-action-tab active" data-tap="order">销售订单/单批次合同</div>
+          </div>
+        </div>
+
+        <!-- Tap 1：销售框架合同 -->
+        <div class="customer-tap-panel" data-tap-panel="framework" hidden>
+          <div class="cp-panel" data-filter-panel>
+            <div class="cp-block">
+              <div class="cp-filter-summary">
+                <div class="cp-filter-summary-left">
+                  当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                  <button class="clear-all-btn" type="button" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+                </div>
+                <button class="btn btn-text btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  数据导出
+                </button>
+              </div>
+              <div class="cp-filter">
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">合同编号</span>
+                  <input type="text" class="input" placeholder="请输入合同编号">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">企业名称</span>
+                  <input type="text" class="input" placeholder="请输入企业名称">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">品类</span>
+                  <select class="select"><option>全部</option><option>淀粉</option><option>谷物</option><option>糖粉</option></select>
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">业务类型</span>
+                  <select class="select"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">签订日期</span>
+                  <input type="text" class="input" placeholder="请选择日期范围">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">创建人</span>
+                  <input type="text" class="input" placeholder="请输入创建人">
+                </div>
+              </div>
+            </div>
+
+            <div class="cp-block cp-block-tab">
+              <div class="cp-tab-bar">
+                <div class="cp-tab-bar-tabs" data-tab-group="framework">
+                  <div class="cp-tab active" data-status-tab="all">全部 <span class="count">286</span></div>
+                  <div class="cp-tab" data-status-tab="draft">待提交</div>
+                  <div class="cp-tab" data-status-tab="approving">审批中 <span class="count">2</span></div>
+                  <div class="cp-tab" data-status-tab="unsigned">待上传双签合同 <span class="count">6</span></div>
+                  <div class="cp-tab" data-status-tab="executing">执行中 <span class="count">142</span></div>
+                  <div class="cp-tab" data-status-tab="completed">已完结 <span class="count">98</span></div>
+                  <div class="cp-tab" data-status-tab="rejected">审批驳回 <span class="count">7</span></div>
+                  <div class="cp-tab" data-status-tab="voided">已作废 <span class="count">31</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cp-block" style="padding: 0;">
+              <div class="cp-table-wrap">
+                <table class="cp-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 22%;">合同信息</th>
+                      <th style="width: 14%;">货转进度</th>
+                      <th style="width: 14%;">回款进度</th>
+                      <th style="width: 14%;">结算进度</th>
+                      <th style="width: 14%;">开票进度</th>
+                      <th style="width: 130px;" class="col-action">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody data-row-group="framework"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="cp-block">
+              <div class="cp-pagination">
+                <div>共 286 条记录 · 第 1 / 58 页</div>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div class="cp-pagination-pages">
+                    <div class="cp-pagination-page">‹</div>
+                    <div class="cp-pagination-page active">1</div>
+                    <div class="cp-pagination-page">2</div>
+                    <div class="cp-pagination-page">3</div>
+                    <div class="cp-pagination-page">›</div>
+                  </div>
+                  <select class="cp-pagination-size">
+                    <option>10 条/页</option>
+                    <option>20 条/页</option>
+                    <option>50 条/页</option>
+                  </select>
+                  <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tap 2：销售订单/单批次合同 -->
+        <div class="customer-tap-panel" data-tap-panel="order">
+          <div class="cp-panel" data-filter-panel>
+            <div class="cp-block">
+              <div class="cp-filter-summary">
+                <div class="cp-filter-summary-left">
+                  当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                  <button class="clear-all-btn" type="button" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+                </div>
+                <button class="btn btn-text btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                  数据导出
+                </button>
+              </div>
+              <div class="cp-filter">
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">合同编号</span>
+                  <input type="text" class="input" placeholder="请输入合同编号">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">企业名称</span>
+                  <input type="text" class="input" placeholder="请输入企业名称">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">品名</span>
+                  <input type="text" class="input" placeholder="请输入品名">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">品类</span>
+                  <select class="select"><option>全部</option><option>淀粉</option><option>谷物</option><option>糖粉</option></select>
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">业务类型</span>
+                  <select class="select"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">签订日期</span>
+                  <input type="text" class="input" placeholder="请选择日期范围">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">创建人</span>
+                  <input type="text" class="input" placeholder="请输入创建人">
+                </div>
+              </div>
+            </div>
+
+            <div class="cp-block cp-block-tab">
+              <div class="cp-tab-bar">
+                <div class="cp-tab-bar-tabs" data-tab-group="order">
+                  <div class="cp-tab active" data-status-tab="all">全部 <span class="count">196</span></div>
+                  <div class="cp-tab" data-status-tab="draft">待提交 <span class="count">1</span></div>
+                  <div class="cp-tab" data-status-tab="approving">审批中 <span class="count">3</span></div>
+                  <div class="cp-tab" data-status-tab="unsigned">待上传双签合同 <span class="count">8</span></div>
+                  <div class="cp-tab" data-status-tab="executing">执行中 <span class="count">108</span></div>
+                  <div class="cp-tab" data-status-tab="completed">已完结 <span class="count">56</span></div>
+                  <div class="cp-tab" data-status-tab="rejected">审批驳回 <span class="count">5</span></div>
+                  <div class="cp-tab" data-status-tab="voided">已作废 <span class="count">16</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="cp-block" style="padding: 0;">
+              <div class="cp-table-wrap">
+                <table class="cp-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 22%;">合同信息</th>
+                      <th style="width: 14%;">货转进度</th>
+                      <th style="width: 14%;">回款进度</th>
+                      <th style="width: 14%;">结算进度</th>
+                      <th style="width: 14%;">开票进度</th>
+                      <th style="width: 130px;" class="col-action">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody data-row-group="order"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="cp-block">
+              <div class="cp-pagination">
+                <div>共 196 条记录 · 第 1 / 40 页</div>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div class="cp-pagination-pages">
+                    <div class="cp-pagination-page">‹</div>
+                    <div class="cp-pagination-page active">1</div>
+                    <div class="cp-pagination-page">2</div>
+                    <div class="cp-pagination-page">3</div>
+                    <div class="cp-pagination-page">›</div>
+                  </div>
+                  <select class="cp-pagination-size">
+                    <option>10 条/页</option>
+                    <option>20 条/页</option>
+                    <option>50 条/页</option>
+                  </select>
+                  <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 A：发起合同完结（正常） -->
+  <div class="cp-modal-mask" id="confirmModal">
+    <div class="cp-modal">
+      <div class="cp-modal-header">
+        <div class="cp-modal-title">
+          <span class="cp-modal-icon" id="confirmIcon" style="display:none">!</span>
+          <span id="confirmTitle">请确认操作</span>
+        </div>
+        <button class="cp-modal-close" onclick="closeModal('confirmModal')">×</button>
+      </div>
+      <div class="cp-modal-body" id="confirmBody"></div>
+      <div class="cp-modal-footer">
+        <button class="btn btn-default btn-sm" onclick="closeModal('confirmModal')">取消</button>
+        <button class="btn btn-primary btn-sm" id="confirmOkBtn">确认提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 B：发起合同完结（阻止） -->
+  <div class="cp-modal-mask" id="blockModal">
+    <div class="cp-modal">
+      <div class="cp-modal-header">
+        <div class="cp-modal-title" id="blockTitle">无法发起</div>
+        <button class="cp-modal-close" onclick="closeModal('blockModal')">×</button>
+      </div>
+      <div class="cp-modal-body" id="blockBody"></div>
+      <div class="cp-modal-footer">
+        <button class="btn btn-primary btn-sm" onclick="closeModal('blockModal')">我知道了</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 C：上传双签合同附件 -->
+  <div class="cp-modal-mask" id="uploadModal">
+    <div class="cp-modal">
+      <div class="cp-modal-header">
+        <div class="cp-modal-title">上传双签合同合同</div>
+        <button class="cp-modal-close" onclick="closeModal('uploadModal')">×</button>
+      </div>
+      <div class="cp-modal-body">
+        <div class="upload-area-label">请上传合同"双签合同附件"</div>
+        <div class="upload-area-btn" onclick="document.getElementById('uploadFileInput').click()">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: middle; margin-right: 6px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M17 8l-5-5-5 5M12 3v12"/></svg>
+          <span>上传文件</span>
+        </div>
+        <div class="upload-area-hint">可支持格式为png, jpeg, jpg, pdf, doc, docx, xlsx, xls的附件，单个附件大小不得超过100M的文件。</div>
+        <input type="file" id="uploadFileInput" style="display:none" multiple onchange="handleFileUpload(this)">
+        <div class="upload-file-list" id="uploadFileList">
+          <div class="upload-file-item">
+            <span class="upload-file-icon">📄</span>
+            <span class="upload-file-name">文件名称.jpg</span>
+            <button class="upload-file-remove" onclick="removeUploadFile(this)">×</button>
+            <div class="upload-progress"><div class="upload-progress-bar"></div></div>
+          </div>
+        </div>
+      </div>
+      <div class="cp-modal-footer">
+        <button class="btn btn-default btn-sm" onclick="closeModal('uploadModal')">取消</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmUpload()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 D：新增补协阻止提示 -->
+  <div class="cp-modal-mask" id="supplementTipModal">
+    <div class="cp-modal">
+      <div class="cp-modal-header">
+        <div class="cp-modal-title">提示</div>
+        <button class="cp-modal-close" onclick="closeModal('supplementTipModal')">×</button>
+      </div>
+      <div class="cp-modal-body">
+        <p style="line-height: 1.7; color: var(--text-primary); font-size: 13px;">当前合同有正在进行中的补协，只有将此补协作废、删除、或者双签完成才能发起新的补充协议</p>
+        <p class="supplement-no" style="margin-top: 14px;">补协编号：<span id="supplementNo">DLXLC-DSRMT-202203-001-补001</span></p>
+      </div>
+      <div class="cp-modal-footer">
+        <button class="btn btn-default btn-sm" onclick="closeModal('supplementTipModal')">取消</button>
+        <button class="btn btn-primary btn-sm" onclick="viewSupplement()">查看补协</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 E：合作废（销售合同弹窗标题统一叫"合作废"，操作按钮叫"合同作废"，图2 规范） -->
+  <div class="cp-modal-mask" id="voidModal">
+    <div class="cp-modal">
+      <div class="cp-modal-header">
+        <div class="cp-modal-title">合作废</div>
+        <button class="cp-modal-close" onclick="closeModal('voidModal')">×</button>
+      </div>
+      <div class="cp-modal-body">
+        <label><span class="required-star">*</span> 请输入作废原因：</label>
+        <p class="orange-tip">提交后，合同状态将变为"已作废"状态，不可再做其他操作。</p>
+        <textarea id="voidReason" maxlength="200" placeholder="请输入作废原因，最多200字"></textarea>
+      </div>
+      <div class="cp-modal-footer">
+        <button class="btn btn-default btn-sm" onclick="closeModal('voidModal')">取消</button>
+        <button class="btn btn-primary btn-sm" onclick="confirmVoid()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // =====================================================
+    // v1.7.99.35 + v1.7.99.88：销售合同列表操作列按状态机展示
+    // 6 状态（不含待提交/已终止）：审批中 / 待上传双签 / 执行中 / 已完结 / 审批驳回 / 已作废
+    // 业务端（我方/卖方）操作项：合同详情 / 合同修改 / 上传双签合同 / 上传双签章合同（执行中黑红章）/ 关联采购合同 / 新增补协 / 发起合同完结 / 合同作废
+    // 注：销售合同"驳回/作废"操作按钮统一叫"合同作废"（图2 规范），但弹窗标题叫"合作废"，弹窗内文保留"已作废"状态描述
+    // v1.7.99.88：移除"已终止"状态 + 移除"发起合同终止"按钮 + 待上传双签合同下"上传合同附件"→"上传双签合同" + 执行中"开票申请"→"上传发票"
+    // 规则：操作列最多展示 5 个按钮；超出合并到「更多」下拉
+    // =====================================================
+
+    // 7 状态 + tag 颜色（v1.7.99.164：加 draft 待提交，与采购合同保持一致）
+    var STATUS_META = {
+      draft:     { label: '待提交',         tag: 'tag-yellow' },
+      approving: { label: '审批中',         tag: 'tag-yellow' },
+      unsigned:  { label: '待上传双签合同', tag: 'tag-orange' },
+      executing: { label: '执行中',         tag: 'tag-green'  },
+      completed: { label: '已完结',         tag: 'tag-blue'   },
+      rejected:  { label: '审批驳回',       tag: 'tag-red'    },
+      voided:    { label: '已作废',         tag: 'tag-red'    }
+    };
+
+    // 销售合同 7 状态操作按钮矩阵（业务端）（v1.7.99.164：加 draft = 合同详情/合同修改；v1.7.99.88：移除 terminate + upload→上传双签合同 + executing invoice→上传发票）
+    var ACTION_RULES = {
+      framework: {
+        draft:     [
+          { id: 'view', label: '合同详情' },
+          { id: 'edit', label: '合同修改' }
+        ],
+        approving: [
+          { id: 'view',   label: '合同详情' }
+        ],
+        unsigned:  [
+          { id: 'view',   label: '合同详情' },
+          { id: 'upload', label: '上传双签合同' },
+          { id: 'void',   label: '合同作废', danger: true }
+        ],
+        executing: [
+          { id: 'view',            label: '合同详情' },
+          { id: 'uploadDoubleStamp', label: '上传双签章合同' },
+          { id: 'addSupp',         label: '新增补协' },
+          { id: 'finish',          label: '发起合同完结' }
+        ],
+        completed: [
+          { id: 'view',   label: '合同详情' }
+        ],
+        rejected: [
+          { id: 'view',   label: '合同详情' },
+          { id: 'edit',   label: '合同修改' },
+          { id: 'void',   label: '合同作废', danger: true }
+        ],
+        voided: [
+          { id: 'view',   label: '合同详情' }
+        ]
+      },
+      order: {
+        draft:     [
+          { id: 'view', label: '合同详情' },
+          { id: 'edit', label: '合同修改' }
+        ],
+        approving: [
+          { id: 'view',   label: '合同详情' }
+        ],
+        unsigned:  [
+          { id: 'view',       label: '合同详情' },
+          { id: 'upload',     label: '上传双签合同' },
+          { id: 'relPurchase',label: '关联采购合同' },
+          { id: 'invoice',    label: '开票申请' },
+          { id: 'settle',     label: '发起结算' },
+          { id: 'goods',      label: '开具货转' },
+          { id: 'void',       label: '合同作废', danger: true }
+        ],
+        executing: [
+          { id: 'view',            label: '合同详情' },
+          { id: 'uploadDoubleStamp', label: '上传双签章合同' },
+          { id: 'goods',           label: '开具货转' },
+          { id: 'settle',          label: '发起结算' },
+          { id: 'invoice',         label: '上传发票' },
+          { id: 'relPurchase',     label: '关联采购合同' },
+          { id: 'addSupp',         label: '新增补协' },
+          { id: 'finish',          label: '发起合同完结' }
+        ],
+        completed: [
+          { id: 'view',   label: '合同详情' }
+        ],
+        rejected: [
+          { id: 'view',   label: '合同详情' },
+          { id: 'edit',   label: '合同修改' },
+          { id: 'void',   label: '合同作废', danger: true }
+        ],
+        voided: [
+          { id: 'view',   label: '合同详情' }
+        ]
+      }
+    };
+
+    function buildMockRows(contractType) {
+      var isFw = contractType === 'framework';
+      var noPrefix = isFw ? 'XSHT' : 'XSDD';
+      var rows = [];
+      var seq = 1;
+      function makeNo() {
+        return noPrefix + '-2024-001-' + String(seq++).padStart(3, '0');
+      }
+      var statusOrder = ['draft', 'approving', 'unsigned', 'executing', 'completed', 'rejected', 'voided'];
+      // v1.7.99.37：销售订单合同且涉及保证金时，hasMargin=true，并给一个保证金比例模拟 3 种状态
+      // executing 行的保证金比例 mock = 110（↑ 绿）模拟"超出约定"
+      // 第一行 executing 行的保证金比例 = 80（↓ 红）模拟"低于约定"
+      // 框架合同 = 不展示保证金字段
+      var marginSeq = 0;
+      statusOrder.forEach(function(s) {
+        var isOrderMargin = !isFw && (s === 'executing' || s === 'completed' || s === 'unsigned');
+        var ratio = 0;
+        if (isOrderMargin) {
+          // 模拟 3 种状态：> 100 / = 100 / < 100
+          if (s === 'executing' && marginSeq === 0) ratio = 110;       // ↑ 绿
+          else if (s === 'executing' && marginSeq === 1) ratio = 80;  // ↓ 红
+          else if (s === 'completed') ratio = 100;                     // = 不展示箭头
+          else if (s === 'unsigned') ratio = 90;                       // ↓ 红
+        }
+        rows.push({
+          no: makeNo(),
+          status: s,
+          buyer: '中原粮食集团有限公司',
+          product: isFw ? '—' : '进口木薯淀粉',
+          category: '淀粉',
+          unitPrice: '500元/吨',
+          amount: '1,200,000元',
+          bizType: '存货业务',
+          signDate: '2024-09-15',
+          validTo: '2025-03-15',
+          creator: '李四',
+          hasMargin: isOrderMargin,
+          marginRatio: ratio
+        });
+        if (s === 'executing') {
+          marginSeq++;
+          rows.push({
+            no: makeNo(),
+            status: s,
+            buyer: '河南双汇食品有限公司',
+            product: isFw ? '—' : '糖粉',
+            category: '糖粉',
+            unitPrice: '850元/吨',
+            amount: '3,000,000元',
+            bizType: '购销业务',
+            signDate: '2024-07-20',
+            validTo: '2025-01-20',
+            creator: '王五',
+            hasMargin: !isFw,
+            marginRatio: !isFw ? 95 : 0
+          });
+        }
+      });
+      return rows;
+    }
+
+    function renderActions(contractType, status) {
+      var actions = ACTION_RULES[contractType][status] || [];
+      var html = '<div class="col-action-list">';
+      if (actions.length <= 5) {
+        actions.forEach(function(a) {
+          html += '<a href="javascript:void(0)" data-action="' + a.id + '" class="' + (a.danger ? 'danger' : '') + '">' + a.label + '</a>';
+        });
+      } else {
+        var shown = actions.slice(0, 4);
+        var hidden = actions.slice(4);
+        shown.forEach(function(a) {
+          html += '<a href="javascript:void(0)" data-action="' + a.id + '" class="' + (a.danger ? 'danger' : '') + '">' + a.label + '</a>';
+        });
+        html += '<span class="action-more">';
+        html += '<a href="javascript:void(0)" class="action-more-trigger">更多 ▾</a>';
+        html += '<div class="action-more-menu">';
+        hidden.forEach(function(a) {
+          html += '<a href="javascript:void(0)" data-action="' + a.id + '" class="' + (a.danger ? 'danger' : '') + '">' + a.label + '</a>';
+        });
+        html += '</div></span>';
+      }
+      html += '</div>';
+      return html;
+    }
+
+    function renderRow(contractType, row) {
+      var statusMeta = STATUS_META[row.status];
+      var no = row.no;
+      var tr = '';
+      tr += '<tr data-status="' + row.status + '" data-no="' + no + '">';
+      // 合同信息板块
+      tr += '<td><div class="contract-info">';
+      tr += '<div class="contract-info-row">';
+      tr += '<span class="contract-info-no" title="' + no + '">' + no + '</span>';
+      // v1.7.99.37：复制 icon + 关联 icon
+      tr += '<span class="contract-info-actions">';
+      tr += '<span class="contract-info-action" data-tip="点击复制合同编号" onclick="copyText(\'' + no + '\')">⧉</span>';
+      if (contractType === 'order') {
+        tr += '<span class="contract-info-action" data-tip="关联销售框架合同编号：XSHT-2024-001-001" onclick="navigateToRel(\'framework\')">⌬</span>';
+      } else {
+        tr += '<span class="contract-info-action" data-tip="关联的销售订单/单批次合同：\nXSDD-2024-001-001\nXSDD-2024-001-002" onclick="navigateToRel(\'order\')">⌬</span>';
+      }
+      tr += '</span>';
+      tr += '<span class="tag ' + statusMeta.tag + '">' + statusMeta.label + '</span>';
+      tr += '</div>';
+      tr += '<div class="contract-info-rows">';
+      tr += '<span><span class="contract-info-label">买方企业：</span><span class="contract-info-val" title="' + row.buyer + '">' + row.buyer + '</span></span>';
+      if (row.product !== '—') {
+        tr += '<span><span class="contract-info-label">品名：</span><span class="contract-info-val" title="' + row.product + '">' + row.product + '</span></span>';
+      }
+      tr += '<span><span class="contract-info-label">品类：</span><span class="contract-info-val" title="' + row.category + '">' + row.category + '</span></span>';
+      tr += '<span><span class="contract-info-label">合同单价：</span><span class="contract-info-val" title="' + row.unitPrice + '">' + row.unitPrice + '</span></span>';
+      tr += '<span><span class="contract-info-label">合同金额：</span><span class="contract-info-val" title="' + row.amount + '">' + row.amount + '</span></span>';
+      tr += '<span><span class="contract-info-label">业务类型：</span><span class="contract-info-val" title="' + row.bizType + '">' + row.bizType + '</span></span>';
+      tr += '<span><span class="contract-info-label">签订日期：</span><span class="contract-info-val" title="' + row.signDate + '">' + row.signDate + '</span></span>';
+      tr += '<span style="grid-column: 1 / -1;"><span class="contract-info-label">合同有效期：</span><span class="contract-info-val" title="' + row.signDate + '至' + row.validTo + '">' + row.signDate + '至' + row.validTo + '</span></span>';
+      tr += '<span style="grid-column: 1 / -1;"><span class="contract-info-label">创建人：</span><span class="contract-info-val" title="' + row.creator + '">' + row.creator + '</span></span>';
+      tr += '</div></div></td>';
+
+      // 4 进度板块（销售合同：货转 + 回款 + 结算 + 开票）
+      var progPct = (row.status === 'completed' || row.status === 'executing') ? 85 : (row.status === 'unsigned' || row.status === 'draft' || row.status === 'approving' || row.status === 'rejected') ? 0 : 100;
+      // 进度条 3 状态：0% 灰 / 0~100% 绿 / >100% 红
+      var progClass = progPct === 0 ? 'zero' : (progPct > 100 ? 'over' : 'normal');
+      var progTextClass = progPct > 100 ? 'over' : '';
+      // 销售合同货转数量定义：货转状态为"已确认"（vs 采购合同"已开具"）
+      var huoZhuanDef = '货转数量定义：货转状态为"已确认"的货转数量之和';
+      var tipPrefix = contractType === 'framework' ? '销售框架合同货转数据取值于其关联的所有订单合同的货转数据总和' : '销售订单合同货转数据取值于该合同订单的货转数量';
+      // 货转进度
+      tr += '<td><div class="progress-block">';
+      tr += '<div class="progress-block-title" data-tip="合同量：' + (progPct > 0 ? '5,000吨' : '5,000吨') + '\n已货转：' + (progPct > 0 ? '4,250吨' : '0吨') + '\n计量单位：吨\n' + huoZhuanDef + '\n\n' + tipPrefix + '">货转进度 <span data-tip="' + tipPrefix + '" style="cursor: help;">ⓘ</span></div>';
+      tr += '<div class="progress"><div class="progress-bar"><div class="progress-fill ' + progClass + '" style="width: ' + Math.min(progPct, 100) + '%;"></div></div><span class="progress-text ' + progTextClass + '">' + progPct + '%</span></div>';
+      tr += '<div class="progress-block-rows">';
+      tr += '<span><span class="progress-block-label">合同量：</span><span class="progress-block-val" title="5,000吨">5,000吨</span></span>';
+      tr += '<span><span class="progress-block-label">已货转：</span><span class="progress-block-val" title="' + (progPct > 0 ? '90吨' : '0吨') + '">' + (progPct > 0 ? '90吨' : '0吨') + '</span></span>';
+      tr += '</div></div></td>';
+
+      // 回款进度（销售特有：已收保证金 + 保证金比例 + 已回款）
+      var huiKuanTip = contractType === 'framework'
+        ? '销售框架合同回款数据取值于其关联的所有订单合同的回款数据总和（货款）\n\n已回款定义：其关联订单(贸易)合同的合同回款金额之和（货款）'
+        : '销售订单合同回款数据取值于该合同的回款数据\n\n已回款定义：认领到当前销售合同的货款金额之和 + 认领到当前销售合同的"下游价差"金额之和 + 保证金调整时调整为当前合同的货款金额 - 向下游的退款金额之和（退款状态为"已退款"）';
+      tr += '<td><div class="progress-block">';
+      tr += '<div class="progress-block-title" data-tip="' + huiKuanTip + '">回款进度 <span data-tip="' + huiKuanTip + '" style="cursor: help;">ⓘ</span></div>';
+      tr += '<div class="progress-block-rows">';
+      // 已收保证金：销售订单(贸易)合同且合同涉及保证金时展示；框架合同不展示
+      // v1.7.99.235：保证金比例合并到同一行展示（"18,800.00元 (12%↓)"）
+      if (contractType === 'order' && row.hasMargin) {
+        var marginRatio = row.marginRatio || 12;  // mock：默认 12% 触发 ↓ 红色箭头
+        var arrowIcon = '';
+        var arrowColor = '';
+        if (marginRatio > 100) { arrowIcon = '↑'; arrowColor = 'color: #10B981;'; }  // 绿
+        else if (marginRatio < 100) { arrowIcon = '↓'; arrowColor = 'color: #DC2626;'; }  // 红
+        // = 100 时不展示箭头
+        tr += '<span><span class="progress-block-label">已收保证金(元)：</span><span class="progress-block-val highlight" title="18,800.00元">18,800.00元</span> <span class="progress-block-val" style="' + arrowColor + ' font-weight: 600;">(' + marginRatio + '%' + (arrowIcon ? ' ' + arrowIcon : '') + ')</span></span>';
+      }
+      tr += '<span><span class="progress-block-label">已回货款(元)：</span><span class="progress-block-val highlight" title="' + (progPct > 0 ? '18,800,000.01' : '0.00') + '">' + (progPct > 0 ? '18,800,000.01' : '0.00') + '</span></span>';
+      tr += '</div></div></td>';
+
+      // 结算进度
+      var jieSuanTip = contractType === 'framework'
+        ? '销售框架合同结算数据取值于其关联的所有订单合同的结算数据总和\n\n结算数量、结算金额：该合同的结算状态为"已确认"的结算数量之和、结算金额之和'
+        : '销售订单合同结算数据取值于该合同的结算数据\n\n结算数量、结算金额：该合同的结算状态为"已确认"的结算数量之和、结算金额之和';
+      tr += '<td><div class="progress-block">';
+      tr += '<div class="progress-block-title" data-tip="' + jieSuanTip + '">结算进度 <span data-tip="' + jieSuanTip + '" style="cursor: help;">ⓘ</span></div>';
+      tr += '<div class="progress-block-rows">';
+      tr += '<span><span class="progress-block-label">已结算数量(吨)：</span><span class="progress-block-val" title="' + (progPct > 0 ? '18,800' : '0') + '">' + (progPct > 0 ? '18,800' : '0') + '</span></span>';
+      tr += '<span><span class="progress-block-label">已结算金额(元)：</span><span class="progress-block-val" title="' + (progPct > 0 ? '18,800,000.01' : '0.00') + '">' + (progPct > 0 ? '18,800,000.01' : '0.00') + '</span></span>';
+      tr += '</div></div></td>';
+
+      // 开票进度
+      var kaiPiaoTip = contractType === 'framework'
+        ? '销售框架合同开票数据取值于其关联的所有订单合同的开票数据总和\n\n注：需过滤掉状态为"红冲、作废"的发票'
+        : '销售订单合同开票数据取值于该合同的开票数据\n\n注：需过滤掉状态为"红冲、作废"的发票';
+      tr += '<td><div class="progress-block">';
+      tr += '<div class="progress-block-title" data-tip="' + kaiPiaoTip + '">开票进度 <span data-tip="' + kaiPiaoTip + '" style="cursor: help;">ⓘ</span></div>';
+      tr += '<div class="progress-block-rows">';
+      tr += '<span><span class="progress-block-label">发票张数(张)：</span><span class="progress-block-val" title="' + (progPct > 0 ? '18,800' : '0') + '">' + (progPct > 0 ? '18,800' : '0') + '</span></span>';
+      tr += '<span><span class="progress-block-label">拆分到本合同金额(元)：</span><span class="progress-block-val" title="' + (progPct > 0 ? '18,800,000.01' : '0.00') + '">' + (progPct > 0 ? '18,800,000.01' : '0.00') + '</span></span>';
+      tr += '</div></div></td>';
+
+      // 操作列
+      tr += '<td class="col-action">' + renderActions(contractType, row.status) + '</td>';
+      tr += '</tr>';
+      return tr;
+    }
+
+    function renderTap(contractType) {
+      var tbody = document.querySelector('tbody[data-row-group="' + contractType + '"]');
+      if (!tbody) return;
+      var rows = buildMockRows(contractType);
+      tbody.innerHTML = rows.map(function(r) { return renderRow(contractType, r); }).join('');
+    }
+
+    function bindStatusTabs() {
+      document.querySelectorAll('[data-tab-group]').forEach(function(group) {
+        var tabs = group.querySelectorAll('[data-status-tab]');
+        tabs.forEach(function(t) {
+          t.addEventListener('click', function() {
+            tabs.forEach(function(x) { x.classList.remove('active'); });
+            t.classList.add('active');
+            var key = t.getAttribute('data-status-tab');
+            filterRows(group.getAttribute('data-tab-group'), key);
+          });
+        });
+      });
+    }
+    function filterRows(contractType, status) {
+      var tbody = document.querySelector('tbody[data-row-group="' + contractType + '"]');
+      if (!tbody) return;
+      var trs = tbody.querySelectorAll('tr');
+      trs.forEach(function(tr) {
+        if (status === 'all') {
+          tr.style.display = '';
+        } else {
+          tr.style.display = tr.getAttribute('data-status') === status ? '' : 'none';
+        }
+      });
+    }
+
+    // =====================================================
+    // 操作按钮点击交互（v1.7.99.35）
+    // 6 状态判断逻辑（销售合同版）
+    // =====================================================
+
+    function checkBlockFlags(action) { return false; }
+    function checkFinishBlock() { return []; }
+    // v1.7.99.88：移除 checkTerminateBlock（发起合同终止已下线）
+    function checkVoidBlock() { return []; }
+
+    function handleAction(action, contractType, tr) {
+      switch (action) {
+        case 'view':
+          if (contractType === 'framework') {
+            window.location.href = './contract-sales-framework-detail.html';
+          } else {
+            window.location.href = './contract-sales-order-detail.html';
+          }
+          break;
+        case 'edit':
+          if (contractType === 'framework') {
+            window.location.href = './contract-sales-new.html?mode=edit';
+          } else {
+            window.location.href = './contract-sales-order-new.html?mode=edit';
+          }
+          break;
+        case 'upload':
+          showUploadModal();
+          break;
+        case 'uploadDoubleStamp':
+          showUploadModal();
+          break;
+        case 'goods':
+          alert('进入开具货转单页面（待实现）');
+          break;
+        case 'settle':
+          alert('进入发起结算页面（待实现）');
+          break;
+        case 'invoice':
+          // v1.7.99.88：销售合同执行中"开票申请"→"上传发票"
+          alert('进入上传发票页面（待实现）');
+          break;
+        case 'relPurchase':
+          // v1.7.99.59 跳转到业务线关联中转页（销售合同 → 关联采购合同）
+          var relPurchaseNo = tr ? (tr.getAttribute('data-no') || '') : '';
+          var url = './contract-sales-relate-purchase.html?from=sales';
+          if (relPurchaseNo) url += '&contract=' + encodeURIComponent(relPurchaseNo);
+          window.location.href = url;
+          break;
+        case 'addSupp':
+          if (checkBlockFlags('addSupp')) {
+            showSupplementTipModal();
+          } else {
+            window.location.href = './contract-supplement-new.html?from=sales-' + contractType;
+          }
+          break;
+        case 'finish':
+          var finishBlockList = checkFinishBlock();
+          if (finishBlockList.length > 0) {
+            showBlockModal('发起合同完结', '当前合同存在以下问题，禁止发起合同完结：', finishBlockList);
+          } else {
+            var body = '<div style="display: flex; align-items: flex-start; gap: 10px;">' +
+                       '<span class="cp-modal-icon" style="margin-top: 2px; flex-shrink: 0;">!</span>' +
+                       '<div style="flex: 1;">' +
+                       '<p style="font-size: 14px; color: var(--text-primary); margin-bottom: 8px;">确定要对该合同进行完结操作吗？</p>' +
+                       '<p style="color: var(--text-secondary); font-size: 13px;">完结后，合同状态将变为"已完结"，不可再做其他操作。</p>' +
+                       '</div></div>';
+            showFinishConfirmModal('发起合同完结', body, '合同已完结');
+          }
+          break;
+        // v1.7.99.88：移除 case 'terminate'（发起合同终止已下线）
+        case 'void':
+          var voidBlockList = checkVoidBlock();
+          if (voidBlockList.length > 0) {
+            showBlockModal('合作废', '当前合同存在以下问题，禁止作废：', voidBlockList);
+          } else {
+            showVoidModal();
+          }
+          break;
+        default:
+          alert('操作 "' + action + '" 待实现');
+      }
+    }
+
+    // 弹窗 A：发起合同完结（正常）
+    function showFinishConfirmModal(title, body, successMsg) {
+      document.getElementById('confirmTitle').textContent = title;
+      document.getElementById('confirmIcon').style.display = 'none';
+      document.getElementById('confirmBody').innerHTML = body;
+      var okBtn = document.getElementById('confirmOkBtn');
+      okBtn.textContent = '确定';
+      okBtn.onclick = function() {
+        closeModal('confirmModal');
+        alert(successMsg || '提交成功');
+      };
+      openModal('confirmModal');
+    }
+
+    // 弹窗 B：阻止
+    function showBlockModal(title, desc, list) {
+      document.getElementById('blockTitle').textContent = title;
+      var body = '<p class="orange-tip-text">' + desc + '</p>';
+      if (list && list.length > 0) {
+        body += '<ol class="block-list">';
+        list.forEach(function(item) { body += '<li>' + item + '</li>'; });
+        body += '</ol>';
+      }
+      document.getElementById('blockBody').innerHTML = body;
+      openModal('blockModal');
+    }
+
+    // 弹窗 C：上传双签合同附件
+    function showUploadModal() { openModal('uploadModal'); }
+    function confirmUpload() {
+      closeModal('uploadModal');
+      alert('双签合同附件已上传');
+    }
+    function handleFileUpload(input) {
+      var list = document.getElementById('uploadFileList');
+      Array.from(input.files).forEach(function(file) {
+        var item = document.createElement('div');
+        item.className = 'upload-file-item';
+        item.innerHTML = '<span class="upload-file-icon">📄</span>' +
+                         '<span class="upload-file-name">' + file.name + '</span>' +
+                         '<button class="upload-file-remove" onclick="removeUploadFile(this)">×</button>' +
+                         '<div class="upload-progress"><div class="upload-progress-bar"></div></div>';
+        list.appendChild(item);
+      });
+      input.value = '';
+    }
+    function removeUploadFile(btn) {
+      var item = btn.closest('.upload-file-item');
+      if (item) item.remove();
+    }
+
+    // 弹窗 D：补协提示
+    function showSupplementTipModal() { openModal('supplementTipModal'); }
+    function viewSupplement() {
+      closeModal('supplementTipModal');
+      window.location.href = './contract-supplement.html';
+    }
+
+    // 弹窗 E：合作废（销售合同弹窗标题统一叫"合作废"，操作按钮叫"合同作废"）
+    function showVoidModal() {
+      document.getElementById('voidReason').value = '';
+      openModal('voidModal');
+    }
+    function confirmVoid() {
+      var reason = document.getElementById('voidReason').value.trim();
+      if (!reason) {
+        alert('请输入作废原因');
+        return;
+      }
+      closeModal('voidModal');
+      alert('合同已作废');
+    }
+
+    // v1.7.99.37：复制合同编号
+    function copyText(text) {
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          alert('已复制：' + text);
+        });
+      } else {
+        var ta = document.createElement('textarea');
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand('copy');
+        document.body.removeChild(ta);
+        alert('已复制：' + text);
+      }
+    }
+    // v1.7.99.37：跳转到关联合同（mock：直接提示）
+    function navigateToRel(type) {
+      if (type === 'framework') {
+        alert('跳转关联销售框架合同详情页');
+      } else {
+        alert('跳转关联销售订单/单批次合同详情页');
+      }
+    }
+
+    function openModal(id) {
+      document.getElementById(id).classList.add('open');
+    }
+    function closeModal(id) {
+      document.getElementById(id).classList.remove('open');
+    }
+
+    // 操作按钮点击绑定
+    function bindActionClicks() {
+      document.body.addEventListener('click', function(e) {
+        var target = e.target;
+        if (target.classList && target.classList.contains('action-more-trigger')) {
+          e.preventDefault();
+          e.stopPropagation();
+          var more = target.closest('.action-more');
+          if (more) {
+            var menu = more.querySelector('.action-more-menu');
+            if (!menu) return;
+            document.querySelectorAll('.action-more-menu.open').forEach(function(m) {
+              if (m !== menu) m.classList.remove('open');
+            });
+            var wasOpen = menu.classList.contains('open');
+            if (wasOpen) {
+              menu.classList.remove('open');
+            } else {
+              if (menu.parentElement !== document.body) {
+                document.body.appendChild(menu);
+              }
+              var rect = target.getBoundingClientRect();
+              menu.style.top = (rect.bottom + 2) + 'px';
+              menu.style.left = (rect.right - 140) + 'px';
+              menu.classList.add('open');
+            }
+          }
+          return;
+        }
+        if (target.tagName === 'A' && target.closest('.action-more-menu')) {
+          e.preventDefault();
+          var menuEl = target.closest('.action-more-menu');
+          if (menuEl) menuEl.classList.remove('open');
+          var action = target.getAttribute('data-action');
+          var tr = target.closest('tr[data-status]');
+          var contractType = tr ? tr.closest('tbody').getAttribute('data-row-group') : 'framework';
+          handleAction(action, contractType, tr);
+          return;
+        }
+        if (target.tagName === 'A' && target.hasAttribute('data-action')) {
+          e.preventDefault();
+          var action2 = target.getAttribute('data-action');
+          var tr2 = target.closest('tr[data-status]');
+          var contractType2 = tr2 ? tr2.closest('tbody').getAttribute('data-row-group') : 'framework';
+          handleAction(action2, contractType2, tr2);
+          return;
+        }
+      });
+      document.addEventListener('click', function(e) {
+        if (!(e.target.closest && e.target.closest('.action-more-menu'))) {
+          document.querySelectorAll('.action-more-menu.open').forEach(function(m) { m.classList.remove('open'); });
+        }
+      });
+      window.addEventListener('scroll', function() {
+        document.querySelectorAll('.action-more-menu.open').forEach(function(m) { m.classList.remove('open'); });
+      }, true);
+    }
+
+    function toggleAddDropdown(e) {
+      if (e) e.stopPropagation();
+      var dd = document.getElementById('addBtnDropdown');
+      if (dd) dd.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var dd = document.getElementById('addBtnDropdown');
+      if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+    });
+
+    (function() {
+      var tabs = document.querySelectorAll('.tab-action-tab[data-tap]');
+      var panels = document.querySelectorAll('.customer-tap-panel');
+      function switchTap(target) {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        panels.forEach(function(p) { p.hidden = true; });
+        var activeTab = document.querySelector('.tab-action-tab[data-tap="' + target + '"]');
+        if (activeTab) activeTab.classList.add('active');
+        var activePanel = document.querySelector('.customer-tap-panel[data-tap-panel="' + target + '"]');
+        if (activePanel) activePanel.hidden = false;
+      }
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          switchTap(tab.getAttribute('data-tap'));
+        });
+      });
+      var hash = location.hash.match(/tap=([\w-]+)/);
+      if (hash) switchTap(hash[1]);
+    })();
+
+    renderTap('framework');
+    renderTap('order');
+    bindStatusTabs();
+    bindActionClicks();
+  </script>
+  </div>
+</body>
+</html>

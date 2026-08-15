@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T10:40:00',
+          version: 'v1.7.99.235',
+          module: '销售合同列表 4 列进度（货转/回款/结算/开票）数据串行问题修复（按 user 2026-08-15 10:34 图 1）',
+          summary: '销售合同列表（pages/contract-sales.html 订单/单批次合同）4 列进度数据串行问题修复，按 user 2026-08-15 10:34 图 1 修改。1) 现状：v1.7.99.234 已修采购合同列表 4 列进度串行问题（CSS grid 1fr 1fr → 1fr + 字段归类 + 字段名调整），但销售合同列表 contract-sales.html 用同样的 v1.7.99.x 旧版 .progress-block-rows（grid 2 列）+ 字段名"已回款"（user 图 1 为"已回货款"）+ 字段名"拆分合同金额"（应改为"已结算金额"/"拆分到本合同金额"）+ 销售合同特有的"已收保证金"+"保证金比例"分开两行（图 1 合并为一行 "18,800.00元 (12%↓)"）；2) 改造方案（v1.7.99.235）：a) CSS .progress-block-rows grid 2 列 → 1 列（label/value 上下排列，与 v1.7.99.234 采购合同一致）；b) 货转进度：值 4,250吨 → 90吨（与 v1.7.99.234 一致）；c) 回款进度（销售特有）：i) 删"保证金比例"独立行；ii) "已收保证金" + "保证金比例" 合并为 1 行（"已收保证金(元)：18,800.00元 (12%↓)" 格式），marginRatio 默认值 100 → 12（触发 ↓ 红色箭头）；iii) 字段名 "已收保证金" → "已收保证金(元)"；iv) 字段名 "已回款(元)" → "已回货款(元)"；v) 值 500,000.00 → 18,800.00 + 1,020,000.00 → 18,800,000.01；d) 结算进度：字段名"拆分合同金额(元)"→"已结算金额(元)" + 值 1,020,000.00 → 18,800,000.01 + 已结算数量 2,000 → 18,800（图 1）；e) 开票进度：字段名"拆分合同金额(元)"→"拆分到本合同金额(元)" + 值 1,020,000.00 → 18,800,000.01 + 发票张数 3 → 18,800（图 1）；3) 关联：v1.7.99.234 采购合同列表 4 列进度修复（CSS + 字段归类 + 字段名）已部署，但销售合同列表同样问题等 user 进一步指示（已解决于 v1.7.99.235）。',
+          changes: [
+            { type: 'modify', location: 'pages/contract-sales.html .progress-block-rows CSS', before: 'v1.7.99.x grid-template-columns: 1fr 1fr（2 列网格）导致 label/value 同行串行（与 v1.7.99.234 采购合同同样问题）', after: 'v1.7.99.235 grid-template-columns: 1fr（单列，label 上 / value 下，与 v1.7.99.234 一致）' },
+            { type: 'modify', location: 'pages/contract-sales.html 货转进度', before: 'v1.7.99.x 字段名"已货转" + 值 4,250吨', after: 'v1.7.99.235 字段名保留"已货转" + 值 90吨（与 v1.7.99.234 采购合同一致）' },
+            { type: 'modify', location: 'pages/contract-sales.html 回款进度（销售特有）', before: 'v1.7.99.x 3 个字段：已收保证金(500,000元) + 保证金比例(独立行) + 已回款(元)(1,020,000)', after: 'v1.7.99.235 2 个字段：已收保证金(元): 18,800.00元 (12%↓)（保证金+比例合并同行）+ 已回货款(元): 18,800,000.01（字段名改"已回货款"）' },
+            { type: 'modify', location: 'pages/contract-sales.html 结算进度', before: 'v1.7.99.x 字段名"拆分合同金额(元)" + 值 1,020,000 + 已结算数量 2,000', after: 'v1.7.99.235 字段名"已结算金额(元)" + 值 18,800,000.01 + 已结算数量 18,800（按图 1 实际值）' },
+            { type: 'modify', location: 'pages/contract-sales.html 开票进度', before: 'v1.7.99.x 字段名"拆分合同金额(元)" + 值 1,020,000 + 发票张数 3', after: 'v1.7.99.235 字段名"拆分到本合同金额(元)" + 值 18,800,000.01 + 发票张数 18,800（按图 1 实际值）' },
+            { type: 'modify', location: 'pages/contract-sales.html marginRatio 默认值', before: 'v1.7.99.x var marginRatio = row.marginRatio || 100（无箭头）', after: 'v1.7.99.235 var marginRatio = row.marginRatio || 12（默认 12% 触发 ↓ 红色箭头）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.234', after: 'v1.7.99.235' },
+          ],
+        },
+        {
           ts: '2026-08-15T10:15:00',
           version: 'v1.7.99.234',
           module: '采购合同列表 4 列进度（货物/付款/结算/开票）数据串行问题修复（按 user 2026-08-15 10:06 图 1）',
