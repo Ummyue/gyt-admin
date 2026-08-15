@@ -108,6 +108,20 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T10:15:00',
+          version: 'v1.7.99.234',
+          module: '采购合同列表 4 列进度（货物/付款/结算/开票）数据串行问题修复（按 user 2026-08-15 10:06 图 1）',
+          summary: '采购合同列表（pages/contract-purchase.html 订单/单批次合同）4 列进度数据串行问题修复，按 user 2026-08-15 10:06 图 1 修改。1) 现状：v1.7.99.x 旧版 .progress-block-rows 用 grid-template-columns: 1fr 1fr（2 列网格），导致 label 和 value 在同 1 行内 grid 显示（"已付款(元)：850,000.00" 同行串行），且付款进度下多了 2 个应归结算进度的字段（已结算数量/已结算金额），字段名"拆分合同金额"不准确；2) 改造方案（v1.7.99.234）：a) CSS .progress-block-rows grid 2 列 → 1 列（label/value 上下排列）；b) 货物进度：字段名"已货转"→"货转数量" + 值 4,250吨 → 90吨（图 1 实际值）；c) 付款进度：删除"已结算数量(吨)"和"已结算金额(元)" 2 个字段（应归结算进度），只保留"已付款(元)"；d) 结算进度：字段名"拆分合同金额(元)"→"已结算金额(元)"（与字段语义一致）；e) 开票进度：字段名"拆分合同金额(元)"→"拆分到本合同金额(元)"（按图 1 精确文字）；3) 后续：contract-sales.html（销售合同列表）有同样串行问题但 user 未明确要求改，等 user 进一步指示。',
+          changes: [
+            { type: 'modify', location: 'pages/contract-purchase.html .progress-block-rows CSS', before: 'v1.7.99.x grid-template-columns: 1fr 1fr（2 列网格）导致 label/value 同行串行', after: 'v1.7.99.234 grid-template-columns: 1fr（单列，label 上 / value 下）' },
+            { type: 'modify', location: 'pages/contract-purchase.html 货物进度', before: 'v1.7.99.x 字段名"已货转" + 值 4,250吨', after: 'v1.7.99.234 字段名"货转数量" + 值 90吨（图 1 实际值）' },
+            { type: 'modify', location: 'pages/contract-purchase.html 付款进度', before: 'v1.7.99.x 3 个字段：已付款(元) + 已结算数量(吨) + 已结算金额(元)（后 2 个应归结算进度）', after: 'v1.7.99.234 只保留 1 个字段：已付款(元)（删除错放的已结算数量/已结算金额）' },
+            { type: 'modify', location: 'pages/contract-purchase.html 结算进度', before: 'v1.7.99.x 字段名"拆分合同金额(元)"（与字段语义不符）', after: 'v1.7.99.234 字段名"已结算金额(元)"（按字段语义重命名）' },
+            { type: 'modify', location: 'pages/contract-purchase.html 开票进度', before: 'v1.7.99.x 字段名"拆分合同金额(元)"', after: 'v1.7.99.234 字段名"拆分到本合同金额(元)"（按图 1 精确文字）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.233', after: 'v1.7.99.234' },
+          ],
+        },
+        {
           ts: '2026-08-14T16:10:00',
           version: 'v1.7.99.233',
           module: '合规验证报告（数据中心 - 合规验证报告）按真实 PDF 报告数据填充 + 检查过程列加底色',
