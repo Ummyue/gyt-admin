@@ -108,6 +108,17 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T10:50:00',
+          version: 'v1.7.99.236',
+          module: '追保函管理列表页 tab 行右侧 3 个重复按钮删除（按 user 2026-08-15 10:42 图 1 红框）',
+          summary: '追保函管理列表页（pages/bond-letter.html）状态 tab 行右侧 3 个重复按钮删除。1) 现状：v1.7.99.85 旧版在 6 个状态 tab 右侧（cp-tab-bar-actions 区域）放了 3 个按钮：+ 新增追保函（跳 bond-letter-new.html）+ + 新增线下追保函（跳 bond-letter-new-offline.html）+ 数据导出，但页面顶部右上角已经有 + 新增追保函 按钮和数据导出按钮（标题行），下方 3 个按钮完全是重复的，user 反馈"下方这个「新增追保函」实际的路由交互应该是给上方「新增追保函」按钮的"；2) 改造方案（v1.7.99.236）：a) 删 .cp-tab-bar-actions 整块（3 个按钮连同容器），保留 6 个状态 tab（全部/审批中/待上传已生效单据/已生效/驳回/已作废）；b) 新增/导出入口统一走页面顶部右上角的 + 新增追保函 和 数据导出（line 76-85 标题行的 2 按钮）；3) 关联：v1.7.99.85 加的 3 个按钮是误加，与 v1.7.99.184 全站筛选控件标准（cp-filter-summary 顶部 summary 才有"数据导出"）冲突。',
+          changes: [
+            { type: 'delete', location: 'pages/bond-letter.html 6 tab 行右侧 .cp-tab-bar-actions 整块', before: 'v1.7.99.85 加 3 个按钮：+ 新增追保函（跳 bond-letter-new.html）+ + 新增线下追保函（跳 bond-letter-new-offline.html）+ 数据导出', after: 'v1.7.99.236 删 .cp-tab-bar-actions 整块（3 个按钮连同容器），保留 6 个状态 tab（全部/审批中/待上传已生效单据/已生效/驳回/已作废）' },
+            { type: 'modify', location: 'pages/bond-letter.html 新增/导出入口', before: 'v1.7.99.85 新增/导出入口分散在 2 处（标题行 2 按钮 + tab 行 3 按钮）', after: 'v1.7.99.236 统一走页面顶部右上角（标题行 line 76-85 的 + 新增追保函 + 数据导出 2 按钮）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.235', after: 'v1.7.99.236' },
+          ],
+        },
+        {
           ts: '2026-08-15T10:40:00',
           version: 'v1.7.99.235',
           module: '销售合同列表 4 列进度（货转/回款/结算/开票）数据串行问题修复（按 user 2026-08-15 10:34 图 1）',
