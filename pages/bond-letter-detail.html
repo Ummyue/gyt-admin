@@ -21,6 +21,21 @@
     .copy-icon:hover { color: var(--color-primary); }
     .status-tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
     .status-tag.green { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+    /* v1.7.99.239 头部「操作」下拉（参考 contract-purchase-order-detail.html v1.7.99.226 模式） */
+    .detail-action-btn { margin-left: auto; padding: 6px 14px; background: var(--color-primary); color: #fff; border-radius: 4px; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 4px; }
+    .detail-action-btn:hover { background: #1E3A8A; }
+    .detail-action-menu { display: none; position: fixed; min-width: 140px; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); padding: 4px 0; z-index: 9999; }
+    .detail-action-menu.open { display: block; }
+    .detail-action-menu a { display: block; padding: 8px 14px; color: var(--text-primary); font-size: 13px; white-space: nowrap; text-decoration: none; cursor: pointer; }
+    .detail-action-menu a:hover { background: #F3F4F6; }
+    .detail-action-menu a.danger { color: var(--color-danger); }
+    .detail-action-menu a.danger:hover { background: #FEE2E2; }
+    .status-tag.yellow { background: #FEF3C7; color: #92400E; }
+    .status-tag.orange { background: #FFEDD5; color: #9A3412; }
+    .status-tag.red    { background: #FEE2E2; color: #991B1B; }
+    .status-tag.gray   { background: #F1F5F9; color: #475569; }
+    .footer-actions { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid var(--border-color); padding: 14px 24px; display: flex; gap: 12px; z-index: 100; box-shadow: 0 -2px 12px rgba(0,0,0,0.08); }
+    body { padding-bottom: 80px; }
     .info-grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px 24px; }
     .info-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
     .info-item { display: flex; flex-direction: column; gap: 4px; }
@@ -92,7 +107,7 @@
       <!-- 详情内容 -->
       <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
 
-        <!-- 头部 detail-header（v1.7.99.210：返回箭头 + 标题 + 编号 + 复制 + tag） -->
+        <!-- 头部 detail-header（v1.7.99.210 + v1.7.99.239：返回箭头 + 标题 + 编号 + 复制 + tag + 操作下拉） -->
         <div class="detail-header">
           <div class="detail-title-row">
             <a class="detail-back" onclick="history.back()" title="返回">«</a>
@@ -102,7 +117,15 @@
             <span class="detail-no-label">追保函编号：</span>
             <span class="detail-no-value">ZBH234324</span>
             <span class="copy-icon" title="复制" onclick="copyText('ZBH234324')">📋</span>
-            <span class="status-tag green">已生效</span>
+            <span class="status-tag green" id="statusTag">已生效</span>
+            <!-- v1.7.99.239 加头部「操作」下拉（按 currentStatus 渲染对应操作项） -->
+            <div style="position: relative; margin-left: auto;" id="actionDropdown">
+              <button class="detail-action-btn" onclick="toggleActionMenu(event)">
+                操作
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </button>
+              <div class="detail-action-menu" id="actionMenu"></div>
+            </div>
           </div>
         </div>
 
@@ -357,6 +380,14 @@
   <script src="../shared/js/topnav-drawer.js"></script>
   </div>
   <!-- /main-content -->
+
+  <!-- v1.7.99.239 审批中固定底栏：approving 状态时显示（固定不滚动，右侧"审批通过/驳回审批"） -->
+  <div class="footer-actions" id="blApprovalFooter" style="display: none;">
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="alert('审批通过（mock）\n追保函编号：ZBH234324')">审批通过</button>
+    <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock）\n追保函编号：ZBH234324')">驳回审批</button>
+  </div>
+
   <script src="../shared/js/left-sidemenu.js"></script>
   <script>
     // v1.7.99.210 + v1.7.99.238 tab 切换（支持 info / approval / log）
@@ -435,6 +466,109 @@
         if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('复制失败', 'error');
       }
     }
+    // v1.7.99.239 footer + ACTION_RULES + currentStatus 解析 + 头部「操作」下拉
+    // 1. currentStatus 从 URL ?status= 解析（默认 effective = 已生效，匹配 user 图 2）
+    var currentStatus = (function() {
+      var keyToStatus = {
+        'all': 'effective',
+        'approving': 'approving',
+        'unsigned': 'unsigned',
+        'uploading': 'unsigned',
+        'effective': 'effective',
+        'rejected': 'rejected',
+        'voided': 'voided'
+      };
+      var m = location.search.match(/[?&]status=([^&]+)/);
+      return m ? (keyToStatus[decodeURIComponent(m[1])] || 'effective') : 'effective';
+    })();
+
+    // 2. statusTag 文字/颜色按 currentStatus 切换
+    var STATUS_META = {
+      approving: { label: '审批中', cls: 'status-tag yellow' },
+      unsigned:  { label: '待上传已生效单据', cls: 'status-tag orange' },
+      effective: { label: '已生效', cls: 'status-tag green' },
+      rejected:  { label: '驳回', cls: 'status-tag red' },
+      voided:    { label: '已作废', cls: 'status-tag gray' }
+    };
+    function updateStatusTag() {
+      var tag = document.getElementById('statusTag');
+      var meta = STATUS_META[currentStatus];
+      if (tag && meta) { tag.className = meta.cls; tag.textContent = meta.label; }
+    }
+
+    // 3. ACTION_RULES 追保函 5 状态操作按钮矩阵
+    var ACTION_RULES = {
+      approving: [
+        { id: 'edit', label: '修改追保函' }
+      ],
+      unsigned: [
+        { id: 'uploadEffect', label: '上传已生效单据' },
+        { id: 'edit',         label: '修改追保函' },
+        { id: 'void',         label: '作废', danger: true }
+      ],
+      effective: [
+        { id: 'edit', label: '修改追保函' }
+      ],
+      rejected: [
+        { id: 'edit', label: '修改追保函' },
+        { id: 'void', label: '作废', danger: true }
+      ],
+      voided: []
+    };
+    function renderActionMenu() {
+      var actions = ACTION_RULES[currentStatus] || [];
+      var menu = document.getElementById('actionMenu');
+      if (!menu) return;
+      var html = '';
+      actions.forEach(function(a) {
+        html += '<a href="javascript:void(0)" data-action="' + a.id + '" class="' + (a.danger ? 'danger' : '') + '">' + a.label + '</a>';
+      });
+      menu.innerHTML = html;
+    }
+    function toggleActionMenu(e) {
+      if (e) e.stopPropagation();
+      var dd = document.getElementById('actionDropdown');
+      var menu = document.getElementById('actionMenu');
+      if (!dd || !menu) return;
+      if (menu.classList.contains('open')) { menu.classList.remove('open'); return; }
+      if (menu.parentElement !== document.body) document.body.appendChild(menu);
+      var rect = dd.getBoundingClientRect();
+      menu.style.top = (rect.bottom + 4) + 'px';
+      menu.style.left = (rect.right - 140) + 'px';
+      menu.classList.add('open');
+    }
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('actionMenu');
+      var dd = document.getElementById('actionDropdown');
+      if (menu && dd && !dd.contains(e.target) && !menu.contains(e.target)) menu.classList.remove('open');
+    });
+
+    // 4. 审批中底部固定底栏
+    (function() {
+      var footer = document.getElementById('blApprovalFooter');
+      if (footer) footer.style.display = (currentStatus === 'approving') ? 'flex' : 'none';
+    })();
+
+    // 5. 头部「操作」按钮点击处理
+    document.body.addEventListener('click', function(e) {
+      var target = e.target.closest('a[data-action]');
+      if (target) {
+        e.preventDefault();
+        var action = target.getAttribute('data-action');
+        var menuEl = document.getElementById('actionMenu');
+        if (menuEl) menuEl.classList.remove('open');
+        var labels = { edit: '修改追保函', uploadEffect: '上传已生效单据', void: '作废' };
+        alert('操作：' + (labels[action] || action) + '（mock）');
+      }
+    });
+
+    // 6. DOM ready 后调用（statusTag 颜色/文字 + 操作下拉）
+    (function() {
+      updateStatusTag();
+      renderActionMenu();
+    })();
+  </script>
+</body>
   </script>
 </body>
 </html>

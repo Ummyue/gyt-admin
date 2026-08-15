@@ -108,6 +108,23 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-15T12:05:00',
+          version: 'v1.7.99.239',
+          module: '合同详情页 3 件事修复（按 user 2026-08-15 11:51）',
+          summary: '合同详情页 3 个 bug 修复。1) bug：contract-purchase-framework-detail.html（v1.7.99.160 + 226 锁定）和 contract-sales-framework-detail.html v1.7.99.160 写死 `var currentStatus = \'executing\'`，导致 (a) 状态机为审批中时详情页底部 fixed 审批操作按钮（审批通过/驳回审批）永远不显示（footer.style.display 永为 none），(b) 顶部右侧「操作」下拉菜单永远空（renderActionMenu 函数定义了但没调用，user 反馈「仍然没有加上」），(c) 顶部 statusTag 永远显示「执行中」（updateContractStat 函数定义了但没调用），(d) 详情页中顶部右侧的「操作」按钮的对应操作项也没有正常显示（actionMenu 永远空）；2) 改造方案（v1.7.99.239）：a) currentStatus 改成从 URL ?status= 解析（参考 bond-letter-detail.html v1.7.99.238 模式），默认 executing；b) DOM ready 后调用 renderActionMenu() + updateContractStat()（v1.7.99.160 函数定义了但没调用，v1.7.99.239 显式调用），approve 时 actionMenu 显示「合同修改」、execute 时显示「上传双签章合同/合同修改/新增补协/发起合同完结」4 项；c) 底部固定 footer 用 JS 动态创建（document.body.insertAdjacentHTML \'beforeend\'，避免 footer div 在 script 闭合标签之后导致 IIFE 同步执行时 footer 还不存在、DOMContentLoaded/load 事件已触发等竞态问题）；3) bug：bond-letter-detail.html v1.7.99.238 缺底部固定 footer + 头部「操作」下拉按钮 + ACTION_RULES 矩阵，user 反馈「追保函状体机为「审批中」时，点击「详情」打开详情页时，底栏固定显示两个对应的审批按钮「审批通过」「驳回审批」」；4) 改造方案（v1.7.99.239 续）：a) 头部加 detail-action-btn + actionMenu（v1.7.99.226 模式）；b) 加 ACTION_RULES 5 状态操作矩阵（approving/unsigned/effective/rejected/voided）；c) 加 blApprovalFooter（approving 时 display=flex，「审批通过」「驳回审批」2 按钮）；d) currentStatus 从 URL ?status= 解析 + updateStatusTag 按 currentStatus 切换 statusTag 文字/颜色；5) 验证：3 个页面 playwright 5 项全 OK（statusTag + footer display + action menu 内容 3 个 status 各自正确）。',
+          changes: [
+            { type: 'modify', location: 'pages/contract-purchase-framework-detail.html currentStatus', before: 'v1.7.99.160 写死 var currentStatus = \'executing\'，footer 永远不显示 + actionMenu 永远空', after: 'v1.7.99.239 从 URL ?status= 解析（默认 executing）' },
+            { type: 'modify', location: 'pages/contract-purchase-framework-detail.html renderActionMenu/updateContractStat 调用', before: 'v1.7.99.160 函数定义了但没调用', after: 'v1.7.99.239 在 IIFE 内显式调用（renderActionMenu + updateContractStat）' },
+            { type: 'modify', location: 'pages/contract-purchase-framework-detail.html footer 渲染', before: 'v1.7.99.160 footer div 在 script 闭合标签之后 + IIFE 同步执行 + DOMContentLoaded/load 监听竞态', after: 'v1.7.99.239 用 JS 动态创建 footer（document.body.insertAdjacentHTML beforeend + 同步设置 display）' },
+            { type: 'modify', location: 'pages/contract-sales-framework-detail.html', before: 'v1.7.99.160 同上 3 个 bug', after: 'v1.7.99.239 同上 3 个修复' },
+            { type: 'add', location: 'pages/bond-letter-detail.html 头部「操作」按钮', before: 'v1.7.99.238 头部只有 status tag', after: 'v1.7.99.239 加 detail-action-btn + actionMenu（v1.7.99.226 模式）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html ACTION_RULES 5 状态操作矩阵', before: 'v1.7.99.238 无操作按钮矩阵', after: 'v1.7.99.239 加 5 状态（approving/unsigned/effective/rejected/voided）操作矩阵' },
+            { type: 'add', location: 'pages/bond-letter-detail.html blApprovalFooter', before: 'v1.7.99.238 缺审批中底栏', after: 'v1.7.99.239 加 blApprovalFooter（approving 时 display=flex，「审批通过」「驳回审批」2 按钮）' },
+            { type: 'add', location: 'pages/bond-letter-detail.html currentStatus + STATUS_META + updateStatusTag', before: 'v1.7.99.238 statusTag 写死「已生效」', after: 'v1.7.99.239 从 URL ?status= 解析 + 按 currentStatus 切换 statusTag 文字/颜色' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.238', after: 'v1.7.99.239' },
+          ],
+        },
+        {
           ts: '2026-08-15T11:55:00',
           version: 'v1.7.99.238',
           module: '追保函管理列表页「新增追保函」按钮 onclick 修复 + 详情页加「审批详情」tab（按 user 2026-08-15 11:51）',
