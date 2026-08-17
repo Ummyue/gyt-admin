@@ -1,0 +1,879 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目详情 - 豫港通 v1.7.99.132</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <style>
+    /* v1.7.99.161 修复：footer-scenario 撑满 footer 宽度，让 <div style="flex:1"> 推右生效 */
+    /* v1.7.99.177 修复：footer-scenario 加 gap: 12px，避免按钮挤在一起 */
+    .footer-scenario { display: flex; align-items: center; width: 100%; gap: 12px; }
+    /* v1.7.99.249 项目描述 2×2 网格 + 总投资信息 3 列网格（强制布局，不被 .info-item 撑开单列） */
+    .project-desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
+    .project-desc-grid .info-item { min-width: 0; }
+    .project-desc-grid .readonly-textarea { width: 100%; box-sizing: border-box; word-break: break-word; }
+    .invest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
+    .invest-grid .info-item { min-width: 0; }
+  </style>
+</head>
+<body>
+  <!-- 顶部 nav -->
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+                    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <!-- 左侧菜单 -->
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><!-- 主区 -->
+    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
+      <!-- 页面标题 -->
+      <div class="page-header">
+        <div class="breadcrumb">
+          <span>准入管理</span>
+          <span class="separator">/</span>
+          <span>项目准入</span>
+          <span class="separator">/</span>
+          <span class="current">项目详情</span>
+        </div>
+      </div>
+
+      <!-- 内容区 -->
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+
+        <!-- 项目信息头 + 企业选择 -->
+        <div class="card" style="margin-bottom: 16px; padding: 20px 24px;">
+          <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
+            <div style="flex: 1;">
+              <!-- v1.7.99.11：状态 tag 动态化（从 URL ?status= 读取，颜色按状态映射） -->
+              <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+                <span class="tag" id="projectStatusTag" style="background: #f1f5f9; color: #64748b;">—</span>
+                <h1 style="font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0;">河南军牧原玉米收购及加工项目</h1>
+              </div>
+              <div class="info-grid info-grid-3" style="row-gap: 8px;">
+                <div class="info-item">
+                  <span class="info-label">创建人</span>
+                  <span class="info-value">张爽</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">业务周期</span>
+                  <span class="info-value" style="font-family: var(--font-mono);">2026-07-12 ~ 2028-07-11</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">创建时间</span>
+                  <span class="info-value">2026-07-12 12:22:32</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">业务类型</span>
+                  <span class="info-value">存货业务</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">货物品类</span>
+                  <span class="info-value">谷物</span>
+                </div>
+                <div class="info-item">
+                  <span class="info-label">预计年销售额</span>
+                  <span class="info-value">¥ 50,000 万元</span>
+                </div>
+              </div>
+              <!-- v1.7.99.26：项目小组成员（只读展示） -->
+              <div class="info-item" style="margin-top: 12px; display: block;">
+                <span class="info-label">项目小组成员</span>
+                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
+                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">张磊</span>
+                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">李雪</span>
+                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">王芳</span>
+                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">赵刚</span>
+                </div>
+              </div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 12px; min-width: 240px;">
+              <div class="form-field" style="margin: 0;">
+                <label class="form-label">选择企业</label>
+                <select class="select">
+                  <option>河南军牧原国际贸易有限公司</option>
+                  <option>郑州铁龙物流有限公司</option>
+                </select>
+              </div>
+              <div class="form-field" style="margin: 0;">
+                <label class="form-label">项目编号</label>
+                <div class="input" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-page);">
+                  <span style="font-family: var(--font-mono); font-size: 13px;">LX20260712001</span>
+                  <button class="btn-text" style="padding: 2px 6px;">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 4 步骤条（v1.7.99.132：项目准入步骤条改回 v1.7.99.127 之前——user 反馈"项目准入的步骤条我哪条指令让你改了"——v1.7.99.127 我擅自改了项目准入的步骤名是错误的） -->
+        <div class="card" style="margin-bottom: 16px; padding: 16px 32px;">
+          <div class="steps">
+            <div class="step">
+              <div class="step-circle completed">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <!-- v1.7.99.132：项目准入步骤 1 改回 "项目信息录入"（v1.7.99.127 错误改成"企业信息录入"） -->
+              <div class="step-label">项目信息录入</div>
+              <div class="step-time">2026-07-12 12:22</div>
+            </div>
+            <div class="step-line completed"></div>
+            <div class="step">
+              <div class="step-circle completed">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
+              </div>
+              <div class="step-label">企业尽调报告</div>
+              <div class="step-time">2026-07-15 09:10</div>
+            </div>
+            <div class="step-line completed"></div>
+            <div class="step">
+              <div class="step-circle current">3</div>
+              <div class="step-label">提交审批</div>
+              <div class="step-time" style="color: var(--color-primary);">进行中</div>
+            </div>
+            <div class="step-line" id="step4Line"></div>
+            <div class="step" id="step4Wrap">
+              <div class="step-circle" id="step4Circle">4</div>
+              <!-- v1.7.99.132：项目准入步骤 4 改回 "准入完成"（v1.7.99.127 错误改成"客户准入与项目关联完成"） -->
+              <div class="step-label">准入完成</div>
+              <div class="step-time" id="step4Time" style="visibility: hidden;">-</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- v1.7.99.249 准入管理详情页顶部加 5 字段（按 user 2026-08-17 15:49 反馈 + 选"2 个独立 card"方案） -->
+        <!-- card 1：项目描述（v1.7.99.249：4 字段 textarea，2×2 网格） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">项目描述</div>
+          </div>
+          <div class="card-body">
+            <div class="project-desc-grid">
+              <div class="info-item">
+                <span class="info-label">项目主要内容</span>
+                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">本项目立足于河南军牧原玉米产区优势，通过"基地+农户"模式整合上游 5 万亩优质玉米种植资源，建设集收购、烘干、仓储、加工于一体的综合基地。计划年收购玉米 30 万吨，覆盖饲料加工、淀粉深加工、食品级玉米粉三大下游产业链。</div>
+              </div>
+              <div class="info-item">
+                <span class="info-label">预计收益</span>
+                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">项目运营期内（2026-2028）预计实现年销售额 5 亿元，年净利润 6000-8000 万元，投资回报率 25%-30%，内部收益率 IRR 约 18%。通过锁定下游核心客户（双汇、牧原等头部饲料企业），保障销售渠道稳定。</div>
+              </div>
+              <div class="info-item">
+                <span class="info-label">保障措施</span>
+                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">1. 价格风险：与下游签订长期框架协议锁定销量，玉米价格波动通过套期保值对冲；2. 信用风险：上游农户采用"订单农业+保底收购"模式，下游客户准入严格审查并要求预付款；3. 合规审查：项目通过农业农村部、国资委合规备案，符合国家粮食安全战略。</div>
+              </div>
+              <div class="info-item">
+                <span class="info-label">呈报事项</span>
+                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">1. 需呈报集团董事会审批的项目总投资额 5 亿元，其中自有资金 1.2 亿元、银行贷款 3 亿元、利用外资 0.5 亿元、其他资金 0.3 亿元；2. 需呈报集团风控委员会的项目准入及限额核定；3. 需呈报集团资金管理部的资金调度方案及还款计划。</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- card 2：总投资信息（v1.7.99.249：5 字段，3 列网格，总投资额置顶自动计算） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">总投资信息</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">单位：万元；总投资额 = 自有资金 + 银行贷款 + 利用外资 + 其他资金（自动计算）</div>
+          </div>
+          <div class="card-body">
+            <div class="invest-grid">
+              <div class="info-item">
+                <span class="info-label">总投资额（万元）</span>
+                <span class="info-value" style="font-family: var(--font-mono); color: var(--color-primary); font-weight: 600; font-size: 16px;">50,000.00</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">自有资金（万元）</span>
+                <span class="info-value" style="font-family: var(--font-mono);">12,000.00</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">银行贷款（万元）</span>
+                <span class="info-value" style="font-family: var(--font-mono);">30,000.00</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">利用外资（万元）</span>
+                <span class="info-value" style="font-family: var(--font-mono);">5,000.00</span>
+              </div>
+              <div class="info-item">
+                <span class="info-label">其他资金（万元）</span>
+                <span class="info-value" style="font-family: var(--font-mono);">3,000.00</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 切换（v1.7.99.106：6 Tab → 5 Tab，删「准入意见」+「审批记录」，新增「审批准入」/ 完成后变「审批准入详情」，附件按 status 动态显示 v1.7.99.74 保留） -->
+        <div class="tabs" style="margin-bottom: 16px;" id="detailTabs">
+          <div class="tab active" data-tab="1">企业信息</div>
+          <div class="tab" data-tab="2">风险扫描结果 <span style="color: var(--color-danger); font-weight: 500;">（1项风险）</span></div>
+          <div class="tab" data-tab="3">客户股权关系</div>
+          <div class="tab" data-tab="4" id="tab4Label">审批准入</div>
+          <div class="tab" data-tab="5" id="tab5Attachment" hidden>附件</div>
+        </div>
+
+        <!-- Tab 1：企业信息 -->
+        <div id="tab1Content">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">基本信息</div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="info-table">
+              <tbody>
+                <tr>
+                  <td class="info-label">企业名称</td>
+                  <td class="info-value">河南军牧原国际贸易有限公司</td>
+                  <td class="info-label">客户类别</td>
+                  <td class="info-value">
+                    <span class="tag tag-blue">上游客户</span>
+                  </td>
+                  <td class="info-label">国家</td>
+                  <td class="info-value">中国</td>
+                </tr>
+                <tr>
+                  <td class="info-label">注册地址</td>
+                  <td class="info-value">河南省郑州市金水区花园路 159 号</td>
+                  <td class="info-label">统一社会信用代码</td>
+                  <td class="info-value" style="font-family: var(--font-mono); font-size: 13px;">91XXXXXXMAXXXXXXXX</td>
+                  <td class="info-label">省份</td>
+                  <td class="info-value">河南</td>
+                </tr>
+                <tr>
+                  <td class="info-label">成立日期</td>
+                  <td class="info-value">2009-01-01</td>
+                  <td class="info-label">经营期限（止）</td>
+                  <td class="info-value">2099-01-01</td>
+                  <td class="info-label">法定代表人</td>
+                  <td class="info-value">张志明</td>
+                </tr>
+                <tr>
+                  <td class="info-label">联系人姓名</td>
+                  <td class="info-value">吴军</td>
+                  <td class="info-label">负责人姓名</td>
+                  <td class="info-value">胡志明</td>
+                  <td class="info-label">负责人电话</td>
+                  <td class="info-value">138 0000 XXXX</td>
+                </tr>
+                <tr>
+                  <td class="info-label">联系人电话</td>
+                  <td class="info-value">138 0000 XXXX</td>
+                  <td class="info-label">经营范围</td>
+                  <td class="info-value" colspan="3">粮食收购、销售；农副产品、饲料销售；货物进出口、技术进出口</td>
+                </tr>
+                <tr>
+                  <td class="info-label">联系人邮箱</td>
+                  <td class="info-value">business@example.com</td>
+                  <td class="info-label">注册资本</td>
+                  <td class="info-value">¥ 5,000 万元</td>
+                  <td class="info-label">实缴资本</td>
+                  <td class="info-value">¥ 5,000 万元</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+        </div>
+        <!-- ========== /Tab 1 ========== -->
+
+        <!-- ========== Tab 2：风险扫描结果 ========== -->
+        <div id="tab2Content" hidden>
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header">
+              <div class="card-title">企业风险扫描结果</div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
+                <span>扫描时间：2026-07-17 15:46:04</span>
+                <span style="color: var(--text-tertiary);">|</span>
+                <span>8 项扫描</span>
+                <span class="risk-count-warn">1 项风险</span>
+              </div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div class="risk-item">
+                <div class="risk-num">1</div>
+                <div class="risk-content">
+                  <div class="risk-name">合作黑名单</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item">
+                <div class="risk-num">2</div>
+                <div class="risk-content">
+                  <div class="risk-name">假国央企</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item">
+                <div class="risk-num">3</div>
+                <div class="risk-content">
+                  <div class="risk-name">失信被执行人信息</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item">
+                <div class="risk-num">4</div>
+                <div class="risk-content">
+                  <div class="risk-name">被执行人信息</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item" style="background: var(--color-primary-lighter);">
+                <div class="risk-num">5</div>
+                <div class="risk-content">
+                  <div class="risk-name">限制消费令信息</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item">
+                <div class="risk-num">6</div>
+                <div class="risk-content">
+                  <div class="risk-name">终本案件</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item">
+                <div class="risk-num">7</div>
+                <div class="risk-content">
+                  <div class="risk-name">税收违法信息</div>
+                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
+                </div>
+                <span class="risk-status ok">暂无风险</span>
+              </div>
+              <div class="risk-item risk-warn">
+                <div class="risk-num">8</div>
+                <div class="risk-content">
+                  <div class="risk-name">行政/工商违法处罚信息</div>
+                  <div class="risk-desc" style="color: var(--color-danger);">截至 2026-07-17 15:46:04，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2022-12-01</mark> 因「销售不合格消防产品」存在 <strong>行政处罚 5 万元</strong>，并已足额缴纳罚款。</div>
+                </div>
+                <span class="risk-status warn">风险提示</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Tab 2 ========== -->
+
+        <!-- ========== Tab 3：客户股权关系 ========== -->
+        <div id="tab3Content" hidden>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">客户股权关系</div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">数据来源：天眼查</div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div style="padding: 20px 24px;">
+                <div class="subsection-title">股东信息</div>
+                <table class="table" style="margin-top: 8px;">
+                  <thead>
+                    <tr>
+                      <th style="width: 40%;">股东</th>
+                      <th style="width: 30%;">持股比例</th>
+                      <th style="width: 30%;">认缴出资日期</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <span style="font-weight: 500;">何永兴</span>
+                        <span class="tag tag-blue" style="margin-left: 8px;">大股东</span>
+                        <span class="tag tag-purple" style="margin-left: 4px;">实际控制人</span>
+                        <span class="tag tag-yellow" style="margin-left: 4px;">最终受益人</span>
+                      </td>
+                      <td><span style="color: var(--color-primary); font-weight: 600;">84%</span></td>
+                      <td>2001-05-18</td>
+                    </tr>
+                    <tr>
+                      <td><span style="font-weight: 500;">何世军</span></td>
+                      <td>16%</td>
+                      <td>2001-05-18</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div style="padding: 4px 24px 20px; border-top: 1px solid var(--border-light);">
+                <div class="subsection-title" style="margin-top: 16px;">对外投资（5 家）</div>
+                <table class="table" style="margin-top: 8px;">
+                  <thead>
+                    <tr>
+                      <th>被投资企业名称</th>
+                      <th>被投资法定代表人</th>
+                      <th>注册资本</th>
+                      <th>投资数额</th>
+                      <th>投资占比</th>
+                      <th>注册时间</th>
+                      <th>状态</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr><td>诸暨致美投资有限公司</td><td>何永兴</td><td class="col-num">100 万人民币</td><td class="col-num">100 万人民币</td><td>100%</td><td>2009-12-02</td><td><span class="tag tag-gray">注销</span></td></tr>
+                    <tr><td>诸暨致美暖通设备有限公司</td><td>何永兴</td><td class="col-num">80 万人民币</td><td class="col-num">80 万人民币</td><td>100%</td><td>2009-12-02</td><td><span class="tag tag-green">存续</span></td></tr>
+                    <tr><td>浙江致美管业有限公司</td><td>何永兴</td><td class="col-num">500 万人民币</td><td class="col-num">500 万人民币</td><td>100%</td><td>2009-12-03</td><td><span class="tag tag-gray">注销</span></td></tr>
+                    <tr><td>浙江橙晨机电有限公司</td><td>何仕君</td><td class="col-num">2,000 万人民币</td><td class="col-num">—</td><td>90%</td><td>2004-07-15</td><td><span class="tag tag-green">存续</span></td></tr>
+                    <tr><td>恒森管业科技（浙江）有限公司</td><td>何泽森</td><td class="col-num">10,000 万人民币</td><td class="col-num">1,800 万人民币</td><td>60%</td><td>2022-12-30</td><td><span class="tag tag-green">存续</span></td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Tab 3 ========== -->
+
+        <!-- ========== Tab 4：审批准入（v1.7.99.106 新增：合并原 Tab 4 准入意见 + Tab 5 审批记录，3 角色场景：发起前/可撤回/审批人处理，完成后变「审批准入详情」） ========== -->
+        <div id="tab4Content" hidden>
+          <!-- 顶部黄底提示（按状态显示/隐藏） -->
+          <div id="approvalNoticeBar" class="approval-status" style="margin-bottom: 16px; display: none;">
+            <div class="approval-status-icon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                <span>审批进行中</span>
+                <span class="tag tag-yellow">待审批</span>
+                <span class="tag tag-blue">外部 OA 系统</span>
+              </div>
+              <div class="approval-status-desc">河南华信物产有限公司 · 准入申请 <strong>ADM-2026-0451</strong> 已提交至外部审批系统，当前在「<strong id="approvalCurrentNode">一级审批</strong>」阶段。</div>
+              <div class="approval-status-meta">
+                <div><span style="color: var(--text-tertiary);">申请编号</span> ADM-2026-0451</div>
+                <div><span style="color: var(--text-tertiary);">提交时间</span> 2026-07-19 16:45</div>
+                              </div>
+            </div>
+            <button class="btn btn-danger-outline" id="withdrawBtn" style="display: none;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9"/><polyline points="3 4 3 9 8 9"/></svg>
+              撤回申请
+            </button>
+          </div>
+
+          <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;">
+            <!-- 左侧：审批进度 time-line（v1.7.99.106 沿用 v1.7.99.13 5 节点结构） -->
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">审批进度 <span style="color: var(--text-tertiary); font-weight: 400; font-size: 13px;">（共 5 个节点，当前进行中 ①）</span></div>
+                <button class="btn btn-text">🔄 刷新</button>
+              </div>
+              <div class="card-body" style="padding: 0;">
+                <div class="approval-timeline">
+                  <!-- 节点 1 -->
+                  <div class="at-item completed">
+                    <div class="at-circle">✓</div>
+                    <div class="at-content">
+                      <div class="at-title">
+                        <span class="at-name">① 提交申请</span>
+                        <span class="at-status ok">已完成</span>
+                      </div>
+                      <div class="at-sub">张爽（业务部负责人）提交准入申请</div>
+                      <div class="at-meta">
+                        <span>🕐 2026-07-19 16:45:23</span>
+                        <span>📎 附件 4 份</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 节点 2（一级审批） -->
+                  <div class="at-item completed">
+                    <div class="at-circle">✓</div>
+                    <div class="at-content">
+                      <div class="at-title">
+                        <span class="at-name">② 一级审批</span>
+                        <span class="at-status ok">已通过</span>
+                      </div>
+                      <div class="at-sub">审批人：张爽（角色名称）</div>
+                      <div class="at-opinion">审批意见：同意，背景调查材料齐全，企业基本面良好，符合准入条件。</div>
+                      <div class="at-meta">
+                        <span>🕐 2026-07-19 18:22:10</span>
+                        <span>⏱ 历时 1 小时 37 分</span>
+                      </div>
+                    </div>
+                  </div>
+                  <!-- 节点 3（二级审批·进行中） -->
+                  <div class="at-item current">
+                    <div class="at-circle">⏳</div>
+                    <div class="at-content">
+                      <div class="at-title">
+                        <span class="at-name">③ 二级审批</span>
+                        <span class="at-status running">进行中</span>
+                      </div>
+                      <div class="at-sub">审批人：宋英帆（审批部经理）</div>
+                      <div class="at-opinion">等待审批人处理，已等待 3 小时 30 分钟</div>
+                      <div class="at-meta">
+                        <span>🕐 2026-07-19 22:00:10</span>
+                        <span>⏱ 等待中</span>
+                      </div>
+                      <!-- v1.7.99.177 修复：移除 v1.7.99.108 内嵌的"审批通过+驳回审批"（底部 footer 已固定显示，重复了） -->
+                      <!-- （v1.7.99.160 在底部固定底栏同步显示审批通过/驳回审批——user 反馈"不应该全部都加"） -->
+                    </div>
+                  </div>
+                  <!-- 节点 4（三级审批·待开始） -->
+                  <div class="at-item pending">
+                    <div class="at-circle">④</div>
+                    <div class="at-content">
+                      <div class="at-title">
+                        <span class="at-name">④ 三级审批</span>
+                        <span class="at-status pending">待开始</span>
+                      </div>
+                      <div class="at-sub">审批人：李娜（平台总经理）</div>
+                      <div class="at-meta">需在二级审批通过后自动触发</div>
+                    </div>
+                  </div>
+                  <!-- 节点 5（准入完成·待开始） -->
+                  <div class="at-item pending">
+                    <div class="at-circle">⑤</div>
+                    <div class="at-content">
+                      <div class="at-title">
+                        <span class="at-name">⑤ 准入完成</span>
+                        <span class="at-status pending">待开始</span>
+                      </div>
+                      <div class="at-sub">三级审批通过后自动归档，企业获得准入凭证</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右侧：3 卡（关键指标 / 实时活动 / 催办） -->
+            <div style="display: flex; flex-direction: column; gap: 16px;">
+              <!-- 关键指标 -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">关键指标</div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                  <div class="kpi-list">
+                    <div class="kpi-row">
+                      <span class="kpi-label">当前节点</span>
+                      <span class="kpi-value blue">二级审批</span>
+                    </div>
+                    <div class="kpi-row">
+                      <span class="kpi-label">剩余节点</span>
+                      <span class="kpi-value">3 个（审核 / 复核 / 完成）</span>
+                    </div>
+                    <div class="kpi-row">
+                      <span class="kpi-label">已耗时</span>
+                      <span class="kpi-value">1 天 7 小时</span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 实时活动（最近 24h） -->
+              <div class="card">
+                <div class="card-header">
+                  <div class="card-title">实时活动 <span style="color: var(--text-tertiary); font-weight: 400; font-size: 12px;">最近 24h</span></div>
+                </div>
+                <div class="card-body" style="padding: 0;">
+                  <div class="activity-list">
+                    <div class="activity-item">
+                      <div class="activity-icon">👁</div>
+                      <div class="activity-body">
+                        <div class="activity-text">宋英帆 查看了审批单</div>
+                        <div class="activity-time">10 分钟前</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon">✓</div>
+                      <div class="activity-body">
+                        <div class="activity-text">王浩 通过了「银行审查节点 1/3」</div>
+                        <div class="activity-time">2 小时前 · 09:10</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon">🔔</div>
+                      <div class="activity-body">
+                        <div class="activity-text">系统向会签节点发起催办</div>
+                        <div class="activity-time">3 小时前 · 08:45</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon">⏰</div>
+                      <div class="activity-body">
+                        <div class="activity-text">邱占伍 查看了审批单</div>
+                        <div class="activity-time">5 小时前 · 06:30</div>
+                      </div>
+                    </div>
+                    <div class="activity-item">
+                      <div class="activity-icon">📨</div>
+                      <div class="activity-body">
+                        <div class="activity-text">张爽 通过了「一级审批」</div>
+                        <div class="activity-time">昨天 · 18:22</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 催办卡（v1.7.99.106 沿用 v1.7.99.13 黄底） -->
+              <div class="card" style="background: #FEF3C7; border: 1px solid #FCD34D;">
+                <div class="card-body" style="padding: 16px;">
+                  <div style="display: flex; align-items: flex-start; gap: 12px;">
+                    <div style="font-size: 18px;">⚠️</div>
+                    <div style="flex: 1;">
+                      <div style="font-size: 13px; color: #92400E; font-weight: 500; margin-bottom: 4px;">宋英帆 已 2 小时未处理</div>
+                      <div style="font-size: 12px; color: #A16207; margin-bottom: 12px;">建议催办 @ 该审批人 加快处理</div>
+                      <button class="btn btn-warning" style="background: #F59E0B; color: #fff; border: 0; padding: 4px 12px; font-size: 12px; border-radius: 4px;">立即催办</button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Tab 4 ========== -->
+
+        <!-- ========== Tab 5：附件（v1.7.99.74 新增：执行中/已完结状态下展示客户准入报告附件，v1.7.99.106 沿用保留） ========== -->
+        <div id="tab5Content" hidden>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">客户准入附件</div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">准入完成后归档的客户准入报告、承诺函、股权穿透图等附件</div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-light);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">客户准入尽调报告.pdf</div>
+                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">2.4 MB · 上传人 张爽 · 2026-03-08 14:30</div>
+                </div>
+                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
+                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
+              </div>
+              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-light);">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">企业风控合规承诺函.pdf</div>
+                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">856 KB · 上传人 张爽 · 2026-03-08 14:32</div>
+                </div>
+                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
+                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
+              </div>
+              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px;">
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                <div style="flex: 1; min-width: 0;">
+                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">关联企业股权穿透图.pdf</div>
+                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">1.2 MB · 上传人 李建国 · 2026-03-09 10:15</div>
+                </div>
+                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
+                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Tab 5 ========== -->
+
+      </div>
+
+      <!-- 底部固定操作栏（v1.7.99.108 修复：按 user 3 张参考图实际，仅保留必要的底部按钮） -->
+      <div class="footer-actions" id="footerActions">
+        <!-- 场景 A：申请人发起前（status=审批中 + 步骤3未发起）→ 提交审批（按 user 参考图 3 实际） -->
+        <div class="footer-scenario" data-scenario="pending-submit" style="display: none;">
+          <button class="btn btn-secondary">导出详情</button>
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary">复制为新项目</button>
+          <button class="btn btn-secondary">返回</button>
+          <button class="btn btn-primary">提交审批</button>
+        </div>
+        <!-- 场景 B：申请人发起后审批中（status=审批中 + 步骤3已发起 + 申请人视角）→ 顶部黄底撤回申请 + 底部仅复制为新项目（按 user 参考图 1 实际） -->
+        <div class="footer-scenario" data-scenario="approving-applicant" style="display: none;">
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary">复制为新项目</button>
+        </div>
+        <!-- 场景 C：审批人处理中（status=审批中 + 步骤3进行中 + 审批人视角）→ 审批通过+驳回审批 内嵌到 time-line 二级审批节点下方（按 user 参考图 2 实际）+ 底部固定底栏同步显示审批通过/驳回审批（v1.7.99.160 按 user 反馈：让用户在非"审批准入" tab 下也能完成审批操作） -->
+        <!-- v1.7.99.189：底栏最左加"导出客户准入报告"按钮（user 反馈：审批中 + 执行中 2 个状态统一加） -->
+        <div class="footer-scenario" data-scenario="approving-approver" style="display: none;">
+          <button class="btn btn-secondary">导出客户准入报告</button>
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary">复制为新项目</button>
+          <button class="btn btn-primary">审批通过</button>
+          <button class="btn btn-danger-outline">驳回审批</button>
+        </div>
+        <!-- 场景 D：完成审批后（status=执行中 + 已完结）→ 复制为新项目 + 返回（只读）+ 导出客户准入报告（v1.7.99.189 新增左下方） -->
+        <div class="footer-scenario" data-scenario="done" style="display: none;">
+          <button class="btn btn-secondary">导出客户准入报告</button>
+          <div style="flex: 1;"></div>
+          <button class="btn btn-secondary">复制为新项目</button>
+          <button class="btn btn-secondary">返回</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // ===== v1.7.99.106 Tab 切换（5 tab：1企业信息/2风险扫描/3客户股权关系/4审批准入/5附件） =====
+    function switchTab(n) {
+      n = Math.max(1, Math.min(5, n));
+      [1, 2, 3, 4, 5].forEach(i => {
+        const el = document.getElementById(`tab${i}Content`);
+        if (el) el.hidden = (i !== n);
+      });
+      // tab 标签 active
+      document.querySelectorAll('#detailTabs .tab').forEach((t) => {
+        t.classList.toggle('active', parseInt(t.dataset.tab, 10) === n);
+      });
+    }
+    // 点击 tab 标签
+    document.querySelectorAll('#detailTabs .tab').forEach(t => {
+      t.addEventListener('click', () => {
+        const n = parseInt(t.dataset.tab, 10);
+        switchTab(n);
+      });
+    });
+    // URL hook：?tab=N 直接进入指定 tab
+    const tabMatch = location.search.match(/tab=(\d+)/);
+    if (tabMatch) {
+      const n = parseInt(tabMatch[1], 10);
+      if (n >= 1 && n <= 5) switchTab(n);
+    }
+
+    // v1.7.99.106：状态/角色驱动（从 URL ?status= 和 ?role= 读取，决定按钮场景 + Tab 4 名称 + 顶部黄底）
+    (function() {
+      // 1. 状态 tag 颜色映射
+      var statusMap = {
+        '待提交': { bg: '#f1f5f9', color: '#64748b' },
+        '审核中': { bg: '#fef3c7', color: '#a16207' },
+        '审批中': { bg: '#fef3c7', color: '#a16207' },
+        '执行中': { bg: '#dbeafe', color: '#1e40af' },
+        '已完结': { bg: '#dcfce7', color: '#15803d' },
+        '驳回':   { bg: '#fee2e2', color: '#b91c1c' }
+      };
+      var statusMatch = location.search.match(/[?&]status=([^&]+)/);
+      var roleMatch = location.search.match(/[?&]role=([^&]+)/);
+      var status = statusMatch ? decodeURIComponent(statusMatch[1]) : '审批中';
+      var role = roleMatch ? decodeURIComponent(roleMatch[1]) : 'approver';
+      var tag = document.getElementById('projectStatusTag');
+      if (tag) {
+        tag.textContent = status;
+        var style = statusMap[status] || statusMap['审批中'];
+        tag.style.background = style.bg;
+        tag.style.color = style.color;
+      }
+
+      // 2. 决定 4 场景（v1.7.99.106 决策锁定）：
+      //    pending-submit：审批中 + 步骤3未发起 + 申请人视角 → 客户股权关系 active + 提交审批
+      //    approving-applicant：审批中 + 步骤3已发起 + 申请人视角 → 审批准入 active + 顶部撤回申请 + 底部只读
+      //    approving-approver：审批中 + 步骤3进行中 + 审批人视角 → 审批准入 active + 审批通过+驳回审批
+      //    done：已完结 → 审批准入详情 active + 复制为新项目+返回（只读）
+      var scenario = 'approving-approver'; // 默认
+      if (status === '审批中' && role === 'applicant-submit') {
+        scenario = 'pending-submit';
+      } else if (status === '审批中' && role === 'applicant') {
+        scenario = 'approving-applicant';
+      } else if (status === '审批中' && role === 'approver') {
+        scenario = 'approving-approver';
+      } else if (status === '已完结' || status === '执行中') {
+        scenario = 'done';
+      }
+      // 隐藏所有场景，显示当前场景
+      document.querySelectorAll('.footer-scenario').forEach(function(el) {
+        el.style.display = 'none';
+      });
+      var activeScenario = document.querySelector('.footer-scenario[data-scenario="' + scenario + '"]');
+      if (activeScenario) activeScenario.style.display = 'flex';
+
+      // v1.7.99.108 修复：time-line 内嵌审批操作按钮（审批通过+驳回审批）按 scenario 动态显示
+      // （按 user 参考图 2 实际：审批通过+驳回审批 内嵌到当前审批节点下方，不是底部按钮栏）
+      document.querySelectorAll('.at-actions[data-show-scenario]').forEach(function(el) {
+        el.style.display = (el.getAttribute('data-show-scenario') === scenario) ? 'flex' : 'none';
+      });
+
+      // 3. Tab 4 名称动态：完成后变"审批准入详情"（v1.7.99.106 决策）
+      var tab4Label = document.getElementById('tab4Label');
+      if (tab4Label) {
+        if (scenario === 'done') {
+          tab4Label.textContent = '审批准入详情';
+        } else {
+          tab4Label.textContent = '审批准入';
+        }
+      }
+
+      // 4. 顶部黄底提示（仅 approving-applicant 和 approving-approver 场景显示）
+      var noticeBar = document.getElementById('approvalNoticeBar');
+      if (noticeBar) {
+        if (scenario === 'approving-applicant' || scenario === 'approving-approver') {
+          noticeBar.style.display = 'flex';
+        } else {
+          noticeBar.style.display = 'none';
+        }
+      }
+      // 5. 撤回申请按钮：仅 approving-applicant 场景显示
+      var withdrawBtn = document.getElementById('withdrawBtn');
+      if (withdrawBtn) {
+        if (scenario === 'approving-applicant') {
+          withdrawBtn.style.display = 'inline-flex';
+        } else {
+          withdrawBtn.style.display = 'none';
+        }
+      }
+
+      // 6. 默认 active tab（按场景）：
+      //    pending-submit → tab 3 客户股权关系
+      //    approving-applicant/approver → tab 4 审批准入
+      //    done → tab 4 审批准入详情
+      //    默认（无 URL）→ tab 4 审批准入
+      var defaultTab = 4;
+      if (scenario === 'pending-submit') defaultTab = 3;
+      // 优先级：URL ?tab=N > 场景默认
+      if (!tabMatch) switchTab(defaultTab);
+
+      // 7. v1.7.99.74：执行中/已完结状态下，tab 5「附件」显示
+      var tab5Attachment = document.getElementById('tab5Attachment');
+      if (tab5Attachment && (status === '执行中' || status === '已完结')) {
+        tab5Attachment.hidden = false;
+      }
+
+      // 8. v1.7.99.74：执行中/已完结状态下，4 步骤第 4 步变 completed
+      if (status === '执行中' || status === '已完结') {
+        var step4Circle = document.getElementById('step4Circle');
+        var step4Line = document.getElementById('step4Line');
+        var step4Time = document.getElementById('step4Time');
+        if (step4Circle) {
+          step4Circle.classList.add('completed');
+          step4Circle.classList.remove('current');
+          step4Circle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        }
+        if (step4Line) {
+          step4Line.classList.add('completed');
+        }
+        if (step4Time) {
+          step4Time.style.visibility = 'visible';
+          step4Time.style.color = 'var(--text-tertiary)';
+          step4Time.textContent = status === '已完结' ? '2026-08-15 10:00' : '准入已完成';
+        }
+      }
+    })();
+  </script>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  </div>
+  <!-- /main-content -->
+</body>
+</html>

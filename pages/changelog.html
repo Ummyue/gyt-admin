@@ -108,6 +108,18 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T16:30:00',
+          version: 'v1.7.99.249',
+          module: '准入管理详情页顶部加 5 字段（按 user 2026-08-17 15:49 反馈 + 选"2 个独立 card"方案）',
+          summary: '准入管理（pages/project-detail.html）详情页顶部加 5 字段（项目主要内容/预计收益/保障措施/呈报事项 4 字段 textarea + 总投资信息 5 字段）。1) 现状：v1.7.99.85 旧版详情页顶部只有项目信息头（6 字段 info-grid + 右侧企业/项目编号）+ 4 步骤条 + tab 区（企业信息/风险扫描/客户股权/审批准入 4 tab），缺少 project-apply.html 新建时填的 5 字段（项目主要内容/预计收益/保障措施/呈报事项/总投资信息 5 字段），user 2026-08-17 15:49 反馈需要在准入管理中的详情页顶部补充增加；2) 方案选型：给 user 3 个方案（2 个独立 card 推荐 / 1 个大 card 集中 / 合并到顶部信息 card），user 选"2 个独立 card"；3) 改造方案（v1.7.99.249）：a) 在 4 步骤条 card 闭合后 + Tab 切换前插入 2 个新 card；b) card 1「项目描述」：4 字段 textarea（项目主要内容/预计收益/保障措施/呈报事项）2×2 网格布局（.project-desc-grid 1fr 1fr）+ readonly 灰色背景只读展示 + min-height: 60px；c) card 2「总投资信息」：5 字段 3 列网格布局（.invest-grid repeat(3, 1fr)）+ 总投资额 50,000.00（蓝色加粗等宽字体）置顶第 1 行 + 自有资金 12,000.00 / 银行贷款 30,000.00 / 利用外资 5,000.00 / 其他资金 3,000.00 + 卡片头部右侧说明文字"单位：万元；总投资额 = 自有资金 + 银行贷款 + 利用外资 + 其他资金（自动计算）"；d) 加 CSS 强制布局：.project-desc-grid + .invest-grid + .info-item min-width:0（避免 .info-item 默认宽度撑开单列）；e) textarea 内容与 project-apply.html 占位符一致（项目主要内容"5 万亩玉米种植资源"/预计收益"年销售额 5 亿元/IRR 18%"/保障措施"价格/信用/合规 3 类"/呈报事项"董事会/风控委员会/资金管理部 3 个"），保持新建与详情页文案一致；4) 验证：playwright 验证 2 个新 card 在 4 步骤条和 tab 区间 + 4 字段 textarea + 5 字段投资信息 + 总投资额 50,000.00 + 0 page error。',
+          changes: [
+            { type: 'add', location: 'pages/project-detail.html card「项目描述」（v1.7.99.249）', before: 'v1.7.99.85 旧版详情页顶部 4 步骤条后直接 Tab 切换，无项目描述 4 字段', after: 'v1.7.99.249 加 card「项目描述」：4 字段 textarea（项目主要内容/预计收益/保障措施/呈报事项）2×2 网格布局，readonly 灰色背景只读展示，textarea 内容与 project-apply.html 占位符一致' },
+            { type: 'add', location: 'pages/project-detail.html card「总投资信息」（v1.7.99.249）', before: 'v1.7.99.85 旧版详情页无总投资信息 5 字段', after: 'v1.7.99.249 加 card「总投资信息」：5 字段 3 列网格（总投资额 50,000.00 蓝色加粗等宽字体置顶 + 自有资金 12,000.00 / 银行贷款 30,000.00 / 利用外资 5,000.00 / 其他资金 3,000.00），卡片头部右侧说明"单位：万元；总投资额 = ...（自动计算）"' },
+            { type: 'add', location: 'pages/project-detail.html CSS 强制布局（v1.7.99.249）', before: 'v1.7.99.85 旧版用 .info-grid-2 / .info-grid-3 但 .info-item 默认宽度撑开单列', after: 'v1.7.99.249 加 .project-desc-grid 1fr 1fr + .invest-grid repeat(3, 1fr) + .info-item min-width:0 强制布局' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.248', after: 'v1.7.99.249' },
+          ],
+        },
+        {
           ts: '2026-08-17T15:00:00',
           version: 'v1.7.99.248',
           module: '预警规则配置-交易监控 tap 4 件事统一调整（按 user 2026-08-17 14:58 反馈）',
