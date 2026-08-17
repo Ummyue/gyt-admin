@@ -108,6 +108,19 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T14:35:00',
+          version: 'v1.7.99.245',
+          module: '预警规则配置-交易监控 tap「添加规则」弹窗（按 user 2026-08-17 14:26 图 1）',
+          summary: '预警规则配置（pages/warning-config.html）交易监控 tap「添加规则」按钮触发的新建预警规则弹窗。1) 现状：v1.7.99.104 旧版「添加规则」按钮无 onclick 事件，点击无反应，user 2026-08-17 14:26 反馈需要做弹窗 + 提供每个字段的选项内容和联动关系；2) 改造方案（v1.7.99.245）：a) 给「添加规则」按钮加 onclick="openAddRuleModal()" 打开弹窗；b) 在 body 末尾 </body> 之前插入 modal 弹窗（右侧 drawer 风格 520px 宽 + 半透明黑色遮罩 + 10 字段表单 + 取消/提交按钮 + 帮助图标）；c) 10 字段：规则应用范围（全部合同/指定合同，默认全部合同）+ 业务类型（存货类型，单值）+ 规则类型（合同监控/货物监控/结算监控/发票监控）+ 规则名称（按规则类型动态切换：合同监控=合同超期未完结/超期未上传有效单据（合同）/超期未上传生效单据（补协），货物监控=超期未上传有效单据（货转），结算监控=超期未上传生效单据（结算单），发票监控=发票未开/发票状态异常）+ 风险等级（高/中/低，默认高）+ 考核项（按规则名称自动回显，只读）+ 配置项（天数+超过+15+天，inline 4 元素组合）+ 规则明细（按规则名称自动回显，含#占位符#，只读）+ 消息类型（业务提醒/预警警告，默认业务提醒）+ 备注（0/50 字符计数 textarea）；d) JS 联动：RULE_NAME_MAP 4 规则类型→7 规则名称映射 + onRuleTypeChange 切换规则名称 + onRuleNameChange 回显考核项和规则明细 + 提交校验 7 必填字段 + ESC 关闭 + 点击遮罩关闭 + 备注字数实时统计；3) 验证：playwright 验证 4 规则类型 + 7 规则名称映射 + 考核项/规则明细自动回显（合同超期未完结/货转/发票状态异常 3 个 case 全过）+ 备注字数 = 6 + ESC 关闭弹窗 + 0 page error。',
+          changes: [
+            { type: 'add', location: 'pages/warning-config.html 交易监控 tap「添加规则」按钮 onclick', before: 'v1.7.99.104 旧版按钮无 onclick，点击无反应', after: 'v1.7.99.245 加 onclick="openAddRuleModal()" 打开弹窗' },
+            { type: 'add', location: 'pages/warning-config.html 新建预警规则弹窗 modal（v1.7.99.245）', before: 'v1.7.99.104 旧版无 modal 弹窗', after: 'v1.7.99.245 加右侧 drawer 风格 modal 弹窗（520px 宽 + 遮罩 + 10 字段表单 + 取消/提交）' },
+            { type: 'add', location: 'pages/warning-config.html modal CSS（v1.7.99.245）', before: 'v1.7.99.104 无 modal 样式', after: 'v1.7.99.245 加 modal-mask / add-rule-drawer / add-rule-header / add-rule-body / add-rule-row / add-rule-select / add-rule-input / add-rule-textarea / add-rule-config / add-rule-footer 9 个样式类' },
+            { type: 'add', location: 'pages/warning-config.html modal JS 联动（v1.7.99.245）', before: 'v1.7.99.104 无联动', after: 'v1.7.99.245 加 RULE_NAME_MAP 4 类型→7 规则名称映射 + onRuleTypeChange + onRuleNameChange + 提交校验 7 必填 + ESC/遮罩关闭 + 备注字数统计' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.244', after: 'v1.7.99.245' },
+          ],
+        },
+        {
           ts: '2026-08-17T13:00:00',
           version: 'v1.7.99.244',
           module: '预警管理-交易监控 tap 表格加回「操作」列（按 user 2026-08-17 12:54 反馈）',
