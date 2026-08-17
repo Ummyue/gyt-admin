@@ -1135,67 +1135,201 @@
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
       </div>
-      <!-- 筛选区（v1.7.99.246：3 字段 + label 上对齐） -->
+      <!-- 筛选区（v1.7.99.247：3 字段实时过滤 + 去掉"重置/查询"按钮，按 v1.7.99.184 全站标准） -->
       <div class="picker-filter">
         <div class="picker-cell">
           <span class="picker-label">合同编号</span>
-          <input type="text" class="picker-input" id="pickerContractNo" placeholder="请输入">
+          <input type="text" class="picker-input" id="pickerContractNo" placeholder="请输入" oninput="onPickerFilterInput()">
         </div>
         <div class="picker-cell">
-          <span class="picker-label">卖方</span>
-          <input type="text" class="picker-input" id="pickerSeller" placeholder="请输入">
+          <span class="picker-label">买卖双方</span>
+          <input type="text" class="picker-input" id="pickerParty" placeholder="请输入卖方或买方" oninput="onPickerFilterInput()">
         </div>
         <div class="picker-cell">
           <span class="picker-label">签订日期</span>
           <div class="picker-date-range">
-            <input type="text" class="picker-input" id="pickerDateStart" placeholder="开始日期">
+            <input type="text" class="picker-input" id="pickerDateStart" placeholder="开始日期" oninput="onPickerFilterInput()">
             <span class="picker-sep">~</span>
-            <input type="text" class="picker-input" id="pickerDateEnd" placeholder="结束日期">
+            <input type="text" class="picker-input" id="pickerDateEnd" placeholder="结束日期" oninput="onPickerFilterInput()">
           </div>
         </div>
       </div>
-      <!-- 操作按钮 -->
-      <div class="picker-actions">
-        <button type="button" class="btn-reset" onclick="resetPickerFilter()">重置</button>
-        <button type="button" class="btn-primary" onclick="queryPicker()">查询</button>
-      </div>
-      <!-- 表格：复选框 + 6 字段 -->
-      <div class="picker-table-wrap">
-        <table class="picker-table">
-          <colgroup>
-            <col style="width: 5%;">
-            <col style="width: 22%;">
-            <col style="width: 18%;">
-            <col style="width: 18%;">
-            <col style="width: 12%;">
-            <col style="width: 13%;">
-            <col style="width: 12%;">
-          </colgroup>
-          <thead>
-            <tr>
-              <th class="picker-checkbox-cell"><input type="checkbox" id="pickerCheckAll" onchange="onPickerCheckAll()"></th>
-              <th>合同编号</th>
-              <th>卖方</th>
-              <th>买方</th>
-              <th>签订日期</th>
-              <th>合同金额（元）</th>
-              <th>交货期限</th>
-            </tr>
-          </thead>
-          <tbody id="pickerTbody">
-            <!-- 10 行 mock（v1.7.99.246：v1.7.99.243 预警详情页同款数据） -->
-            <tr data-contract-no="YTYXSMYXGS-TR-202206-001"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202206-001</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-06-20</td><td>18,800,000.00</td><td>2022-07-01 至 2023-06-30</td></tr>
-            <tr data-contract-no="TYYGJ-HNRH-202306-015"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202306-015</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-03-22</td><td>15,200,000.00</td><td>2023-04-01 至 2023-04-30</td></tr>
-            <tr data-contract-no="TYYGJ-HNRH-202306-016"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202306-016</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-03-25</td><td>22,500,000.00</td><td>2023-04-10 至 2023-05-10</td></tr>
-            <tr data-contract-no="YTYXSMYXGS-TR-202207-008"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202207-008</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-07-15</td><td>12,800,000.00</td><td>2022-08-01 至 2023-07-31</td></tr>
-            <tr data-contract-no="TYYGJ-HNRH-202305-002"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202305-002</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-05-10</td><td>9,500,000.00</td><td>2023-05-20 至 2023-06-20</td></tr>
-            <tr data-contract-no="YTYXSMYXGS-TR-202208-012"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202208-012</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-08-22</td><td>16,300,000.00</td><td>2022-09-01 至 2023-08-31</td></tr>
-            <tr data-contract-no="TYYGJ-HNRH-202304-005"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202304-005</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-04-15</td><td>11,200,000.00</td><td>2023-05-01 至 2023-05-31</td></tr>
-            <tr data-contract-no="YTYXSMYXGS-TR-202209-003"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202209-003</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-09-08</td><td>20,100,000.00</td><td>2022-10-01 至 2023-09-30</td></tr>
-            <tr data-contract-no="TYYGJ-HNRH-202307-022"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202307-022</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-07-20</td><td>14,600,000.00</td><td>2023-08-01 至 2023-08-31</td></tr>
-            <tr data-contract-no="YTYXSMYXGS-TR-202210-018"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202210-018</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-10-30</td><td>17,900,000.00</td><td>2022-11-15 至 2023-11-14</td></tr>
-          </tbody>
-        </table>
+      <!-- v1.7.99.247 卡片列表（替换 v1.7.99.246 7 列表格，每张卡片=1 行合同数据，信息更聚焦） -->
+      <div class="picker-cards" id="pickerCards">
+        <div class="picker-card" data-contract-no="YTYXSMYXGS-TR-202206-001" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2022-06-20">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">YTYXSMYXGS-TR-202206-001</a>
+              <span class="picker-card-amount">¥ 18,800,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2022-06-20</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2022-07-01 至 2023-06-30</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="TYYGJ-HNRH-202306-015" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2023-03-22">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">TYYGJ-HNRH-202306-015</a>
+              <span class="picker-card-amount">¥ 15,200,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2023-03-22</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2023-04-01 至 2023-04-30</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="TYYGJ-HNRH-202306-016" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2023-03-25">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">TYYGJ-HNRH-202306-016</a>
+              <span class="picker-card-amount">¥ 22,500,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2023-03-25</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2023-04-10 至 2023-05-10</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="YTYXSMYXGS-TR-202207-008" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2022-07-15">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">YTYXSMYXGS-TR-202207-008</a>
+              <span class="picker-card-amount">¥ 12,800,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2022-07-15</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2022-08-01 至 2023-07-31</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="TYYGJ-HNRH-202305-002" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2023-05-10">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">TYYGJ-HNRH-202305-002</a>
+              <span class="picker-card-amount">¥ 9,500,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2023-05-10</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2023-05-20 至 2023-06-20</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="YTYXSMYXGS-TR-202208-012" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2022-08-22">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">YTYXSMYXGS-TR-202208-012</a>
+              <span class="picker-card-amount">¥ 16,300,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2022-08-22</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2022-09-01 至 2023-08-31</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="TYYGJ-HNRH-202304-005" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2023-04-15">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">TYYGJ-HNRH-202304-005</a>
+              <span class="picker-card-amount">¥ 11,200,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2023-04-15</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2023-05-01 至 2023-05-31</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="YTYXSMYXGS-TR-202209-003" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2022-09-08">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">YTYXSMYXGS-TR-202209-003</a>
+              <span class="picker-card-amount">¥ 20,100,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2022-09-08</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2022-10-01 至 2023-09-30</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="TYYGJ-HNRH-202307-022" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2023-07-20">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">TYYGJ-HNRH-202307-022</a>
+              <span class="picker-card-amount">¥ 14,600,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2023-07-20</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2023-08-01 至 2023-08-31</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-card" data-contract-no="YTYXSMYXGS-TR-202210-018" data-seller="广州壹企签信息科技有限公司" data-buyer="华能巢湖发电有限责任公司" data-date="2022-10-30">
+          <label class="picker-card-checkbox"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></label>
+          <div class="picker-card-main">
+            <div class="picker-card-header">
+              <a href="javascript:void(0)" class="picker-card-no">YTYXSMYXGS-TR-202210-018</a>
+              <span class="picker-card-amount">¥ 17,900,000.00</span>
+            </div>
+            <div class="picker-card-parties">
+              <div class="picker-party"><span class="picker-party-label">卖方</span><span class="picker-party-name">广州壹企签信息科技有限公司</span></div>
+              <div class="picker-party"><span class="picker-party-label">买方</span><span class="picker-party-name">华能巢湖发电有限责任公司</span></div>
+            </div>
+            <div class="picker-card-info">
+              <span class="picker-info-item"><span class="picker-info-label">签订日期</span>2022-10-30</span>
+              <span class="picker-info-item"><span class="picker-info-label">交货期限</span>2022-11-15 至 2023-11-14</span>
+            </div>
+          </div>
+        </div>
+        <div class="picker-empty" id="pickerEmpty" style="display: none;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" style="color: #D1D5DB;"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+          <div class="picker-empty-text">暂无符合条件的合同</div>
+        </div>
       </div>
       <!-- 底部按钮（v1.7.99.246：左侧显示已选 N 个 + 右侧取消/确定） -->
       <div class="picker-footer">
@@ -1228,18 +1362,28 @@
     .picker-actions .btn-reset:hover { border-color: var(--color-primary); color: var(--color-primary); }
     .picker-actions .btn-primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
     .picker-actions .btn-primary:hover { background: #1E3A8A; }
-    /* 表格 */
-    .picker-table-wrap { flex: 1; overflow-y: auto; padding: 0 24px 12px; background: #fff; }
-    .picker-table { width: 100%; border-collapse: collapse; font-size: 13px; }
-    .picker-table th { background: #F8FAFC; padding: 10px 8px; text-align: left; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
-    .picker-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-light); }
-    .picker-table tr:hover { background: #F8FAFC; }
-    .picker-table tr.selected { background: #EFF6FF; }
-    .picker-table tr.selected:hover { background: #DBEAFE; }
-    .picker-checkbox-cell { text-align: center; width: 40px; }
-    .picker-checkbox-cell input[type="checkbox"] { cursor: pointer; }
-    .picker-contract-link { color: var(--color-primary); text-decoration: none; }
-    .picker-contract-link:hover { text-decoration: underline; }
+    /* v1.7.99.247 卡片列表（替换 v1.7.99.246 7 列表格） */
+    .picker-cards { flex: 1; overflow-y: auto; padding: 8px 24px 12px; background: #fff; display: flex; flex-direction: column; gap: 8px; }
+    .picker-card { display: flex; align-items: flex-start; gap: 10px; padding: 12px 14px; border: 1px solid var(--border-light); border-radius: 6px; background: #fff; transition: all 0.15s; cursor: pointer; }
+    .picker-card:hover { border-color: var(--color-primary); background: #F8FAFC; }
+    .picker-card.selected { border-color: var(--color-primary); background: #EFF6FF; }
+    .picker-card-checkbox { padding-top: 2px; flex-shrink: 0; cursor: pointer; }
+    .picker-card-checkbox input[type="checkbox"] { cursor: pointer; width: 14px; height: 14px; }
+    .picker-card-main { flex: 1; min-width: 0; }
+    .picker-card-header { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 8px; }
+    .picker-card-no { color: var(--color-primary); text-decoration: none; font-weight: 500; font-size: 13px; font-family: 'SF Mono', Consolas, monospace; }
+    .picker-card-no:hover { text-decoration: underline; }
+    .picker-card-amount { color: #DC2626; font-weight: 600; font-size: 13px; font-family: var(--font-mono); white-space: nowrap; }
+    .picker-card-parties { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 12px; margin-bottom: 8px; padding: 6px 0; border-top: 1px dashed var(--border-light); border-bottom: 1px dashed var(--border-light); }
+    .picker-party { display: flex; align-items: flex-start; gap: 6px; min-width: 0; }
+    .picker-party-label { flex-shrink: 0; font-size: 12px; color: var(--text-tertiary); padding-top: 1px; }
+    .picker-party-name { flex: 1; min-width: 0; font-size: 13px; color: var(--text-primary); word-break: break-all; line-height: 1.4; }
+    .picker-card-info { display: flex; flex-wrap: wrap; gap: 8px 16px; font-size: 12px; color: var(--text-secondary); }
+    .picker-info-item { display: inline-flex; align-items: center; gap: 4px; }
+    .picker-info-label { color: var(--text-tertiary); }
+    /* 卡片 empty state */
+    .picker-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); }
+    .picker-empty-text { margin-top: 12px; font-size: 13px; }
     /* 底部 */
     .picker-footer { padding: 12px 24px; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: #fff; }
     .picker-footer-left { font-size: 13px; color: var(--text-secondary); }
@@ -1310,66 +1454,70 @@
       // 弹窗 B 关闭 + 弹窗 A 显示（不确认选择）
       closeContractPicker();
     }
-    // 恢复已选状态（checkbox 勾选 + tr 高亮）
+    // 恢复已选状态（checkbox 勾选 + 卡片高亮）
     function restorePickerSelection() {
-      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
+      var checks = document.querySelectorAll('#pickerCards .picker-row-check');
       checks.forEach(function(c) {
-        var row = c.closest('tr');
-        var no = row.getAttribute('data-contract-no');
+        var card = c.closest('.picker-card');
+        var no = card.getAttribute('data-contract-no');
         c.checked = !!_pickerSelectedMap[no];
-        row.classList.toggle('selected', c.checked);
+        card.classList.toggle('selected', c.checked);
       });
-      updatePickerCheckAll();
     }
-    // 全选
-    function onPickerCheckAll() {
-      var all = document.getElementById('pickerCheckAll');
-      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
-      checks.forEach(function(c) {
-        var row = c.closest('tr');
-        c.checked = all.checked;
-        row.classList.toggle('selected', all.checked);
-        var no = row.getAttribute('data-contract-no');
-        if (all.checked) _pickerSelectedMap[no] = true;
-        else delete _pickerSelectedMap[no];
-      });
-      updatePickerSelectedCount();
-    }
-    // 单选
+    // v1.7.99.247 删 onPickerCheckAll / updatePickerCheckAll（卡片视口无"全选"概念）
+    // 单选（点击卡片任意位置也能切换勾选）
     function onPickerRowCheck() {
-      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
+      var checks = document.querySelectorAll('#pickerCards .picker-row-check');
       checks.forEach(function(c) {
-        var row = c.closest('tr');
-        var no = row.getAttribute('data-contract-no');
+        var card = c.closest('.picker-card');
+        var no = card.getAttribute('data-contract-no');
         if (c.checked) _pickerSelectedMap[no] = true;
         else delete _pickerSelectedMap[no];
-        row.classList.toggle('selected', c.checked);
+        card.classList.toggle('selected', c.checked);
       });
-      updatePickerCheckAll();
       updatePickerSelectedCount();
     }
-    function updatePickerCheckAll() {
-      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
-      var all = document.getElementById('pickerCheckAll');
-      if (!all || checks.length === 0) return;
-      var allChecked = Array.from(checks).every(function(c) { return c.checked; });
-      all.checked = allChecked;
-    }
+    // 卡片整体可点击切换勾选（点 checkbox 本身不重复触发）
+    document.addEventListener('DOMContentLoaded', function() {
+      var cards = document.querySelectorAll('#pickerCards .picker-card');
+      cards.forEach(function(card) {
+        card.addEventListener('click', function(e) {
+          // 点链接/checkbox 本身不触发
+          if (e.target.closest('a') || e.target.closest('input[type="checkbox"]')) return;
+          var c = card.querySelector('.picker-row-check');
+          if (c) { c.checked = !c.checked; onPickerRowCheck(); }
+        });
+      });
+    });
+    // v1.7.99.247 删 updatePickerCheckAll（卡片视口无"全选"概念）
     function updatePickerSelectedCount() {
       var n = Object.keys(_pickerSelectedMap).length;
       var el = document.getElementById('pickerSelectedCount');
       if (el) el.textContent = n;
     }
-    // 重置筛选
-    function resetPickerFilter() {
-      document.getElementById('pickerContractNo').value = '';
-      document.getElementById('pickerSeller').value = '';
-      document.getElementById('pickerDateStart').value = '';
-      document.getElementById('pickerDateEnd').value = '';
-    }
-    // 查询（mock：弹 toast 提示）
-    function queryPicker() {
-      if (window.Utils && Utils.toast) Utils.toast('查询合同（mock）');
+    // v1.7.99.247 实时过滤筛选（按 v1.7.99.184 全站标准：实时 input/change 过滤）
+    function onPickerFilterInput() {
+      var noKw = (document.getElementById('pickerContractNo').value || '').toLowerCase().trim();
+      var partyKw = (document.getElementById('pickerParty').value || '').toLowerCase().trim();
+      var dateStart = (document.getElementById('pickerDateStart').value || '').trim();
+      var dateEnd = (document.getElementById('pickerDateEnd').value || '').trim();
+      var cards = document.querySelectorAll('#pickerCards .picker-card');
+      var visibleCount = 0;
+      cards.forEach(function(card) {
+        var no = (card.getAttribute('data-contract-no') || '').toLowerCase();
+        var seller = (card.getAttribute('data-seller') || '').toLowerCase();
+        var buyer = (card.getAttribute('data-buyer') || '').toLowerCase();
+        var date = (card.getAttribute('data-date') || '').trim();
+        var match = true;
+        if (noKw && no.indexOf(noKw) === -1) match = false;
+        if (partyKw && seller.indexOf(partyKw) === -1 && buyer.indexOf(partyKw) === -1) match = false;
+        if (dateStart && date < dateStart) match = false;
+        if (dateEnd && date > dateEnd) match = false;
+        card.style.display = match ? 'flex' : 'none';
+        if (match) visibleCount++;
+      });
+      var emptyEl = document.getElementById('pickerEmpty');
+      if (emptyEl) emptyEl.style.display = visibleCount === 0 ? 'block' : 'none';
     }
     // 确定（带回弹窗 A）
     function confirmContractSelection() {

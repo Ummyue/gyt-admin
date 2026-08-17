@@ -108,6 +108,19 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T14:55:00',
+          version: 'v1.7.99.247',
+          module: '合同选择器重构：表格→卡片 + 简化筛选（按 user 2026-08-17 14:52 反馈）',
+          summary: '预警规则配置（pages/warning-config.html）合同选择器弹窗 B 重构：表格 → 信息卡片 + 简化筛选。1) 现状：v1.7.99.246 旧版 7 列表格（合同编号/卖方/买方/签订日期/合同金额/交货期限）+ 4 字段筛选（合同编号/卖方/签订日期+重置/查询按钮），买卖双方企业名称过长（"广州壹企签信息科技有限公司"/"华能巢湖发电有限责任公司" 6+7 个汉字）导致表格列变窄、单元格内文字断行、观感差，user 2026-08-17 14:52 反馈"图1优化每行合同数据的信息展示，现在买卖双方企业名称太长，导致观感很差，我的建议是做成信息卡片，让信息更聚焦，模块更清晰，同时顶部的筛选，需要支持搜索买卖双方，去掉「重置」「查询」按钮"；2) 改造方案（v1.7.99.247）：a) 表格 → 卡片（10 张 picker-card，每张 = 复选框 + 头部[合同编号蓝链 + 合同金额红色等宽字体] + 中部[卖方/买方左右两列带虚线分隔] + 底部[签订日期 + 交货期限 inline]）；b) 卡片整体可点击切换勾选（点 checkbox 本身不重复触发，点链接不触发）；c) 卡片选中态：蓝边 + 浅蓝底（.picker-card.selected）；d) 筛选区合并"卖方"为"买卖双方"单一 input（搜任一即匹配）+ 去掉"重置/查询"按钮 + 实时过滤（oninput="onPickerFilterInput()"），按 v1.7.99.184 全站筛选控件标准；e) JS：删 queryPicker/resetPickerFilter/onPickerCheckAll/updatePickerCheckAll 函数（卡片视口无"全选"概念）+ 加 onPickerFilterInput 实时过滤（合同编号模糊匹配 + 买卖双方任一匹配 + 签订日期区间过滤 + 0 匹配时显示 .picker-empty 文案"暂无符合条件的合同" + 文件夹 SVG 图标）；f) CSS：删 .picker-table-wrap / .picker-table / .picker-table th / .picker-table td / .picker-table tr / .picker-table tr:hover / .picker-table tr.selected / .picker-checkbox-cell / .picker-contract-link 9 个旧样式 + 加 .picker-cards 卡片容器（flex column gap 8px）+ .picker-card / .picker-card:hover / .picker-card.selected / .picker-card-checkbox / .picker-card-main / .picker-card-header / .picker-card-no / .picker-card-amount / .picker-card-parties / .picker-party / .picker-party-label / .picker-party-name / .picker-card-info / .picker-info-item / .picker-info-label / .picker-empty 16 个新样式；3) 验证：playwright 验证 10 卡片 + 0 重置/查询按钮 + 3 字段实时过滤（合同编号 TYYGJ → 5 卡片 + 买卖双方 壹企签 → 10 + 华能 → 10 + 不存在公司 → empty state display=block）+ 点击 2 卡片已选 2 + 点确定带回弹窗 A hint + 通过修改再次打开恢复已选 2 + 顶部返回 A 显示 + 0 page error + 3 个 inline script block 通过 node --check。',
+          changes: [
+            { type: 'rewrite', location: 'pages/warning-config.html 合同选择器弹窗 B 内容区（v1.7.99.247）', before: 'v1.7.99.246 7 列表格（合同编号/卖方/买方/签订日期/合同金额/交货期限）+ 重置/查询按钮', after: 'v1.7.99.247 10 张 picker-card 信息卡片 + 3 字段实时过滤无按钮' },
+            { type: 'modify', location: 'pages/warning-config.html 筛选区字段（v1.7.99.247）', before: 'v1.7.99.246 4 字段（合同编号 + 卖方独立 + 签订日期 + 重置/查询按钮）', after: 'v1.7.99.247 3 字段（合同编号 + 买卖双方合并 + 签订日期），无按钮实时过滤' },
+            { type: 'add', location: 'pages/warning-config.html 卡片样式 CSS（v1.7.99.247）', before: 'v1.7.99.246 .picker-table 系列 9 个样式', after: 'v1.7.99.247 .picker-cards / .picker-card / .picker-card.selected / .picker-card-main / .picker-card-header / .picker-card-no / .picker-card-amount / .picker-card-parties / .picker-party / .picker-card-info / .picker-empty 16 个新样式' },
+            { type: 'modify', location: 'pages/warning-config.html 合同选择器 JS（v1.7.99.247）', before: 'v1.7.99.246 resetPickerFilter / queryPicker / onPickerCheckAll / updatePickerCheckAll + onPickerRowCheck 适配 tr', after: 'v1.7.99.247 删 4 个函数 + 加 onPickerFilterInput 实时过滤（合同编号模糊 + 买卖双方任一匹配 + 签订日期区间 + 0 匹配 empty state）+ onPickerRowCheck 适配 .picker-card + 点击卡片切换（点链接/checkbox 本身不触发）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.246', after: 'v1.7.99.247' },
+          ],
+        },
+        {
           ts: '2026-08-17T14:45:00',
           version: 'v1.7.99.246',
           module: '预警规则配置-指定合同选择器嵌套弹窗（按 user 2026-08-17 14:35 反馈）',
