@@ -108,6 +108,21 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T14:45:00',
+          version: 'v1.7.99.246',
+          module: '预警规则配置-指定合同选择器嵌套弹窗（按 user 2026-08-17 14:35 反馈）',
+          summary: '预警规则配置（pages/warning-config.html）新建预警规则弹窗 A 内嵌合同选择器弹窗 B。1) 现状：v1.7.99.245 旧版「规则应用范围」只支持单选全部合同 / 指定合同，但选指定合同时没有具体合同选择器，user 2026-08-17 14:35 反馈需要"在当前侧边弹窗中加载平台通用的合同选择模块，合同数据前为复选框，用户选择后带入原筛选框中，页面交互逻辑要完整，顶部有返回按钮，用户已可以不选择，点击返回后回到「新建预警规则」侧边弹窗页"；2) 改造方案（v1.7.99.246）：a) 弹窗 A「规则应用范围」select 加 onchange="onApplyScopeChange()"——选「指定合同」自动打开弹窗 B；b) select 下方加「已选 N 个合同：[合同编号列表] 修改」hint 区域（默认隐藏，选完才显示，「修改」链接再次打开弹窗 B）；c) 弹窗 B（合同选择器）HTML/CSS/JS：右侧 drawer 风格 520px 宽 + 顶部"← 返回 + 选择合同 + 关闭"标题栏 + 3 字段筛选区（合同编号/卖方/签订日期）+ 重置/查询按钮 + 7 列表格 10 行（复选框 + 合同编号/卖方/买方/签订日期/合同金额/交货期限，10 行 mock 用 v1.7.99.243 预警详情页同款数据）+ 底部「已选 N 个合同 + 取消 + 确定」+ 全选/单选联动 + 选中行高亮（蓝底）；d) JS 联动：openContractPicker 隐藏弹窗 A 并显示弹窗 B（dataset.hiddenByPicker 标记用于确定时恢复显示）+ restorePickerSelection 恢复已选状态 + onPickerCheckAll/onPickerRowCheck 全选/单选联动 + updatePickerSelectedCount 更新底部计数 + backToAddRule 顶部"返回"关闭弹窗 B 显示弹窗 A（不确认选择）+ closeContractPicker 关闭弹窗 B + confirmContractSelection "确定"：选 0 个给 toast 提示并关闭，选 N 个带回到弹窗 A 的 hint 区域；e) 10 行 mock 数据：YTYXSMYXGS-TR-202206-001（18,800,000.00 元，2022-06-20 签订）+ TYYGJ-HNRH-202306-015/016/005/002/022 + YTYXSMYXGS-TR-202207-008/202208-012/202209-003/202210-018，全部卖方"广州壹企签信息科技有限公司"+ 买方"华能巢湖发电有限责任公司"（与 v1.7.99.243 预警详情页同款）；f) 修复 bug：openContractPicker 加 aMask.style.display = "none"（v1.7.99.246 第一次写漏了 dataset.hiddenByPicker 标记但没真隐藏）；3) 验证：playwright 验证 弹窗 A/B 互切（选指定合同→A 隐藏+B 打开+返回→A 显示+B 关闭+确定→A 显示+hint 出现+选 3 合同带回到 hint）+ 全选 10/取消全选 0/单选恢复 3 + 0 page error + node --check 3 个 inline script block 语法 OK。',
+          changes: [
+            { type: 'modify', location: 'pages/warning-config.html 弹窗 A「规则应用范围」select', before: 'v1.7.99.245 select 无 onchange，选指定合同无具体合同选择器', after: 'v1.7.99.246 加 onchange="onApplyScopeChange()" 联动弹窗 B + 下方 hint 区域（已选 N 个合同 + 修改链接）' },
+            { type: 'add', location: 'pages/warning-config.html 已选合同 hint 区域（v1.7.99.246）', before: 'v1.7.99.245 无 hint', after: 'v1.7.99.246 加 .add-rule-scope-hint 蓝底提示（已选 N 个 + 合同编号列表 + 修改链接）' },
+            { type: 'add', location: 'pages/warning-config.html 合同选择器弹窗 B HTML（v1.7.99.246）', before: 'v1.7.99.245 无弹窗 B', after: 'v1.7.99.246 加 .picker-filter（3 字段）+ .picker-actions（重置/查询）+ .picker-table（7 列 10 行 复选框）+ .picker-footer（已选 N 个 + 取消/确定）' },
+            { type: 'add', location: 'pages/warning-config.html 合同选择器弹窗 B CSS（v1.7.99.246）', before: 'v1.7.99.245 无', after: 'v1.7.99.246 加 .add-rule-back（顶部返回按钮）+ .picker-filter / .picker-cell / .picker-input / .picker-date-range / .picker-actions / .picker-table / .picker-checkbox-cell / .picker-contract-link / .picker-footer 9 个样式类' },
+            { type: 'add', location: 'pages/warning-config.html 合同选择器 JS 联动（v1.7.99.246）', before: 'v1.7.99.245 无', after: 'v1.7.99.246 加 onApplyScopeChange / openContractPicker（隐藏 A 显示 B + dataset.hiddenByPicker）/ closeContractPicker（恢复 A 显示）/ backToAddRule（顶部返回不确认选择）/ restorePickerSelection（恢复已选 + 高亮）/ onPickerCheckAll + onPickerRowCheck（全选单选联动 + 选中行蓝底）/ confirmContractSelection（带回到 A 的 hint）' },
+            { type: 'fix', location: 'pages/warning-config.html openContractPicker 隐藏弹窗 A（v1.7.99.246 bug 修复）', before: 'v1.7.99.246 第一次只设 dataset.hiddenByPicker = "1" 未真隐藏 A（验证发现 A 仍 display=flex 遮挡 B）', after: 'v1.7.99.246 修复加 aMask.style.display = "none" 真隐藏 A' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.245', after: 'v1.7.99.246' },
+          ],
+        },
+        {
           ts: '2026-08-17T14:35:00',
           version: 'v1.7.99.245',
           module: '预警规则配置-交易监控 tap「添加规则」弹窗（按 user 2026-08-17 14:26 图 1）',

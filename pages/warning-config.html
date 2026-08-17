@@ -868,14 +868,20 @@
       </div>
       <!-- 表单内容 -->
       <div class="add-rule-body">
-        <!-- 规则应用范围 -->
+        <!-- 规则应用范围（v1.7.99.246：选「指定合同」打开嵌套弹窗 B 合同选择器） -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>规则应用范围</label>
-          <select class="add-rule-select" id="ruleApplyScope">
+          <select class="add-rule-select" id="ruleApplyScope" onchange="onApplyScopeChange()">
             <option value="">请选择</option>
             <option value="all" selected>全部合同</option>
             <option value="specific">指定合同</option>
           </select>
+          <!-- v1.7.99.246 已选合同 hint（选「指定合同」并选完合同后显示） -->
+          <div class="add-rule-scope-hint" id="scopeHint" style="display: none;">
+            <span class="scope-hint-label">已选 <span id="scopeHintCount">0</span> 个合同：</span>
+            <span class="scope-hint-list" id="scopeHintList"></span>
+            <a href="javascript:void(0)" class="scope-hint-edit" onclick="openContractPicker()">修改</a>
+          </div>
         </div>
         <!-- 业务类型 -->
         <div class="add-rule-row">
@@ -988,6 +994,12 @@
     .add-rule-remark-count { position: absolute; right: 8px; bottom: 6px; font-size: 12px; color: var(--text-tertiary); pointer-events: none; }
     .add-rule-footer { padding: 14px 24px; border-top: 1px solid var(--border-light); display: flex; justify-content: center; gap: 12px; background: #fff; }
     .add-rule-footer .btn { min-width: 100px; }
+    /* v1.7.99.246 已选合同 hint 样式 */
+    .add-rule-scope-hint { margin-top: 8px; padding: 8px 12px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 4px; font-size: 12px; display: flex; flex-wrap: wrap; align-items: flex-start; gap: 6px; }
+    .scope-hint-label { color: #1E40AF; font-weight: 500; flex-shrink: 0; }
+    .scope-hint-list { color: var(--text-secondary); flex: 1; word-break: break-all; }
+    .scope-hint-edit { color: var(--color-primary); text-decoration: none; flex-shrink: 0; }
+    .scope-hint-edit:hover { text-decoration: underline; }
   </style>
 
   <script>
@@ -1105,6 +1117,295 @@
       if (e.key === 'Escape') {
         var mask = document.getElementById('addRuleModalMask');
         if (mask && mask.style.display !== 'none') closeAddRuleModal();
+      }
+    });
+  </script>
+
+
+  <!-- v1.7.99.246 合同选择器弹窗 B（嵌套在弹窗 A 内的二级弹窗） -->
+  <div class="modal-mask" id="contractPickerMask" style="display: none;" onclick="closeContractPickerByMask(event)">
+    <div class="add-rule-drawer" onclick="event.stopPropagation()">
+      <!-- 标题栏（顶部"返回"按钮 + 标题 + 关闭） -->
+      <div class="add-rule-header">
+        <button type="button" class="add-rule-back" onclick="backToAddRule()" title="返回新建预警规则">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        </button>
+        <span class="add-rule-title" style="flex: 1; margin-left: 8px;">选择合同</span>
+        <button type="button" class="add-rule-help" onclick="closeContractPicker()" title="关闭">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <!-- 筛选区（v1.7.99.246：3 字段 + label 上对齐） -->
+      <div class="picker-filter">
+        <div class="picker-cell">
+          <span class="picker-label">合同编号</span>
+          <input type="text" class="picker-input" id="pickerContractNo" placeholder="请输入">
+        </div>
+        <div class="picker-cell">
+          <span class="picker-label">卖方</span>
+          <input type="text" class="picker-input" id="pickerSeller" placeholder="请输入">
+        </div>
+        <div class="picker-cell">
+          <span class="picker-label">签订日期</span>
+          <div class="picker-date-range">
+            <input type="text" class="picker-input" id="pickerDateStart" placeholder="开始日期">
+            <span class="picker-sep">~</span>
+            <input type="text" class="picker-input" id="pickerDateEnd" placeholder="结束日期">
+          </div>
+        </div>
+      </div>
+      <!-- 操作按钮 -->
+      <div class="picker-actions">
+        <button type="button" class="btn-reset" onclick="resetPickerFilter()">重置</button>
+        <button type="button" class="btn-primary" onclick="queryPicker()">查询</button>
+      </div>
+      <!-- 表格：复选框 + 6 字段 -->
+      <div class="picker-table-wrap">
+        <table class="picker-table">
+          <colgroup>
+            <col style="width: 5%;">
+            <col style="width: 22%;">
+            <col style="width: 18%;">
+            <col style="width: 18%;">
+            <col style="width: 12%;">
+            <col style="width: 13%;">
+            <col style="width: 12%;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th class="picker-checkbox-cell"><input type="checkbox" id="pickerCheckAll" onchange="onPickerCheckAll()"></th>
+              <th>合同编号</th>
+              <th>卖方</th>
+              <th>买方</th>
+              <th>签订日期</th>
+              <th>合同金额（元）</th>
+              <th>交货期限</th>
+            </tr>
+          </thead>
+          <tbody id="pickerTbody">
+            <!-- 10 行 mock（v1.7.99.246：v1.7.99.243 预警详情页同款数据） -->
+            <tr data-contract-no="YTYXSMYXGS-TR-202206-001"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202206-001</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-06-20</td><td>18,800,000.00</td><td>2022-07-01 至 2023-06-30</td></tr>
+            <tr data-contract-no="TYYGJ-HNRH-202306-015"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202306-015</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-03-22</td><td>15,200,000.00</td><td>2023-04-01 至 2023-04-30</td></tr>
+            <tr data-contract-no="TYYGJ-HNRH-202306-016"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202306-016</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-03-25</td><td>22,500,000.00</td><td>2023-04-10 至 2023-05-10</td></tr>
+            <tr data-contract-no="YTYXSMYXGS-TR-202207-008"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202207-008</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-07-15</td><td>12,800,000.00</td><td>2022-08-01 至 2023-07-31</td></tr>
+            <tr data-contract-no="TYYGJ-HNRH-202305-002"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202305-002</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-05-10</td><td>9,500,000.00</td><td>2023-05-20 至 2023-06-20</td></tr>
+            <tr data-contract-no="YTYXSMYXGS-TR-202208-012"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202208-012</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-08-22</td><td>16,300,000.00</td><td>2022-09-01 至 2023-08-31</td></tr>
+            <tr data-contract-no="TYYGJ-HNRH-202304-005"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202304-005</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-04-15</td><td>11,200,000.00</td><td>2023-05-01 至 2023-05-31</td></tr>
+            <tr data-contract-no="YTYXSMYXGS-TR-202209-003"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202209-003</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-09-08</td><td>20,100,000.00</td><td>2022-10-01 至 2023-09-30</td></tr>
+            <tr data-contract-no="TYYGJ-HNRH-202307-022"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">TYYGJ-HNRH-202307-022</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2023-07-20</td><td>14,600,000.00</td><td>2023-08-01 至 2023-08-31</td></tr>
+            <tr data-contract-no="YTYXSMYXGS-TR-202210-018"><td class="picker-checkbox-cell"><input type="checkbox" class="picker-row-check" onchange="onPickerRowCheck()"></td><td><a href="javascript:void(0)" class="link-primary picker-contract-link">YTYXSMYXGS-TR-202210-018</a></td><td>广州壹企签信息科技有限公司</td><td>华能巢湖发电有限责任公司</td><td>2022-10-30</td><td>17,900,000.00</td><td>2022-11-15 至 2023-11-14</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <!-- 底部按钮（v1.7.99.246：左侧显示已选 N 个 + 右侧取消/确定） -->
+      <div class="picker-footer">
+        <div class="picker-footer-left">已选 <span id="pickerSelectedCount">0</span> 个合同</div>
+        <div class="picker-footer-right">
+          <button type="button" class="btn btn-secondary" onclick="closeContractPicker()">取消</button>
+          <button type="button" class="btn btn-primary" onclick="confirmContractSelection()">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* v1.7.99.246 合同选择器弹窗 B 样式 */
+    .add-rule-back { background: none; border: 1px solid var(--border-light); border-radius: 4px; padding: 4px 6px; color: var(--text-secondary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .add-rule-back:hover { color: var(--color-primary); border-color: var(--color-primary); background: #F8FAFC; }
+    /* 筛选区 */
+    .picker-filter { padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--border-light); display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; }
+    .picker-cell { display: flex; flex-direction: column; gap: 4px; }
+    .picker-label { font-size: 12px; color: var(--text-tertiary); }
+    .picker-input { width: 100%; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff; box-sizing: border-box; }
+    .picker-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+    .picker-date-range { display: flex; align-items: center; gap: 6px; }
+    .picker-date-range .picker-input { flex: 1; min-width: 0; }
+    .picker-sep { color: var(--text-tertiary); font-size: 12px; }
+    /* 操作按钮 */
+    .picker-actions { padding: 0 24px 12px; display: flex; gap: 8px; justify-content: flex-end; background: #fff; }
+    .picker-actions .btn-reset, .picker-actions .btn-primary { padding: 5px 16px; font-size: 13px; border-radius: 4px; cursor: pointer; border: 1px solid var(--border-light); }
+    .picker-actions .btn-reset { background: #fff; color: var(--text-secondary); }
+    .picker-actions .btn-reset:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .picker-actions .btn-primary { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .picker-actions .btn-primary:hover { background: #1E3A8A; }
+    /* 表格 */
+    .picker-table-wrap { flex: 1; overflow-y: auto; padding: 0 24px 12px; background: #fff; }
+    .picker-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .picker-table th { background: #F8FAFC; padding: 10px 8px; text-align: left; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); white-space: nowrap; position: sticky; top: 0; z-index: 1; }
+    .picker-table td { padding: 10px 8px; border-bottom: 1px solid var(--border-light); }
+    .picker-table tr:hover { background: #F8FAFC; }
+    .picker-table tr.selected { background: #EFF6FF; }
+    .picker-table tr.selected:hover { background: #DBEAFE; }
+    .picker-checkbox-cell { text-align: center; width: 40px; }
+    .picker-checkbox-cell input[type="checkbox"] { cursor: pointer; }
+    .picker-contract-link { color: var(--color-primary); text-decoration: none; }
+    .picker-contract-link:hover { text-decoration: underline; }
+    /* 底部 */
+    .picker-footer { padding: 12px 24px; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: #fff; }
+    .picker-footer-left { font-size: 13px; color: var(--text-secondary); }
+    .picker-footer-left #pickerSelectedCount { color: var(--color-primary); font-weight: 600; }
+    .picker-footer-right { display: flex; gap: 12px; }
+    .picker-footer-right .btn { min-width: 90px; }
+  </style>
+
+  <script>
+    // === v1.7.99.246 合同选择器弹窗 B 逻辑 ===
+
+    // 弹窗 B 已选合同缓存（在用户点"确定"前保留）
+    var _pickerSelectedMap = {};  // contractNo -> true
+    // 弹窗 B 打开来源（'addRule' 从弹窗 A 选「指定合同」打开 / 'edit' 从已选合同 hint「修改」链接打开）
+    var _pickerOpenSource = 'addRule';
+
+    // 弹窗 A 规则应用范围 change
+    function onApplyScopeChange() {
+      var scope = document.getElementById('ruleApplyScope').value;
+      if (scope === 'specific') {
+        // 选「指定合同」→ 打开弹窗 B
+        _pickerOpenSource = 'addRule';
+        openContractPicker();
+      } else {
+        // 选「全部合同」/「请选择」→ 隐藏 hint
+        document.getElementById('scopeHint').style.display = 'none';
+        _pickerSelectedMap = {};
+      }
+    }
+
+    // 打开弹窗 B
+    function openContractPicker() {
+      // 隐藏弹窗 A（但保留其状态）
+      var aMask = document.getElementById('addRuleModalMask');
+      if (aMask && aMask.style.display !== 'none') {
+        aMask.dataset.hiddenByPicker = '1';
+        aMask.style.display = 'none';
+      }
+
+      // 恢复已选状态
+      restorePickerSelection();
+
+      // 显示弹窗 B
+      var bMask = document.getElementById('contractPickerMask');
+      bMask.style.display = 'flex';
+      document.body.style.overflow = 'hidden';
+      updatePickerSelectedCount();
+    }
+    // 关闭弹窗 B（点关闭/取消/ESC）
+    function closeContractPicker() {
+      var bMask = document.getElementById('contractPickerMask');
+      bMask.style.display = 'none';
+
+      // 检查是否需要恢复弹窗 A
+      var aMask = document.getElementById('addRuleModalMask');
+      if (aMask && aMask.dataset.hiddenByPicker === '1') {
+        aMask.style.display = 'flex';
+        delete aMask.dataset.hiddenByPicker;
+      } else {
+        document.body.style.overflow = '';
+      }
+    }
+    function closeContractPickerByMask(e) {
+      if (e.target === e.currentTarget) closeContractPicker();
+    }
+    // 返回弹窗 A
+    function backToAddRule() {
+      // 弹窗 B 关闭 + 弹窗 A 显示（不确认选择）
+      closeContractPicker();
+    }
+    // 恢复已选状态（checkbox 勾选 + tr 高亮）
+    function restorePickerSelection() {
+      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
+      checks.forEach(function(c) {
+        var row = c.closest('tr');
+        var no = row.getAttribute('data-contract-no');
+        c.checked = !!_pickerSelectedMap[no];
+        row.classList.toggle('selected', c.checked);
+      });
+      updatePickerCheckAll();
+    }
+    // 全选
+    function onPickerCheckAll() {
+      var all = document.getElementById('pickerCheckAll');
+      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
+      checks.forEach(function(c) {
+        var row = c.closest('tr');
+        c.checked = all.checked;
+        row.classList.toggle('selected', all.checked);
+        var no = row.getAttribute('data-contract-no');
+        if (all.checked) _pickerSelectedMap[no] = true;
+        else delete _pickerSelectedMap[no];
+      });
+      updatePickerSelectedCount();
+    }
+    // 单选
+    function onPickerRowCheck() {
+      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
+      checks.forEach(function(c) {
+        var row = c.closest('tr');
+        var no = row.getAttribute('data-contract-no');
+        if (c.checked) _pickerSelectedMap[no] = true;
+        else delete _pickerSelectedMap[no];
+        row.classList.toggle('selected', c.checked);
+      });
+      updatePickerCheckAll();
+      updatePickerSelectedCount();
+    }
+    function updatePickerCheckAll() {
+      var checks = document.querySelectorAll('#pickerTbody .picker-row-check');
+      var all = document.getElementById('pickerCheckAll');
+      if (!all || checks.length === 0) return;
+      var allChecked = Array.from(checks).every(function(c) { return c.checked; });
+      all.checked = allChecked;
+    }
+    function updatePickerSelectedCount() {
+      var n = Object.keys(_pickerSelectedMap).length;
+      var el = document.getElementById('pickerSelectedCount');
+      if (el) el.textContent = n;
+    }
+    // 重置筛选
+    function resetPickerFilter() {
+      document.getElementById('pickerContractNo').value = '';
+      document.getElementById('pickerSeller').value = '';
+      document.getElementById('pickerDateStart').value = '';
+      document.getElementById('pickerDateEnd').value = '';
+    }
+    // 查询（mock：弹 toast 提示）
+    function queryPicker() {
+      if (window.Utils && Utils.toast) Utils.toast('查询合同（mock）');
+    }
+    // 确定（带回弹窗 A）
+    function confirmContractSelection() {
+      // 1. 把已选合同带回弹窗 A 的「规则应用范围」字段
+      var n = Object.keys(_pickerSelectedMap).length;
+      if (n === 0) {
+        // 用户没有选择任何合同 → 不带回任何合同，回弹窗 A（不关闭）
+        if (window.Utils && Utils.toast) Utils.toast('未选择任何合同');
+        closeContractPicker();
+        return;
+      }
+      // 2. 弹窗 A 显示 hint（已选 N 个 + 合同编号列表）
+      var hint = document.getElementById('scopeHint');
+      var countEl = document.getElementById('scopeHintCount');
+      var listEl = document.getElementById('scopeHintList');
+      countEl.textContent = n;
+      var list = Object.keys(_pickerSelectedMap).slice(0, 3).join('、');
+      if (n > 3) list += ' 等 ' + n + ' 个';
+      listEl.textContent = list;
+      hint.style.display = 'flex';
+
+      // 3. 关闭弹窗 B + 显示弹窗 A
+      closeContractPicker();
+    }
+
+    // ESC 处理（A 弹窗 / B 弹窗都响应）
+    document.addEventListener('keydown', function(e) {
+      if (e.key !== 'Escape') return;
+      var bMask = document.getElementById('contractPickerMask');
+      if (bMask && bMask.style.display !== 'none') {
+        closeContractPicker();
+        return;
+      }
+      var aMask = document.getElementById('addRuleModalMask');
+      if (aMask && aMask.style.display !== 'none') {
+        closeAddRuleModal();
       }
     });
   </script>
