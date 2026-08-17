@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>预警列表 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <style>
+    /* v1.7.99.103：预警列表页重制（按 user 实际业务截图细化）
+       - Tab1 企业监控 12 列（含统一社会信用代码 + 预警解除时间）
+       - Tab2 交易监控 11 列（含预警解除时间）
+       - Tab3 价格波动 13 列（含预警解除时间）
+       - label 上对齐强化（v1.7.99.102 兜底修复） + 去掉冒号
+       - 去掉虚线框（v1.7.99.102 兜底修复） */
+    .page-body { padding: 20px 24px; background: var(--bg-page); min-height: 100vh; }
+    .breadcrumb-inline { font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .breadcrumb-inline a { color: var(--text-tertiary); text-decoration: none; }
+    .breadcrumb-inline a:hover { color: var(--color-primary); }
+    .breadcrumb-inline .sep { margin: 0 8px; color: var(--text-tertiary); }
+    .breadcrumb-inline .current { color: var(--text-primary); font-weight: 500; }
+    .page-h1 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0 0 16px 0; }
+    /* 预警信息 标题区（v1.7.99.101 锁定：h2 + 紫色右边粗线） */
+    .section-title {
+      font-size: 18px; font-weight: 600; color: var(--text-primary);
+      padding-left: 12px; border-left: 4px solid var(--color-primary);
+      margin: 16px 0 14px 0;
+    }
+    /* 数据概览 3 张柱状图卡片（v1.7.99.101 锁定：3 列等宽 + 卡片白色背景 + 阴影） */
+    .overview-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px; }
+    .overview-card { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; padding: 16px 20px 12px; }
+    .overview-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; }
+    .overview-title { font-size: 14px; color: var(--text-tertiary); }
+    .overview-total { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .overview-total .unit { font-size: 12px; color: var(--text-tertiary); margin-left: 2px; font-weight: 400; }
+    .overview-legend { display: flex; align-items: center; gap: 14px; margin-bottom: 8px; font-size: 11px; color: var(--text-secondary); }
+    .overview-legend-item { display: flex; align-items: center; gap: 4px; cursor: pointer; }
+    .overview-legend-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .overview-svg { width: 100%; height: 160px; }
+    /* 3 tab 切换（v1.7.99.101 锁定：active 蓝下划线） */
+    .wl-tabs { display: flex; align-items: center; gap: 32px; padding: 0 24px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px 8px 0 0; border-bottom: 1px solid var(--border-light); }
+    .wl-tab { padding: 14px 0; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; }
+    .wl-tab:hover { color: var(--text-secondary); }
+    .wl-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .wl-tab-content { display: none; padding: 16px 24px 24px; background: #fff; border: 1px solid var(--border-light); border-top: 0; border-radius: 0 0 8px 8px; }
+    .wl-tab-content.active { display: block; }
+    /* 筛选区（v1.7.99.103 强化 label 上对齐，参考 v1.7.99.97 report-project cp-filter 标准）
+       v1.7.99.102 改过但 v1.7.99.103 兜底强化 + label 去掉冒号 */
+    .wl-filter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; margin-bottom: 16px; }
+    .wl-filter.cols-2 { grid-template-columns: repeat(2, 1fr); }
+    .wl-filter .ff-cell { display: flex; flex-direction: column; gap: 6px; }
+    .wl-filter .ff-label { font-size: 13px; color: var(--text-primary); font-weight: 500; display: block; }
+    .wl-filter input, .wl-filter select {
+      width: 100%; height: 32px; padding: 0 10px;
+      border: 1px solid var(--border-strong); border-radius: 4px;
+      font-size: 13px; color: var(--text-primary);
+      background: #fff; box-sizing: border-box;
+    }
+    .wl-filter .ff-date-range { display: flex; align-items: center; gap: 6px; }
+    .wl-filter .ff-date-range input { flex: 1; min-width: 0; }
+    .wl-filter-actions { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 14px; }
+    .btn-search { background: #fff; color: var(--text-primary); border: 1px solid var(--border-strong); padding: 6px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-search:hover { background: var(--bg-page); }
+    .btn-primary { background: var(--color-primary); color: #fff; border: 0; padding: 6px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-primary:hover { background: #1E3A8A; }
+    .btn-reset { background: #fff; color: var(--text-primary); border: 1px solid var(--border-strong); padding: 6px 18px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+    .btn-reset:hover { background: var(--bg-page); }
+    /* 状态 tab */
+    .wl-status-tab-bar { display: flex; align-items: center; border-bottom: 1px solid var(--border-light); margin-bottom: 16px; gap: 24px; flex-wrap: wrap; }
+    .wl-status-tab { padding: 10px 0; font-size: 13px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; white-space: nowrap; }
+    .wl-status-tab:hover { color: var(--text-secondary); }
+    .wl-status-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    /* 表格（v1.7.99.103 强化 table-layout: fixed + 每列具体 width） */
+    .wl-table-wrap { overflow-x: auto; }
+    .wl-table { table-layout: fixed; width: 100%; min-width: 100%; border-collapse: collapse; }
+    .wl-table th, .wl-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wl-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .wl-table td { color: var(--text-primary); }
+    /* 8 种 tab 状态 tag 颜色（v1.7.99.242：加 待风控审批/审批驳回/延期预警/超 7 日未处理 4 种） */
+    .wl-table .risk-high { color: #DC2626; font-weight: 600; }
+    .wl-tag-pending-risk { background: #FEF3C7; color: #92400E; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .wl-tag-rejected { background: #FEE2E2; color: #B91C1C; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .wl-tag-extended { background: #FFEDD5; color: #C2410C; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .wl-tag-overdue { background: #FECACA; color: #991B1B; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .wl-table .risk-mid { color: #A16207; font-weight: 600; }
+    .wl-table .risk-low { color: #15803D; font-weight: 600; }
+    .wl-table .col-action { text-align: right; }
+    .wl-table .col-action a { color: var(--color-primary); margin-left: 8px; text-decoration: none; }
+    .wl-table .col-action a:hover { text-decoration: underline; }
+    .wl-table .col-num { font-family: var(--font-mono); color: var(--color-primary); }
+    /* 状态 tag（v1.7.99.103 精确化：6 种状态值 + 对应颜色） */
+    .wl-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; white-space: nowrap; }
+    .wl-tag-pending { background: #FEF3C7; color: #A16207; }     /* 待处理：黄色 */
+    .wl-tag-claimed { background: #DBEAFE; color: #1E40AF; }     /* 已跟踪：蓝色 */
+    .wl-tag-resolved { background: #DCFCE7; color: #15803D; }    /* 已处理：绿色 */
+    .wl-tag-resolved-manual { background: #DCFCE7; color: #15803D; }  /* 已处理(人工)：绿色 */
+    .wl-tag-risk { background: #FEF3C7; color: #A16207; }        /* 待风险审批：黄色 */
+    .wl-tag-rejected { background: #FEE2E2; color: #DC2626; }   /* 审批驳回：红色 */
+    .wl-tag-overdue { background: #FEE2E2; color: #DC2626; }     /* 超期预警：红色 */
+    .wl-tag-warn { background: #FEE2E2; color: #DC2626; }       /* 已超 7 日未处理：红色 */
+    /* 分页 */
+    .wl-pagination { display: flex; align-items: center; justify-content: space-between; padding: 14px 0 0; }
+    .wl-pagination-pages { display: flex; align-items: center; gap: 4px; }
+    .wl-pagination-page { min-width: 28px; height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 12px; color: var(--text-primary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .wl-pagination-page.active { background: var(--color-primary); color: #fff; border-color: var(--color-primary); }
+    .wl-pagination-size { height: 28px; padding: 0 8px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 12px; }
+    .wl-pagination-jump { font-size: 12px; color: var(--text-secondary); display: inline-flex; align-items: center; gap: 6px; }
+    .wl-pagination-jump input { width: 50px; height: 28px; padding: 0 6px; border: 1px solid var(--border-strong); border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item active" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body">
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">预警中心</a>
+          <span class="sep">/</span>
+          <a href="#">预警管理</a>
+          <span class="sep">/</span>
+          <span class="current">预警列表</span>
+        </div>
+        <!-- 标题 -->
+        <h1 class="page-h1">预警列表</h1>
+
+        <!-- 区块 1：数据概览 3 张柱状图（v1.7.99.101 锁定：3 列等宽 + inline SVG 堆叠柱状图） -->
+        <div class="section-title">预警信息</div>
+        <div style="font-size: 13px; color: var(--text-tertiary); margin-bottom: 10px;">数据概览</div>
+        <div class="overview-grid" id="overviewGrid">
+          <!-- JS 渲染 3 张柱状图 -->
+        </div>
+
+        <!-- 区块 2：预警数据 3 tab -->
+        <div style="font-size: 13px; color: var(--text-tertiary); margin: 12px 0 10px;">预警数据</div>
+        <div class="wl-tabs">
+          <div class="wl-tab active" data-wl-tab="enterprise" onclick="switchWLTab(this, 'enterprise')">企业监控 <span style="color: var(--text-tertiary);">(1000)</span></div>
+          <div class="wl-tab" data-wl-tab="transaction" onclick="switchWLTab(this, 'transaction')">交易监控 <span style="color: var(--text-tertiary);">(1000)</span></div>
+          <div class="wl-tab" data-wl-tab="price" onclick="switchWLTab(this, 'price')">价格波动 <span style="color: var(--text-tertiary);">(1000)</span></div>
+        </div>
+
+        <!-- Tab 1：企业监控（v1.7.99.103 锁定：12 列含统一社会信用代码 + 5 状态 tab + 4+3+3 mock 10 行） -->
+        <div class="wl-tab-content active" id="wl-tab-enterprise">
+          <!-- 筛选区（v1.7.99.103：6 字段 + label 上对齐 + 去掉冒号） -->
+          <div class="wl-filter">
+            <div class="ff-cell">
+              <span class="ff-label">预警日期</span>
+              <div class="ff-date-range">
+                <input type="text" placeholder="开始日期">
+                <span style="color: var(--text-tertiary);">~</span>
+                <input type="text" placeholder="结束日期">
+              </div>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">规则类型</span>
+              <select><option value="">请选择</option><option>工商信息变更</option><option>主体司法诉讼</option><option>主体经营风险</option><option>限制高消费</option><option>严重违法</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">规则名称</span>
+              <select><option value="">请选择</option><option>被限制高消费</option><option>破产重组核查</option><option>被执行人核查</option><option>法定代表人变更</option><option>欠税公告核查</option><option>工商登记状态异常</option><option>被列入失信被执行人</option><option>主体经营风险</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">风险等级</span>
+              <select><option value="">请选择</option><option>高</option><option>中</option><option>低</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">企业名称</span>
+              <input type="text" placeholder="请输入">
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">企业类型</span>
+              <select><option value="">请选择</option><option>贸易商-一般贸易商</option><option>贸易商-核心企业</option><option>终端企业</option></select>
+            </div>
+          </div>
+          <!-- 操作按钮 -->
+          <div class="wl-filter-actions">
+            <button class="btn-reset">重置</button>
+            <button class="btn-primary">查询</button>
+            <button class="btn-search">导出</button>
+          </div>
+          <!-- 状态 tab（v1.7.99.103：5 状态：全部/待处理/已跟进/已处理/超 7 日未处理） -->
+          <div class="wl-status-tab-bar">
+            <div class="wl-status-tab active">全部 <span style="color: var(--text-tertiary);">(2000)</span></div>
+            <div class="wl-status-tab">待处理 <span style="color: var(--text-tertiary);">(700)</span></div>
+            <div class="wl-status-tab">已跟进 <span style="color: var(--text-tertiary);">(300)</span></div>
+            <div class="wl-status-tab">已处理 <span style="color: var(--text-tertiary);">(1000)</span></div>
+            <div class="wl-status-tab">超 7 日未处理 <span style="color: var(--text-tertiary);">(20)</span></div>
+          </div>
+          <!-- 表格（v1.7.99.103：12 列 4+3+3=10 行） -->
+          <div class="wl-table-wrap">
+            <table class="wl-table">
+              <colgroup>
+                <col style="width: 9%;"><col style="width: 16%;"><col style="width: 6%;"><col style="width: 8%;"><col style="width: 10%;"><col style="width: 9%;">
+                <col style="width: 12%;"><col style="width: 13%;"><col style="width: 7%;"><col style="width: 8%;"><col style="width: 8%;"><col style="width: 5%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>预警日期</th>
+                  <th>预警内容</th>
+                  <th>风险等级</th>
+                  <th>预警状态</th>
+                  <th>规则名称</th>
+                  <th>规则类型</th>
+                  <th>企业名称</th>
+                  <th>统一社会信用代码</th>
+                  <th>企业类型</th>
+                  <th>最新跟踪时间</th>
+                  <th>预警解除时间</th>
+                  <th class="col-action">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 微山鑫久泰商贸有限公司（贸易商-一般贸易商）4 行 -->
+                <tr><td>2022-12-07</td><td>企业存在被严重警示信息，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>被限制高消费</td><td>工商信息变更</td><td>微山鑫久泰商贸有限公司</td><td>91370826MA3N67XA7P</td><td>贸易商-一般贸易商</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>存在被限制高消费处罚案例，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>破产重组核查</td><td>工商信息变更</td><td>微山鑫久泰商贸有限公司</td><td>91370826MA3N67XA7P</td><td>贸易商-一般贸易商</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>存在被执行人触发案例，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>被执行人核查</td><td>工商信息变更</td><td>微山鑫久泰商贸有限公司</td><td>91370826MA3N67XA7P</td><td>贸易商-一般贸易商</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>企业存在未补的欠税公告，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>法定代表人变更</td><td>工商信息变更</td><td>微山鑫久泰商贸有限公司</td><td>91370826MA3N67XA7P</td><td>贸易商-一般贸易商</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <!-- 国家能源投资集团有限责任公司（终端企业）3 行 -->
+                <tr><td>2022-12-07</td><td>存在被执行人触发案例，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>欠税公告核查</td><td>工商信息变更</td><td>国家能源投资集团有限责任公司</td><td>91110000100018267J</td><td>终端企业</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>登记状态：注销</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>工商登记状态异常</td><td>主体司法诉讼</td><td>国家能源投资集团有限责任公司</td><td>91110000100018267J</td><td>终端企业</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>存在被执行人触发案例，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>被列入失信被执行人</td><td>主体司法诉讼</td><td>国家能源投资集团有限责任公司</td><td>91110000100018267J</td><td>终端企业</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <!-- 陕西朕煤供应链管理有限公司（贸易商-核心企业）3 行 -->
+                <tr><td>2022-12-07</td><td>存在被执行人触发案例，请查看详情</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>被执行人核查</td><td>主体司法诉讼</td><td>陕西朕煤供应链管理有限公司</td><td>91610138MA6X3K6K0G</td><td>贸易商-核心企业</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>法定代表人：变更前廖雪松，变更后张鹏</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>被执行人核查</td><td>主体经营风险</td><td>陕西朕煤供应链管理有限公司</td><td>91610138MA6X3K6K0G</td><td>贸易商-核心企业</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>法定代表人：变更前廖雪松，变更后张鹏</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>被执行人核查</td><td>主体经营风险</td><td>陕西朕煤供应链管理有限公司</td><td>91610138MA6X3K6K0G</td><td>贸易商-核心企业</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="wl-pagination">
+            <div style="font-size: 12px; color: var(--text-secondary);">共 XXXX 条记录 · 第 1 / XXX 页</div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div class="wl-pagination-pages">
+                <div class="wl-pagination-page">‹</div>
+                <div class="wl-pagination-page active">1</div>
+                <div class="wl-pagination-page">2</div>
+                <div class="wl-pagination-page">3</div>
+                <div class="wl-pagination-page">4</div>
+                <div class="wl-pagination-page">5</div>
+                <div class="wl-pagination-page">6</div>
+                <div class="wl-pagination-page">7</div>
+                <div class="wl-pagination-page">8</div>
+                <div class="wl-pagination-page">9</div>
+                <div class="wl-pagination-page">›</div>
+              </div>
+              <select class="wl-pagination-size"><option>10 条/页</option><option>20 条/页</option></select>
+              <span class="wl-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 2：交易监控（v1.7.99.242 锁定：12 列 + 8 状态 tab + 10 行） -->
+        <div class="wl-tab-content" id="wl-tab-transaction">
+          <!-- 筛选区（v1.7.99.103：5 字段 + label 上对齐 + 去掉冒号） -->
+          <div class="wl-filter">
+            <div class="ff-cell">
+              <span class="ff-label">预警日期</span>
+              <div class="ff-date-range">
+                <input type="text" placeholder="开始日期">
+                <span style="color: var(--text-tertiary);">~</span>
+                <input type="text" placeholder="结束日期">
+              </div>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">规则名称</span>
+              <input type="text" placeholder="请输入">
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">规则类型</span>
+              <select><option value="">请选择</option><option>取风控配置的规则名称</option><option>价格波动监控</option><option>交易异常监控</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">触发预警指标</span>
+              <input type="text" placeholder="请输入">
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">风险等级</span>
+              <select><option value="">请选择</option><option>高</option><option>中</option><option>低</option></select>
+            </div>
+          </div>
+          <!-- 操作按钮 -->
+          <div class="wl-filter-actions">
+            <button class="btn-reset">重置</button>
+            <button class="btn-primary">查询</button>
+            <button class="btn-search">导出</button>
+          </div>
+          <!-- 状态 tab（v1.7.99.242：8 状态：全部/待处理/已跟进/待风控审批/审批驳回/延期预警/已处理/超 7 日未处理） -->
+          <div class="wl-status-tab-bar">
+            <div class="wl-status-tab active">全部 <span style="color: var(--text-tertiary);">(1000)</span></div>
+            <div class="wl-status-tab">待处理 <span style="color: var(--text-tertiary);">(70)</span></div>
+            <div class="wl-status-tab">已跟进 <span style="color: var(--text-tertiary);">(30)</span></div>
+            <div class="wl-status-tab">待风控审批 <span style="color: var(--text-tertiary);">(5)</span></div>
+            <div class="wl-status-tab">审批驳回 <span style="color: var(--text-tertiary);">(200)</span></div>
+            <div class="wl-status-tab">延期预警 <span style="color: var(--text-tertiary);">(200)</span></div>
+            <div class="wl-status-tab">已处理 <span style="color: var(--text-tertiary);">(200)</span></div>
+            <div class="wl-status-tab">超 7 日未处理 <span style="color: var(--text-tertiary);">(20)</span></div>
+          </div>
+          <!-- 表格（v1.7.99.242：12 列 + 8 状态全覆盖 + 7 煤炭 + 3 钢材 = 10 行） -->
+          <div class="wl-table-wrap">
+            <table class="wl-table">
+              <colgroup>
+                <col style="width: 8%;"><col style="width: 14%;"><col style="width: 5%;"><col style="width: 8%;"><col style="width: 10%;"><col style="width: 9%;">
+                <col style="width: 9%;"><col style="width: 9%;"><col style="width: 8%;"><col style="width: 6%;"><col style="width: 8%;"><col style="width: 6%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>预警日期</th>
+                  <th>预警内容</th>
+                  <th>风险等级</th>
+                  <th>预警状态</th>
+                  <th>规则名称</th>
+                  <th>规则类型</th>
+                  <th>合同编号</th>
+                  <th>实际业务负责人</th>
+                  <th>业务线名称</th>
+                  <th>业务品种</th>
+                  <th>最新跟踪时间</th>
+                  <th>预警解除时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 煤炭 7 行（v1.7.99.242：12 列 + 8 种 tab 状态全覆盖） -->
+                <tr><td>2022-12-07</td><td>XJXNGYL-DSRMT-202212-002，最新市场价格相比[指定日期]价格下跌超过[阈值]，请尽快跟进处理</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>煤炭价格下跌预警</td><td>货值监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>-</td></tr>
+                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，停船超过12小时，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-claimed">已跟进</span></td><td>船舱停船预警</td><td>货运监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>-</td></tr>
+                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，超过20天仍未到达[港口名称]，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>船舶超时未到预警</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
+                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending-risk">待风控审批</span></td><td>结算单超时未签约</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td></tr>
+                <tr><td>2022-12-07</td><td>业务线放款后，已超90天，终端仍未回款</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-rejected">审批驳回</span></td><td>超时未开具货转</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td></tr>
+                <tr><td>2022-12-07</td><td>首笔放款后已超45天，仍未补充下游结算单</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-extended">延期预警</span></td><td>超时未收款(汽运)</td><td>还款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td></tr>
+                <tr><td>2022-12-07</td><td>已超31天仍未补充电厂双签合同</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>超时未发货</td><td>合同监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
+                <!-- 钢材 3 行（v1.7.99.242：8 状态全覆盖） -->
+                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>资产审核后发票状态查验</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
+                <tr><td>2022-12-07</td><td>已临近应收账款到期日，货款未结清</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending-risk">待风控审批</span></td><td>资产审核后发票状态查验</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
+                <tr><td>2022-12-07</td><td>上传下游结算单后已超15天仍未足额补充发票</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-overdue">超 7 日未处理</span></td><td>超时未补充上游发票-无需融资</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>-</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="wl-pagination">
+            <div style="font-size: 12px; color: var(--text-secondary);">共 XXXX 条记录 · 第 1 / XXX 页</div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div class="wl-pagination-pages">
+                <div class="wl-pagination-page">‹</div>
+                <div class="wl-pagination-page active">1</div>
+                <div class="wl-pagination-page">2</div>
+                <div class="wl-pagination-page">3</div>
+                <div class="wl-pagination-page">4</div>
+                <div class="wl-pagination-page">5</div>
+                <div class="wl-pagination-page">6</div>
+                <div class="wl-pagination-page">7</div>
+                <div class="wl-pagination-page">8</div>
+                <div class="wl-pagination-page">9</div>
+                <div class="wl-pagination-page">›</div>
+              </div>
+              <select class="wl-pagination-size"><option>10 条/页</option><option>20 条/页</option></select>
+              <span class="wl-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tab 3：价格波动（v1.7.99.103 锁定：13 列含预警解除时间 + 8 状态 tab + 10 行详细 mock） -->
+        <div class="wl-tab-content" id="wl-tab-price">
+          <!-- 筛选区（v1.7.99.103：8 字段 + label 上对齐 + 去掉冒号） -->
+          <div class="wl-filter">
+            <div class="ff-cell">
+              <span class="ff-label">预警日期</span>
+              <div class="ff-date-range">
+                <input type="text" placeholder="开始日期">
+                <span style="color: var(--text-tertiary);">~</span>
+                <input type="text" placeholder="结束日期">
+              </div>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">规则类型</span>
+              <select><option value="">请选择</option><option>货值监控</option><option>提运监控</option><option>发票监控</option><option>结算监控</option><option>回款监控</option><option>合同监控</option><option>还款监控</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">规则名称</span>
+              <select><option value="">请选择</option><option>煤炭价格下跌预警</option><option>船舱停船预警</option><option>船舶超时未到预警</option><option>结算单超时未签约</option><option>超时未开具货转</option><option>超时未收款(汽运)</option><option>超时未发货</option><option>资产审核后发票状态查验</option><option>超时未补充上游发票-无需融资</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">风险等级</span>
+              <select><option value="">请选择</option><option>高</option><option>中</option><option>低</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">合同编号</span>
+              <input type="text" placeholder="请输入">
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">下游实际负责人</span>
+              <select><option value="">请选择</option></select>
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">业务线名称</span>
+              <input type="text" placeholder="请输入">
+            </div>
+            <div class="ff-cell">
+              <span class="ff-label">业务品种</span>
+              <select><option value="">请选择</option><option>煤炭</option><option>钢材</option><option>玉米</option><option>木薯淀粉</option></select>
+            </div>
+          </div>
+          <!-- 操作按钮 -->
+          <div class="wl-filter-actions">
+            <button class="btn-reset">重置</button>
+            <button class="btn-primary">查询</button>
+            <button class="btn-search">导出</button>
+          </div>
+          <!-- 状态 tab（v1.7.99.103：8 状态：全部/待处理/已跟进/待风险审批/审批驳回/超期预警/已处理/超 7 日未处理） -->
+          <div class="wl-status-tab-bar">
+            <div class="wl-status-tab active">全部 <span style="color: var(--text-tertiary);">(1000)</span></div>
+            <div class="wl-status-tab">待处理 <span style="color: var(--text-tertiary);">(700)</span></div>
+            <div class="wl-status-tab">已跟进 <span style="color: var(--text-tertiary);">(30)</span></div>
+            <div class="wl-status-tab">待风险审批 <span style="color: var(--text-tertiary);">(5)</span></div>
+            <div class="wl-status-tab">审批驳回 <span style="color: var(--text-tertiary);">(200)</span></div>
+            <div class="wl-status-tab">超期预警 <span style="color: var(--text-tertiary);">(200)</span></div>
+            <div class="wl-status-tab">已处理 <span style="color: var(--text-tertiary);">(200)</span></div>
+            <div class="wl-status-tab">超 7 日未处理 <span style="color: var(--text-tertiary);">(20)</span></div>
+          </div>
+          <!-- 表格（v1.7.99.103：13 列 10 行详细 mock） -->
+          <div class="wl-table-wrap">
+            <table class="wl-table">
+              <colgroup>
+                <col style="width: 8%;"><col style="width: 14%;"><col style="width: 5%;"><col style="width: 8%;"><col style="width: 9%;"><col style="width: 8%;">
+                <col style="width: 9%;"><col style="width: 9%;"><col style="width: 7%;"><col style="width: 6%;"><col style="width: 8%;"><col style="width: 8%;"><col style="width: 5%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>预警日期</th>
+                  <th>预警内容</th>
+                  <th>风险等级</th>
+                  <th>预警状态</th>
+                  <th>规则名称</th>
+                  <th>规则类型</th>
+                  <th>合同编号</th>
+                  <th>实际业务负责人</th>
+                  <th>业务线名称</th>
+                  <th>业务品种</th>
+                  <th>最新跟踪时间</th>
+                  <th>预警解除时间</th>
+                  <th class="col-action">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>2022-12-07</td><td>{合同编号}，最新市场价格相比(指定日期)价格下跌超过[阈值]，关联指标[指数名称 指标名称]请尽快跟进处理</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>煤炭价格下跌预警</td><td>货值监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，停船超过12小时，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-claimed">已跟进</span></td><td>船舱停船预警</td><td>提运监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，超过20天仍未到达[港口名称]，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>船舶超时未到预警</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-risk">待风险审批</span></td><td>结算单超时未签约</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>业务线放款后，已超90天，终端仍未回款</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-rejected">审批驳回</span></td><td>超时未开具货转</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>首笔放款后已超45天，仍未补充下游结算单</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>超时未收款(汽运)</td><td>还款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>-</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>已超31天未补充电充双签合同</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-claimed">已跟进</span></td><td>超时未发货</td><td>合同监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>资产审核后发票状态查验</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>已临近应收账款到期日，货款未结清</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-risk">待风险审批</span></td><td>资产审核后发票状态查验</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>上传下游结算单后已超15天仍未足额补充发票</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-rejected">审批驳回</span></td><td>超时未补充上游发票-无需融资</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>取业务线名称</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="#">详情</a></td></tr>
+              </tbody>
+            </table>
+          </div>
+          <!-- 分页 -->
+          <div class="wl-pagination">
+            <div style="font-size: 12px; color: var(--text-secondary);">共 XXXX 条记录 · 第 1 / XXX 页</div>
+            <div style="display: flex; align-items: center; gap: 14px;">
+              <div class="wl-pagination-pages">
+                <div class="wl-pagination-page">‹</div>
+                <div class="wl-pagination-page active">1</div>
+                <div class="wl-pagination-page">2</div>
+                <div class="wl-pagination-page">3</div>
+                <div class="wl-pagination-page">4</div>
+                <div class="wl-pagination-page">5</div>
+                <div class="wl-pagination-page">6</div>
+                <div class="wl-pagination-page">7</div>
+                <div class="wl-pagination-page">8</div>
+                <div class="wl-pagination-page">9</div>
+                <div class="wl-pagination-page">›</div>
+              </div>
+              <select class="wl-pagination-size"><option>10 条/页</option><option>20 条/页</option></select>
+              <span class="wl-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.80 模式：inline Utils fallback
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[Utils.toast]', type || 'info', msg); } catch (e) {} }
+    };
+
+    // v1.7.99.101 核心：3 张柱状图数据（v1.7.99.101 锁定：堆叠柱状图 3 维度）
+    var OVERVIEW_DATA = [
+      { title: '预警总计',  total: 10000, unit: '条', data: [800, 1100, 700] },  // 企业监控/交易监控/价格波动
+      { title: '未处理预警', total: 5000,  unit: '条', data: [600, 1100, 500] },
+      { title: '超 7 日未处理', total: 3000, unit: '条', data: [400, 1100, 400] }
+    ];
+    // X 轴 3 维度
+    var X_LABELS = ['企业监控', '交易监控', '价格波动'];
+    // 图例 + 颜色（v1.7.99.101 锁定：4 图例 + 3 色：红=高风险/黄=中风险/蓝=低风险）
+    var LEGEND = [
+      { key: 'all',   label: '全部',   color: '#94A3B8' },
+      { key: 'high',  label: '高风险', color: '#DC2626' },
+      { key: 'mid',   label: '中风险', color: '#F59E0B' },
+      { key: 'low',   label: '低风险', color: '#3B82F6' }
+    ];
+    // 3 个柱子的高/中/低占比（v1.7.99.101 经验：mock 数据，每柱 high 30% + mid 35% + low 35%）
+    function splitBar(total) {
+      var h = Math.round(total * 0.30);
+      var m = Math.round(total * 0.35);
+      var l = total - h - m;
+      return { high: h, mid: m, low: l };
+    }
+    // 渲染 3 张柱状图（v1.7.99.101 经验：inline SVG 避免引入图表库）
+    // v1.7.99.103 修复 yBase/yScale 提到最外层（v1.7.99.101 已知 pageerror 教训）
+    function renderOverview() {
+      var container = document.getElementById('overviewGrid');
+      if (!container) return;
+      var W = 360, H = 200, padL = 36, padR = 12, padT = 12, padB = 36;
+      var barWidth = (W - padL - padR) / OVERVIEW_DATA[0].data.length;
+      var yBase = H - padB;                              // v1.7.99.103 提到最外层
+      var yScale = (H - padT - padB) / 1200;             // v1.7.99.103 提到最外层
+      container.innerHTML = OVERVIEW_DATA.map(function(o) {
+        // 3 柱 X 位置
+        var bars = o.data.map(function(v, i) {
+          var x = padL + i * barWidth + barWidth * 0.15;
+          var w = barWidth * 0.7;
+          var split = splitBar(v);
+          var hH = split.high * yScale;
+          var hM = split.mid * yScale;
+          var hL = split.low * yScale;
+          var yH = yBase - hH;
+          var yM = yH - hM;
+          var yL = yM - hL;
+          return '' +
+            '<rect x="' + x + '" y="' + yH + '" width="' + w + '" height="' + hH + '" fill="#DC2626"/>' +
+            '<rect x="' + x + '" y="' + yM + '" width="' + w + '" height="' + hM + '" fill="#F59E0B"/>' +
+            '<rect x="' + x + '" y="' + yL + '" width="' + w + '" height="' + hL + '" fill="#3B82F6"/>';
+        }).join('');
+        // X 轴 label
+        var xLabels = X_LABELS.map(function(label, i) {
+          var x = padL + i * barWidth + barWidth * 0.5;
+          return '<text x="' + x + '" y="' + (H - padB + 16) + '" font-size="11" fill="#64748B" text-anchor="middle">' + label + '</text>';
+        }).join('');
+        // Y 轴 0/500/1000 grid
+        var grid = [0, 500, 1000].map(function(v) {
+          var y = yBase - v * yScale;
+          return '<line x1="' + padL + '" y1="' + y + '" x2="' + (W - padR) + '" y2="' + y + '" stroke="#E2E8F0" stroke-dasharray="2,2"/>' +
+                 '<text x="' + (padL - 6) + '" y="' + (y + 4) + '" font-size="10" fill="#94A3B8" text-anchor="end">' + v + '</text>';
+        }).join('');
+        return '' +
+          '<div class="overview-card">' +
+            '<div class="overview-header">' +
+              '<div class="overview-title">' + o.title + '：</div>' +
+              '<div class="overview-total">' + o.total.toLocaleString() + ' <span class="unit">' + o.unit + '</span></div>' +
+            '</div>' +
+            '<div class="overview-legend">' +
+              LEGEND.map(function(l) { return '<div class="overview-legend-item"><span class="overview-legend-dot" style="background: ' + l.color + ';"></span>' + l.label + '</div>'; }).join('') +
+            '</div>' +
+            '<svg class="overview-svg" viewBox="0 0 ' + W + ' ' + H + '">' + grid + bars + xLabels + '</svg>' +
+          '</div>';
+      }).join('');
+    }
+
+    // v1.7.99.101 核心：3 tab 切换
+    function switchWLTab(el, tabKey) {
+      document.querySelectorAll('.wl-tab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      document.querySelectorAll('.wl-tab-content').forEach(function(c) { c.classList.remove('active'); });
+      var target = document.getElementById('wl-tab-' + tabKey);
+      if (target) target.classList.add('active');
+    }
+
+    // v1.7.99.101 状态 tab 切换
+    document.addEventListener('click', function(e) {
+      var tab = e.target.closest('.wl-status-tab');
+      if (!tab) return;
+      var bar = tab.parentElement;
+      bar.querySelectorAll('.wl-status-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+    });
+
+    // 初始化
+    renderOverview();
+  </script>
+</body>
+</html>
