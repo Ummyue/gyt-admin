@@ -332,7 +332,7 @@
 
         <!-- Tab 2：交易监控（v1.7.99.104 锁定：7 字段筛选 + 13 列表格 10 行 mock 全部煤炭） -->
         <div class="wc-tab-content" id="wc-tab-transaction">
-          <!-- 筛选区（v1.7.99.104：7 字段 + label 上对齐 + 去掉冒号） -->
+          <!-- 筛选区（v1.7.99.248：业务类型/资金类型 改为单选项与新建弹窗一致 + 业务品种→业务品类） -->
           <div class="wc-filter">
             <div class="ff-cell">
               <span class="ff-label">规则类型</span>
@@ -351,27 +351,26 @@
               <select><option value="">请选择</option><option>高</option><option>中</option><option>低</option></select>
             </div>
             <div class="ff-cell">
-              <span class="ff-label">业务品种</span>
+              <span class="ff-label">业务品类</span>
               <select><option value="">请选择</option><option>煤炭</option><option>钢材</option><option>玉米</option><option>木薯淀粉</option></select>
             </div>
             <div class="ff-cell">
               <span class="ff-label">业务类型</span>
-              <select><option value="">请选择</option><option>标准仓单</option><option>打折仓单</option><option>代理</option><option>应收</option><option>其他</option></select>
+              <select><option value="">请选择</option><option>存货类型</option></select>
             </div>
             <div class="ff-cell">
               <span class="ff-label">资金类型</span>
-              <select><option value="">请选择</option><option>郑州银行</option><option>工商银行</option><option>建设银行</option><option>农业银行</option></select>
+              <select><option value="">请选择</option><option>自有资金</option></select>
             </div>
           </div>
-          <!-- 操作按钮（v1.7.99.104：Tab2 含 +添加规则 按钮） -->
+          <!-- 操作按钮（v1.7.99.248：Tab2 「+ 添加规则」放右侧 + 去除"查询/重置"按钮） -->
           <div class="wc-filter-actions">
-            <button class="btn-add" onclick="openAddRuleModal()">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
-              添加规则
-            </button>
+            <div class="wc-filter-actions-left"></div>
             <div class="wc-filter-actions-right">
-              <button class="btn-primary">查询</button>
-              <button class="btn-reset">重置</button>
+              <button class="btn-add" onclick="openAddRuleModal()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+                添加规则
+              </button>
             </div>
           </div>
           <!-- 表格（v1.7.99.104：13 列 10 行 全部煤炭） -->
@@ -391,7 +390,7 @@
                   <th>规则明细 <span class="hint-icon" title="规则的详细说明">?</span></th>
                   <th>风险等级</th>
                   <th>状态</th>
-                  <th>业务品种</th>
+                  <th>业务品类</th>
                   <th>业务类型</th>
                   <th>资金类型</th>
                   <th>备注</th>

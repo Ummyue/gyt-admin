@@ -108,6 +108,20 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T15:00:00',
+          version: 'v1.7.99.248',
+          module: '预警规则配置-交易监控 tap 4 件事统一调整（按 user 2026-08-17 14:58 反馈）',
+          summary: '预警规则配置（pages/warning-config.html）交易监控 tap 4 件事统一调整。1) 现状：v1.7.99.104 旧版交易监控 tap「+ 添加规则」按钮在筛选区下方左侧 + 「查询/重置」按钮在右侧 + 业务类型 select 5 选项（标准仓单/打折仓单/代理/应收/其他）+ 资金类型 select 4 选项（郑州银行/工商银行/建设银行/农业银行）+ 业务品种字段名（user 反馈应该统一检查），user 2026-08-17 14:58 反馈 4 件事：(1) 去除"查询/重置"按钮；(2)「+ 添加规则」按钮放右侧；(3) 业务品种名称修改为"业务品类"；(4) 上方字段类型（规则类型/规则名称/业务类型/业务品种/资金类型）都统一检查一下，与新建时的预设项保持一致（资金类型目前仅有"自有资金"一个选项）；2) 改造方案（v1.7.99.248）：a) 操作按钮区"查询/重置"删掉 + 「+ 添加规则」按钮移到右侧 wc-filter-actions-right 容器（左侧留空 div 占位）；b) 筛选区 + 表格列"业务品种"全部改名为"业务品类"（label + th）；c) 业务类型 select：5 选项 → 1 选项（"存货类型"，与 v1.7.99.245 新建弹窗一致）；d) 资金类型 select：4 选项（郑州银行等）→ 1 选项（"自有资金"，按 user 反馈）；3) 注：规则类型 + 规则名称 选项保持 v1.7.99.104 不变（user 反馈"统一检查一下"但没明确说要改，保守不动）；4) 注：表格里历史 mock 数据（业务类型列"标准仓单/代理/应收/其他"+ 资金类型列"郑州银行/-"等）保留不动（user 只指 select options 改为单选项，不指表格 mock 数据）；5) 验证：playwright 验证查询/重置按钮 = None + 「+ 添加规则」在 wc-filter-actions-right 内 + 筛选区 label 含"业务品类" + 业务类型 select = ["请选择", "存货类型"] + 资金类型 select = ["请选择", "自有资金"] + 表格列名含"业务品类" + 点"添加规则"v1.7.99.245 弹窗 A 仍能正常打开 + 0 page error。',
+          changes: [
+            { type: 'modify', location: 'pages/warning-config.html 交易监控 tap 操作按钮区', before: 'v1.7.99.104「+ 添加规则」在左侧 + 「查询」「重置」在右侧', after: 'v1.7.99.248「+ 添加规则」移到右侧 wc-filter-actions-right 容器 + 删「查询」「重置」按钮' },
+            { type: 'modify', location: 'pages/warning-config.html 交易监控 tap 筛选区"业务品种" label', before: 'v1.7.99.104 业务品种', after: 'v1.7.99.248 业务品类（按 user 改名）' },
+            { type: 'modify', location: 'pages/warning-config.html 交易监控 tap 表格列"业务品种"', before: 'v1.7.99.104 <th>业务品种</th>', after: 'v1.7.99.248 <th>业务品类</th>' },
+            { type: 'modify', location: 'pages/warning-config.html 交易监控 tap 筛选区"业务类型" select', before: 'v1.7.99.104 5 选项（标准仓单/打折仓单/代理/应收/其他）', after: 'v1.7.99.248 1 选项（"存货类型"，与 v1.7.99.245 弹窗一致）' },
+            { type: 'modify', location: 'pages/warning-config.html 交易监控 tap 筛选区"资金类型" select', before: 'v1.7.99.104 4 选项（郑州银行/工商银行/建设银行/农业银行）', after: 'v1.7.99.248 1 选项（"自有资金"，按 user 反馈资金类型目前仅此一个选项）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.247', after: 'v1.7.99.248' },
+          ],
+        },
+        {
           ts: '2026-08-17T14:55:00',
           version: 'v1.7.99.247',
           module: '合同选择器重构：表格→卡片 + 简化筛选（按 user 2026-08-17 14:52 反馈）',
