@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>预警详情 - 豫港通 v1.7.99.243</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../shared/css/all-pages.css">
+  <style>
+    /* v1.7.99.243 预警详情页样式 */
+    .detail-back { color: var(--color-primary); cursor: pointer; font-size: 18px; font-weight: 600; line-height: 1; text-decoration: none; display: inline-flex; align-items: center; }
+    .detail-back:hover { opacity: 0.8; }
+    .detail-header { padding: 16px 24px; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px; }
+    .detail-header .detail-title-row { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .status-tag { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 4px; font-size: 12px; }
+    .status-tag.green { background: #DCFCE7; color: #166534; border: 1px solid #BBF7D0; }
+    .status-tag.yellow { background: #FEF3C7; color: #92400E; border: 1px solid #FDE68A; }
+    .status-tag.red { background: #FEE2E2; color: #991B1B; border: 1px solid #FECACA; }
+    .status-tag.gray { background: #F1F5F9; color: #475569; border: 1px solid #E2E8F0; }
+    /* 头部「操作」下拉（v1.7.99.243 锁定：参考 contract-purchase-order-detail.html v1.7.99.226 模式） */
+    .detail-action-btn { margin-left: auto; padding: 6px 14px; background: var(--color-primary); color: #fff; border-radius: 4px; font-size: 13px; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 4px; }
+    .detail-action-btn:hover { background: #1E3A8A; }
+    .detail-action-menu { display: none; position: fixed; min-width: 140px; background: #fff; border: 1px solid var(--border-color); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,0.15); padding: 4px 0; z-index: 9999; }
+    .detail-action-menu.open { display: block; }
+    .detail-action-menu a { display: block; padding: 8px 14px; color: var(--text-primary); font-size: 13px; white-space: nowrap; text-decoration: none; cursor: pointer; }
+    .detail-action-menu a:hover { background: #F3F4F6; }
+    /* 底部嵌入式按钮区（v1.7.99.243 锁定：按 user 2026-08-17 12:44 图 1 嵌入式，不是 fixed bottom） */
+    .footer-actions { background: #fff; padding: 16px 0 0; display: flex; gap: 12px; justify-content: center; margin-top: 8px; }
+    .footer-actions .btn { min-width: 100px; }
+    /* 区块通用样式（v1.7.99.243 锁定：左蓝竖线 + 标题 + 描述 + 内容） */
+    .block { background: #fff; padding: 16px 24px; border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 12px; }
+    .block-title { font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 12px; }
+    .block-title::before { content: ''; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px; flex-shrink: 0; }
+    .block-title .block-desc { font-size: 12px; color: var(--text-tertiary); font-weight: 400; }
+    .block-title-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .block-title-row .block-title { margin-bottom: 0; }
+    .block-link { font-size: 13px; color: var(--color-primary); text-decoration: none; }
+    .block-link:hover { text-decoration: underline; }
+    /* 基本信息 6 行 2 列 */
+    .info-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 32px; }
+    .info-item { display: flex; flex-direction: column; gap: 4px; }
+    .info-label { font-size: 12px; color: var(--text-tertiary); }
+    .info-value { font-size: 14px; color: var(--text-primary); }
+    .link-primary { color: var(--color-primary); text-decoration: none; }
+    .link-primary:hover { text-decoration: underline; }
+    /* 表格通用（v1.7.99.243 锁定：attach-table 模式） */
+    .attach-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .attach-table th { background: #F8FAFC; padding: 10px 12px; text-align: left; font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-color); white-space: nowrap; }
+    .attach-table td { padding: 12px; border-bottom: 1px solid var(--border-color); vertical-align: middle; }
+    .attach-table tr:last-child td { border-bottom: none; }
+    .attach-table tr:hover { background: #F8FAFC; }
+    /* 涨跌幅（v1.7.99.243 锁定：下跌绿色，上涨红色 —— 与盯市/预警模块风格一致） */
+    .change-down { color: #15803D; font-weight: 600; }
+    .change-up { color: #DC2626; font-weight: 600; }
+    /* 风险等级 */
+    .risk-high { color: #DC2626; font-weight: 600; }
+    .risk-mid { color: #A16207; font-weight: 600; }
+    /* 预警解除 radio 组 */
+    .radio-group { display: flex; gap: 24px; padding: 12px 0; }
+    .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 14px; color: var(--text-primary); }
+    .radio-item input[type="radio"] { cursor: pointer; }
+    /* 追保金额 input */
+    .form-input { width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff; box-sizing: border-box; }
+    .form-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+    .form-input::placeholder { color: var(--text-tertiary); }
+    /* 复选框单元格 */
+    .checkbox-cell { width: 40px; text-align: center; }
+    .checkbox-cell input[type="checkbox"] { cursor: pointer; }
+    /* 必填星号 */
+    .required-mark { color: #DC2626; margin-right: 2px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item active" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <!-- 面包屑 -->
+      <div class="page-header">
+        <div class="breadcrumb"><span>预警中心</span><span class="separator">/</span><a href="./warning-list.html" style="color: var(--text-secondary); text-decoration: none;">预警列表</a><span class="separator">/</span><span class="current">预警详情</span></div>
+      </div>
+
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+        <!-- 头部 -->
+        <div class="detail-header">
+          <div class="detail-title-row">
+            <a href="./warning-list.html" class="detail-back" title="返回预警列表">←</a>
+            <span class="detail-title">预警详情</span>
+            <span class="status-tag yellow" id="statusTag">待处理</span>
+            <button type="button" class="detail-action-btn" id="detailActionBtn" onclick="toggleActionMenu(event)">
+              操作
+              <svg width="10" height="10" viewBox="0 0 12 12" fill="currentColor"><path d="M6 8L1 3h10z"/></svg>
+            </button>
+            <div class="detail-action-menu" id="detailActionMenu">
+              <a onclick="copyWarnNo()">复制预警编号</a>
+              <a onclick="exportDetail()">导出明细</a>
+            </div>
+          </div>
+          <div style="font-size: 13px; color: var(--text-secondary);">预警流水号：<span id="warnNo">YJ20220620000020</span></div>
+        </div>
+
+        <!-- 区块 1：基本信息（6 行 2 列 = 12 字段） -->
+        <div class="block">
+          <div class="block-title">基本信息</div>
+          <div style="margin-top: 8px;">
+            <div class="info-grid-2">
+              <div class="info-item"><span class="info-label">预警流水号</span><span class="info-value" id="infoWarnNo">YJ20220620000020</span></div>
+              <div class="info-item"><span class="info-label">预警日期</span><span class="info-value">2022-06-20</span></div>
+              <div class="info-item"><span class="info-label">预警类型</span><span class="info-value">取预警类型</span></div>
+              <div class="info-item"><span class="info-label">预警名称</span><span class="info-value">取预警规则名称</span></div>
+              <div class="info-item"><span class="info-label">预警状态</span><span class="info-value">待处理<span style="color: var(--text-tertiary);"> / </span>已处理</span></div>
+              <div class="info-item"><span class="info-label">风险等级</span><span class="info-value"><span class="risk-high">高</span><span style="color: var(--text-tertiary);"> / </span><span class="risk-mid">中</span></span></div>
+              <div class="info-item"><span class="info-label">合同编号</span><span class="info-value"><a href="./contract-sales-order-detail.html" class="link-primary">YTYXSMYXGS-TR-202206-001</a></span></div>
+              <div class="info-item"><span class="info-label">实际业务负责人</span><span class="info-value">张三-13323888888</span></div>
+              <div class="info-item"><span class="info-label">业务线号</span><span class="info-value"><a href="./business-line-detail.html" class="link-primary">SKYWX202206200011</a></span></div>
+              <div class="info-item"><span class="info-label">业务线名称</span><span class="info-value">AYHJ-晋瑞-华能巢湖发电有限责任公司</span></div>
+              <div class="info-item"><span class="info-label">合同签订日期</span><span class="info-value">2023-03-22</span></div>
+              <div class="info-item"><span class="info-label">下跌幅度阈值</span><span class="info-value">5%</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：预警明细（描述 + 9 列表格 1 行） -->
+        <div class="block">
+          <div class="block-title">预警明细 <span class="block-desc">当前合同关联 8 个指标，共有 3 个指标达到预警条件</span></div>
+          <table class="attach-table" style="margin-top: 12px;">
+            <thead>
+              <tr>
+                <th>指标名称</th>
+                <th>指标名</th>
+                <th>更新频率</th>
+                <th>商品种类</th>
+                <th>对应地点</th>
+                <th>指定日期价格</th>
+                <th>预警触发时价格</th>
+                <th>涨跌幅</th>
+                <th style="text-align: right;">操作</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>CCI 指数</td>
+                <td>盛源站台 5500K</td>
+                <td>日</td>
+                <td>动力煤</td>
+                <td>山西大同</td>
+                <td>718.00</td>
+                <td>605.00</td>
+                <td><span class="change-down">-8.11%</span></td>
+                <td style="text-align: right;"><a href="./market-price-detail.html" class="link-primary">指标详情</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 区块 3：预警处理记录（5 列表格 5 行） -->
+        <div class="block">
+          <div class="block-title">预警处理记录</div>
+          <table class="attach-table" style="margin-top: 12px;">
+            <colgroup>
+              <col style="width: 14%;">
+              <col style="width: 14%;">
+              <col style="width: 14%;">
+              <col style="width: auto;">
+              <col style="width: 14%;">
+            </colgroup>
+            <thead>
+              <tr>
+                <th>操作时间</th>
+                <th>操作人</th>
+                <th>操作类型</th>
+                <th>处理意见</th>
+                <th>附件</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>YYYY-MM-DD<br>hh:mm:ss</td>
+                <td>处理人姓名<br>手机号</td>
+                <td>跟踪说明</td>
+                <td>处理情况说明</td>
+                <td><a href="#" class="link-primary">xxxx.jpg</a></td>
+              </tr>
+              <tr>
+                <td>YYYY-MM-DD<br>hh:mm:ss</td>
+                <td>处理人姓名<br>手机号</td>
+                <td>跟踪说明</td>
+                <td>处理情况说明</td>
+                <td><a href="#" class="link-primary">xxxx.jpg</a></td>
+              </tr>
+              <tr>
+                <td>YYYY-MM-DD<br>hh:mm:ss</td>
+                <td>处理人姓名<br>手机号</td>
+                <td>跟踪说明</td>
+                <td>处理情况说明</td>
+                <td><a href="#" class="link-primary">xxxx.jpg</a></td>
+              </tr>
+              <tr>
+                <td>YYYY-MM-DD<br>hh:mm:ss</td>
+                <td>处理人姓名<br>手机号</td>
+                <td>跟踪说明</td>
+                <td>处理情况说明</td>
+                <td><a href="#" class="link-primary">xxxx.jpg</a></td>
+              </tr>
+              <tr>
+                <td>YYYY-MM-DD<br>hh:mm:ss</td>
+                <td>处理人姓名<br>手机号</td>
+                <td>预警解除</td>
+                <td>处理情况说明</td>
+                <td><a href="#" class="link-primary">xxxx.jpg</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- 区块 4：预警解除（radio + 6 列表格 5 行 + 取消/提交） -->
+        <div class="block">
+          <div class="block-title-row">
+            <div class="block-title">预警解除</div>
+            <a href="#" class="block-link">当前合同追保记录</a>
+          </div>
+          <div style="margin-top: 8px;">
+            <div style="display: flex; align-items: center; gap: 12px; padding: 8px 0;">
+              <span class="required-mark">*</span>
+              <span style="font-size: 14px; color: var(--text-primary);">是否启动追保流程</span>
+              <div class="radio-group" style="padding: 0;">
+                <label class="radio-item"><input type="radio" name="triggerBond" value="yes" checked>是</label>
+                <label class="radio-item"><input type="radio" name="triggerBond" value="no">否</label>
+              </div>
+            </div>
+            <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 12px; padding: 8px 12px; background: #F8FAFC; border-radius: 4px;">请选择要追保的合同并填写追保金额</div>
+            <table class="attach-table">
+              <colgroup>
+                <col style="width: 5%;">
+                <col style="width: 18%;">
+                <col style="width: 20%;">
+                <col style="width: 12%;">
+                <col style="width: 20%;">
+                <col style="width: 25%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th class="checkbox-cell"><input type="checkbox" id="checkAll"></th>
+                  <th>下游销售合同编号</th>
+                  <th>卖方名称</th>
+                  <th>签订日期</th>
+                  <th>交货期限</th>
+                  <th><span class="required-mark">*</span>追保金额（元）</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="checkbox-cell"><input type="checkbox" class="row-check"></td>
+                  <td><a href="#" class="link-primary">TYYGJ-HNRH-202306-015</a></td>
+                  <td>广州壹企签信息科技有限公司</td>
+                  <td>2023-03-22</td>
+                  <td>2023-04-01 至 2023-04-30</td>
+                  <td><input type="number" class="form-input" placeholder="请输入追保金额" data-bond-input></td>
+                </tr>
+                <tr>
+                  <td class="checkbox-cell"><input type="checkbox" class="row-check"></td>
+                  <td><a href="#" class="link-primary">TYYGJ-HNRH-202306-015</a></td>
+                  <td>广州壹企签信息科技有限公司</td>
+                  <td>2023-03-22</td>
+                  <td>2023-04-01 至 2023-04-30</td>
+                  <td><input type="number" class="form-input" placeholder="请输入追保金额" data-bond-input></td>
+                </tr>
+                <tr>
+                  <td class="checkbox-cell"><input type="checkbox" class="row-check"></td>
+                  <td><a href="#" class="link-primary">TYYGJ-HNRH-202306-015</a></td>
+                  <td>广州壹企签信息科技有限公司</td>
+                  <td>2023-03-22</td>
+                  <td>2023-04-01 至 2023-04-30</td>
+                  <td><input type="number" class="form-input" placeholder="请输入追保金额" data-bond-input></td>
+                </tr>
+                <tr>
+                  <td class="checkbox-cell"><input type="checkbox" class="row-check"></td>
+                  <td><a href="#" class="link-primary">TYYGJ-HNRH-202306-015</a></td>
+                  <td>广州壹企签信息科技有限公司</td>
+                  <td>2023-03-22</td>
+                  <td>2023-04-01 至 2023-04-30</td>
+                  <td><input type="number" class="form-input" placeholder="请输入追保金额" data-bond-input></td>
+                </tr>
+                <tr>
+                  <td class="checkbox-cell"><input type="checkbox" class="row-check"></td>
+                  <td><a href="#" class="link-primary">TYYGJ-HNRH-202306-015</a></td>
+                  <td>广州壹企签信息科技有限公司</td>
+                  <td>2023-03-22</td>
+                  <td>2023-04-01 至 2023-04-30</td>
+                  <td><input type="number" class="form-input" placeholder="请输入追保金额" data-bond-input></td>
+                </tr>
+              </tbody>
+            </table>
+            <!-- 嵌入式按钮（v1.7.99.243 锁定：取消 + 提交，按 user 图 1 嵌入"预警解除"区块内） -->
+            <div class="footer-actions">
+              <button type="button" class="btn btn-secondary" onclick="cancelResolve()">取消</button>
+              <button type="button" class="btn btn-primary" onclick="submitResolve()">提交</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script>
+    // === v1.7.99.243 预警详情页交互 ===
+    // 1. 头部「操作」下拉（参考 contract-purchase-order-detail.html v1.7.99.226 模式）
+    function toggleActionMenu(e) {
+      e.stopPropagation();
+      var menu = document.getElementById('detailActionMenu');
+      var btn = document.getElementById('detailActionBtn');
+      var rect = btn.getBoundingClientRect();
+      menu.style.top = (rect.bottom + 4) + 'px';
+      menu.style.left = (rect.right - 140) + 'px';
+      menu.classList.toggle('open');
+    }
+    document.addEventListener('click', function() {
+      var menu = document.getElementById('detailActionMenu');
+      if (menu) menu.classList.remove('open');
+    });
+    function copyWarnNo() {
+      var no = document.getElementById('warnNo').textContent;
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(no).then(function() {
+          if (window.Utils && Utils.toast) Utils.toast('已复制预警编号：' + no);
+        });
+      }
+    }
+    function exportDetail() {
+      if (window.Utils && Utils.toast) Utils.toast('导出明细（mock）');
+    }
+
+    // 2. 预警解除：全选 + 单选
+    (function() {
+      var checkAll = document.getElementById('checkAll');
+      if (!checkAll) return;
+      var rowChecks = document.querySelectorAll('.row-check');
+      checkAll.addEventListener('change', function() {
+        rowChecks.forEach(function(c) { c.checked = checkAll.checked; });
+      });
+      rowChecks.forEach(function(c) {
+        c.addEventListener('change', function() {
+          var allChecked = Array.from(rowChecks).every(function(x) { return x.checked; });
+          checkAll.checked = allChecked;
+        });
+      });
+    })();
+
+    // 3. 取消 / 提交
+    function cancelResolve() {
+      if (confirm('确认取消预警解除操作？')) {
+        if (window.Utils && Utils.toast) Utils.toast('已取消');
+        else history.back();
+      }
+    }
+    function submitResolve() {
+      // mock 校验：至少勾选 1 行 + 填写追保金额
+      var checked = document.querySelectorAll('.row-check:checked');
+      if (checked.length === 0) {
+        alert('请至少勾选 1 行下游销售合同');
+        return;
+      }
+      var invalid = [];
+      checked.forEach(function(c) {
+        var row = c.closest('tr');
+        var amt = row.querySelector('[data-bond-input]').value.trim();
+        if (!amt || parseFloat(amt) <= 0) invalid.push(row);
+      });
+      if (invalid.length > 0) {
+        alert('已勾选的合同必须填写追保金额');
+        return;
+      }
+      if (window.Utils && Utils.toast) Utils.toast('已提交追保流程（mock）');
+      else alert('已提交追保流程（mock）');
+    }
+  </script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+</body>
+</html>

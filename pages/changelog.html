@@ -108,6 +108,23 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T12:50:00',
+          version: 'v1.7.99.243',
+          module: '预警详情页完全重写（按 user 2026-08-17 12:44 图 1）',
+          summary: '预警详情页（pages/warning-detail.html）从 v1.7.99.85 旧版「字段待补充」占位完全重写为 4 区块标准详情页（参考 bond-letter-detail.html v1.7.99.238 模式）。1) 现状：v1.7.99.85 旧版 inline sidemenu 残影 + 「字段待补充」占位，user 2026-08-17 12:44 反馈「图 1 为「预警中心」的「详情」页面，先补充一下原型界面」；2) 改造方案（v1.7.99.243）：a) 完全重写页面（删 v1.7.99.85 旧版 inline sidemenu 残影约 75 行，按 v1.7.99.215 教训保留 page-header 业务内容），用标准 topbar + left-sidemenu.js；b) 头部加「操作」下拉按钮（v1.7.99.226 模式：复制预警编号 / 导出明细，按 v1.7.99.232 决策详情页不加业务变更按钮）；c) 加 status tag「待处理」黄底（v1.7.99.239 模式）；d) 4 区块：基本信息（6 行 2 列 = 12 字段，含预警流水号/预警日期/预警类型/预警名称/预警状态/风险等级/合同编号+实际业务负责人/业务线号+业务线名称/合同签订日期/下跌幅度阈值；合同编号/业务线号蓝色链接跳关联单据）；预警明细（描述「当前合同关联 8 个指标，共有 3 个指标达到预警条件」+ 9 列表格 1 行：指标名称/指标名/更新频率/商品种类/对应地点/指定日期价格/预警触发时价格/涨跌幅/操作，涨跌幅-8.11% 绿色字体+ .change-down 样式）；预警处理记录（5 列表格 5 行：操作时间/操作人/操作类型/处理意见/附件，5 行操作类型分别为「跟踪说明」×4 + 「预警解除」×1）；预警解除（右上角「当前合同追保记录」蓝链 + radio「是否启动追保流程：是/否」默认「是」选中 + 提示语 + 6 列表格 5 行：复选框/下游销售合同编号/卖方名称/签订日期/交货期限/追保金额 input + 嵌入式「取消」+「提交」按钮）；e) 加 JS 交互：操作菜单 toggle + copyWarnNo（navigator.clipboard 复制预警编号 + Utils.toast 提示）+ exportDetail mock + 全选/单选 checkbox 联动 + submitResolve 校验（至少勾选 1 行 + 已勾选必须填追保金额）+ cancelResolve 二次确认；f) 涨跌幅样式 .change-down（下跌绿色）/ .change-up（上涨红色），风险等级 .risk-high（高红色）/ .risk-mid（中橙色）；3) 验证：playwright 验证 4 区块 + 12 字段 + 3 表格 + 全选+5 行 checkbox + 操作按钮+菜单 + 底部 2 按钮 + 操作菜单点击后 open=True。',
+          changes: [
+            { type: 'rewrite', location: 'pages/warning-detail.html 整体页面（v1.7.99.85 → v1.7.99.243）', before: 'v1.7.99.85 inline sidemenu 残影 + 「字段待补充」占位（161 行）', after: 'v1.7.99.243 完全重写 411 行（标准 topbar + 4 区块 + 操作下拉 + 嵌入式按钮）' },
+            { type: 'add', location: 'pages/warning-detail.html 头部「操作」下拉按钮（v1.7.99.243）', before: 'v1.7.99.85 无', after: 'v1.7.99.243 加 detail-action-btn + actionMenu（v1.7.99.226 模式：复制预警编号/导出明细）' },
+            { type: 'add', location: 'pages/warning-detail.html status tag（v1.7.99.243）', before: 'v1.7.99.85 无 status tag', after: 'v1.7.99.243 加 status-tag yellow「待处理」' },
+            { type: 'add', location: 'pages/warning-detail.html 区块 1 基本信息（v1.7.99.243）', before: 'v1.7.99.85 「字段待补充」', after: 'v1.7.99.243 6 行 2 列 = 12 字段（含 2 个蓝色链接跳关联单据）' },
+            { type: 'add', location: 'pages/warning-detail.html 区块 2 预警明细（v1.7.99.243）', before: 'v1.7.99.85 无', after: 'v1.7.99.243 描述 + 9 列表格 1 行（涨跌幅-8.11% 绿色）' },
+            { type: 'add', location: 'pages/warning-detail.html 区块 3 预警处理记录（v1.7.99.243）', before: 'v1.7.99.85 无', after: 'v1.7.99.243 5 列表格 5 行（操作类型：跟踪说明×4 + 预警解除×1）' },
+            { type: 'add', location: 'pages/warning-detail.html 区块 4 预警解除（v1.7.99.243）', before: 'v1.7.99.85 无', after: 'v1.7.99.243 radio + 6 列表格 5 行 + 嵌入式「取消」+「提交」按钮' },
+            { type: 'add', location: 'pages/warning-detail.html JS 交互（v1.7.99.243）', before: 'v1.7.99.85 无 JS 业务逻辑', after: 'v1.7.99.243 加 toggleActionMenu / copyWarnNo / exportDetail / 全选单选联动 / submitResolve 校验 / cancelResolve 确认' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.242', after: 'v1.7.99.243' },
+          ],
+        },
+        {
           ts: '2026-08-17T12:30:00',
           version: 'v1.7.99.242',
           module: '预警管理-交易监控列表字段调整（按 user 2026-08-17 12:24 图 1）',
