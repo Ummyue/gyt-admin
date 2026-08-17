@@ -108,6 +108,19 @@
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [
         {
+          ts: '2026-08-17T13:00:00',
+          version: 'v1.7.99.244',
+          module: '预警管理-交易监控 tap 表格加回「操作」列（按 user 2026-08-17 12:54 反馈）',
+          summary: '预警管理-交易监控 tap 表格加回「操作」列，user 反馈「预警中心刚加的交易监控 tap 列表的操作列漏掉了，固定在行尾，文字按钮为「详情」其他三个 tap 也同步调整」。1) 现状：v1.7.99.242 旧版把交易监控 tap 表格从 11 列改成 12 列时把「操作」列删了（按 user 2026-08-17 12:24 图 1 没操作列），现在 user 2026-08-17 12:54 反馈需要加回；3 个 tap 中：tap 1 企业监控 13 列含「操作」列 ✓（v1.7.99.103 已有）+ tap 3 价格波动 14 列含「操作」列 ✓（v1.7.99.103 已有），只有 tap 2 交易监控 12 列 ❌ 缺「操作」列；2) 改造方案（v1.7.99.244）：a) colgroup 12 → 13 列（其他 6 列微调宽度让位给「操作」列 5%）；b) 表头加 <th class="col-action">操作</th>；c) 10 行 mock 数据每行加 <td class="col-action"><a href="./warning-detail.html">详情</a></td>（点击跳 v1.7.99.243 预警详情页）；d) 表格注释更新为「v1.7.99.244：13 列含「操作」+ 8 状态全覆盖 + 7 煤炭 + 3 钢材 = 10 行」；3) 验证：playwright 验证交易监控 tap 表头 13 列 + 10 行 × 13 td + 最后一格文字 = 「详情」+ 3 个 tap 都各有 10 个操作列链接 + 0 page error。',
+          changes: [
+            { type: 'modify', location: 'pages/warning-list.html 交易监控 tap 表格注释', before: 'v1.7.99.242 12 列 + 8 状态全覆盖 + 7 煤炭 + 3 钢材 = 10 行', after: 'v1.7.99.244 13 列含「操作」+ 8 状态全覆盖 + 7 煤炭 + 3 钢材 = 10 行' },
+            { type: 'modify', location: 'pages/warning-list.html 交易监控 tap colgroup', before: 'v1.7.99.242 12 列 width（8%/14%/5%/8%/10%/9% + 9%/9%/8%/6%/8%/6%）', after: 'v1.7.99.244 13 列 width（8%/14%/5%/8%/10%/9% + 9%/8%/7%/6%/8%/5%/5%，其他 6 列微调让位给「操作」5%）' },
+            { type: 'modify', location: 'pages/warning-list.html 交易监控 tap 表头', before: 'v1.7.99.242 12 列（无操作列）', after: 'v1.7.99.244 13 列（加 <th class="col-action">操作</th>）' },
+            { type: 'modify', location: 'pages/warning-list.html 交易监控 tap 10 行 mock 数据', before: 'v1.7.99.242 12 列（每行 12 个 td，缺操作列）', after: 'v1.7.99.244 13 列（每行 13 个 td，末列 <td class="col-action"><a href="./warning-detail.html">详情</a></td>）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.243', after: 'v1.7.99.244' },
+          ],
+        },
+        {
           ts: '2026-08-17T12:50:00',
           version: 'v1.7.99.243',
           module: '预警详情页完全重写（按 user 2026-08-17 12:44 图 1）',

@@ -326,12 +326,12 @@
             <div class="wl-status-tab">已处理 <span style="color: var(--text-tertiary);">(200)</span></div>
             <div class="wl-status-tab">超 7 日未处理 <span style="color: var(--text-tertiary);">(20)</span></div>
           </div>
-          <!-- 表格（v1.7.99.242：12 列 + 8 状态全覆盖 + 7 煤炭 + 3 钢材 = 10 行） -->
+          <!-- 表格（v1.7.99.244：13 列含「操作」+ 8 状态全覆盖 + 7 煤炭 + 3 钢材 = 10 行） -->
           <div class="wl-table-wrap">
             <table class="wl-table">
               <colgroup>
                 <col style="width: 8%;"><col style="width: 14%;"><col style="width: 5%;"><col style="width: 8%;"><col style="width: 10%;"><col style="width: 9%;">
-                <col style="width: 9%;"><col style="width: 9%;"><col style="width: 8%;"><col style="width: 6%;"><col style="width: 8%;"><col style="width: 6%;">
+                <col style="width: 9%;"><col style="width: 8%;"><col style="width: 7%;"><col style="width: 6%;"><col style="width: 8%;"><col style="width: 5%;"><col style="width: 5%;">
               </colgroup>
               <thead>
                 <tr>
@@ -347,21 +347,22 @@
                   <th>业务品种</th>
                   <th>最新跟踪时间</th>
                   <th>预警解除时间</th>
+                  <th class="col-action">操作</th>
                 </tr>
               </thead>
               <tbody>
                 <!-- 煤炭 7 行（v1.7.99.242：12 列 + 8 种 tab 状态全覆盖） -->
-                <tr><td>2022-12-07</td><td>XJXNGYL-DSRMT-202212-002，最新市场价格相比[指定日期]价格下跌超过[阈值]，请尽快跟进处理</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>煤炭价格下跌预警</td><td>货值监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>-</td></tr>
-                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，停船超过12小时，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-claimed">已跟进</span></td><td>船舱停船预警</td><td>货运监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>-</td></tr>
-                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，超过20天仍未到达[港口名称]，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>船舶超时未到预警</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
-                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending-risk">待风控审批</span></td><td>结算单超时未签约</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td></tr>
-                <tr><td>2022-12-07</td><td>业务线放款后，已超90天，终端仍未回款</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-rejected">审批驳回</span></td><td>超时未开具货转</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td></tr>
-                <tr><td>2022-12-07</td><td>首笔放款后已超45天，仍未补充下游结算单</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-extended">延期预警</span></td><td>超时未收款(汽运)</td><td>还款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td></tr>
-                <tr><td>2022-12-07</td><td>已超31天仍未补充电厂双签合同</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>超时未发货</td><td>合同监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
+                <tr><td>2022-12-07</td><td>XJXNGYL-DSRMT-202212-002，最新市场价格相比[指定日期]价格下跌超过[阈值]，请尽快跟进处理</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending">待处理</span></td><td>煤炭价格下跌预警</td><td>货值监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，停船超过12小时，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-claimed">已跟进</span></td><td>船舱停船预警</td><td>货运监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>发货批次[发货批次号]，船舶LUJININGTUO2022，超过20天仍未到达[港口名称]，请及时跟进</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>船舶超时未到预警</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending-risk">待风控审批</span></td><td>结算单超时未签约</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>业务线放款后，已超90天，终端仍未回款</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-rejected">审批驳回</span></td><td>超时未开具货转</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>首笔放款后已超45天，仍未补充下游结算单</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-extended">延期预警</span></td><td>超时未收款(汽运)</td><td>还款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>-</td><td>-</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>已超31天仍未补充电厂双签合同</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved">已处理</span></td><td>超时未发货</td><td>合同监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>煤炭</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
                 <!-- 钢材 3 行（v1.7.99.242：8 状态全覆盖） -->
-                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>资产审核后发票状态查验</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
-                <tr><td>2022-12-07</td><td>已临近应收账款到期日，货款未结清</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending-risk">待风控审批</span></td><td>资产审核后发票状态查验</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td></tr>
-                <tr><td>2022-12-07</td><td>上传下游结算单后已超15天仍未足额补充发票</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-overdue">超 7 日未处理</span></td><td>超时未补充上游发票-无需融资</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>-</td></tr>
+                <tr><td>2022-12-07</td><td>合同双签后已超过30天仍未发货</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-resolved-manual">已处理(人工)</span></td><td>资产审核后发票状态查验</td><td>发票监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>已临近应收账款到期日，货款未结清</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-pending-risk">待风控审批</span></td><td>资产审核后发票状态查验</td><td>结算监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>2023-03-11 15:00:00</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
+                <tr><td>2022-12-07</td><td>上传下游结算单后已超15天仍未足额补充发票</td><td><span class="risk-high">高</span></td><td><span class="wl-tag wl-tag-overdue">超 7 日未处理</span></td><td>超时未补充上游发票-无需融资</td><td>回款监控</td><td>XJXNGYL-DSRMT-202212-002</td><td>王涛 15651461325</td><td>取业务线名称</td><td>钢材</td><td>2023-03-11 15:00:00</td><td>-</td><td class="col-action"><a href="./warning-detail.html">详情</a></td></tr>
               </tbody>
             </table>
           </div>
