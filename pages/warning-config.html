@@ -607,7 +607,7 @@
           </div>
           <!-- 操作按钮（v1.7.99.104：Tab3 含 +添加规则 按钮） -->
           <div class="wc-filter-actions">
-            <button class="btn-add">
+            <button class="btn-add" onclick="openAddRulePriceModal()">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
               添加规则
             </button>
@@ -966,6 +966,172 @@
     </div>
   </div>
 
+  <!-- v1.7.99.251 新建预警规则弹窗（价格波动 tap 专用，12 字段 + 18 选项 + 树形通用指标） -->
+  <div class="modal-mask" id="addRulePriceModalMask" style="display: none;" onclick="closeAddRulePriceModalByMask(event)">
+    <div class="add-rule-drawer add-rule-price-drawer" onclick="event.stopPropagation()">
+      <!-- 标题栏 -->
+      <div class="add-rule-header">
+        <span class="add-rule-title">新建预警规则</span>
+        <button type="button" class="add-rule-help" onclick="showAddRulePriceHelp()" title="查看帮助">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        </button>
+      </div>
+      <!-- 表单内容 -->
+      <div class="add-rule-body">
+        <!-- 1. 是否关联合同（radio） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>是否关联合同</label>
+          <div class="add-rule-radio-group">
+            <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="yes" checked><span>是</span></label>
+            <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="no"><span>否</span></label>
+          </div>
+        </div>
+        <!-- 2. 业务类型（1 选项：存货业务） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>业务类型</label>
+          <select class="add-rule-select" id="priceBizType">
+            <option value="">请选择</option>
+            <option value="inventory" selected>存货业务</option>
+          </select>
+        </div>
+        <!-- 3. 规则类型（18 选项价格对比） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>规则类型</label>
+          <select class="add-rule-select" id="priceRuleType">
+            <option value="">请选择</option>
+            <option value="d1" selected>本期价格与指定日期价格对比</option>
+            <option value="d2">本期价格与当月月初价格对比</option>
+            <option value="d3">本期价格与上月同期价格对比</option>
+            <option value="d4">本期价格与上上月同期价格对比</option>
+            <option value="d5">本期价格与本年年初价格对比</option>
+            <option value="d6">本期价格与去年同期价格对比</option>
+            <option value="d7">本期价格与当月平均价格对比</option>
+            <option value="d8">本期价格与当月最高价格对比</option>
+            <option value="d9">本期价格与当月最低价格对比</option>
+            <option value="d10">本期价格与当年平均价格对比</option>
+            <option value="d11">本期价格与当年最高价格对比</option>
+            <option value="d12">本期价格与当年最低价格对比</option>
+            <option value="d13">本期价格与最近N个自然日内平均价格对比</option>
+            <option value="d14">本期价格与最近N个自然日内最高价格对比</option>
+            <option value="d15">本期价格与最近N个自然日内最低价格对比</option>
+            <option value="d16">本期价格与各地现货交易最高限价N对比</option>
+          </select>
+        </div>
+        <!-- 4. 规则名称（input） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>规则名称</label>
+          <input type="text" class="add-rule-input" id="priceRuleName" placeholder="请输入规则名称，如：爆炭价格下跌预警" value="爆炭价格下跌预警">
+        </div>
+        <!-- 5. 风险等级 -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>风险等级</label>
+          <select class="add-rule-select" id="priceRuleRisk">
+            <option value="">请选择</option>
+            <option value="high" selected>高</option>
+            <option value="mid">中</option>
+            <option value="low">低</option>
+          </select>
+        </div>
+        <!-- 6. 考核项 -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>考核项</label>
+          <select class="add-rule-select" id="priceCheckItem">
+            <option value="">请选择</option>
+            <option value="range" selected>最大波动幅度超过阈值触发预警</option>
+            <option value="amount">最大波动金额超过阈值触发报警</option>
+          </select>
+        </div>
+        <!-- 7. 参考价格（select + checkbox） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>参考价格</label>
+          <div class="add-rule-price-ref-group">
+            <select class="add-rule-select add-rule-price-ref-select" id="priceRef">
+              <option value="none" selected>无</option>
+              <option value="contract">合同价</option>
+              <option value="market">市场价</option>
+            </select>
+            <label class="add-rule-checkbox"><input type="checkbox" id="priceRefSignDate" checked><span>签订日期</span></label>
+          </div>
+        </div>
+        <!-- 8. 配置项（涨幅/跌幅 + 超过 + 数字 + %） -->
+        <div class="add-rule-row add-rule-config">
+          <label class="add-rule-label required"><span class="required-mark">*</span>配置项</label>
+          <div class="add-rule-config-group">
+            <select class="add-rule-select add-rule-config-type" id="priceConfigType">
+              <option value="up">涨幅</option>
+              <option value="down" selected>跌幅</option>
+            </select>
+            <span class="add-rule-config-text">超过</span>
+            <input type="number" class="add-rule-input add-rule-config-input" id="priceConfigValue" min="0" step="0.01" placeholder="请输入考核阈值">
+            <span class="add-rule-config-text">%</span>
+          </div>
+        </div>
+        <!-- 9. 规则明细（综合描述 textarea） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label">规则明细</label>
+          <textarea class="add-rule-textarea" id="priceRuleDetail" rows="3" placeholder="综合描述">合同签订后，最新市场价格相比合同签订日期价格下跌超过指定阈值时预警</textarea>
+        </div>
+        <!-- 10. 通用指标（tag 输入 + ? 帮助） -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>通用指标</label>
+          <div class="add-rule-indicator-wrap">
+            <div class="add-rule-indicator-input" id="priceIndicatorDisplay" onclick="openIndicatorPicker()">
+              <span class="add-rule-indicator-placeholder" id="priceIndicatorPlaceholder">请选择通用指标</span>
+            </div>
+            <button type="button" class="add-rule-indicator-help" onclick="openIndicatorPicker()" title="选择通用指标">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            </button>
+          </div>
+        </div>
+        <!-- 11. 消息类型 -->
+        <div class="add-rule-row">
+          <label class="add-rule-label required"><span class="required-mark">*</span>消息类型</label>
+          <select class="add-rule-select" id="priceMsgType">
+            <option value="">请选择</option>
+            <option value="warn" selected>预警</option>
+            <option value="notify">业务提醒</option>
+          </select>
+        </div>
+        <!-- 12. 备注 -->
+        <div class="add-rule-row">
+          <label class="add-rule-label">备注</label>
+          <div class="add-rule-remark-wrap">
+            <textarea class="add-rule-textarea" id="priceRemark" rows="3" maxlength="50" placeholder="请输入备注" oninput="updatePriceRemarkCount()"></textarea>
+            <div class="add-rule-remark-count"><span id="priceRemarkCount">0</span>/50</div>
+          </div>
+        </div>
+      </div>
+      <!-- 底部按钮 -->
+      <div class="add-rule-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAddRulePriceModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="submitAddRulePrice()">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.251 通用指标树形选择器（弹窗内嵌小弹窗） -->
+  <div class="modal-mask" id="indicatorPickerMask" style="display: none; z-index: 10000;" onclick="closeIndicatorPickerByMask(event)">
+    <div class="indicator-picker-panel" onclick="event.stopPropagation()">
+      <div class="indicator-picker-header">
+        <span class="indicator-picker-title">请选择通用指标</span>
+        <button type="button" class="indicator-picker-close" onclick="closeIndicatorPicker()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="indicator-picker-body" id="indicatorPickerBody">
+        <!-- JS 动态生成树形节点 -->
+      </div>
+      <div class="indicator-picker-footer">
+        <span class="indicator-picker-hint" id="indicatorPickerHint">已选 0 个指标</span>
+        <div class="indicator-picker-footer-right">
+          <button type="button" class="btn btn-secondary btn-sm" onclick="closeIndicatorPicker()">取消</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="confirmIndicatorPicker()">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+
   <style>
     /* v1.7.99.245 新建预警规则弹窗（右侧 drawer 风格） */
     .modal-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 9998; display: flex; align-items: stretch; justify-content: flex-end; }
@@ -999,6 +1165,45 @@
     .scope-hint-list { color: var(--text-secondary); flex: 1; word-break: break-all; }
     .scope-hint-edit { color: var(--color-primary); text-decoration: none; flex-shrink: 0; }
     .scope-hint-edit:hover { text-decoration: underline; }
+
+    /* v1.7.99.251 价格波动专用弹窗样式（720px 宽 + 12 字段） */
+    .add-rule-price-drawer { width: 720px; }
+    .add-rule-radio-group { display: flex; gap: 24px; padding: 7px 0; }
+    .add-rule-radio { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--text-primary); }
+    .add-rule-radio input { margin: 0; cursor: pointer; }
+    .add-rule-checkbox { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--text-primary); }
+    .add-rule-checkbox input { margin: 0; cursor: pointer; }
+    .add-rule-price-ref-group { display: flex; align-items: center; gap: 16px; }
+    .add-rule-price-ref-select { flex: 1; }
+    .add-rule-indicator-wrap { display: flex; align-items: center; gap: 8px; }
+    .add-rule-indicator-input { flex: 1; min-height: 32px; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 4px; background: #fff; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
+    .add-rule-indicator-input:hover { border-color: var(--color-primary); }
+    .add-rule-indicator-placeholder { color: var(--text-tertiary); font-size: 13px; }
+    .add-rule-indicator-tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #EFF6FF; color: #1D4ED8; border-radius: 3px; font-size: 12px; }
+    .add-rule-indicator-tag .tag-close { cursor: pointer; opacity: 0.6; }
+    .add-rule-indicator-tag .tag-close:hover { opacity: 1; }
+    .add-rule-indicator-help { background: none; border: 1px solid var(--border-light); border-radius: 4px; padding: 5px; color: var(--text-tertiary); cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+    .add-rule-indicator-help:hover { color: var(--color-primary); border-color: var(--color-primary); }
+    /* 通用指标树形选择器样式 */
+    .indicator-picker-panel { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; max-height: 70vh; background: #fff; border-radius: 8px; box-shadow: 0 8px 32px rgba(0,0,0,0.2); display: flex; flex-direction: column; overflow: hidden; }
+    .indicator-picker-header { padding: 14px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+    .indicator-picker-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .indicator-picker-close { background: none; border: none; color: var(--text-tertiary); cursor: pointer; padding: 4px; display: inline-flex; }
+    .indicator-picker-close:hover { color: var(--text-primary); }
+    .indicator-picker-body { flex: 1; overflow-y: auto; padding: 12px 20px; max-height: 50vh; }
+    .indicator-tree-group { margin-bottom: 8px; }
+    .indicator-tree-group-header { display: flex; align-items: center; gap: 6px; padding: 4px 0; cursor: pointer; font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .indicator-tree-group-header .tree-arrow { transition: transform 0.15s; color: var(--text-tertiary); }
+    .indicator-tree-group-header.collapsed .tree-arrow { transform: rotate(-90deg); }
+    .indicator-tree-group-children { padding-left: 24px; }
+    .indicator-tree-group-children.collapsed { display: none; }
+    .indicator-tree-leaf { display: flex; align-items: center; gap: 6px; padding: 4px 0; cursor: pointer; font-size: 13px; color: var(--text-primary); }
+    .indicator-tree-leaf:hover { color: var(--color-primary); }
+    .indicator-tree-leaf input { margin: 0; cursor: pointer; }
+    .indicator-picker-footer { padding: 12px 20px; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: #FAFAFA; }
+    .indicator-picker-hint { font-size: 12px; color: var(--text-tertiary); }
+    .indicator-picker-footer-right { display: flex; gap: 8px; }
+    .btn-sm { padding: 4px 14px; font-size: 12px; }
   </style>
 
   <script>
@@ -1037,6 +1242,159 @@
     function closeAddRuleModalByMask(e) {
       if (e.target === e.currentTarget) closeAddRuleModal();
     }
+      // === v1.7.99.251 价格波动 tap「添加规则」专用弹窗 ===
+      // 通用指标树形 mock 数据
+      var INDICATOR_TREE = {
+        '厦门港': ['木薯淀粉 厦门港 其他 日更新', '玉米淀粉 厦门港 其他 日更新'],
+        '青岛港': ['木薯淀粉 青岛港 其他 日更新', '玉米淀粉 青岛港 其他 日更新'],
+        '榆林（动力煤主产地）': ['CCI 5000 榆林 5500K 日更新', 'CCI 5500 榆林 5500K 日更新', '动力煤 榆林 5500K 日更新'],
+        '鄂尔多斯（动力煤主产地）': ['CCI 5000 鄂尔多斯 5500K 日更新', 'CCI 5500 鄂尔多斯 5500K 日更新', '动力煤 鄂尔多斯 5500K 日更新'],
+        '山西大同': ['CCI 5000 山西大同 5500K 日更新', 'CCI 5500 山西大同 5500K 日更新', '动力煤 山西大同 5500K 日更新'],
+        '内蒙古': ['CCI 5000 内蒙古 5500K 日更新', '动力煤 内蒙古 5500K 日更新'],
+        '盛源站台': ['CCI 5500 盛源站台 5500K 日更新', '动力煤 盛源站台 5500K 日更新'],
+        '西安（销售地）': ['钢材指数 西安 日更新', '动力煤 西安 5500K 日更新'],
+        '全国综合': ['钢材指数 全国 日更新', '动力煤 全国综合 日更新', '焦煤 全国综合 日更新'],
+      };
+      var priceSelectedIndicators = []; // 已选指标（树形 leaf 完整名称）
+
+      function openAddRulePriceModal() {
+        document.getElementById('addRulePriceModalMask').style.display = 'flex';
+        // 默认值
+        priceSelectedIndicators = ['动力煤 榆林 5500K 日更新', '动力煤 鄂尔多斯 5500K 日更新'];
+        renderPriceSelectedIndicators();
+      }
+
+      function closeAddRulePriceModal() {
+        document.getElementById('addRulePriceModalMask').style.display = 'none';
+      }
+
+      function closeAddRulePriceModalByMask(e) {
+        if (e.target === e.currentTarget) closeAddRulePriceModal();
+      }
+
+      function showAddRulePriceHelp() {
+        Utils.toast('价格波动预警规则：基于通用指标的本期价格与参考价格（指定日期/月度/年度/最近N日/现货限价）对比，超出跌幅/涨幅阈值时触发预警/报警。', 'info');
+      }
+
+      function updatePriceRemarkCount() {
+        var v = document.getElementById('priceRemark').value || '';
+        document.getElementById('priceRemarkCount').textContent = v.length;
+      }
+
+      function renderPriceSelectedIndicators() {
+        var box = document.getElementById('priceIndicatorDisplay');
+        var placeholder = document.getElementById('priceIndicatorPlaceholder');
+        if (priceSelectedIndicators.length === 0) {
+          box.innerHTML = '<span class="add-rule-indicator-placeholder" id="priceIndicatorPlaceholder">请选择通用指标</span>';
+        } else {
+          var html = '';
+          priceSelectedIndicators.forEach(function(name, idx) {
+            html += '<span class="add-rule-indicator-tag">' + escapeHtml(name) + '<span class="tag-close" onclick="removePriceIndicator(' + idx + ')">×</span></span>';
+          });
+          box.innerHTML = html;
+        }
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, function(c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; });
+      }
+
+      function removePriceIndicator(idx) {
+        priceSelectedIndicators.splice(idx, 1);
+        renderPriceSelectedIndicators();
+      }
+
+      function openIndicatorPicker() {
+        var body = document.getElementById('indicatorPickerBody');
+        var html = '';
+        Object.keys(INDICATOR_TREE).forEach(function(groupName) {
+          var leaves = INDICATOR_TREE[groupName];
+          html += '<div class="indicator-tree-group">';
+          html += '  <div class="indicator-tree-group-header" onclick="toggleIndicatorGroup(this)">';
+          html += '    <span class="tree-arrow">▼</span>';
+          html += '    <input type="checkbox" onclick="toggleIndicatorGroupCheck(this, event)" data-group="' + escapeHtml(groupName) + '">';
+          html += '    <span>' + escapeHtml(groupName) + '</span>';
+          html += '  </div>';
+          html += '  <div class="indicator-tree-group-children">';
+          leaves.forEach(function(leaf) {
+            var checked = priceSelectedIndicators.indexOf(leaf) >= 0 ? 'checked' : '';
+            html += '    <label class="indicator-tree-leaf"><input type="checkbox" value="' + escapeHtml(leaf) + '" ' + checked + ' onchange="onIndicatorLeafChange(this)"><span>' + escapeHtml(leaf) + '</span></label>';
+          });
+          html += '  </div>';
+          html += '</div>';
+        });
+        body.innerHTML = html;
+        document.getElementById('indicatorPickerHint').textContent = '已选 ' + priceSelectedIndicators.length + ' 个指标';
+        document.getElementById('indicatorPickerMask').style.display = 'flex';
+      }
+
+      function closeIndicatorPicker() {
+        document.getElementById('indicatorPickerMask').style.display = 'none';
+      }
+
+      function closeIndicatorPickerByMask(e) {
+        if (e.target === e.currentTarget) closeIndicatorPicker();
+      }
+
+      function toggleIndicatorGroup(header) {
+        header.classList.toggle('collapsed');
+        var children = header.nextElementSibling;
+        if (children) children.classList.toggle('collapsed');
+      }
+
+      function toggleIndicatorGroupCheck(cb, ev) {
+        ev.stopPropagation();
+        var groupName = cb.getAttribute('data-group');
+        var leaves = INDICATOR_TREE[groupName] || [];
+        var children = cb.closest('.indicator-tree-group-header').nextElementSibling;
+        var leafChecks = children.querySelectorAll('.indicator-tree-leaf input[type="checkbox"]');
+        leafChecks.forEach(function(lc) {
+          lc.checked = cb.checked;
+          onIndicatorLeafChange(lc);
+        });
+      }
+
+      function onIndicatorLeafChange(cb) {
+        var v = cb.value;
+        var idx = priceSelectedIndicators.indexOf(v);
+        if (cb.checked && idx < 0) {
+          priceSelectedIndicators.push(v);
+        } else if (!cb.checked && idx >= 0) {
+          priceSelectedIndicators.splice(idx, 1);
+        }
+        document.getElementById('indicatorPickerHint').textContent = '已选 ' + priceSelectedIndicators.length + ' 个指标';
+      }
+
+      function confirmIndicatorPicker() {
+        renderPriceSelectedIndicators();
+        closeIndicatorPicker();
+      }
+
+      function submitAddRulePrice() {
+        // 简单校验
+        var relContract = document.querySelector('input[name="priceRelContract"]:checked');
+        var bizType = document.getElementById('priceBizType').value;
+        var ruleType = document.getElementById('priceRuleType').value;
+        var ruleName = document.getElementById('priceRuleName').value.trim();
+        var risk = document.getElementById('priceRuleRisk').value;
+        var checkItem = document.getElementById('priceCheckItem').value;
+        var ref = document.getElementById('priceRef').value;
+        var configValue = document.getElementById('priceConfigValue').value;
+        var msgType = document.getElementById('priceMsgType').value;
+        if (!relContract) { Utils.toast('请选择是否关联合同', 'warn'); return; }
+        if (!bizType) { Utils.toast('请选择业务类型', 'warn'); return; }
+        if (!ruleType) { Utils.toast('请选择规则类型', 'warn'); return; }
+        if (!ruleName) { Utils.toast('请输入规则名称', 'warn'); return; }
+        if (!risk) { Utils.toast('请选择风险等级', 'warn'); return; }
+        if (!checkItem) { Utils.toast('请选择考核项', 'warn'); return; }
+        if (!ref) { Utils.toast('请选择参考价格', 'warn'); return; }
+        if (!configValue) { Utils.toast('请输入考核阈值', 'warn'); return; }
+        if (priceSelectedIndicators.length === 0) { Utils.toast('请选择通用指标', 'warn'); return; }
+        if (!msgType) { Utils.toast('请选择消息类型', 'warn'); return; }
+        Utils.toast('新建预警规则「' + ruleName + '」成功（演示用，未持久化）', 'success');
+        closeAddRulePriceModal();
+      }
+
     // 重置表单
     function resetAddRuleForm() {
       // 保留默认值（应用范围=全部合同 / 业务类型=存货类型 / 风险等级=高 / 消息类型=业务提醒 / 天数=15）
@@ -1114,6 +1472,10 @@
     // ESC 关闭
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
+        var iMask = document.getElementById('indicatorPickerMask');
+        if (iMask && iMask.style.display !== 'none') { closeIndicatorPicker(); return; }
+        var pMask = document.getElementById('addRulePriceModalMask');
+        if (pMask && pMask.style.display !== 'none') { closeAddRulePriceModal(); return; }
         var mask = document.getElementById('addRuleModalMask');
         if (mask && mask.style.display !== 'none') closeAddRuleModal();
       }
