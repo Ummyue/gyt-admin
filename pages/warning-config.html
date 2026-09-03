@@ -867,21 +867,7 @@
       </div>
       <!-- 表单内容 -->
       <div class="add-rule-body">
-        <!-- 规则应用范围（v1.7.99.246：选「指定合同」打开嵌套弹窗 B 合同选择器） -->
-        <div class="add-rule-row">
-          <label class="add-rule-label required"><span class="required-mark">*</span>规则应用范围</label>
-          <select class="add-rule-select" id="ruleApplyScope" onchange="onApplyScopeChange()">
-            <option value="">请选择</option>
-            <option value="all" selected>全部合同</option>
-            <option value="specific">指定合同</option>
-          </select>
-          <!-- v1.7.99.246 已选合同 hint（选「指定合同」并选完合同后显示） -->
-          <div class="add-rule-scope-hint" id="scopeHint" style="display: none;">
-            <span class="scope-hint-label">已选 <span id="scopeHintCount">0</span> 个合同：</span>
-            <span class="scope-hint-list" id="scopeHintList"></span>
-            <a href="javascript:void(0)" class="scope-hint-edit" onclick="openContractPicker()">修改</a>
-          </div>
-        </div>
+        <!-- v1.7.99.252 删除「规则应用范围」字段（与「规则类型」字段重复，user 2026-09-03 17:16 反馈合并为 6 选项规则类型下拉） -->
         <!-- 业务类型 -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>业务类型</label>
@@ -890,15 +876,17 @@
             <option value="inventory" selected>存货类型</option>
           </select>
         </div>
-        <!-- 规则类型 -->
+        <!-- 规则类型（v1.7.99.252：4 选项 → 6 选项，按 user 2026-09-03 17:16 图 1 红框：合同监控/货物监控/发票监控/结算监控/回款监控/还款监控） -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>规则类型</label>
           <select class="add-rule-select" id="ruleType" onchange="onRuleTypeChange()">
             <option value="">请选择</option>
-            <option value="contract">合同监控</option>
+            <option value="contract" selected>合同监控</option>
             <option value="goods">货物监控</option>
-            <option value="settlement">结算监控</option>
             <option value="invoice">发票监控</option>
+            <option value="settlement">结算监控</option>
+            <option value="receipt">回款监控</option>
+            <option value="repayment">还款监控</option>
           </select>
         </div>
         <!-- 规则名称（联动） -->
@@ -1760,20 +1748,6 @@
     var _pickerSelectedMap = {};  // contractNo -> true
     // 弹窗 B 打开来源（'addRule' 从弹窗 A 选「指定合同」打开 / 'edit' 从已选合同 hint「修改」链接打开）
     var _pickerOpenSource = 'addRule';
-
-    // 弹窗 A 规则应用范围 change
-    function onApplyScopeChange() {
-      var scope = document.getElementById('ruleApplyScope').value;
-      if (scope === 'specific') {
-        // 选「指定合同」→ 打开弹窗 B
-        _pickerOpenSource = 'addRule';
-        openContractPicker();
-      } else {
-        // 选「全部合同」/「请选择」→ 隐藏 hint
-        document.getElementById('scopeHint').style.display = 'none';
-        _pickerSelectedMap = {};
-      }
-    }
 
     // 打开弹窗 B
     function openContractPicker() {

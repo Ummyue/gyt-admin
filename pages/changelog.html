@@ -106,7 +106,19 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                {
+      var BASELINE = [                        {
+          ts: '2026-09-03T17:18:00',
+          version: 'v1.7.99.252',
+          module: '预警规则配置-交易监控 tap「添加规则」弹窗字段合并（删「规则应用范围」+ 扩展「规则类型」4 → 6 选项）',
+          summary: '预警规则配置（pages/warning-config.html）交易监控 tap「添加规则」弹窗 addRuleModalMask 字段合并。1) 现状：v1.7.99.245 旧版弹窗有「规则应用范围」字段（全部合同/指定合同 2 选项 + v1.7.99.246 加的 scopeHint + 选「指定合同」触发嵌套弹窗 B 合同选择器）+ 「规则类型」字段（合同监控/货物监控/结算监控/发票监控 4 选项），user 2026-09-03 17:16 反馈：图 1 红框的 6 选项规则类型（合同监控/货物监控/发票监控/结算监控/回款监控/还款监控）应该作为图 2 红框的「规则应用范围」字段内容（即两个字段合并为 1 个「规则类型」6 选项下拉）；2) 改造方案（v1.7.99.252）：a) 删除「规则应用范围」字段 HTML（含 v1.7.99.246 加的 scopeHint 已选合同 hint + 修改链接 + 触发 contractPickerMask 的 onchange 联动）；b) 扩展「规则类型」select：4 选项 → 6 选项（合同监控/货物监控/发票监控/结算监控/回款监控/还款监控，v1.7.99.245 旧 4 选项 + user 新增回款监控 + 还款监控），默认「合同监控」保留 v1.7.99.245 原值；c) 删 JS onApplyScopeChange 函数（line 1765-1777 整段，12 行，含 _pickerOpenSource 联动 + openContractPicker 调用 + scopeHint 隐藏逻辑）；d) 删 resetAddRuleForm 数组里 { id: ruleApplyScope, label: 规则应用范围 } 引用（避免 reset 时找不到 DOM 元素报错）；e) 注：contractPickerMask 弹窗 HTML（line 1487-） + openContractPicker / closeContractPicker / closeContractPickerByMask 等函数 + v1.7.99.247 卡片化选择器 保留不动（user 没要求删，保守做法；后续如有需要再清）；3) 验证：playwright 验证 交易监控 tap 添加规则按钮触发 addRuleModalMask（display=flex）+ 规则应用范围字段 REMOVED_OK（DOM 不存在）+ 规则类型 select = 7 选项（1 placeholder「请选择」+ 6 实际：合同监控/货物监控/发票监控/结算监控/回款监控/还款监控）+ 3 个 inline script 通过 node --check。',
+          changes: [
+            { type: 'delete', location: 'pages/warning-config.html「规则应用范围」字段（v1.7.99.252）', before: 'v1.7.99.245 旧版弹窗顶部第一个字段（select 全部合同/指定合同 + v1.7.99.246 scopeHint + 选指定合同触发 contractPickerMask）', after: 'v1.7.99.252 删除整个字段（line 871-884 整段 + onApplyScopeChange 函数 12 行 + resetAddRuleForm 里的引用）' },
+            { type: 'modify', location: 'pages/warning-config.html「规则类型」select（v1.7.99.252）', before: 'v1.7.99.245 4 选项（合同监控/货物监控/结算监控/发票监控）', after: 'v1.7.99.252 6 选项（合同监控/货物监控/发票监控/结算监控/回款监控/还款监控），默认「合同监控」' },
+            { type: 'delete', location: 'pages/warning-config.html onApplyScopeChange 函数（v1.7.99.252）', before: 'v1.7.99.246 加的 onchange 联动函数（scope===specific 打开 contractPickerMask + 其他隐藏 scopeHint）', after: 'v1.7.99.252 删函数（line 1765-1777，12 行）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.251', after: 'v1.7.99.252' },
+          ],
+        },
+{
           ts: '2026-09-03T16:10:00',
           version: 'v1.7.99.251',
           module: '预警规则配置-价格波动 tap「添加规则」专用弹窗（12 字段 + 18 选项 + 树形通用指标）',
