@@ -106,7 +106,19 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                                                {
+      var BASELINE = [                                                                        {
+          ts: '2026-09-07T14:30:00',
+          version: 'v1.7.99.258',
+          module: '合规验证报告-材料完善度数字 hover tooltip（显示哪些已上传/未上传）',
+          summary: '合规验证报告（pages/report-compliance.html）材料完善度列百分比数字加 hover tooltip。1) 现状：v1.7.99.254 升级的材料完善度双段式卡片（10 行 × 2 上下游 = 20 个数字：100% / 86% / 68%）hover 时无任何反馈，user 2026-09-07 14:27 反馈需要在数字 hover 时弹出气泡显示材料完整状态（哪些上传了哪些没上传）；2) 改造方案（v1.7.99.258）：a) 材料清单升级为 5 项（按 docs/p-report-compliance.md § 6.6 上游/下游各 5 类）：双签合同/发票/货转单/结算单/付款单，v1.7.99.256 th tooltip 同步升级 4 → 5 项保持一致（加「付款单」1 项）；b) 数字 → 已上传项数映射：100% = 5/5 全 ✓ / 86% ≈ 4/5（缺 1 项） / 68% ≈ 3/5（缺 2 项），缺失项在不同 cell 按 cell_idx 循环分布（用 seed = cell_idx % 5 决定缺哪 1 项，缺 2 项用 seed 和 seed+2 偏移），避免所有 cell 都缺同一项；c) CSS 套件追加：.mat-card-value 加 position:relative + cursor:help + .mat-pct-tip 绝对定位（180px 宽 + 白底 + 圆角 6px + 浅灰边 + box-shadow + 上方箭头 ::before 5px 三角 + opacity 0.15s 过渡 + z-index 100 + white-space nowrap）+ .mat-pct-tip-title 11px 加粗标题 + 1px 浅灰底分隔 + .mat-pct-list（list reset）+ .mat-pct-list li（11px 文字 + 1.5px padding）+ .mat-pct-icon 12px 圆圈（uploaded 绿底 #ECFDF5 + #059669 ✓ / missing 红底 #FEF2F2 + #DC2626 ✗）；d) HTML 注入：10 行 tr × 2 上下游 = 20 个 .mat-card-value 全部内嵌 .mat-pct-tip 子元素（含标题"材料上传明细" + 5 行 li 列表）；e) 缺失项状态用 2 种图标：✓ 已上传（绿）+ ✗ 未上传（红），清晰区分；3) 注：缺失项位置在不同 cell 轮换（86% 缺第 1 项、68% 缺第 0+2 或 1+3 或 2+4 等组合），体现"不同业务线缺不同材料"的真实场景；4) 验证：playwright 验证 20 个 .mat-pct-tip 元素 + 第一个 100% 含 5 项全 ✓ + 86% 缺 1 项 + 68% 缺 2 项 + 缺失项按 cell_idx 循环 + hover 前 visibility:hidden + hover 后 visibility:visible opacity:1 + 0 page error。',
+          changes: [
+            { type: 'add', location: 'pages/report-compliance.html .mat-pct-tip 数字 hover tooltip（v1.7.99.258）', before: 'v1.7.99.254 旧 .mat-card-value 数字 hover 无任何反馈', after: 'v1.7.99.258 加 .mat-pct-tip 绝对定位 tooltip（180px 宽 + 白底 + 圆角 + 阴影 + 上方箭头 + 标题"材料上传明细" + 5 行 ✓/✗ 状态列表：双签合同/发票/货转单/结算单/付款单），hover .mat-card-value 触发显示' },
+            { type: 'add', location: 'pages/report-compliance.html 缺失项循环分布（v1.7.99.258）', before: 'v1.7.99.254 旧 20 个 .mat-card-value 数字无关联 tooltip', after: 'v1.7.99.258 给 20 个 cell 全部注入 .mat-pct-tip，缺失项按 cell_idx 循环分布（100% 全 ✓ / 86% 缺 1 项 / 68% 缺 2 项）' },
+            { type: 'modify', location: 'pages/report-compliance.html v1.7.99.256 th tooltip 同步升级（v1.7.99.258）', before: 'v1.7.99.256 旧 th tooltip 4 项（双签合同/发票/货转单/结算单）', after: 'v1.7.99.258 升级为 5 项（加付款单），标题"材料内容（4 项）"→"材料内容（5 项）"保持与 percentage tooltip 一致' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.257', after: 'v1.7.99.258' },
+          ],
+        },
+{
           ts: '2026-09-07T09:27:00',
           version: 'v1.7.99.257',
           module: '合规验证报告-合同状态卡片去掉「已签/未签」重复状态指示',
