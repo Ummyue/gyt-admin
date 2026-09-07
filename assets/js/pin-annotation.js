@@ -50,6 +50,8 @@
     var d = loadData();
     d.password = newPwd;
     saveData(d);
+    // 顶层 app.html：通知 iframe 同步新密码
+    if (!IN_IFRAME) notifyIframe('change-pwd', { newPwd: newPwd });
   }
   function getPins() {
     return loadData().pins;
@@ -77,6 +79,52 @@
   }
   function getLockRemainMin() {
     return Math.ceil((state.lockedUntil - Date.now()) / 60000);
+  }
+
+  // ===== iframe 桥接（app.html 用 iframe 加载 pages/*.html 时） =====
+  // 顶层 (app.html) 和 iframe 内 (pages/*.html) 共享 pin 模式状态
+  var IN_IFRAME = (function() {
+    try { return window.parent && window.parent !== window; } catch(e) { return false; }
+  })();
+  function notifyIframe(action, data) {
+    // 顶层 → iframe：通知 pin 模式状态变化
+    try {
+      var frame = document.getElementById('prototypeFrame');
+      if (frame && frame.contentWindow && frame.contentWindow !== window) {
+        frame.contentWindow.postMessage({ type: 'pin-bridge', action: action, data: data || {} }, '*');
+      }
+    } catch(e) { /* 跨域或 iframe 未就绪 */ }
+  }
+  function bindMessageBridge() {
+    if (IN_IFRAME) {
+      // ===== iframe 内（pages/*.html）监听父窗口消息 =====
+      window.addEventListener('message', function(e) {
+        if (!e.data || e.data.type !== 'pin-bridge') return;
+        if (e.data.action === 'enter') {
+          // 父窗口已验证密码，直接进入 pin 模式（不弹密码弹窗）
+          state.authorized = true;
+          enterPinMode();
+        } else if (e.data.action === 'exit') {
+          state.authorized = false;
+          exitPinMode();
+        } else if (e.data.action === 'change-pwd' && e.data.data && e.data.data.newPwd) {
+          setPwd(e.data.data.newPwd);
+        }
+      });
+      // pages/*.html 加载完成后主动询问父窗口当前状态
+      if (window.parent) {
+        try { window.parent.postMessage({ type: 'pin-bridge', action: 'ready' }, '*'); } catch(e) {}
+      }
+    } else {
+      // ===== 顶层 app.html 监听 iframe 的 ready 消息 =====
+      window.addEventListener('message', function(e) {
+        if (!e.data || e.data.type !== 'pin-bridge') return;
+        if (e.data.action === 'ready') {
+          // iframe 加载完成，同步当前 pin 模式状态
+          if (state.pinMode) notifyIframe('enter');
+        }
+      });
+    }
   }
 
   // ===== 密码弹窗 =====
@@ -191,12 +239,16 @@
     document.body.classList.add('pin-mode-active');
     showBanner();
     updateTriggerBtn();
+    // 顶层 app.html：通知 iframe 进入 pin 模式
+    if (!IN_IFRAME) notifyIframe('enter');
   }
   function exitPinMode() {
     state.pinMode = false;
     document.body.classList.remove('pin-mode-active');
     hideBanner();
     updateTriggerBtn();
+    // 顶层 app.html：通知 iframe 退出 pin 模式
+    if (!IN_IFRAME) notifyIframe('exit');
   }
   function showBanner() {
     hideBanner();
@@ -443,9 +495,19 @@
     renderAllPins();
     ensureToggleBtn();
     if (document.getElementById('btnCenter')) {
+      // 顶层 app.html：创建 trigger 按钮
       ensureTriggerBtn();
       updateTriggerBtn();
+      // 顶层 app.html：监听 prototypeFrame iframe 加载，新页面加载完同步 pin 模式
+      var frame = document.getElementById('prototypeFrame');
+      if (frame) {
+        frame.addEventListener('load', function() {
+          if (state.pinMode) notifyIframe('enter');
+        });
+      }
     }
+    // 双向桥接（iframe 内监听父窗口消息 + 顶层发消息）
+    bindMessageBridge();
   }
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', init);
