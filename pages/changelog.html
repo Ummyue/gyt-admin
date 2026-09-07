@@ -106,7 +106,18 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                                {
+      var BASELINE = [                                                        {
+          ts: '2026-09-07T09:20:00',
+          version: 'v1.7.99.256',
+          module: '合规验证报告-材料完善度 th 加提示 icon + hover tooltip（告知材料内容 4 项）',
+          summary: '合规验证报告（pages/report-compliance.html）「材料完善度」th 字段名后加提示 icon 气泡。1) 现状：v1.7.99.254 旧版 th 只显示"材料完善度"文字（width 8%），user 2026-09-07 09:18 反馈需要在字段名后加 ? 提示 icon，鼠标悬停时告知用户材料具体内容；2) 改造方案（v1.7.99.256）：a) HTML 升级 th 结构：<th style="width: 8%;"><span class="th-cell"><span>材料完善度</span><span class="th-help" tabindex="0" aria-label="材料内容"><svg>?</svg><span class="th-help-tip">...</span></span></span></th>；b) icon 设计：14×14 圆圈 + 浅灰底 #F3F4F6 + 灰色 ? SVG（圆+点+横线问号形状），hover/focus 时变蓝色底 #DBEAFE + 蓝色 ? #1D4ED8 + cursor: help；c) tooltip 设计：绝对定位 top: calc(100% + 8px) + left: 50% transform: translateX(-50%) 居中显示在 icon 下方 + min-width: 200px + 白底 #fff + 1px 浅灰边 #E5E7EB + 6px 圆角 + 0 4px 12px rgba(0,0,0,0.08) 阴影 + 10px 12px padding + 默认 opacity:0 visibility:hidden + hover/focus 父级时变 opacity:1 visibility:visible + transition 0.15s + z-index:100；d) 箭头：.th-help-tip::before 伪元素 + 5px 三角 + border-bottom-color: #fff + drop-shadow 形成上方小箭头指 icon；e) tooltip 内容：标题"材料内容（4 项）"12px 加粗 + 1px 浅灰底分隔 + 4 行 ul.th-help-list：每行 14×14 绿底 ✓ 圆圈 (#ECFDF5 + #059669) + 12px 文字，分别为：双签合同、发票、货转单、结算单；f) CSS 套件：.th-cell（inline-flex 居中）+ .th-help（圆圈 icon 容器 + hover/focus 态）+ .th-help-tip（绝对定位 tooltip + ::before 箭头）+ .th-help-tip-title（标题样式）+ .th-help-list（列表 reset）+ .th-help-list li（行布局）+ .th-help-check（✓ 绿底圆圈）8 个新样式；g) 交互：tabindex="0" 支持键盘 focus 触发，aria-label 增强无障碍体验；3) 验证：playwright 验证 th-help 圆圈 14×14 存在 + tooltip 含 4 项材料内容（双签合同/发票/货转单/结算单）+ hover 前 visibility:hidden opacity:0 + hover 后 visibility:visible opacity:1 display:block + 0 page error。',
+          changes: [
+            { type: 'add', location: 'pages/report-compliance.html「材料完善度」th 字段名后加 ? 提示 icon + tooltip（v1.7.99.256）', before: 'v1.7.99.254 旧 th <th style="width: 8%;">材料完善度</th> 只有文字', after: 'v1.7.99.256 新 th 含 <span class="th-cell"> + 文字 + <span class="th-help" tabindex="0"> + 14×14 ? 圆圈 SVG + <span class="th-help-tip"> 绝对定位 tooltip（200px 宽 + 白底 + 圆角 + 阴影 + 上方箭头 + 标题"材料内容（4 项）" + 4 行 ✓ 列表：双签合同/发票/货转单/结算单）' },
+            { type: 'add', location: 'pages/report-compliance.html th-help CSS 套件（v1.7.99.256）', before: 'v1.7.99.254 旧 th 无任何帮助样式', after: 'v1.7.99.256 加 .th-cell + .th-help（圆圈 icon 14×14 + hover 蓝态）+ .th-help-tip（绝对定位 + 箭头 + opacity 过渡）+ .th-help-tip-title（标题样式）+ .th-help-list（列表 reset）+ .th-help-list li（行布局）+ .th-help-check（绿底 ✓ 圆圈）8 个新样式' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.255', after: 'v1.7.99.256' },
+          ],
+        },
+{
           ts: '2026-09-07T09:15:00',
           version: 'v1.7.99.255',
           module: '合规验证报告-合同状态列视觉升级（复用 v1.7.99.254 双段式卡片视觉）',
