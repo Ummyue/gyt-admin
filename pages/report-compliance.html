@@ -29,10 +29,10 @@
     .data-status .arrow { color: var(--text-tertiary); margin: 0 4px; }
 
     /* 合同状态（v1.7.99.255：双段式卡片，复用 v1.7.99.254 视觉语言，2 态 = 双签/单签） */
-    .contract-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-    .contract-card { display: flex; flex-direction: column; gap: 3px; padding: 6px 10px; min-width: 64px; line-height: 1.2; }
+    .contract-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.04); }
+    .contract-card { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; min-width: 56px; line-height: 1.2; }
     /* 上游合同：默认双签（蓝）/ 单签（红） */
-    .contract-card.contract-up.signed { background: #EFF6FF; border-top: 2px solid #1D4ED8; }
+    .contract-card.contract-up.signed { background: #EFF6FF; border-top: 1.5px solid #1D4ED8; }
     .contract-card.contract-up.signed .contract-card-value { color: #1D4ED8; }
     .contract-card.contract-up.signed .contract-card-status { color: #059669; }
     .contract-card.contract-up.unsigned { background: #FEF2F2; border-top: 2px solid #DC2626; }
@@ -46,9 +46,9 @@
     .contract-card.contract-down.unsigned .contract-card-value { color: #DC2626; }
     .contract-card.contract-down.unsigned .contract-card-status { color: #DC2626; }
     .contract-card-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.3px; }
-    .contract-card-value { font-size: 14px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
+    .contract-card-value { font-size: 12px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
     .contract-card-status { font-size: 10px; font-weight: 500; line-height: 1.1; }
-    .contract-flow { display: flex; align-items: center; justify-content: center; padding: 0 8px; color: #9CA3AF; font-size: 14px; line-height: 1; background: #F9FAFB; border-top: 2px solid #E5E7EB; }
+    .contract-flow { display: flex; align-items: center; justify-content: center; padding: 0 6px; color: #9CA3AF; font-size: 12px; line-height: 1; background: #F9FAFB; border-top: 1.5px solid #E5E7EB; }
 
     /* 表头帮助 icon + 自定义 tooltip（v1.7.99.256：材料完善度字段提示气泡） */
     .th-cell { display: inline-flex; align-items: center; gap: 4px; }
@@ -79,9 +79,9 @@
     .col-sticky-right-2 { position: sticky; right: 100px; background: #fff; z-index: 1; box-shadow: inset 4px 0 8px -4px rgba(0,0,0,0.05); }  /* 100px ≈ 操作列宽 + 安全距离 */
 
     /* 数据完善状态（v1.7.99.260：双段式卡片 + 6 环节审批 tooltip） */
-    .data-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-    .data-card { display: flex; flex-direction: column; gap: 3px; padding: 6px 10px; min-width: 64px; line-height: 1.2; position: relative; }
-    .data-card.data-up.ready { background: #EFF6FF; border-top: 2px solid #1D4ED8; }
+    .data-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.04); }
+    .data-card { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; min-width: 56px; line-height: 1.2; position: relative; }
+    .data-card.data-up.ready { background: #EFF6FF; border-top: 1.5px solid #1D4ED8; }
     .data-card.data-up.ready .data-card-value { color: #1D4ED8; }
     .data-card.data-up.pending { background: #FEF3C7; border-top: 2px solid #D97706; }
     .data-card.data-up.pending .data-card-value { color: #D97706; }
@@ -90,8 +90,8 @@
     .data-card.data-down.pending { background: #FEF3C7; border-top: 2px solid #D97706; }
     .data-card.data-down.pending .data-card-value { color: #D97706; }
     .data-card-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.3px; }
-    .data-card-value { font-size: 14px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
-    .data-flow { display: flex; align-items: center; justify-content: center; padding: 0 8px; color: #9CA3AF; font-size: 14px; line-height: 1; background: #F9FAFB; border-top: 2px solid #E5E7EB; }
+    .data-card-value { font-size: 12px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
+    .data-flow { display: flex; align-items: center; justify-content: center; padding: 0 6px; color: #9CA3AF; font-size: 12px; line-height: 1; background: #F9FAFB; border-top: 1.5px solid #E5E7EB; }
     /* hover 气泡：6 环节审批状态 */
     .data-card-value { position: relative; cursor: help; }
     .data-step-tip { position: absolute; top: calc(100% + 6px); left: 50%; transform: translateX(-50%); min-width: 200px; background: #fff; border: 1px solid #E5E7EB; border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); padding: 8px 10px; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.15s, visibility 0.15s; z-index: 100; white-space: nowrap; }
@@ -110,20 +110,20 @@
     .warn-num.zero { color: var(--text-tertiary); font-weight: 400; }
 
     /* 材料完善度（v1.7.99.254：双段式卡片 — 上游卡片 + 流向箭头 + 下游卡片，B 端克制风格） */
-    .mat-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-    .mat-card { display: flex; flex-direction: column; gap: 3px; padding: 6px 10px; min-width: 64px; line-height: 1.2; }
-    .mat-card.mat-up { background: #EFF6FF; border-top: 2px solid #1D4ED8; }
+    .mat-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 4px; overflow: hidden; box-shadow: 0 0 0 1px rgba(0,0,0,0.04); }
+    .mat-card { display: flex; flex-direction: column; gap: 2px; padding: 4px 8px; min-width: 56px; line-height: 1.2; }
+    .mat-card.mat-up { background: #EFF6FF; border-top: 1.5px solid #1D4ED8; }
     .mat-card.mat-down { background: #ECFDF5; border-top: 2px solid #10B981; }
-    .mat-card-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.3px; }
-    .mat-card-value { font-size: 14px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
+    .mat-card-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.2px; line-height: 1.2; }
+    .mat-card-value { font-size: 12px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
     .mat-card.mat-up .mat-card-value { color: #1D4ED8; }
     .mat-card.mat-down .mat-card-value { color: #047857; }
-    .mat-card-value .pct-suffix { font-size: 10px; font-weight: 500; color: var(--text-tertiary); margin-left: 1px; }
+    .mat-card-value .pct-suffix { font-size: 9px; font-weight: 500; color: var(--text-tertiary); margin-left: 1px; }
     .mat-card-bar { width: 100%; height: 3px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: hidden; }
     .mat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
     .mat-card.mat-up .mat-bar-fill { background: #1D4ED8; }
     .mat-card.mat-down .mat-bar-fill { background: #10B981; }
-    .mat-flow { display: flex; align-items: center; justify-content: center; padding: 0 8px; color: #9CA3AF; font-size: 14px; line-height: 1; background: #F9FAFB; border-top: 2px solid #E5E7EB; }
+    .mat-flow { display: flex; align-items: center; justify-content: center; padding: 0 6px; color: #9CA3AF; font-size: 12px; line-height: 1; background: #F9FAFB; border-top: 1.5px solid #E5E7EB; }
 
     /* 业务线列 */
     .bizline-cell { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }

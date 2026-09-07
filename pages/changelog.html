@@ -106,7 +106,19 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                                                                        {
+      var BASELINE = [                                                                                                {
+          ts: '2026-09-07T15:13:00',
+          version: 'v1.7.99.261',
+          module: '合规验证报告-3 个双段式卡片视觉一致性优化（字号/尺寸/色块占比统一）',
+          summary: '合规验证报告（pages/report-compliance.html）3 个双段式卡片视觉一致性优化。1) 现状：v1.7.99.254 材料完善度 + v1.7.99.255 合同状态 + v1.7.99.260 数据完善状态 3 套独立 CSS（.mat-* / .contract-* / .data-*）字号/尺寸/色块占比不统一，user 2026-09-07 15:10 反馈：a) 字体大小未与页面整体 12-13px 字号保持一致（卡片用 14px 偏大）；b) 框的宽高未统一（mat 50px / contract 57px / data 57px）；c) 色块占比有点大（padding 6px 10px + 圆角 6px + 顶边 2px + box-shadow 0 1px 2px 偏重）；2) 改造方案（v1.7.99.261）：a) 字号统一：mat-card-value / contract-card-value / data-card-value 14px → 12px（与页面表格 12-13px 一致）；b) pct-suffix 后缀 10px → 9px；c) 标签 letter-spacing 0.3px → 0.2px（更紧凑）；d) 卡片 padding 6px 10px → 4px 8px（色块占比缩小约 1/3）；e) 卡片 gap 3px → 2px；f) 卡片 min-width 64px → 56px；g) 容器圆角 6px → 4px；h) 顶边条 2px → 1.5px；i) 容器 box-shadow 0 1px 2px rgba(0,0,0,0.04) → 0 0 0 1px rgba(0,0,0,0.04)（更克制）；j) 中间连接区 .mat-flow / .contract-flow / .data-flow padding 0 8px → 0 6px + font-size 14px → 12px + border-top 2px → 1.5px；3) 注：3 套独立类名保留以防破坏其他页面（实际只 report-compliance.html 用了），关键值统一调整；4) 验证：playwright 验证 3 套卡片 .mat-card-value / .contract-card-value / .data-card-value font-size 全部 12px + 3 套卡片存在 + 0 page error。',
+          changes: [
+            { type: 'modify', location: 'pages/report-compliance.html .mat-* CSS 套件（v1.7.99.261）', before: 'v1.7.99.254 旧 .mat-dual 圆角 6px + box-shadow 0 1px 2px / .mat-card padding 6/10 + min-width 64 + gap 3px / .mat-card-value 14px / .mat-flow padding 0/8 + 14px + border-top 2px', after: 'v1.7.99.261 新 .mat-dual 圆角 4px + box-shadow 0 0 0 1px / .mat-card padding 4/8 + min-width 56 + gap 2px / .mat-card-value 12px / .mat-flow padding 0/6 + 12px + border-top 1.5px' },
+            { type: 'modify', location: 'pages/report-compliance.html .contract-* CSS 套件（v1.7.99.261）', before: 'v1.7.99.255 旧 .contract-dual 圆角 6px + .contract-card padding 6/10 + min-width 64 + gap 3px / .contract-card-value 14px / .contract-flow padding 0/8 + 14px + border-top 2px', after: 'v1.7.99.261 新 .contract-dual 圆角 4px + .contract-card padding 4/8 + min-width 56 + gap 2px / .contract-card-value 12px / .contract-flow padding 0/6 + 12px + border-top 1.5px' },
+            { type: 'modify', location: 'pages/report-compliance.html .data-* CSS 套件（v1.7.99.261）', before: 'v1.7.99.260 旧 .data-dual 圆角 6px + .data-card padding 6/10 + min-width 64 + gap 3px / .data-card-value 14px / .data-flow padding 0/8 + 14px + border-top 2px', after: 'v1.7.99.261 新 .data-dual 圆角 4px + .data-card padding 4/8 + min-width 56 + gap 2px / .data-card-value 12px / .data-flow padding 0/6 + 12px + border-top 1.5px' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.260', after: 'v1.7.99.261' },
+          ],
+        },
+{
           ts: '2026-09-07T14:55:00',
           version: 'v1.7.99.260',
           module: '合规验证报告-字段顺序调整 + 数据完善状态重新设计（双段式卡片 + 6 环节审批 tooltip）',
