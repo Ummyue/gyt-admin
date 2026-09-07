@@ -106,7 +106,18 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                        {
+      var BASELINE = [                                                {
+          ts: '2026-09-07T09:15:00',
+          version: 'v1.7.99.255',
+          module: '合规验证报告-合同状态列视觉升级（复用 v1.7.99.254 双段式卡片视觉）',
+          summary: '合规验证报告（pages/report-compliance.html）「合同状态」列按 v1.7.99.254 「材料完善度」的双段式卡片视觉升级。1) 现状：v1.7.99.64 旧版合同状态是简单 span（"双签"普通字 + "单签"红色 600 字重 + "---" 灰字分隔），与 v1.7.99.254 材料完善度视觉风格不一致，user 2026-09-07 09:13 反馈按材料完善度的 UI 视觉改造合同状态字段；2) 字段定义（docs/p-report-compliance.md § 4.4）：合同状态 = 取上下游的合同状态（双签/单签）+ 单签状态时为红字显示，2×2 = 4 种组合（双签双签 / 单签双签 / 双签单签 / 单签单签），v1.7.99.64 mock 数据 10 行：6 行双签/双签 + 4 行双签/单签（无单签/双签 或 单签/单签）；3) 改造方案（v1.7.99.255）：a) CSS 替换 v1.7.99.64 旧 .contract-status + .dual + .single + .arrow 5 样式 → 新 .contract-dual（外层圆角矩形 156×71px + overflow:hidden + box-shadow 立体感，与 v1.7.99.254 mat-dual 同样设计语言）+ .contract-card（上下卡片 64px min-width + flex column + padding 6px 10px）+ .contract-card-label（10px 灰字"上游合同"/"下游合同"）+ .contract-card-value（14px 加粗等宽 + "双签"/"单签"大字）+ .contract-card-status（10px 字 + "✓已签" 绿色 / "⚠未签" 红色状态指示替代 v1.7.99.254 mat-card-bar 进度条）+ .contract-flow（中间连接区 + 14px 灰箭头 + 灰边 + 灰底）；b) 4 种 .contract-card.signed/unsigned 配色组合：上游双签 #1D4ED8 蓝 + #EFF6FF 浅蓝底 + #059669 绿状态；上游单签 #DC2626 红 + #FEF2F2 浅红底 + #DC2626 红状态；下游双签 #047857 深绿 + #ECFDF5 浅绿底 + #059669 绿状态；下游单签 #DC2626 红 + #FEF2F2 浅红底 + #DC2626 红状态；c) HTML 替换：10 行 tr 全部从 v1.7.99.64 span 结构升级为 v1.7.99.255 双段式卡片结构 <div class="contract-dual"><div class="contract-card contract-up signed"><span class="contract-card-label">上游合同</span><span class="contract-card-value">双签</span><span class="contract-card-status">✓ 已签</span></div><div class="contract-flow">→</div><div class="contract-card contract-down signed/unsigned">...</div></div>；4) 视觉对比：v1.7.99.64 简单文字（"双签---单签"）vs v1.7.99.255 双段式卡片（圆角矩形 + 上下卡片 + 状态指示），与 v1.7.99.254 材料完善度视觉统一；5) 验证：playwright 验证 10 个 .contract-dual 容器全部生成（6 行 双签/双签 + 4 行 双签/单签）+ 容器尺寸 156×71px + 4 种状态组合（signed/unsigned × contract-up/contract-down）正确渲染 + 上游双签蓝色 + 下游单签红色警示。',
+          changes: [
+            { type: 'modify', location: 'pages/report-compliance.html .contract-* CSS 套件（v1.7.99.255）', before: 'v1.7.99.64 旧 .contract-status + .dual + .single + .arrow 4 样式', after: 'v1.7.99.255 新 .contract-dual + .contract-card + .contract-card-label + .contract-card-value + .contract-card-status + .contract-flow + 4 配色组合 9 样式（与 v1.7.99.254 mat-dual 同设计语言）' },
+            { type: 'modify', location: 'pages/report-compliance.html 10 行 tr HTML 模板（v1.7.99.255）', before: 'v1.7.99.64 旧 <span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="single">单签</span></span>', after: 'v1.7.99.255 新 <div class="contract-dual"><div class="contract-card contract-up signed"><span class="contract-card-label">上游合同</span><span class="contract-card-value">双签</span><span class="contract-card-status">✓ 已签</span></div><div class="contract-flow">→</div><div class="contract-card contract-down signed/unsigned">...</div></div>（10 行全替换）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.254', after: 'v1.7.99.255' },
+          ],
+        },
+{
           ts: '2026-09-07T09:05:00',
           version: 'v1.7.99.254',
           module: '合规验证报告-材料完整度列视觉重新设计（v1.7.99.253 圆环方案 → v1.7.99.254 双段式卡片方案）',
