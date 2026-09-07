@@ -971,8 +971,30 @@
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>是否关联合同</label>
           <div class="add-rule-radio-group">
-            <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="yes" checked><span>是</span></label>
-            <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="no"><span>否</span></label>
+            <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="yes" checked onchange="togglePriceContractRow()"><span>是</span></label>
+            <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="no" onchange="togglePriceContractRow()"><span>否</span></label>
+          </div>
+        </div>
+        <!-- 1.5. 关联合同选择控件（仅在"是否关联合同=是"时显示，v1.7.99.263 新增） -->
+        <div class="add-rule-row" id="priceContractRow">
+          <label class="add-rule-label required"><span class="required-mark">*</span>关联合同</label>
+          <div class="price-contract-picker">
+            <!-- 3 个 tap（全部/采购合同/销售合同） -->
+            <div class="price-contract-tabs">
+              <div class="price-contract-tab active" data-tab="all" onclick="switchPriceContractTab(this, 'all')">全部 <span class="count" id="priceContractCountAll">0</span></div>
+              <div class="price-contract-tab" data-tab="purchase" onclick="switchPriceContractTab(this, 'purchase')">采购合同 <span class="count" id="priceContractCountPurchase">0</span></div>
+              <div class="price-contract-tab" data-tab="sales" onclick="switchPriceContractTab(this, 'sales')">销售合同 <span class="count" id="priceContractCountSales">0</span></div>
+            </div>
+            <!-- 合同列表 -->
+            <div class="price-contract-list" id="priceContractList">
+              <!-- JS 动态渲染 -->
+            </div>
+            <!-- 已选合同预览 -->
+            <div class="price-contract-selected-preview" id="priceContractSelectedPreview" style="display: none;">
+              <span class="preview-label">已选：</span>
+              <span class="preview-content" id="priceContractSelectedContent"></span>
+              <button type="button" class="preview-clear" onclick="clearPriceContractSelection()">清除</button>
+            </div>
           </div>
         </div>
         <!-- 2. 业务类型（1 选项：存货业务） -->
@@ -1165,6 +1187,36 @@
     .add-rule-price-ref-group { display: flex; align-items: center; gap: 16px; }
     .add-rule-price-ref-select { flex: 1; }
     .add-rule-indicator-wrap { display: flex; align-items: center; gap: 8px; }
+
+    /* v1.7.99.263 合同选择控件（价格波动 tap「是否关联合同=是」时显示） */
+    .price-contract-picker { display: flex; flex-direction: column; gap: 8px; }
+    .price-contract-tabs { display: flex; gap: 0; border-bottom: 1px solid #E5E7EB; }
+    .price-contract-tab { padding: 8px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; }
+    .price-contract-tab:hover { color: var(--color-primary); }
+    .price-contract-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .price-contract-tab .count { display: inline-block; margin-left: 4px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; min-width: 20px; text-align: center; }
+    .price-contract-list { border: 1px solid #E5E7EB; border-radius: 4px; max-height: 240px; overflow-y: auto; background: #fff; }
+    .price-contract-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .price-contract-table thead { position: sticky; top: 0; background: #F9FAFB; z-index: 1; }
+    .price-contract-table th { padding: 8px 12px; font-weight: 500; color: var(--text-secondary); text-align: left; border-bottom: 1px solid #E5E7EB; white-space: nowrap; }
+    .price-contract-table td { padding: 10px 12px; border-bottom: 1px solid #F3F4F6; color: var(--text-primary); }
+    .price-contract-table tbody tr { cursor: pointer; transition: background 0.1s; }
+    .price-contract-table tbody tr:hover { background: #F9FAFB; }
+    .price-contract-table tbody tr.selected { background: rgba(30, 64, 175, 0.08); }
+    .price-contract-table tbody tr.selected td { color: var(--color-primary); font-weight: 500; }
+    .price-contract-table tbody tr:last-child td { border-bottom: 0; }
+    .price-contract-table .col-radio { width: 32px; text-align: center; }
+    .price-contract-table .col-code { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+    .price-contract-table .col-type-purchase { color: #1E40AF; font-weight: 500; }
+    .price-contract-table .col-type-sales { color: #D97706; font-weight: 500; }
+    .price-contract-table .col-status { font-size: 11px; }
+    .price-contract-table .used-tag { display: inline-block; padding: 1px 6px; background: rgba(245, 158, 11, 0.12); color: #B45309; border-radius: 3px; font-size: 11px; font-weight: 500; margin-left: 6px; }
+    .price-contract-table .empty-row td { text-align: center; color: var(--text-tertiary); padding: 32px 12px; font-size: 12px; }
+    .price-contract-selected-preview { display: flex; align-items: center; gap: 8px; padding: 8px 12px; background: rgba(30, 64, 175, 0.04); border: 1px solid rgba(30, 64, 175, 0.2); border-radius: 4px; font-size: 12px; }
+    .price-contract-selected-preview .preview-label { color: var(--text-secondary); font-weight: 500; }
+    .price-contract-selected-preview .preview-content { flex: 1; color: var(--color-primary); font-family: var(--font-mono); font-size: 11px; word-break: break-all; }
+    .price-contract-selected-preview .preview-clear { padding: 2px 8px; background: transparent; border: 1px solid #E5E7EB; border-radius: 3px; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+    .price-contract-selected-preview .preview-clear:hover { color: #DC2626; border-color: #FCA5A5; }
     .add-rule-indicator-input { flex: 1; min-height: 32px; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 4px; background: #fff; cursor: pointer; display: flex; align-items: center; flex-wrap: wrap; gap: 4px; }
     .add-rule-indicator-input:hover { border-color: var(--color-primary); }
     .add-rule-indicator-placeholder { color: var(--text-tertiary); font-size: 13px; }
@@ -1251,6 +1303,16 @@
         // 默认值
         priceSelectedIndicators = ['动力煤 榆林 5500K 日更新', '动力煤 鄂尔多斯 5500K 日更新'];
         renderPriceSelectedIndicators();
+        // v1.7.99.263 合同选择控件初始化
+        priceCurrentContractTab = 'all';
+        priceSelectedContract = null;
+        renderPriceContractList();
+        updatePriceContractCounts();
+        togglePriceContractRow();
+        // 默认 tap 重置为 all
+        document.querySelectorAll('.price-contract-tab').forEach(function(t) {
+          t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
+        });
       }
 
       function closeAddRulePriceModal() {
@@ -1268,6 +1330,109 @@
       function updatePriceRemarkCount() {
         var v = document.getElementById('priceRemark').value || '';
         document.getElementById('priceRemarkCount').textContent = v.length;
+      }
+
+      // ===== v1.7.99.263 合同选择控件（价格波动 tap「关联合同」联动） =====
+      // mock 合同数据：5 条（2 采购 + 3 销售），其中 2 条已关联其他规则（used: true）
+      var PRICE_MOCK_CONTRACTS = [
+        { id: 'c1', code: 'GTGYL-MSXS-20260127-S', type: 'sales',    typeLabel: '销售', party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-12-31', amount: '20000 吨', status: '执行中', used: true,  usedBy: '煤炭价格下跌预警' },
+        { id: 'c2', code: 'DLXLC-DSRMT-202203-0011', type: 'sales',  typeLabel: '销售', party: '天宇源国际',                 signDate: '2026-02-28', endDate: '2026-08-31', amount: '5000 吨',  status: '执行中', used: true,  usedBy: '超时未结算' },
+        { id: 'c3', code: 'GTGYL-MSXS-20260320-S', type: 'sales',    typeLabel: '销售', party: '河南全慧物资贸易有限公司',   signDate: '2026-03-20', endDate: '2027-03-19', amount: '12000 吨', status: '已生效', used: false, usedBy: null },
+        { id: 'c4', code: 'HNCIEGNMYB25(购)H03-05', type: 'purchase', typeLabel: '采购', party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-12-31', amount: '35000 吨', status: '执行中', used: false, usedBy: null },
+        { id: 'c5', code: 'GTGYL-PUR-20260510-P', type: 'purchase',  typeLabel: '采购', party: '内蒙古伊泰集团股份有限公司',  signDate: '2026-05-10', endDate: '2027-05-09', amount: '8000 吨',  status: '已生效', used: false, usedBy: null },
+      ];
+      var priceCurrentContractTab = 'all';
+      var priceSelectedContract = null; // 选中合同对象 { id, code, type, ... }
+
+      // 「是否关联合同」radio 切换时：yes 显示 / no 隐藏
+      function togglePriceContractRow() {
+        var yes = document.querySelector('input[name="priceRelContract"]:checked').value === 'yes';
+        document.getElementById('priceContractRow').style.display = yes ? '' : 'none';
+        if (!yes) {
+          // 禁用时清掉选择（避免提交时仍带着已选的合同）
+          priceSelectedContract = null;
+          renderPriceContractSelectedPreview();
+        }
+      }
+
+      // tap 切换：3 个 tab（全部 / 采购 / 销售）
+      function switchPriceContractTab(el, tab) {
+        priceCurrentContractTab = tab;
+        document.querySelectorAll('.price-contract-tab').forEach(function(t) {
+          t.classList.toggle('active', t.getAttribute('data-tab') === tab);
+        });
+        renderPriceContractList();
+      }
+
+      // 按当前 tab 过滤并渲染列表
+      function renderPriceContractList() {
+        var data = PRICE_MOCK_CONTRACTS.filter(function(c) {
+          if (priceCurrentContractTab === 'all') return true;
+          if (priceCurrentContractTab === 'purchase') return c.type === 'purchase';
+          if (priceCurrentContractTab === 'sales') return c.type === 'sales';
+          return true;
+        });
+        var html = '';
+        if (data.length === 0) {
+          html = '<tr class="empty-row"><td colspan="6">该类型暂无合同</td></tr>';
+        } else {
+          data.forEach(function(c) {
+            var isSel = priceSelectedContract && priceSelectedContract.id === c.id;
+            var usedTag = c.used ? '<span class="used-tag" title="已关联规则：' + (c.usedBy || '') + '">已配置</span>' : '';
+            var typeClass = c.type === 'purchase' ? 'col-type-purchase' : 'col-type-sales';
+            html += ''
+              + '<tr class="' + (isSel ? 'selected' : '') + '" onclick="selectPriceContract(\'' + c.id + '\')">'
+              + '  <td class="col-radio"><input type="radio" name="priceContractChoice" ' + (isSel ? 'checked' : '') + ' onclick="event.stopPropagation();selectPriceContract(\'' + c.id + '\')"></td>'
+              + '  <td class="col-code">' + c.code + usedTag + '</td>'
+              + '  <td>' + c.party + '</td>'
+              + '  <td>' + c.signDate + ' ~ ' + c.endDate + '</td>'
+              + '  <td class="' + typeClass + '">' + c.typeLabel + ' / ' + c.amount + '</td>'
+              + '  <td class="col-status">' + c.status + '</td>'
+              + '</tr>';
+          });
+        }
+        document.getElementById('priceContractList').innerHTML = '<table class="price-contract-table"><thead><tr><th class="col-radio"></th><th>合同编号</th><th>对方企业</th><th>合同期限</th><th>类型 / 数量</th><th class="col-status">状态</th></tr></thead><tbody>' + html + '</tbody></table>';
+      }
+
+      // 更新 3 个 tap 的计数
+      function updatePriceContractCounts() {
+        var all = PRICE_MOCK_CONTRACTS.length;
+        var purchase = PRICE_MOCK_CONTRACTS.filter(function(c) { return c.type === 'purchase'; }).length;
+        var sales = PRICE_MOCK_CONTRACTS.filter(function(c) { return c.type === 'sales'; }).length;
+        document.getElementById('priceContractCountAll').textContent = all;
+        document.getElementById('priceContractCountPurchase').textContent = purchase;
+        document.getElementById('priceContractCountSales').textContent = sales;
+      }
+
+      // 选中合同
+      function selectPriceContract(id) {
+        var c = PRICE_MOCK_CONTRACTS.find(function(x) { return x.id === id; });
+        if (!c) return;
+        priceSelectedContract = c;
+        // 重渲染列表（更新 selected 高亮 + radio checked）
+        renderPriceContractList();
+        // 更新已选预览
+        renderPriceContractSelectedPreview();
+      }
+
+      // 清除选择
+      function clearPriceContractSelection() {
+        priceSelectedContract = null;
+        renderPriceContractList();
+        renderPriceContractSelectedPreview();
+      }
+
+      // 渲染「已选：xxx」预览条
+      function renderPriceContractSelectedPreview() {
+        var preview = document.getElementById('priceContractSelectedPreview');
+        var content = document.getElementById('priceContractSelectedContent');
+        if (priceSelectedContract) {
+          preview.style.display = '';
+          content.textContent = priceSelectedContract.code + '（' + priceSelectedContract.typeLabel + ' / ' + priceSelectedContract.party + '）';
+        } else {
+          preview.style.display = 'none';
+          content.textContent = '';
+        }
       }
 
       function renderPriceSelectedIndicators() {
@@ -1371,6 +1536,7 @@
         var configValue = document.getElementById('priceConfigValue').value;
         var msgType = document.getElementById('priceMsgType').value;
         if (!relContract) { Utils.toast('请选择是否关联合同', 'warn'); return; }
+        if (relContract.value === 'yes' && !priceSelectedContract) { Utils.toast('请选择关联合同（点击列表中的合同行）', 'warn'); return; }
         if (!bizType) { Utils.toast('请选择业务类型', 'warn'); return; }
         if (!ruleType) { Utils.toast('请选择规则类型', 'warn'); return; }
         if (!ruleName) { Utils.toast('请输入规则名称', 'warn'); return; }
