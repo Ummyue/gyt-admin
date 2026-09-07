@@ -106,7 +106,18 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                        {
+      var BASELINE = [                                {
+          ts: '2026-09-07T08:55:00',
+          version: 'v1.7.99.253',
+          module: '合规验证报告-材料完整度列视觉优化（B 端风格 + 上下游关系清晰化）',
+          summary: '合规验证报告（pages/report-compliance.html）「材料完善度」列视觉优化。1) 现状：v1.7.99.64 旧版两个 28px 圆环 + 竖线 | 分隔 + 10px 数字，user 2026-09-07 08:51 反馈视觉效果差强人意（圆环偏小 + 数字可读性差 + 无上下游关系标识 + B 端风格不够专业）；2) 改造方案（v1.7.99.253）：a) 旧 .mat-score 容器升级为 .mat-completeness 三段式结构（上游 + 箭头 + 下游），每段 .mat-side 内 flex column 布局（顶部小标签 + 圆环本体）；b) 圆环 28px → 38px，数字 10px → 12px 加粗等宽字体（font-family: var(--font-mono) font-weight: 700），加 box-shadow 0 1px 2px rgba(0,0,0,0.04) 增加立体感；c) 颜色逻辑：上游 .mat-up .mat-label 蓝色（#1D4ED8，呼应"上游来料"语义），下游 .mat-down .mat-label 绿色（#047857，呼应"下游销售"语义）；d) 中间 .mat-arrow 连接器：18×18 圆形 bg (#F3F4F6) + 灰箭头 → (#6B7280) + margin-top: 12px 与圆环中心对齐；e) 圆环配色：r1b（上游 100%）保持 #ECFDF5 浅绿底 + #059669 深绿边 + 文字色一致，r2b（下游按比例）从 #10B981 浅绿调整为 #047857 深绿文字 + #10B981 边，r3（未达）保持 #F9FAFB 灰底 + #6B7280 灰边；f) HTML 10 行 tr 全部替换为新结构：<div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>；3) 验证：playwright 验证 10 个 .mat-completeness 容器全部生成 + 每个容器包含 .mat-up（上游标签 + 圆环）+ .mat-down（下游标签 + 圆环）+ .mat-arrow（→ 箭头）+ 2 个 .mat-ring 圆环 + 容器尺寸 114×50px。',
+          changes: [
+            { type: 'modify', location: 'pages/report-compliance.html .mat-* CSS 套件（v1.7.99.253）', before: 'v1.7.99.64 旧 .mat-score + .mat-ring(28px) + .mat-divider 5 个样式', after: 'v1.7.99.253 新 .mat-completeness + .mat-side + .mat-label + .mat-arrow + 升级 .mat-ring(38px) + 加 box-shadow + 配色优化 7 个样式' },
+            { type: 'modify', location: 'pages/report-compliance.html 10 行 tr HTML 模板（v1.7.99.253）', before: 'v1.7.99.64 旧 <div class="mat-score"><span class="mat-ring">100%</span><span class="mat-divider">|</span><span class="mat-ring">68%</span></div>', after: 'v1.7.99.253 新 <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring">68%</span></div></div>（10 行全替换）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.252', after: 'v1.7.99.253' },
+          ],
+        },
+{
           ts: '2026-09-03T17:18:00',
           version: 'v1.7.99.252',
           module: '预警规则配置-交易监控 tap「添加规则」弹窗字段合并（删「规则应用范围」+ 扩展「规则类型」4 → 6 选项）',
