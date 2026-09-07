@@ -14,6 +14,31 @@
   var MAX_TRY = 3;
   var LOCK_MIN = 5;
 
+  // ===== Utils fallback（v1.7.99.262.2 修复：pages/*.html 无 window.Utils） =====
+  // pin-annotation.js 会被注入到所有 112 个 pages/*.html，但 pages/*.html 本身
+  // 不一定有 window.Utils（仅 app.html 顶层有）。如果不兜底，保存/删除 handler
+  // 调 Utils.toast 会抛 ReferenceError，closeEditor 不执行 → 编辑器卡住。
+  if (!window.Utils) {
+    window.Utils = {
+      toast: function(msg, type) {
+        // 简单 DOM toast：底部弹出 2 秒
+        try {
+          var t = document.createElement('div');
+          t.textContent = msg || '';
+          t.style.cssText = 'position:fixed;bottom:60px;left:50%;transform:translateX(-50%);'
+            + 'background:rgba(31,41,55,0.92);color:#fff;padding:8px 16px;border-radius:4px;'
+            + 'font-size:13px;z-index:99999;box-shadow:0 4px 12px rgba(0,0,0,0.15);'
+            + 'pointer-events:none;opacity:0;transition:opacity 0.2s';
+          document.body.appendChild(t);
+          setTimeout(function() { t.style.opacity = '1'; }, 10);
+          setTimeout(function() { t.style.opacity = '0'; setTimeout(function() { t.remove(); }, 200); }, 2000);
+        } catch(e) { /* DOM 异常时静默 */ }
+        // 同时 console 输出便于调试
+        if (window.console) console.log('[pin-toast]', type || 'info', msg);
+      }
+    };
+  }
+
   // 状态
   var state = {
     authorized: false,
