@@ -74,6 +74,10 @@
     .mat-pct-icon.uploaded { background: #ECFDF5; color: #059669; }
     .mat-pct-icon.missing { background: #FEF2F2; color: #DC2626; }
 
+    /* v1.7.99.259：业务线状态/操作 两列固定行尾（position: sticky right） */
+    .col-sticky-right { position: sticky; right: 0; background: #fff; z-index: 2; box-shadow: -4px 0 8px rgba(0,0,0,0.05); }
+    .col-sticky-right-2 { position: sticky; right: 100px; background: #fff; z-index: 1; box-shadow: inset 4px 0 8px -4px rgba(0,0,0,0.05); }  /* 100px ≈ 操作列宽 + 安全距离 */
+
     /* 预警数（v1.7.99.64 按图 1：橙色数字） */
     .warn-num { display: inline-block; min-width: 18px; text-align: center; font-weight: 600; color: #EA580C; }
     .warn-num.zero { color: var(--text-tertiary); font-weight: 400; }
@@ -240,8 +244,8 @@
                     <th style="width: 9%;">采购合同编号</th>
                     <th style="width: 9%;">销售合同编号</th>
                     <th style="width: 9%;">业务线号</th>
-                    <th style="width: 8%;">业务线状态</th>
-                    <th class="col-action" style="width: auto;text-align: right;">操作</th>
+                    <th style="width: 8%;" class="col-sticky-right-2">业务线状态</th>
+                    <th class="col-action col-sticky-right" style="width: auto;text-align: right;">操作</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -258,8 +262,8 @@
                     <td class="col-num"><span class="num-link">GTGYL-MSXS-20260127-S</span></td>
                     <td class="col-num"><span class="num-link">YL-MSXS-20260127-S</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202607050001</span></td>
-                    <td><span class="bizline-status executing">执行中</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status executing">执行中</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <!-- Row 2: 完结审批中（v1.7.99.64） -->
                   <tr>
@@ -274,8 +278,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status approving">完结审批中</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status approving">完结审批中</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <!-- Row 3: 完结审批驳回（v1.7.99.64） -->
                   <tr>
@@ -290,8 +294,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status rejected">完结审批驳回</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status rejected">完结审批驳回</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <!-- Row 4: 上游已完结（v1.7.99.64） -->
                   <tr>
@@ -306,8 +310,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status upstream-done">上游已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status upstream-done">上游已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <!-- Row 5: 下游已完结（v1.7.99.64） -->
                   <tr>
@@ -322,8 +326,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status downstream-done">下游已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status downstream-done">下游已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <!-- Row 6: 已完结（v1.7.99.64） -->
                   <tr>
@@ -338,8 +342,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status approved">已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status approved">已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <!-- Row 7-10: 已完结（v1.7.99.64 重复 4 行） -->
                   <tr>
@@ -354,8 +358,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status approved">已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status approved">已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <tr>
                     <td><div class="bizline-cell"><span class="biz">泰州凯佳-郑州卓鼎-华能陕西渭</span></div></td>
@@ -369,8 +373,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status approved">已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status approved">已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <tr>
                     <td><div class="bizline-cell"><span class="biz">泰州凯佳-郑州卓鼎-华能陕西渭</span></div></td>
@@ -384,8 +388,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status approved">已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status approved">已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                   <tr>
                     <td><div class="bizline-cell"><span class="biz">泰州凯佳-郑州卓鼎-华能陕西渭</span></div></td>
@@ -399,8 +403,8 @@
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SKYWX202210260001</span></td>
-                    <td><span class="bizline-status approved">已完结</span></td>
-                    <td class="col-action" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
+                    <td class="col-sticky-right-2"><span class="bizline-status approved">已完结</span></td>
+                    <td class="col-action col-sticky-right" style="text-align: right;"><a href="./report-compliance-detail.html">查看报告</a></td>
                   </tr>
                 </tbody>
               </table>

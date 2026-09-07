@@ -106,7 +106,18 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                                                        {
+      var BASELINE = [                                                                                {
+          ts: '2026-09-07T14:35:00',
+          version: 'v1.7.99.259',
+          module: '合规验证报告-业务线状态/操作 两列固定行尾（position: sticky right）',
+          summary: '合规验证报告（pages/report-compliance.html）表格最后 2 列固定行尾。1) 现状：v1.7.99.64 旧版 11 列表格（业务线/数据完善状态/资金来源/合同状态/预警数/材料完善度/采购合同编号/销售合同编号/业务线号/业务线状态/操作）所有列随 .cp-table-wrap overflow-x: auto 一起水平滚动，user 2026-09-07 14:33 反馈需要"业务线状态/操作"两列固定行尾显示，其他字段页面收紧时自适应左右滚动；2) 改造方案（v1.7.99.259）：a) CSS 新增 .col-sticky-right（操作列，最右，right:0 + z-index 4 + 左侧 box-shadow -4px 0 8px rgba(0,0,0,0.05) 显示"被滚动遮挡"效果）和 .col-sticky-right-2（业务线状态列，次右，right:100px 即操作列宽 + 安全距离 + z-index 1 + 左侧 box-shadow inset 4px 0 8px -4px 弱阴影），都加 background: #fff 防止下面行内容透出；b) HTML 升级：业务线状态 th 加 col-sticky-right-2 + 10 个业务线状态 td 全部加 col-sticky-right-2（11 处）+ 操作 th 加 col-sticky-right + 10 个操作 td 全部加 col-sticky-right（11 处）；c) 容器 .cp-table-wrap 已有 overflow-x: auto（assets/css/list-page.css line 160），无需新增 CSS；d) sticky right 触发条件：表格 scrollWidth > clientWidth 时（窄屏 viewport 1200px 触发，wrapScrollWidth=1635 vs wrapClientWidth=930），最后 2 列固定显示，其他列水平滚动；3) 视觉：右侧 2 列固定，左侧阴影效果（box-shadow）暗示"被滚动遮挡"，符合 B 端表格常见设计；4) 验证：playwright 验证 11 个 .col-sticky-right-2（1 th + 10 td）+ 11 个 .col-sticky-right（1 th + 10 td）+ sticky 样式 position:sticky right:0/100px z-index 4/1 + 窄屏 1200px viewport 触发水平滚动（wrapScrollWidth=1635 > wrapClientWidth=930）+ 滚动到最右后右侧 2 列仍可见。',
+          changes: [
+            { type: 'add', location: 'pages/report-compliance.html .col-sticky-right* CSS 套件（v1.7.99.259）', before: 'v1.7.99.64 旧表格 11 列全部随 overflow-x 滚动', after: 'v1.7.99.259 加 .col-sticky-right（操作列 right:0 z-index 4 + 左阴影）+ .col-sticky-right-2（业务线状态列 right:100px z-index 1 + 弱阴影）2 样式' },
+            { type: 'modify', location: 'pages/report-compliance.html 业务线状态列 11 处 + 操作列 11 处（v1.7.99.259）', before: 'v1.7.99.64 旧 th/td 无 sticky 类', after: 'v1.7.99.259 业务线状态 1 th + 10 td 加 col-sticky-right-2 + 操作 1 th + 10 td 加 col-sticky-right（22 处全加）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.258', after: 'v1.7.99.259' },
+          ],
+        },
+{
           ts: '2026-09-07T14:30:00',
           version: 'v1.7.99.258',
           module: '合规验证报告-材料完善度数字 hover tooltip（显示哪些已上传/未上传）',
