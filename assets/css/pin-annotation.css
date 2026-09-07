@@ -1,0 +1,330 @@
+/* v1.7.99.262 全局页面标记点（pin annotation）样式 */
+
+/* === 触发按钮（顶部工具栏） === */
+.pin-trigger-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  background: rgba(245, 158, 11, 0.1);
+  color: #B45309;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  border-radius: 4px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s;
+  margin-right: 4px;
+}
+.pin-trigger-btn:hover {
+  background: rgba(245, 158, 11, 0.2);
+  color: #92400E;
+}
+.pin-trigger-btn.active {
+  background: #F59E0B;
+  color: #fff;
+  border-color: #F59E0B;
+}
+
+/* === 密码弹窗 === */
+.pin-password-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.4);
+  z-index: 99999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pin-password-box {
+  background: #fff;
+  border-radius: 8px;
+  padding: 24px;
+  width: 360px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+}
+.pin-password-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--text-primary, #1F2937);
+  margin-bottom: 4px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pin-password-hint {
+  font-size: 12px;
+  color: var(--text-tertiary, #9CA3AF);
+  margin-bottom: 16px;
+}
+.pin-password-input-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.pin-password-input {
+  flex: 1;
+  padding: 10px 12px;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  font-size: 18px;
+  font-family: var(--font-mono, monospace);
+  text-align: center;
+  letter-spacing: 8px;
+  outline: none;
+  transition: border-color 0.15s;
+}
+.pin-password-input:focus {
+  border-color: #F59E0B;
+}
+.pin-password-input.error {
+  border-color: #DC2626;
+  animation: pin-shake 0.3s;
+}
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  25% { transform: translateX(-4px); }
+  75% { transform: translateX(4px); }
+}
+.pin-password-error {
+  font-size: 12px;
+  color: #DC2626;
+  margin-bottom: 12px;
+  min-height: 16px;
+}
+.pin-password-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+}
+.pin-password-btn {
+  padding: 6px 16px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #E5E7EB;
+  background: #fff;
+  color: var(--text-primary, #1F2937);
+}
+.pin-password-btn:hover { background: #F9FAFB; }
+.pin-password-btn.primary {
+  background: #F59E0B;
+  color: #fff;
+  border-color: #F59E0B;
+}
+.pin-password-btn.primary:hover { background: #D97706; }
+
+/* === 修改密码弹窗（与密码弹窗共用样式） === */
+
+/* === 标记模式提示条 === */
+.pin-mode-banner {
+  position: fixed;
+  top: 60px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #F59E0B;
+  color: #fff;
+  padding: 8px 20px;
+  border-radius: 0 0 6px 6px;
+  font-size: 13px;
+  font-weight: 500;
+  z-index: 99998;
+  box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.pin-mode-banner button {
+  background: rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  color: #fff;
+  border-radius: 3px;
+  padding: 2px 8px;
+  font-size: 12px;
+  cursor: pointer;
+}
+.pin-mode-banner button:hover { background: rgba(255, 255, 255, 0.4); }
+
+/* === 标记模式：光标变十字 + 标记预览 === */
+body.pin-mode-active { cursor: crosshair !important; }
+body.pin-mode-active * { cursor: crosshair !important; }
+body.pin-mode-active .pin-marker { cursor: pointer !important; }
+
+/* === Pin 徽标（半透明，不遮内容） === */
+.pin-marker {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-radius: 50% 50% 50% 4px;
+  background: rgba(245, 158, 11, 0.6);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  font-family: var(--font-mono, monospace);
+  z-index: 9990;
+  cursor: pointer;
+  transform: rotate(-45deg);
+  transition: all 0.2s;
+  user-select: none;
+}
+.pin-marker > span { transform: rotate(45deg); display: block; }
+.pin-marker:hover {
+  background: rgba(245, 158, 11, 0.85);
+  transform: rotate(-45deg) scale(1.15);
+  z-index: 9991;
+}
+.pin-marker.selected {
+  background: rgba(220, 38, 38, 0.7);
+  border-color: rgba(255, 255, 255, 1);
+  z-index: 9992;
+}
+
+/* === Pin 描述 tooltip（hover 鼠标停留显示） === */
+.pin-tooltip {
+  position: absolute;
+  background: rgba(31, 41, 55, 0.95);
+  color: #fff;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  max-width: 280px;
+  line-height: 1.5;
+  z-index: 9995;
+  pointer-events: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  display: none;
+}
+.pin-marker:hover + .pin-tooltip,
+.pin-tooltip.show { display: block; }
+
+/* === 编辑器（右侧 360px 抽屉） === */
+.pin-editor-mask {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.2);
+  z-index: 99995;
+  display: none;
+  justify-content: flex-end;
+}
+.pin-editor-mask.show { display: flex; }
+.pin-editor {
+  width: 360px;
+  max-width: 90vw;
+  background: #fff;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-shadow: -4px 0 24px rgba(0, 0, 0, 0.15);
+}
+.pin-editor-header {
+  padding: 16px 20px;
+  border-bottom: 1px solid #E5E7EB;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.pin-editor-title {
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-primary, #1F2937);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pin-editor-close {
+  background: none;
+  border: none;
+  color: var(--text-tertiary, #9CA3AF);
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+}
+.pin-editor-close:hover { color: var(--text-primary, #1F2937); }
+.pin-editor-meta {
+  padding: 12px 20px;
+  background: #F9FAFB;
+  font-size: 12px;
+  color: var(--text-tertiary, #6B7280);
+  border-bottom: 1px solid #F3F4F6;
+  line-height: 1.6;
+}
+.pin-editor-body {
+  flex: 1;
+  padding: 16px 20px;
+  display: flex;
+  flex-direction: column;
+}
+.pin-editor-textarea {
+  flex: 1;
+  width: 100%;
+  border: 1px solid #E5E7EB;
+  border-radius: 4px;
+  padding: 10px 12px;
+  font-size: 13px;
+  line-height: 1.6;
+  font-family: inherit;
+  resize: none;
+  outline: none;
+  transition: border-color 0.15s;
+  min-height: 160px;
+}
+.pin-editor-textarea:focus { border-color: #F59E0B; }
+.pin-editor-footer {
+  padding: 12px 20px;
+  border-top: 1px solid #E5E7EB;
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  background: #FAFAFA;
+}
+.pin-editor-btn {
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 13px;
+  cursor: pointer;
+  border: 1px solid #E5E7EB;
+  background: #fff;
+  color: var(--text-primary, #1F2937);
+}
+.pin-editor-btn:hover { background: #F9FAFB; }
+.pin-editor-btn.danger {
+  color: #DC2626;
+  border-color: #FCA5A5;
+}
+.pin-editor-btn.danger:hover { background: #FEF2F2; }
+.pin-editor-btn.primary {
+  background: #F59E0B;
+  color: #fff;
+  border-color: #F59E0B;
+}
+.pin-editor-btn.primary:hover { background: #D97706; }
+
+/* === 全局开关按钮（访客隐藏所有 pin） === */
+.pin-toggle-btn {
+  position: fixed;
+  bottom: 20px;
+  right: 20px;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: rgba(31, 41, 55, 0.85);
+  color: #fff;
+  border: none;
+  cursor: pointer;
+  z-index: 9990;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+  transition: all 0.2s;
+}
+.pin-toggle-btn:hover { background: rgba(31, 41, 55, 1); }
+.pin-toggle-btn.hidden { background: rgba(156, 163, 175, 0.7); }
+body.pin-hidden .pin-marker { display: none !important; }
+body.pin-hidden .pin-tooltip { display: none !important; }

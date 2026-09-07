@@ -3,8 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>豫港通原型 v.1.7.99.261</title>
+  <title>豫港通原型 v.1.7.99.262</title>
   <link rel="stylesheet" href="./assets/css/design-system.css">
+  <link rel="stylesheet" href="./assets/css/pin-annotation.css">
   <style>
     /* 三栏容器：四边留间距 + 灰色背景 */
     body {
@@ -416,6 +417,10 @@
           <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m9 18 6-6-6-6"/></svg>
         </button>
         <div class="center-toolbar-divider"></div>
+        <button class="pin-trigger-btn" id="pinTriggerBtn" title="页面标记（4 位数字密码保护）">
+          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          标记
+        </button>
         <button class="toolbar-btn" id="btnCenter" title="窗口化（仅显示中间）">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>
           窗口化
@@ -464,6 +469,7 @@
 
   <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <script src="./assets/js/pin-annotation.js"></script>
   <script>
     // ===== 页面树（83 个页面，1:1 路由映射，3 级 group→sub→page）=====
     const pageTree = [
