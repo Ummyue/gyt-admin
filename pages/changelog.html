@@ -106,7 +106,18 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                {
+      var BASELINE = [                                        {
+          ts: '2026-09-07T09:05:00',
+          version: 'v1.7.99.254',
+          module: '合规验证报告-材料完整度列视觉重新设计（v1.7.99.253 圆环方案 → v1.7.99.254 双段式卡片方案）',
+          summary: '合规验证报告（pages/report-compliance.html）「材料完善度」列视觉方案替换。1) 现状：v1.7.99.253 圆环方案（38px 圆环 + 上下游标签 + 箭头连接器）部署后 user 2026-09-07 09:02 反馈视觉不美观（三段拼凑感强 + 标签显拥挤 + 整体不够统一），要求更换方案；2) 改造方案（v1.7.99.254）：a) 设计思路转变：从"三段拼凑"（圆环 + 圆环 + 箭头）升级为"一体化分段卡片"（1 个圆角矩形 + 内部 2 段 + 中间箭头），视觉更克制统一；b) 旧 .mat-completeness / .mat-side / .mat-label / .mat-ring / .mat-arrow 5 样式 → 新 .mat-dual（外层圆角矩形 156×50px + overflow:hidden + box-shadow 立体感）+ .mat-card（上/下卡片 64px min-width + flex column + 顶部 2px 边条 + 浅色底 + padding 6px 10px）+ .mat-card-label（10px 灰字"上游材料"/"下游材料"）+ .mat-card-value（14px 加粗等宽 + 100/86/68 大字 + 灰字 10px"%"后缀）+ .mat-card-bar（4px 高进度条底）+ .mat-bar-fill（按比例填充 + transition: width 0.3s）+ .mat-flow（中间连接区 + 14px 灰箭头 + 灰边 + 灰底 9 样式；c) 颜色：上游 #1D4ED8 深蓝边条 + #EFF6FF 浅蓝底 + 进度条同色；下游 #10B981 深绿边条 + #ECFDF5 浅绿底 + 进度条同色；箭头 #9CA3AF 灰字 + #F9FAFB 灰底 + #E5E7EB 灰边；d) HTML 模板：10 行 tr 全部从 v1.7.99.253 圆环结构替换为 v1.7.99.254 双段式卡片结构 <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down">...</div></div>；3) 视觉对比：v1.7.99.253 圆环方案（2 圆环 + 标签 + 箭头，3 段拼凑）vs v1.7.99.254 双段式卡片方案（1 圆角矩形 + 内部 2 段 + 中间箭头，一体化分段）— 新方案信息层次更清晰（顶部标签 + 中间数字 + 底部进度条）+ 视觉更统一（外框 + 内部分段）+ B 端克制风格更强（去圆环 + 加矩形 + 边条配色）；4) 验证：playwright 验证 10 个 .mat-dual 容器全部生成 + 每容器尺寸 156×50px + 含 mat-card mat-up（"上游材料"+ 100%）+ mat-flow（→）+ mat-card mat-down（"下游材料"+ 86%）+ 进度条宽度 100% / 86% 按比例填充。',
+          changes: [
+            { type: 'rewrite', location: 'pages/report-compliance.html .mat-* CSS 套件（v1.7.99.254）', before: 'v1.7.99.253 .mat-completeness + .mat-side + .mat-label + .mat-ring(38px) + .mat-arrow 5 样式（圆环方案）', after: 'v1.7.99.254 .mat-dual + .mat-card + .mat-card-label + .mat-card-value + .pct-suffix + .mat-card-bar + .mat-bar-fill + .mat-flow 9 样式（双段式卡片方案）' },
+            { type: 'rewrite', location: 'pages/report-compliance.html 10 行 tr HTML 模板（v1.7.99.254）', before: 'v1.7.99.253 旧 <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down">...</div></div>', after: 'v1.7.99.254 新 <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down">...</div></div>' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.253', after: 'v1.7.99.254' },
+          ],
+        },
+{
           ts: '2026-09-07T08:55:00',
           version: 'v1.7.99.253',
           module: '合规验证报告-材料完整度列视觉优化（B 端风格 + 上下游关系清晰化）',

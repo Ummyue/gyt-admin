@@ -38,19 +38,21 @@
     .warn-num { display: inline-block; min-width: 18px; text-align: center; font-weight: 600; color: #EA580C; }
     .warn-num.zero { color: var(--text-tertiary); font-weight: 400; }
 
-    /* 材料完善度（v1.7.99.253：双圆环 + 上下游标签 + 箭头连接器，B 端专业风格） */
-    .mat-completeness { display: inline-flex; align-items: center; gap: 6px; }
-    .mat-side { display: inline-flex; flex-direction: column; align-items: center; gap: 2px; min-width: 42px; }
-    .mat-label { font-size: 10px; color: var(--text-tertiary); font-family: var(--font-mono); letter-spacing: 0.5px; line-height: 1; }
-    .mat-side.mat-up .mat-label { color: #1D4ED8; }   /* 上游标签蓝色 */
-    .mat-side.mat-down .mat-label { color: #047857; }  /* 下游标签绿色 */
-    .mat-ring { width: 38px; height: 38px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 12px; color: white; font-weight: 700; font-family: var(--font-mono); line-height: 1; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
-    .mat-ring.r1 { background: conic-gradient(#059669 100%, #E5E7EB 0); color: #fff; }
-    .mat-ring.r1b { background: #ECFDF5; color: #059669; border: 2px solid #059669; }
-    .mat-ring.r2 { background: conic-gradient(#10B981 68%, #E5E7EB 0); color: #fff; }
-    .mat-ring.r2b { background: #ECFDF5; color: #047857; border: 2px solid #10B981; }
-    .mat-ring.r3 { background: #F9FAFB; color: #6B7280; border: 2px solid #D1D5DB; }   /* 未达灰色 */
-    .mat-arrow { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; background: #F3F4F6; border-radius: 50%; color: #6B7280; font-size: 12px; line-height: 1; margin-top: 12px; }  /* margin-top 让箭头与圆环中心对齐 */
+    /* 材料完善度（v1.7.99.254：双段式卡片 — 上游卡片 + 流向箭头 + 下游卡片，B 端克制风格） */
+    .mat-dual { display: inline-flex; align-items: stretch; gap: 0; border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+    .mat-card { display: flex; flex-direction: column; gap: 3px; padding: 6px 10px; min-width: 64px; line-height: 1.2; }
+    .mat-card.mat-up { background: #EFF6FF; border-top: 2px solid #1D4ED8; }
+    .mat-card.mat-down { background: #ECFDF5; border-top: 2px solid #10B981; }
+    .mat-card-label { font-size: 10px; color: var(--text-tertiary); letter-spacing: 0.3px; }
+    .mat-card-value { font-size: 14px; font-weight: 700; font-family: var(--font-mono); line-height: 1.1; }
+    .mat-card.mat-up .mat-card-value { color: #1D4ED8; }
+    .mat-card.mat-down .mat-card-value { color: #047857; }
+    .mat-card-value .pct-suffix { font-size: 10px; font-weight: 500; color: var(--text-tertiary); margin-left: 1px; }
+    .mat-card-bar { width: 100%; height: 3px; background: rgba(0,0,0,0.06); border-radius: 2px; overflow: hidden; }
+    .mat-bar-fill { height: 100%; border-radius: 2px; transition: width 0.3s; }
+    .mat-card.mat-up .mat-bar-fill { background: #1D4ED8; }
+    .mat-card.mat-down .mat-bar-fill { background: #10B981; }
+    .mat-flow { display: flex; align-items: center; justify-content: center; padding: 0 8px; color: #9CA3AF; font-size: 14px; line-height: 1; background: #F9FAFB; border-top: 2px solid #E5E7EB; }
 
     /* 业务线列 */
     .bizline-cell { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
@@ -194,7 +196,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="single">单签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num">0</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">86%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">86<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 86%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">GTGYL-MSXS-20260127-S</span></td>
                     <td class="col-num"><span class="num-link">YL-MSXS-20260127-S</span></td>
@@ -210,7 +212,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="dual">双签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num">1</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -226,7 +228,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="dual">双签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num">1</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -242,7 +244,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="single">单签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num">1</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -258,7 +260,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="dual">双签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num">1</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -274,7 +276,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="dual">双签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num">1</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -290,7 +292,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="single">单签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num zero">0</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -305,7 +307,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="dual">双签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num zero">0</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -320,7 +322,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="dual">双签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num zero">0</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
@@ -335,7 +337,7 @@
                     <td><span class="contract-status"><span class="dual">双签</span><span class="arrow">---</span><span class="single">单签</span></span></td>
                     <td style="text-align: center;"><span class="warn-num zero">0</span></td>
                     <td>
-                      <div class="mat-completeness"><div class="mat-side mat-up"><span class="mat-label">上游</span><span class="mat-ring r1b">100%</span></div><span class="mat-arrow">→</span><div class="mat-side mat-down"><span class="mat-label">下游</span><span class="mat-ring r2b">68%</span></div></div>
+                      <div class="mat-dual"><div class="mat-card mat-up"><span class="mat-card-label">上游材料</span><span class="mat-card-value">100<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 100%;"></div></div></div><div class="mat-flow">→</div><div class="mat-card mat-down"><span class="mat-card-label">下游材料</span><span class="mat-card-value">68<span class="pct-suffix">%</span></span><div class="mat-card-bar"><div class="mat-bar-fill" style="width: 68%;"></div></div></div></div>
                     </td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
                     <td class="col-num"><span class="num-link">SLKJ-HLDZ-2021</span></td>
