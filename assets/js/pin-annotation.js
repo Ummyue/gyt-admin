@@ -85,6 +85,22 @@
     var d = loadData();
     d.pins = pins;
     saveData(d);
+    // v1.7.99.262.4 fix: 通知另一边 pin 数据已更新（删除/保存后同步 DOM）
+    notifyPinDataChanged();
+  }
+  function notifyPinDataChanged() {
+    try {
+      if (IN_IFRAME && window.parent) {
+        // iframe 内：通知顶层
+        window.parent.postMessage({ type: 'pin-bridge', action: 'pins-updated' }, '*');
+      } else {
+        // 顶层：通知 iframe
+        var frame = document.getElementById('prototypeFrame');
+        if (frame && frame.contentWindow && frame.contentWindow !== window) {
+          frame.contentWindow.postMessage({ type: 'pin-bridge', action: 'pins-updated' }, '*');
+        }
+      }
+    } catch(e) { /* 跨域或未就绪 */ }
   }
 
   // ===== 工具 =====
@@ -134,6 +150,9 @@
           exitPinMode();
         } else if (e.data.action === 'change-pwd' && e.data.data && e.data.data.newPwd) {
           setPwd(e.data.data.newPwd);
+        } else if (e.data.action === 'pins-updated') {
+          // v1.7.99.262.4 fix: 另一边更新了 pin 数据（删除/保存），重新渲染本地 DOM
+          renderAllPins();
         }
       });
       // pages/*.html 加载完成后主动询问父窗口当前状态
@@ -147,6 +166,9 @@
         if (e.data.action === 'ready') {
           // iframe 加载完成，同步当前 pin 模式状态
           if (state.pinMode) notifyIframe('enter');
+        } else if (e.data.action === 'pins-updated') {
+          // v1.7.99.262.4 fix: iframe 内更新了 pin 数据（删除/保存），重新渲染顶层 DOM
+          renderAllPins();
         }
       });
     }
