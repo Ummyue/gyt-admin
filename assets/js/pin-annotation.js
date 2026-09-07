@@ -262,7 +262,8 @@
     if (!state.authorized) return;
     state.pinMode = true;
     document.body.classList.add('pin-mode-active');
-    showBanner();
+    // v1.7.99.262.3 fix: iframe 内不同步 banner（顶层 app.html 已有 banner，避免双 banner 冗余）
+    if (!IN_IFRAME) showBanner();
     updateTriggerBtn();
     // 顶层 app.html：通知 iframe 进入 pin 模式
     if (!IN_IFRAME) notifyIframe('enter');
@@ -270,7 +271,8 @@
   function exitPinMode() {
     state.pinMode = false;
     document.body.classList.remove('pin-mode-active');
-    hideBanner();
+    // v1.7.99.262.3 fix: iframe 内不同步 banner（顶层管理）
+    if (!IN_IFRAME) hideBanner();
     updateTriggerBtn();
     // 顶层 app.html：通知 iframe 退出 pin 模式
     if (!IN_IFRAME) notifyIframe('exit');
