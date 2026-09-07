@@ -78,6 +78,35 @@
     .cd-value { font-size: 13px; color: var(--text-primary); }
     .cd-value.mono { font-family: var(--font-mono); }
     .cd-value.amount { color: #DC2626; font-weight: 600; font-family: var(--font-mono); }
+    /* v1.7.99.263.2 可编辑 cell 样式（hover 显示 edit icon） */
+    .cd-value.cd-editable { display: inline-flex; align-items: center; gap: 6px; padding: 4px 8px; border: 1px dashed #CBD5E1; border-radius: 4px; cursor: pointer; transition: all 0.15s; }
+    .cd-value.cd-editable:hover { border-color: var(--color-primary); background: #EFF6FF; }
+    .cd-value.cd-editable .cd-edit-icon { width: 12px; height: 12px; color: var(--text-tertiary); }
+    .cd-value.cd-editable:hover .cd-edit-icon { color: var(--color-primary); }
+    /* v1.7.99.263.2 合同指标选择器（单选树形） */
+    .contract-indicator-mask { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.4); z-index: 10000; display: none; align-items: center; justify-content: center; }
+    .contract-indicator-mask.show { display: flex; }
+    .contract-indicator-panel { background: #fff; border-radius: 8px; width: 520px; max-height: 70vh; display: flex; flex-direction: column; overflow: hidden; box-shadow: 0 8px 32px rgba(0,0,0,0.2); }
+    .contract-indicator-header { padding: 14px 20px; border-bottom: 1px solid #E5E7EB; display: flex; align-items: center; justify-content: space-between; }
+    .contract-indicator-title { font-size: 14px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; }
+    .contract-indicator-close { background: none; border: none; color: #9CA3AF; cursor: pointer; padding: 4px; font-size: 18px; line-height: 1; }
+    .contract-indicator-close:hover { color: #1F2937; }
+    .contract-indicator-body { flex: 1; overflow-y: auto; padding: 12px 20px; max-height: 50vh; }
+    .contract-indicator-group { margin-bottom: 8px; border: 1px solid #F3F4F6; border-radius: 4px; overflow: hidden; }
+    .contract-indicator-group-header { padding: 8px 12px; background: #F9FAFB; cursor: pointer; display: flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; color: var(--text-primary); user-select: none; }
+    .contract-indicator-group-header:hover { background: #F3F4F6; }
+    .contract-indicator-group-header .tree-arrow { display: inline-block; font-size: 10px; color: #6B7280; transition: transform 0.2s; }
+    .contract-indicator-group.collapsed .tree-arrow { transform: rotate(-90deg); }
+    .contract-indicator-group.collapsed .contract-indicator-group-children { display: none; }
+    .contract-indicator-group-children { padding: 4px 0; background: #fff; }
+    .contract-indicator-leaf { display: flex; align-items: center; gap: 8px; padding: 6px 12px 6px 28px; cursor: pointer; font-size: 12px; color: #374151; transition: background 0.1s; }
+    .contract-indicator-leaf:hover { background: #F0F9FF; }
+    .contract-indicator-leaf input[type="radio"] { margin: 0; cursor: pointer; accent-color: var(--color-primary); }
+    .contract-indicator-leaf.selected { background: #EFF6FF; color: var(--color-primary); font-weight: 500; }
+    .contract-indicator-footer { padding: 12px 20px; border-top: 1px solid #E5E7EB; display: flex; justify-content: space-between; align-items: center; background: #FAFAFA; }
+    .contract-indicator-current { font-size: 12px; color: var(--text-secondary); }
+    .contract-indicator-current strong { color: var(--color-primary); font-family: var(--font-mono); }
+    .contract-indicator-actions { display: flex; gap: 8px; }
     .cd-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; background: #DBEAFE; color: #1E40AF; }
   </style>
 </head>
@@ -362,6 +391,29 @@
     </div>
   </div>
 
+  <!-- v1.7.99.263.2 合同指标选择器（单选树形） -->
+  <div class="contract-indicator-mask" id="contractIndicatorMask" onclick="closeContractIndicatorPickerByMask(event)">
+    <div class="contract-indicator-panel" onclick="event.stopPropagation()">
+      <div class="contract-indicator-header">
+        <span class="contract-indicator-title">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#F59E0B" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          选择关联业务指标
+        </span>
+        <button type="button" class="contract-indicator-close" onclick="closeContractIndicatorPicker()">×</button>
+      </div>
+      <div class="contract-indicator-body" id="contractIndicatorBody">
+        <!-- JS 动态渲染树形 -->
+      </div>
+      <div class="contract-indicator-footer">
+        <span class="contract-indicator-current">当前：<strong id="contractIndicatorCurrent">-</strong></span>
+        <div class="contract-indicator-actions">
+          <button type="button" class="btn btn-default btn-sm" onclick="closeContractIndicatorPicker()">取消</button>
+          <button type="button" class="btn btn-primary btn-sm" onclick="confirmContractIndicator()">确定</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
   <script>
@@ -369,16 +421,16 @@
 
     // 合同 mock 数据库（10 个合同）
     var CONTRACT_DB = {
-      'HFS-XAHQ-202308-001': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-15', deliveryDate: '2024-08-15', amount: 18500000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '50,000 吨', price: '370 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 盛源站台 5500K', threshold: 5, monitorOn: true, status: '执行中' },
-      'HFS-XAHQ-202308-002': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-15', deliveryDate: '2024-08-15', amount: 19200000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '52,000 吨', price: '370 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 盛源站台 5500K', threshold: 5, monitorOn: true, status: '执行中' },
-      'HFS-XAHQ-202308-003': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-22', deliveryDate: '2024-08-22', amount: 16800000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '45,000 吨', price: '373 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5000 山西大同 5500K', threshold: 5, monitorOn: true, status: '执行中' },
-      'HFS-XAHQ-202308-004': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-30', deliveryDate: '2024-08-30', amount: 15200000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '40,000 吨', price: '380 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 鄂尔多斯 5500K', threshold: 8, monitorOn: false, status: '执行中' },
-      'HFS-XAHQ-202309-005': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-09-08', deliveryDate: '2024-09-08', amount: 9800000, currency: '元', bizType: '存货业务', product: '钢材', quantity: '8,000 吨', price: '1,225 元/吨', paymentMethod: '银行承兑汇票', indicator: '钢材指数 全国', threshold: 3, monitorOn: true, status: '已完结' },
-      'HFS-XAHQ-202309-006': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-09-15', deliveryDate: '2024-09-15', amount: 17600000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '48,000 吨', price: '367 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 榆林 5500K', threshold: 5, monitorOn: true, status: '执行中' },
-      'HFS-XAHQ-202310-007': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-10-12', deliveryDate: '2024-10-12', amount: 20100000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '55,000 吨', price: '365 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5000 内蒙古 5500K', threshold: 6, monitorOn: true, status: '执行中' },
-      'HFS-XAHQ-202310-008': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-10-20', deliveryDate: '2024-10-20', amount: 16500000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '44,000 吨', price: '375 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 鄂尔多斯 5500K', threshold: 10, monitorOn: false, status: '已终止' },
-      'HFS-XAHQ-202311-009': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-11-05', deliveryDate: '2024-11-05', amount: 17800000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '47,000 吨', price: '379 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 山西大同 5500K', threshold: 5, monitorOn: true, status: '执行中' },
-      'HFS-XAHQ-202311-010': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-11-20', deliveryDate: '2024-11-20', amount: 14200000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '38,000 吨', price: '374 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5000 榆林 5500K', threshold: 4, monitorOn: true, status: '已完结' }
+      'HFS-XAHQ-202308-001': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-15', deliveryDate: '2024-08-15', amount: 18500000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '50,000 吨', price: '370 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 盛源站台 5500K 日更新', threshold: 5, monitorOn: true, status: '执行中' },
+      'HFS-XAHQ-202308-002': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-15', deliveryDate: '2024-08-15', amount: 19200000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '52,000 吨', price: '370 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 盛源站台 5500K 日更新', threshold: 5, monitorOn: true, status: '执行中' },
+      'HFS-XAHQ-202308-003': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-22', deliveryDate: '2024-08-22', amount: 16800000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '45,000 吨', price: '373 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5000 山西大同 5500K 日更新', threshold: 5, monitorOn: true, status: '执行中' },
+      'HFS-XAHQ-202308-004': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-08-30', deliveryDate: '2024-08-30', amount: 15200000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '40,000 吨', price: '380 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 鄂尔多斯 5500K 日更新', threshold: 8, monitorOn: false, status: '执行中' },
+      'HFS-XAHQ-202309-005': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-09-08', deliveryDate: '2024-09-08', amount: 9800000, currency: '元', bizType: '存货业务', product: '钢材', quantity: '8,000 吨', price: '1,225 元/吨', paymentMethod: '银行承兑汇票', indicator: '钢材指数 全国 日更新', threshold: 3, monitorOn: true, status: '已完结' },
+      'HFS-XAHQ-202309-006': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-09-15', deliveryDate: '2024-09-15', amount: 17600000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '48,000 吨', price: '367 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 榆林 5500K 日更新', threshold: 5, monitorOn: true, status: '执行中' },
+      'HFS-XAHQ-202310-007': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-10-12', deliveryDate: '2024-10-12', amount: 20100000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '55,000 吨', price: '365 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5000 内蒙古 5500K 日更新', threshold: 6, monitorOn: true, status: '执行中' },
+      'HFS-XAHQ-202310-008': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-10-20', deliveryDate: '2024-10-20', amount: 16500000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '44,000 吨', price: '375 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 鄂尔多斯 5500K 日更新', threshold: 10, monitorOn: false, status: '已终止' },
+      'HFS-XAHQ-202311-009': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-11-05', deliveryDate: '2024-11-05', amount: 17800000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '47,000 吨', price: '379 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5500 山西大同 5500K 日更新', threshold: 5, monitorOn: true, status: '执行中' },
+      'HFS-XAHQ-202311-010': { seller: '宁夏宏发顺工贸有限公司', buyer: '西安华秦供应链管理有限公司', signDate: '2023-11-20', deliveryDate: '2024-11-20', amount: 14200000, currency: '元', bizType: '存货业务', product: '动力煤', quantity: '38,000 吨', price: '374 元/吨', paymentMethod: '银行承兑汇票', indicator: 'CCI 5000 榆林 5500K 日更新', threshold: 4, monitorOn: true, status: '已完结' }
     };
 
     // 实时筛选（v1.7.99.184 全站标准）
@@ -456,7 +508,11 @@
         + '<div class="cd-block">'
         + '<div class="cd-block-title">监控配置</div>'
         + '<div class="cd-grid">'
-        + '<div class="cd-item"><span class="cd-label">关联业务指标</span><span class="cd-value">' + data.indicator + '</span></div>'
+        + '<div class="cd-item"><span class="cd-label">关联业务指标</span>'
+        + '<span class="cd-value cd-editable" onclick="openContractIndicatorPicker(\'' + contractNo + '\')" title="点击修改关联业务指标">'
+        + data.indicator
+        + '<svg class="cd-edit-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>'
+        + '</span></div>'
         + '<div class="cd-item"><span class="cd-label">下跌幅度阈值</span><span class="cd-value amount">' + data.threshold + ' %</span></div>'
         + '<div class="cd-item"><span class="cd-label">监控开关</span><span class="cd-tag">' + (data.monitorOn ? '开' : '关') + '</span></div>'
         + '</div></div>';
@@ -473,10 +529,145 @@
     // ESC 关闭
     document.addEventListener('keydown', function(e) {
       if (e.key === 'Escape') {
-        var mask = document.getElementById('contractDetailMask');
-        if (mask && mask.style.display !== 'none') closeContractDetail();
+        var detailMask = document.getElementById('contractDetailMask');
+        var indicatorMask = document.getElementById('contractIndicatorMask');
+        if (indicatorMask && indicatorMask.classList.contains('show')) closeContractIndicatorPicker();
+        else if (detailMask && detailMask.style.display !== 'none') closeContractDetail();
       }
     });
+
+    // === v1.7.99.263.2 合同配置「关联业务指标」可编辑（与新建预警规则 选择逻辑一致） ===
+    // 通用指标树形 mock 数据（与 v1.7.99.251 PRICE_INDICATOR_TREE 沿用）
+    var CONTRACT_INDICATOR_TREE = {
+      '厦门港': ['木薯淀粉 厦门港 其他 日更新', '玉米淀粉 厦门港 其他 日更新'],
+      '青岛港': ['木薯淀粉 青岛港 其他 日更新', '玉米淀粉 青岛港 其他 日更新'],
+      '榆林（动力煤主产地）': ['CCI 5000 榆林 5500K 日更新', 'CCI 5500 榆林 5500K 日更新', '动力煤 榆林 5500K 日更新'],
+      '鄂尔多斯（动力煤主产地）': ['CCI 5000 鄂尔多斯 5500K 日更新', 'CCI 5500 鄂尔多斯 5500K 日更新', '动力煤 鄂尔多斯 5500K 日更新'],
+      '山西大同': ['CCI 5000 山西大同 5500K 日更新', 'CCI 5500 山西大同 5500K 日更新', '动力煤 山西大同 5500K 日更新'],
+      '内蒙古': ['CCI 5000 内蒙古 5500K 日更新', '动力煤 内蒙古 5500K 日更新'],
+      '盛源站台': ['CCI 5500 盛源站台 5500K 日更新', '动力煤 盛源站台 5500K 日更新'],
+      '西安（销售地）': ['钢材指数 西安 日更新', '动力煤 西安 5500K 日更新'],
+      '全国综合': ['钢材指数 全国 日更新', '动力煤 全国综合 日更新', '焦煤 全国综合 日更新'],
+    };
+    var _currentEditingContract = null; // 当前编辑的合同编号
+    var _pendingIndicator = null; // 选择器中暂存的指标
+
+    function openContractIndicatorPicker(contractNo) {
+      _currentEditingContract = contractNo;
+      _pendingIndicator = (CONTRACT_DB[contractNo] && CONTRACT_DB[contractNo].indicator) || null;
+      document.getElementById('contractIndicatorCurrent').textContent = _pendingIndicator || '-';
+      renderContractIndicatorTree();
+      document.getElementById('contractIndicatorMask').classList.add('show');
+    }
+
+    function closeContractIndicatorPicker() {
+      document.getElementById('contractIndicatorMask').classList.remove('show');
+      _currentEditingContract = null;
+      _pendingIndicator = null;
+    }
+
+    function closeContractIndicatorPickerByMask(e) {
+      if (e.target === e.currentTarget) closeContractIndicatorPicker();
+    }
+
+    function renderContractIndicatorTree() {
+      var body = document.getElementById('contractIndicatorBody');
+      var html = '';
+      Object.keys(CONTRACT_INDICATOR_TREE).forEach(function(groupName) {
+        var leaves = CONTRACT_INDICATOR_TREE[groupName];
+        // 默认展开包含当前指标的 group
+        var hasCurrent = leaves.indexOf(_pendingIndicator) >= 0;
+        html += '<div class="contract-indicator-group' + (hasCurrent ? '' : ' collapsed') + '" data-group="' + escapeHtml(groupName) + '">';
+        html += '  <div class="contract-indicator-group-header" onclick="toggleContractIndicatorGroup(this)">';
+        html += '    <span class="tree-arrow">▼</span>';
+        html += '    <span>' + escapeHtml(groupName) + '</span>';
+        html += '  </div>';
+        html += '  <div class="contract-indicator-group-children">';
+        leaves.forEach(function(leaf) {
+          var checked = _pendingIndicator === leaf ? 'checked' : '';
+          var selectedClass = _pendingIndicator === leaf ? ' selected' : '';
+          html += '<label class="contract-indicator-leaf' + selectedClass + '">';
+          html += '<input type="radio" name="contractIndicatorChoice" value="' + escapeHtml(leaf) + '" ' + checked + ' onchange="onContractIndicatorLeafChange(this)">';
+          html += '<span>' + escapeHtml(leaf) + '</span>';
+          html += '</label>';
+        });
+        html += '  </div>';
+        html += '</div>';
+      });
+      body.innerHTML = html;
+    }
+
+    function toggleContractIndicatorGroup(headerEl) {
+      headerEl.parentElement.classList.toggle('collapsed');
+    }
+
+    function onContractIndicatorLeafChange(inputEl) {
+      _pendingIndicator = inputEl.value;
+      document.getElementById('contractIndicatorCurrent').textContent = _pendingIndicator;
+      // 更新叶子 selected class
+      document.querySelectorAll('.contract-indicator-leaf').forEach(function(l) {
+        var input = l.querySelector('input');
+        l.classList.toggle('selected', input && input.checked);
+      });
+    }
+
+    function confirmContractIndicator() {
+      if (!_currentEditingContract) { closeContractIndicatorPicker(); return; }
+      if (!_pendingIndicator) {
+        if (window.Utils && window.Utils.toast) window.Utils.toast('请选择一个指标', 'warn');
+        return;
+      }
+      // 保存到 mock 数据库
+      if (CONTRACT_DB[_currentEditingContract]) {
+        CONTRACT_DB[_currentEditingContract].indicator = _pendingIndicator;
+      }
+      // 关闭弹窗 + 刷新合同详情弹窗内容 + 刷新列表
+      var prevContractNo = _currentEditingContract;
+      var savedIndicator = _pendingIndicator; // v1.7.99.263.2 fix: 保存到变量，close 会清空 _pendingIndicator
+      closeContractIndicatorPicker();
+      openContractDetail(prevContractNo);
+      renderMonitorList(); // 重新渲染列表行（更新「关联业务指标」列）
+      if (window.Utils && window.Utils.toast) window.Utils.toast('关联业务指标已更新为「' + savedIndicator + '」', 'success');
+    }
+
+    // 重新渲染监控合同列表（更新指标列 + 列表行 data-indicator 属性）
+    function renderMonitorList() {
+      var tbody = document.getElementById('mpTbody');
+      if (!tbody) return;
+      var rows = tbody.querySelectorAll('tr');
+      rows.forEach(function(row) {
+        var no = row.getAttribute('data-contract-no');
+        var data = CONTRACT_DB[no];
+        if (!data) return;
+        // 找到「关联业务指标」列（按 thead 顺序：编号/卖方/买方/指标/签订日/幅度/开关/状态/操作）
+        var cells = row.querySelectorAll('td');
+        // 索引 3 = 关联业务指标（0=编号 1=卖方 2=买方 3=指标 4=签订日 5=幅度 6=开关 7=状态 8=操作）
+        if (cells[3]) cells[3].textContent = data.indicator;
+        // data-indicator 保持 v1.7.99.250 简化标识（cci5500/cci5000/steel-index），不影响筛选
+        row.setAttribute('data-indicator', getIndicatorShortName(data.indicator));
+      });
+    }
+
+    // 把真实指标名转成筛选用的简化标识（保持 v1.7.99.250 筛选逻辑）
+    function getIndicatorShortName(fullName) {
+      if (!fullName) return '';
+      if (fullName.indexOf('CCI 5500') >= 0) return 'cci5500';
+      if (fullName.indexOf('CCI 5000') >= 0) return 'cci5000';
+      if (fullName.indexOf('钢材指数') >= 0) return 'steel-index';
+      if (fullName.indexOf('焦煤') >= 0) return 'coking';
+      return 'other';
+    }
+
+    // 简单的 HTML 转义（与 v1.7.99.251 escapeHtml 一致）
+    function escapeHtml(s) {
+      if (s == null) return '';
+      return String(s)
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
   </script>
 <script src="../assets/js/pin-annotation.js"></script>
 </body>
