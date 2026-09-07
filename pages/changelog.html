@@ -106,7 +106,17 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                                        {
+      var BASELINE = [                                                                {
+          ts: '2026-09-07T09:27:00',
+          version: 'v1.7.99.257',
+          module: '合规验证报告-合同状态卡片去掉「已签/未签」重复状态指示',
+          summary: '合规验证报告（pages/report-compliance.html）合同状态卡片优化。1) 现状：v1.7.99.255 升级的合同状态双段式卡片含 3 段信息：顶部"上游合同/下游合同"标签 + 中间"双签/单签"大字 + 底部"✓已签/⚠未签"状态指示（10 行共 20 个 status span，6 行 ✓已签 + 4 行 ⚠未签），user 2026-09-07 09:25 反馈底部"已签/未签"状态文字与中间"双签/单签"语义重复（都是表达"签没签"），要求去掉底部状态指示只保留"双签/单签"文字即可；2) 改造方案（v1.7.99.257）：a) HTML：10 行 tr × 2 上下游 = 20 个 <span class="contract-card-status">✓ 已签</span> / <span class="contract-card-status">⚠ 未签</span> 全部删除（regex 匹配 contract-card-status span 模式）；b) CSS 保留 .contract-card-status 样式（不影响功能，v1.7.99.255 留存可复用，未来其他场景如需用可启用）；c) 容器高度从 71px 降到 57px（去掉底部 status 行 14px），与 v1.7.99.254 材料完善度卡片 50px 高度更接近（57px vs 50px 差异来自 3px 行高 + 6px padding）；d) 视觉对比：v1.7.99.255 3 段信息（标签 + 状态文字 + 重复的 ✓/⚠ 状态）vs v1.7.99.257 2 段信息（标签 + 状态文字），更简洁更聚焦；3) 注：双签/单签本身的颜色编码（双签=蓝/绿、单签=红）保留，仅去掉冗余的 ✓/⚠ 文字指示；4) 验证：playwright 验证 10 个 .contract-dual 容器 + 0 个 .contract-card-status 元素 + 容器尺寸 156×57px + HTML 只剩 label + value（双签/单签）+ 箭头。',
+          changes: [
+            { type: 'modify', location: 'pages/report-compliance.html 10 行 tr HTML 模板（v1.7.99.257）', before: 'v1.7.99.255 旧 <div class="contract-card"><span class="contract-card-label">...</span><span class="contract-card-value">双签</span><span class="contract-card-status">✓ 已签</span></div>（含底部 ✓已签/⚠未签 状态指示）', after: 'v1.7.99.257 新 <div class="contract-card"><span class="contract-card-label">...</span><span class="contract-card-value">双签</span></div>（去掉底部 status 状态指示，20 个 span 全删）' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.256', after: 'v1.7.99.257' },
+          ],
+        },
+{
           ts: '2026-09-07T09:20:00',
           version: 'v1.7.99.256',
           module: '合规验证报告-材料完善度 th 加提示 icon + hover tooltip（告知材料内容 4 项）',
