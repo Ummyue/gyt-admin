@@ -106,7 +106,20 @@
 
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
-      var BASELINE = [                                                                                {
+      var BASELINE = [                                                                                        {
+          ts: '2026-09-07T14:55:00',
+          version: 'v1.7.99.260',
+          module: '合规验证报告-字段顺序调整 + 数据完善状态重新设计（双段式卡片 + 6 环节审批 tooltip）',
+          summary: '合规验证报告（pages/report-compliance.html）列表 2 件事。1) 字段顺序调整：user 2026-09-07 14:51 反馈将"资金来源"移动到业务线后、"预警数"移动到资金来源后；旧 11 列顺序 = 业务线/数据完善状态/资金来源/合同状态/预警数/材料完善度/采购/销售/业务线号/业务线状态/操作 → 新顺序 = 业务线/资金来源/预警数/数据完善状态/合同状态/材料完善度/采购/销售/业务线号/业务线状态/操作，"数据完善状态"从第 2 列后移到第 4 列；2) 「数据完善状态」按合同状态/材料完善度的双段式卡片视觉重新设计，状态改为 2 态（user 指定：数据完善/待审核 而非原文档的"待完善/已完善"）；3) hover 气泡显示 6 环节审批状态（合同/货转/付款/退款/结算单/追保函），3 态（通过 ✓ / 审核中 ⏳ / 未通过 ✗）；4) 改造详情：a) CSS 套件新增 .data-dual 容器（圆角矩形 156×57px + overflow:hidden + box-shadow 立体感，与 v1.7.99.254 mat-dual / v1.7.99.255 contract-dual 同设计语言）+ .data-card 上下卡片（顶部 2px 边条 + 浅色底 + padding 6px 10px + 64px min-width）+ .data-card-label（10px 灰字"上游数据"/"下游数据"）+ .data-card-value（14px 加粗等宽 + 大字 + position:relative cursor:help）+ .data-flow（中间 → 箭头 + 灰底 + 灰边）+ .data-step-tip 绝对定位 tooltip（200px 宽 + 白底 + 圆角 + box-shadow + 上方箭头 ::before + opacity 0.15s 过渡 + z-index 100 + white-space nowrap）+ .data-step-tip-title（11px 加粗标题）+ .data-step-list（list reset）+ .data-step-list li（11px 文字 + 1.5px padding）+ .data-step-icon 12px 圆圈（approved 绿底 #ECFDF5 + #059669 ✓ / reviewing 黄底 #FEF3C7 + #D97706 ⏳ / rejected 红底 #FEF2F2 + #DC2626 ✗）共 19 个新样式；b) 状态配色：数据完善 = 上游 #1D4ED8 蓝（边框 + 文字 #EFF6FF 浅蓝底）/ 下游 #10B981 绿（边框 + #047857 文字 #ECFDF5 浅绿底）；待审核 = 上游/下游都用 #D97706 黄（边框 + 文字 #FEF3C7 浅黄底）；c) HTML 升级：th 顺序调整（11 列）+ 10 行 tr 的 td 列顺序同步调整 + 每行第 4 列替换为新 .data-dual 结构（内含 .data-up + .data-flow + .data-down，每段 data-card-value 内嵌 .data-step-tip 子元素含 6 环节审批状态）；d) 状态组合 4 种循环分布（cell_idx % 4）：0=数据完善/数据完善 / 1=待审核/待审核 / 2=数据完善/待审核 / 3=待审核/数据完善；e) 6 环节审批状态 mock 分布（每行 6 个环节 × 2 上下游 = 12 个状态，3 通过 + 2 审核中 + 1 未通过）：用 (cell_idx * 7 + step_idx * 3) % 10 决定 0-2 通过 / 3-7 审核中 / 8-9 未通过，downstream 用 step_idx + 1 错开；5) 注：v1.7.99.259 业务线状态 + 操作 2 列 sticky 行为保留（th 和 td 都加 col-sticky-right-2 / col-sticky-right class），新字段顺序不影响 sticky；6) 验证：playwright 验证 th 顺序 11 列 + 10 个 .data-dual + 4 种状态组合循环 + 第一个 cell 上下游 6 环节审批 tooltip 全 6 项渲染 + 0 page error。',
+          changes: [
+            { type: 'modify', location: 'pages/report-compliance.html 字段顺序（v1.7.99.260）', before: 'v1.7.99.64 旧 11 列顺序 业务线/数据完善状态/资金来源/合同状态/预警数/材料完善度/采购/销售/业务线号/业务线状态/操作', after: 'v1.7.99.260 新顺序 业务线/资金来源/预警数/数据完善状态/合同状态/材料完善度/采购/销售/业务线号/业务线状态/操作（资金来源前移到第 2 列、预警数前移到第 3 列、数据完善状态从第 2 列后移到第 4 列）' },
+            { type: 'add', location: 'pages/report-compliance.html 数据完善状态双段式卡片（v1.7.99.260）', before: 'v1.7.99.64 旧版 <span class="data-status"><span class="pending">待完善</span><span class="arrow">----</span><span class="pending">待审核</span></span>（10 行全一样 + 状态名错用）', after: 'v1.7.99.260 新版 <div class="data-dual"><div class="data-card data-up ready/pending">...上游数据/数据完善或待审核</div><div class="data-flow">→</div><div class="data-card data-down ready/pending">...下游数据/数据完善或待审核</div></div>（4 种组合循环分布）' },
+            { type: 'add', location: 'pages/report-compliance.html 数据完善状态 6 环节审批 tooltip（v1.7.99.260）', before: 'v1.7.99.64 旧版无任何 hover 反馈', after: 'v1.7.99.260 加 hover .data-card-value 触发 .data-step-tip 绝对定位 tooltip（200px 宽 + 白底 + 圆角 + 上方箭头 + 标题"上游/下游审批环节（6 项）" + 6 行 ✓/⏳/✗ 列表：合同/货转/付款/退款/结算单/追保函，3 通过 + 2 审核中 + 1 未通过循环分布）' },
+            { type: 'add', location: 'pages/report-compliance.html .data-* CSS 套件（v1.7.99.260）', before: 'v1.7.99.64 旧 .data-status 2 样式', after: 'v1.7.99.260 加 .data-dual + .data-card + 4 状态配色（up/down × ready/pending）+ .data-card-label + .data-card-value + .data-flow + .data-step-tip + .data-step-tip-title + .data-step-list + .data-step-list li + .data-step-icon + 3 态配色（approved/reviewing/rejected）共 19 个新样式' },
+            { type: 'modify', location: 'app.html title', before: 'v1.7.99.259', after: 'v1.7.99.260' },
+          ],
+        },
+{
           ts: '2026-09-07T14:35:00',
           version: 'v1.7.99.259',
           module: '合规验证报告-业务线状态/操作 两列固定行尾（position: sticky right）',
