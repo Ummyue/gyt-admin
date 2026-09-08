@@ -486,6 +486,8 @@
 
   // ===== 全局开关按钮（右下角访客可隐藏所有 pin） =====
   function ensureToggleBtn() {
+    // v1.7.99.262.5 fix: iframe 内不创建 toggle 按钮（顶层管理，避免重复）
+    if (IN_IFRAME) return;
     if (document.getElementById('pinToggleBtn')) return;
     var b = document.createElement('button');
     b.className = 'pin-toggle-btn';
