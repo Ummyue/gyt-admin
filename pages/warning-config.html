@@ -606,8 +606,9 @@
               <select><option value="">请选择</option><option>是</option><option>否</option></select>
             </div>
           </div>
-          <!-- 操作按钮（v1.7.99.263.5：移除查询/重置按钮 + 添加规则按钮移到右侧） -->
+          <!-- 操作按钮（v1.7.99.263.5 移除查询/重置 + 添加规则右侧；v1.7.99.263.6 修复右侧对齐——加空 left 占位让 space-between 生效） -->
           <div class="wc-filter-actions">
+            <div class="wc-filter-actions-left"></div>
             <div class="wc-filter-actions-right">
               <button class="btn-add" onclick="openAddRulePriceModal()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
