@@ -23,6 +23,21 @@
     .risk-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
     .risk-tab .count { display: inline-block; margin-left: 4px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; min-width: 20px; text-align: center; }
     .risk-panel { padding: 0; }
+    /* v1.7.99.266 人员风险展开/收起（多条明细子表） */
+    .risk-cases-count { display: inline-block; margin-left: 6px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; }
+    .risk-toggle { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; padding: 4px 10px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; color: var(--color-primary); cursor: pointer; user-select: none; transition: all 0.15s; }
+    .risk-toggle:hover { background: #E2E8F0; border-color: #CBD5E1; }
+    .risk-toggle .toggle-icon { font-size: 9px; transition: transform 0.15s; }
+    .risk-cases { margin-top: 12px; border: 1px solid #E2E8F0; border-radius: 4px; background: #FAFBFC; overflow: hidden; }
+    .risk-cases-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .risk-cases-table thead { background: #F1F5F9; }
+    .risk-cases-table th { padding: 8px 12px; font-weight: 500; color: var(--text-secondary); text-align: left; border-bottom: 1px solid #E2E8F0; }
+    .risk-cases-table td { padding: 8px 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-primary); }
+    .risk-cases-table tbody tr:last-child td { border-bottom: none; }
+    .risk-cases-table .case-no { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+    .case-status { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; font-weight: 500; }
+    .case-status-warn { background: rgba(220, 38, 38, 0.1); color: #DC2626; }
+    .case-status-ok { background: rgba(16, 185, 129, 0.1); color: #059669; }
   </style>
 </head>
 <body>
@@ -746,15 +761,48 @@
           { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在终本案件。' },
           { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在历史限制消费令记录。' },
           { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在当前限制消费令。' },
-          { name: '法律诉讼', status: 'warn', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」涉及 1 笔 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2025-03-22</mark> 买卖合同纠纷诉讼，标的 35 万元，案件审理中。' },
-          { name: '历史法律诉讼', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史法律诉讼已结案，未发现尚未解决的法律风险。' },
+          // 法律诉讼（v1.7.99.266：3 条明细，展开/收起）
+          {
+            name: '法律诉讼', status: 'warn',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」存在 3 笔法律诉讼，其中 1 笔审理中，2 笔已结案。',
+            cases: [
+              { date: '2025-03-22', caseNo: '（2025）豫0102民初3521号', type: '买卖合同纠纷', amount: '35 万元', status: '审理中', statusType: 'warn' },
+              { date: '2024-06-10', caseNo: '（2024）豫0102民初1856号', type: '货款纠纷', amount: '12 万元', status: '已结案', statusType: 'ok' },
+              { date: '2023-09-05', caseNo: '（2023）豫0102民初0921号', type: '运输合同纠纷', amount: '8 万元', status: '已结案', statusType: 'ok' }
+            ]
+          },
+          // 历史法律诉讼（2 条明细）
+          {
+            name: '历史法律诉讼', status: 'ok',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史法律诉讼已结案，未发现尚未解决的法律风险。',
+            cases: [
+              { date: '2022-11-15', caseNo: '（2022）豫0102民初2210号', type: '民间借贷纠纷', amount: '20 万元', status: '已结案', statusType: 'ok' },
+              { date: '2021-05-20', caseNo: '（2021）豫0102民初0512号', type: '侵权责任纠纷', amount: '5 万元', status: '已结案', statusType: 'ok' }
+            ]
+          },
           { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」未来 30 天内无开庭公告。' },
           { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史开庭公告已结案。' },
           { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在被执行人记录。' },
           { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在司法协助记录。' },
-          { name: '历史被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史被执行人记录已结案。' },
+          // 历史被执行人（2 条明细）
+          {
+            name: '历史被执行人', status: 'ok',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史被执行人记录已结案。',
+            cases: [
+              { date: '2020-08-12', caseNo: '（2020）豫0102执1234号', type: '货款纠纷执行', amount: '15 万元', status: '已结案', statusType: 'ok' },
+              { date: '2019-04-25', caseNo: '（2019）豫0102执0876号', type: '民间借贷执行', amount: '8 万元', status: '已结案', statusType: 'ok' }
+            ]
+          },
           { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在失信被执行人记录。' },
-          { name: '历史失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史失信被执行人记录已结案。' }
+          // 历史失信被执行人（2 条明细）
+          {
+            name: '历史失信被执行人', status: 'ok',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史失信被执行人记录已结案。',
+            cases: [
+              { date: '2018-12-08', caseNo: '（2018）豫0102执0543号', type: '买卖合同执行', amount: '6 万元', status: '已结案', statusType: 'ok' },
+              { date: '2017-07-15', caseNo: '（2017）豫0102执0321号', type: '货款纠纷执行', amount: '4 万元', status: '已结案', statusType: 'ok' }
+            ]
+          }
         ]
       }
     };
@@ -771,16 +819,62 @@
       if (!data) return;
       var html = data.items.map(function(item, i) {
         var isWarn = item.status === 'warn';
+        var hasCases = Array.isArray(item.cases) && item.cases.length > 0;
+        // 每个 item 唯一 id 用于展开/收起
+        var itemId = key + '_item_' + i;
+        var casesHtml = '';
+        if (hasCases) {
+          casesHtml = '<div class="risk-cases" id="' + itemId + '_cases" hidden>'
+            + '<table class="risk-cases-table">'
+            + '<thead><tr><th>立案日期</th><th>案号</th><th>案件类型</th><th>标的金额</th><th>案件状态</th></tr></thead>'
+            + '<tbody>'
+            + item.cases.map(function(c) {
+                return '<tr>'
+                  + '<td>' + c.date + '</td>'
+                  + '<td class="case-no">' + c.caseNo + '</td>'
+                  + '<td>' + c.type + '</td>'
+                  + '<td style="color: var(--color-primary); font-weight: 500;">' + c.amount + '</td>'
+                  + '<td><span class="case-status case-status-' + c.statusType + '">' + c.status + '</span></td>'
+                  + '</tr>';
+              }).join('')
+            + '</tbody></table>'
+            + '</div>';
+        }
+        var toggleHtml = '';
+        if (hasCases) {
+          toggleHtml = '<div class="risk-toggle" onclick="toggleRiskCases(\'' + itemId + '\')" id="' + itemId + '_toggle">'
+            + '<span class="toggle-icon">▼</span>'
+            + '<span class="toggle-text">展开 ' + item.cases.length + ' 条明细</span>'
+            + '</div>';
+        }
         return '<div class="risk-item' + (isWarn ? ' risk-warn' : '') + '">'
           + '<div class="risk-num">' + (i + 1) + '</div>'
           + '<div class="risk-content">'
-          + '<div class="risk-name">' + item.name + '</div>'
+          + '<div class="risk-name">' + item.name + (hasCases ? ' <span class="risk-cases-count">' + item.cases.length + ' 条</span>' : '') + '</div>'
           + '<div class="risk-desc"' + (isWarn ? ' style="color: var(--color-danger);"' : '') + '>' + item.desc + '</div>'
+          + toggleHtml
+          + casesHtml
           + '</div>'
           + '<span class="risk-status ' + item.status + '">' + (isWarn ? '风险提示' : '暂无风险') + '</span>'
           + '</div>';
       }).join('');
       document.getElementById('riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)).innerHTML = html;
+    }
+
+    // 展开/收起 单个 item 的 cases 明细
+    function toggleRiskCases(itemId) {
+      var cases = document.getElementById(itemId + '_cases');
+      var toggle = document.getElementById(itemId + '_toggle');
+      if (!cases || !toggle) return;
+      var expanded = !cases.hidden;
+      cases.hidden = expanded;
+      var icon = toggle.querySelector('.toggle-icon');
+      var text = toggle.querySelector('.toggle-text');
+      if (icon) icon.textContent = expanded ? '▼' : '▲';
+      if (text) {
+        var count = cases.querySelectorAll('tbody tr').length;
+        text.textContent = expanded ? '展开 ' + count + ' 条明细' : '收起明细';
+      }
     }
 
     // 更新 6 个 tap 的计数
