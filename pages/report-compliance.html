@@ -128,6 +128,10 @@
 
     /* 业务线列 */
     .bizline-cell { display: flex; flex-direction: column; gap: 2px; font-size: 12px; }
+
+    /* v1.7.99.262.8：合同状态/材料完整度 两列 cell 底部对齐（消除 td padding-bottom 14px 导致的「底部进度条下方留白」视觉问题） */
+    .cp-table tbody td:nth-child(5),
+    .cp-table tbody td:nth-child(6) { vertical-align: bottom; }
     .bizline-cell .biz { color: var(--text-primary); }
     .bizline-cell .biz-link { color: var(--color-primary); cursor: pointer; }
 
