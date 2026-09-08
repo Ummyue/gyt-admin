@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>清理全站标记点 · 工具页</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fa; padding: 40px 16px; margin: 0; color: #1f2937; }
+    .card { max-width: 640px; margin: 0 auto; background: #fff; padding: 32px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.08); }
+    h1 { font-size: 20px; margin: 0 0 8px; color: #111827; }
+    .sub { color: #6b7280; font-size: 13px; margin: 0 0 20px; }
+    .stat { background: #fef3c7; border-left: 3px solid #f59e0b; padding: 14px 18px; border-radius: 4px; margin: 16px 0; font-size: 14px; line-height: 1.7; }
+    .stat.ok { background: #d1fae5; border-left-color: #10b981; }
+    .stat strong { color: #dc2626; font-size: 16px; }
+    .stat.ok strong { color: #059669; }
+    .page-list { background: #f9fafb; padding: 12px 16px; border-radius: 4px; margin: 12px 0; max-height: 280px; overflow-y: auto; font-size: 13px; }
+    .page-list code { color: #2563eb; background: #eff6ff; padding: 1px 6px; border-radius: 3px; font-size: 12px; }
+    .page-list .count { color: #6b7280; margin-left: 8px; }
+    .actions { margin-top: 24px; display: flex; gap: 8px; flex-wrap: wrap; }
+    button { padding: 10px 20px; font-size: 14px; border: none; border-radius: 4px; cursor: pointer; font-weight: 500; transition: opacity 0.15s; }
+    button:hover { opacity: 0.85; }
+    button:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-danger { background: #dc2626; color: #fff; }
+    .btn-secondary { background: #e5e7eb; color: #1f2937; }
+    .btn-primary { background: #2563eb; color: #fff; }
+    .toast { position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%); background: rgba(31,41,55,0.92); color: #fff; padding: 10px 20px; border-radius: 4px; font-size: 13px; z-index: 99999; opacity: 0; transition: opacity 0.2s; }
+    .toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <h1>🧹 清理全站标记点（Pin Annotation）</h1>
+    <p class="sub">v1.7.99.262.7 一次性工具页 · 用于清空 localStorage 中所有页面的标记点数据</p>
+
+    <div id="status">加载中...</div>
+
+    <div class="actions">
+      <button id="btnClear" class="btn-danger">一键清空全部</button>
+      <button id="btnRefresh" class="btn-secondary">刷新统计</button>
+      <button id="btnBack" class="btn-primary">返回主页</button>
+    </div>
+  </div>
+
+  <div id="toast" class="toast"></div>
+
+  <script>
+    var LS_KEY = 'ygt_pin_data';
+
+    function toast(msg) {
+      var t = document.getElementById('toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(function() { t.classList.remove('show'); }, 1800);
+    }
+
+    function load() {
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        if (!raw) return { password: '3905', pins: [] };
+        var data = JSON.parse(raw);
+        if (!data.pins) data.pins = [];
+        return data;
+      } catch(e) {
+        return { password: '3905', pins: [] };
+      }
+    }
+
+    function render() {
+      var data = load();
+      var pins = data.pins || [];
+      var byPage = {};
+      pins.forEach(function(p) {
+        var key = p.page || '(unknown)';
+        byPage[key] = (byPage[key] || 0) + 1;
+      });
+
+      var html;
+      if (pins.length === 0) {
+        html = '<div class="stat ok">✅ 当前 <strong>0</strong> 个标记点，无需清理</div>';
+        document.getElementById('btnClear').disabled = true;
+      } else {
+        html = '<div class="stat">⚠️ 当前共有 <strong>' + pins.length + '</strong> 个标记点，分布在 <strong>' + Object.keys(byPage).length + '</strong> 个页面</div>';
+        html += '<div class="page-list">';
+        var pages = Object.keys(byPage).sort();
+        pages.forEach(function(p) {
+          html += '<div><code>' + p + '</code><span class="count">' + byPage[p] + ' 个</span></div>';
+        });
+        html += '</div>';
+        document.getElementById('btnClear').disabled = false;
+      }
+      document.getElementById('status').innerHTML = html;
+    }
+
+    document.getElementById('btnClear').onclick = function() {
+      var data = load();
+      var count = (data.pins || []).length;
+      if (count === 0) { toast('已经是空的'); return; }
+      if (!confirm('确认清空全部 ' + count + ' 个标记点？\n此操作不可撤销。')) return;
+      localStorage.removeItem(LS_KEY);
+      toast('已清空 ' + count + ' 个标记点');
+      render();
+    };
+
+    document.getElementById('btnRefresh').onclick = function() {
+      render();
+      toast('已刷新');
+    };
+
+    document.getElementById('btnBack').onclick = function() {
+      location.href = './app.html';
+    };
+
+    render();
+  </script>
+</body>
+</html>
