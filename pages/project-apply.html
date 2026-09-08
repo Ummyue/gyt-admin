@@ -1,0 +1,1871 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增立项申请 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* ===== Step 2 企业风险报告样式 ===== */
+    .form-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 20px;
+    }
+    .form-value-block {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      padding: 14px 16px;
+      background: var(--bg-page);
+      border-radius: var(--radius-default);
+      border: 1px solid var(--border-light);
+    }
+
+    /* 关联企业 tabs */
+    .risk-tab {
+      padding: 14px 18px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .risk-tab:hover { color: var(--text-primary); }
+    .risk-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      font-weight: 500;
+    }
+
+    /* 风险项 / 小节标题：已迁入 design-system.css 全局共享（v1.4.1） */
+    /* .risk-item / .risk-num / .risk-status / .risk-warn / .risk-count-warn / .subsection-title */
+
+    /* ============ 关联企业原有样式 ============ */
+    .company-search { position: relative; }
+    .company-suggest {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      margin-top: 4px;
+      background: #fff;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-default);
+      box-shadow: var(--shadow-lg);
+      max-height: 240px;
+      overflow-y: auto;
+      z-index: 100;
+      display: none;
+    }
+    .company-suggest.show { display: block; }
+    .company-suggest-item {
+      padding: 10px 12px;
+      cursor: pointer;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+    }
+    .company-suggest-item:last-child { border-bottom: none; }
+    .company-suggest-item:hover { background: var(--color-primary-lighter); }
+    .company-suggest-item .name { font-weight: 500; color: var(--text-primary); }
+    .company-suggest-item .meta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* 自动带入的字段 - 灰色禁用 + "自动带入"标签 */
+    .auto-fill { position: relative; }
+    .auto-fill-tag {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+      background: var(--bg-page);
+      padding: 1px 6px;
+      border-radius: 3px;
+    }
+    .info-banner {
+      background: var(--color-info-light);
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      border-radius: var(--radius-default);
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .info-banner strong { color: var(--color-info); }
+
+    /* ===== v1.7.99.16 提交审批（与 customer-apply.html 一致） ===== */
+    .approval-status-card {
+      display: flex; align-items: center; gap: 16px;
+      padding: 20px 24px;
+      background: linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 100%);
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius-default);
+      margin-bottom: 16px;
+    }
+    .approval-status-icon {
+      width: 56px; height: 56px; background: #fff; border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(30,64,175,0.1); flex-shrink: 0; font-size: 28px;
+    }
+    .approval-status-body { flex: 1; min-width: 0; }
+    .approval-status-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 18px; font-weight: 600; color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .approval-status-chips { display: flex; gap: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; font-size: 12px;
+      border-radius: 4px; font-weight: 500;
+    }
+    .chip-orange { background: #FED7AA; color: #9A3412; }
+    .chip-blue { background: #DBEAFE; color: #1E40AF; }
+    .chip-green { background: #DCFCE7; color: #166534; }
+    .chip-red { background: #FEE2E2; color: #991B1B; }
+    .chip-gray { background: #F1F5F9; color: #475569; }
+    .approval-status-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+    .approval-status-desc .link { color: var(--color-primary); cursor: pointer; font-weight: 500; }
+    .approval-status-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-cancel-approval {
+      padding: 7px 16px; background: #fff;
+      border: 1px solid #FCA5A5; color: #B91C1C;
+      border-radius: var(--radius-default); font-size: 13px; cursor: pointer;
+    }
+    .btn-cancel-approval:hover { background: #FEF2F2; }
+
+    .approval-summary {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+      padding: 16px 24px; background: var(--bg-page);
+      border-radius: var(--radius-default); margin-bottom: 16px;
+    }
+    .approval-summary-item .label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; }
+    .approval-summary-item .value { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+
+    .approval-grid {
+      display: grid; grid-template-columns: 1fr 360px; gap: 16px;
+    }
+    @media (max-width: 1100px) { .approval-grid { grid-template-columns: 1fr; } }
+    .approval-main-card {
+      background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius-default); padding: 20px 24px;
+    }
+    .approval-aside { display: flex; flex-direction: column; gap: 16px; }
+    .approval-aside-card {
+      background: #fff; border: 1px solid var(--border-light);
+      border-radius: var(--radius-default); padding: 16px 20px;
+    }
+    .approval-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .approval-header-title {
+      font-size: 15px; font-weight: 600; color: var(--text-primary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .approval-header-title::before {
+      content: ""; width: 3px; height: 14px;
+      background: var(--color-primary); border-radius: 2px;
+    }
+    .approval-header-meta { font-size: 12px; color: var(--text-tertiary); }
+
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before {
+      content: ""; position: absolute;
+      left: 12px; top: 12px; bottom: 12px;
+      width: 2px; background: var(--border-light);
+    }
+    .timeline-item { position: relative; padding-bottom: 24px; }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot {
+      position: absolute; left: -28px; top: 2px;
+      width: 24px; height: 24px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      background: #fff; border: 2px solid var(--border-light); color: var(--text-tertiary);
+    }
+    .timeline-item.done .timeline-dot {
+      background: var(--color-success); border-color: var(--color-success); color: #fff;
+    }
+    .timeline-item.done .timeline-dot-num { display: none; }
+    .timeline-item.done .timeline-dot::after { content: "✓"; font-size: 14px; }
+    .timeline-item.current .timeline-dot {
+      background: var(--color-primary); border-color: var(--color-primary); color: #fff;
+    }
+    .timeline-item.pending .timeline-dot {
+      background: #F1F5F9; border-color: var(--border-default); color: var(--text-tertiary);
+    }
+    .timeline-content {
+      background: var(--bg-page); border-radius: var(--radius-default);
+      padding: 12px 16px; border: 1px solid var(--border-light);
+    }
+    .timeline-item.current .timeline-content { background: #EFF6FF; border-color: #BFDBFE; }
+    .timeline-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 500; color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .timeline-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-tertiary); }
+    .timeline-actor {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-secondary); margin-top: 8px;
+    }
+    .timeline-actor .avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--color-primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+    }
+    .timeline-subitem {
+      background: #fff; border-radius: var(--radius-default);
+      padding: 10px 12px; margin-top: 8px; border: 1px solid var(--border-light);
+    }
+    .timeline-subitem-header {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+    }
+    .timeline-subitem-name {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-primary); font-weight: 500;
+    }
+    .timeline-subitem-name .avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--color-primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600;
+    }
+    .timeline-subitem-opinion {
+      font-size: 12px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.5;
+    }
+
+    .metric-list { display: flex; flex-direction: column; gap: 12px; }
+    .metric-row {
+      display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+    }
+    .metric-label { color: var(--text-tertiary); }
+    .metric-value { color: var(--text-primary); font-weight: 500; }
+    .metric-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; font-size: 12px;
+      background: rgba(30,64,175,0.08); color: var(--color-primary);
+      border-radius: 4px; font-weight: 500;
+    }
+
+    .activity-list { display: flex; flex-direction: column; }
+    .activity-item {
+      display: flex; gap: 10px; padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--color-primary-lighter); color: var(--color-primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; flex-shrink: 0;
+    }
+    .activity-body { flex: 1; min-width: 0; }
+    .activity-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+    .activity-text strong { color: var(--text-primary); }
+    .activity-time { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    .urge-card {
+      background: linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%);
+      border: 1px solid #FCD34D;
+      border-radius: var(--radius-default);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .urge-icon {
+      width: 32px; height: 32px; background: #F59E0B; color: #fff;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .urge-body { flex: 1; min-width: 0; }
+    .urge-title { font-size: 13px; color: #92400E; font-weight: 600; margin-bottom: 2px; }
+    .urge-desc { font-size: 12px; color: #B45309; line-height: 1.5; }
+    .btn-urge {
+      padding: 4px 10px; background: #F59E0B; color: #fff;
+      border: none; border-radius: 4px; font-size: 12px; cursor: pointer; flex-shrink: 0;
+    }
+    /* v1.7.99.25 成员多选 */
+    .member-select {
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 6px 8px;
+      min-height: 38px;
+      background: #fff;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      transition: border-color 0.15s;
+    }
+    .member-select:focus-within { border-color: var(--color-primary); }
+    .member-chips { display: contents; }
+    .member-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 4px 3px 8px;
+      background: #EFF6FF; color: #1E40AF;
+      border-radius: 4px; font-size: 12px; font-weight: 500;
+    }
+    .member-chip-close {
+      cursor: pointer; width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; color: #1E40AF; font-size: 14px; line-height: 1;
+    }
+    .member-chip-close:hover { background: #DBEAFE; }
+    .member-input-wrap { flex: 1; min-width: 180px; }
+    .member-input-wrap .input {
+      border: none; padding: 4px 0; font-size: 13px; background: transparent;
+    }
+    .member-input-wrap .input:focus { outline: none; }
+    .member-suggest {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: #fff; border: 1px solid var(--border-default);
+      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-height: 220px; overflow-y: auto; z-index: 100;
+      display: none;
+    }
+    .member-suggest.show { display: block; }
+    .member-suggest-item {
+      padding: 8px 12px; cursor: pointer; font-size: 13px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .member-suggest-item:hover { background: #F1F5F9; }
+    .member-suggest-item .member-id { color: var(--text-tertiary); font-size: 12px; }
+    .member-suggest-item.disabled { color: var(--text-tertiary); cursor: not-allowed; }
+    .member-suggest-item.disabled:hover { background: transparent; }
+    /* v1.7.99.27 紧凑版（3 列 grid 中间列用） */
+    .member-select-compact { min-height: 32px; padding: 3px 5px; gap: 4px; }
+    .member-select-compact .member-chip { padding: 2px 3px 2px 6px; font-size: 11px; }
+    .member-select-compact .member-input-wrap { min-width: 100px; }
+    .member-select-compact .member-input-wrap .input { padding: 2px 0; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+                    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><div class="page-header">
+        <div class="breadcrumb">
+          <span>准入管理</span>
+          <span class="separator">/</span>
+          <span>项目准入</span>
+          <span class="separator">/</span>
+          <span class="current">新增立项申请</span>
+        </div>
+        <h1 class="page-title">新增立项申请</h1>
+      </div>
+
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+        <!-- 4 步骤条 -->
+        <div class="card" style="margin-bottom: 16px; padding: 16px 32px;">
+          <div class="steps" id="stepper">
+            <div class="step" data-step="1">
+              <div class="step-circle" id="stepCircle1">1</div>
+              <div class="step-label" id="stepLabel1">项目信息录入</div>
+            </div>
+            <div class="step-line" id="stepLine1"></div>
+            <div class="step" data-step="2">
+              <div class="step-circle" id="stepCircle2">2</div>
+              <div class="step-label" id="stepLabel2">企业风险报告</div>
+            </div>
+            <div class="step-line" id="stepLine2"></div>
+            <div class="step" data-step="3">
+              <div class="step-circle" id="stepCircle3">3</div>
+              <div class="step-label" id="stepLabel3">提交审批</div>
+            </div>
+            <div class="step-line" id="stepLine3"></div>
+            <div class="step" data-step="4">
+              <div class="step-circle" id="stepCircle4">4</div>
+              <div class="step-label" id="stepLabel4">准入完成</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== Step 1：项目信息录入 ========== -->
+        <div id="step1Content">
+        <!-- 项目基本信息 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">项目基本信息</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">带 <span style="color: var(--color-danger);">*</span> 为必填项</div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid form-grid-3">
+              <div class="form-field">
+                <label class="form-label">立项编号</label>
+                <input type="text" class="input" value="LX20260122001" disabled>
+                <div class="form-help">保存后自动生成（14位无横线）</div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">项目名称 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入项目名称">
+              </div>
+              <div class="form-field">
+                <label class="form-label">业务类型</label>
+                <select class="select">
+                  <option>请选择业务类型</option>
+                  <option>存货业务</option>
+                  <option>预付业务</option>
+                  <option>账期业务</option>
+                  <option>购销业务</option>
+                </select>
+              </div>
+              <div class="form-field">
+                <label class="form-label">业务周期 <span class="required">*</span></label>
+                <div style="display: flex; align-items: center; gap: 8px;">
+                  <input type="date" class="input" style="flex: 1;" placeholder="开始日期">
+                  <span style="color: var(--text-tertiary);">~</span>
+                  <input type="date" class="input" style="flex: 1;" placeholder="结束日期">
+                </div>
+                <div class="form-help">选择业务开始日期 ~ 结束日期（年月日）</div>
+              </div>
+              <div class="form-field" style="grid-column: 2;">
+                <label class="form-label">项目小组成员 <span class="required">*</span></label>
+                <div class="member-select member-select-compact" id="projectMembers">
+                  <div class="member-chips" id="memberChips"></div>
+                  <div class="member-input-wrap" style="position: relative;">
+                    <input type="text" class="input" id="memberSearch" placeholder="输入姓名/工号搜索" autocomplete="off">
+                    <div class="member-suggest" id="memberSuggest"></div>
+                  </div>
+                </div>
+                <div class="form-help">支持多选，模糊搜索</div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">货物品类</label>
+                <select class="select">
+                  <option>请选择货物品类</option>
+                  <option>淀粉</option>
+                  <option>谷物</option>
+                  <option>糖粉</option>
+                </select>
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label class="form-label">项目主要内容</label>
+                <textarea class="textarea" rows="3" placeholder="描述项目主要内容、市场机会、合作契机等等..."></textarea>
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label class="form-label">预计收益</label>
+                <textarea class="textarea" rows="3" placeholder="描述项目预计收益、上下游关系、行业地位等等..."></textarea>
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label class="form-label">保障措施</label>
+                <textarea class="textarea" rows="3" placeholder="描述项目风险控制、保障措施、合规审查等等..."></textarea>
+              </div>
+              <div class="form-field" style="grid-column: 1 / -1;">
+                <label class="form-label">呈报事项</label>
+                <textarea class="textarea" rows="3" placeholder="需要呈报管理层或审批委员会的事项..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 总投资信息（v1.7.99.25：5 字段，总投资额自动计算） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">总投资信息</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">单位：万元；总投资额 = 自有资金 + 银行贷款 + 利用外资 + 其他资金（自动计算）</div>
+          </div>
+          <div class="card-body">
+            <div class="form-grid form-grid-3">
+              <div class="form-field">
+                <label class="form-label">总投资额（万元）</label>
+                <input type="text" class="input" id="investTotal" value="0" disabled style="background: #F8FAFC; font-weight: 600; color: var(--color-primary);">
+                <div class="form-help">自动计算</div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">自有资金（万元）</label>
+                <input type="number" class="input" id="investOwn" placeholder="0" min="0" step="0.01" oninput="updateInvestTotal()">
+              </div>
+              <div class="form-field">
+                <label class="form-label">银行贷款（万元）</label>
+                <input type="number" class="input" id="investBank" placeholder="0" min="0" step="0.01" oninput="updateInvestTotal()">
+              </div>
+              <div class="form-field">
+                <label class="form-label">利用外资（万元）</label>
+                <input type="number" class="input" id="investForeign" placeholder="0" min="0" step="0.01" oninput="updateInvestTotal()">
+              </div>
+              <div class="form-field">
+                <label class="form-label">其他资金（万元）</label>
+                <input type="number" class="input" id="investOther" placeholder="0" min="0" step="0.01" oninput="updateInvestTotal()">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 关联企业 -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">关联企业</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">至少添加 1 家企业</div>
+          </div>
+          <div class="card-body">
+            <!-- 已添加企业列表 -->
+            <div id="selectedCompanies" style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 16px;">
+              <div class="tag-card" data-category="上游客户" data-credit="91XXXXXXMAXXXXXXXX">
+                <div class="tag-card-icon">🏢</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="tag-card-title">河南军牧原国际贸易有限公司</div>
+                  <div class="tag-card-sub">上游客户 · 91XXXXXXMAXXXXXXXX</div>
+                </div>
+                <div class="tag-card-actions">
+                  <button class="tag-card-action edit" title="编辑" onclick="editCompany(this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </button>
+                  <button class="tag-card-action remove" title="删除" onclick="confirmRemoveCompany(this, '河南军牧原国际贸易有限公司')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/></svg>
+                  </button>
+                </div>
+              </div>
+              <div class="tag-card" data-category="第三方物流" data-credit="91XXXXXXMAXXXXXXXX">
+                <div class="tag-card-icon">🚚</div>
+                <div style="flex: 1; min-width: 0;">
+                  <div class="tag-card-title">郑州铁龙物流有限公司</div>
+                  <div class="tag-card-sub">第三方物流 · 91XXXXXXMAXXXXXXXX</div>
+                </div>
+                <div class="tag-card-actions">
+                  <button class="tag-card-action edit" title="编辑" onclick="editCompany(this)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+                  </button>
+                  <button class="tag-card-action remove" title="删除" onclick="confirmRemoveCompany(this, '郑州铁龙物流有限公司')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/></svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 添加按钮 -->
+            <div class="dashed-add" onclick="openCompanyModal()">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+              <span>添加项目关联企业</span>
+            </div>
+          </div>
+        </div>
+        </div>
+        <!-- ========== /Step 1 ========== -->
+
+        <!-- ========== Step 2：企业风险报告（v1.1 + v1.4 tab 切换 + v1.5 图1模块） ========== -->
+        <div id="step2Content" hidden>
+          <!-- 关联企业 tabs -->
+          <div class="card" style="margin-bottom: 16px; padding: 0;">
+            <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px;">
+              <div style="display: flex; gap: 4px;" id="companyTabs">
+                <div class="risk-tab active" data-company="all">全部</div>
+                <div class="risk-tab" data-company="A">企业 A</div>
+                <div class="risk-tab" data-company="B">企业 B</div>
+                <div class="risk-tab" data-company="C">企业 C</div>
+              </div>
+              <div style="font-size: 12px; color: var(--text-tertiary); padding: 12px 0;">共 3 家企业 · 数据更新时间 2026-07-17 15:46</div>
+            </div>
+          </div>
+
+          <!-- 动态渲染容器（按 tab 显示对应企业） -->
+          <div id="step2Container"></div>
+        </div>
+        <!-- ========== /Step 2 ========== -->
+
+        <!-- ========== Step 3：提交审批（v1.7.99.16 完整组件，与 customer-apply 一致） ========== -->
+        <div id="step3Content" hidden>
+          <!-- 顶部状态卡片 -->
+          <div class="approval-status-card">
+            <div class="approval-status-icon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                审批进行中
+                <div class="approval-status-chips">
+                  <span class="chip chip-orange">⏸ 待审批</span>
+                  <span class="chip chip-blue">外部 OA 系统</span>
+                </div>
+              </div>
+              <div class="approval-status-desc">
+                河南军牧原国际贸易有限公司 · 立项申请 <strong style="color: var(--text-primary);">LX-2026-0722-001</strong> 已提交至外部审批系统，当前在「<span class="link">财务部审批</span>」阶段（已 1/3 完成）。
+              </div>
+            </div>
+            <div class="approval-status-actions">
+              <button class="btn-cancel-approval" onclick="alert('已撤回申请')">↩ 撤回申请</button>
+            </div>
+          </div>
+
+          <!-- 摘要信息 -->
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请编号</div>
+              <div class="value" style="font-family: var(--font-mono);">LX-2026-0722-001</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2026-07-19 16:45</div>
+            </div>
+          </div>
+
+          <!-- 左右两栏：审批进度 + 关键指标/活动 -->
+          <div class="approval-grid">
+            <!-- 左：审批进度时间线 -->
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta">共 5 个节点，当前进行中 ②</div>
+              </div>
+              <div class="timeline">
+                <!-- 节点 1：提交申请（已完成）-->
+                <div class="timeline-item done">
+                  <div class="timeline-dot"><span class="timeline-dot-num">①</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ① 提交申请
+                      <span class="chip chip-green">已通过</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar">张</div>
+                      <span><strong>张磊</strong>（运营方）提交立项申请</span>
+                    </div>
+                    <div class="timeline-meta">
+                      <span>🕐 2026-07-19 16:45:23</span>
+                      <span>📎 附件 4 份</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点 2：一级审批·风控部（已完成）-->
+                <div class="timeline-item done">
+                  <div class="timeline-dot"><span class="timeline-dot-num">②</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ② 一级审批 · 风控部
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 1/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;">王</div>
+                      <span>审批人：<strong>王浩</strong> · 风控部负责人</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">✓ 该风险可控（180 万贷款纠纷已结），财务健康度良好，同意准入。 <span style="color: var(--text-tertiary);">· 2026-07-20 09:15</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 3：二级审批·财务部（进行中）-->
+                <div class="timeline-item current">
+                  <div class="timeline-dot"><span class="timeline-dot-num">③</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ③ 二级审批 · 财务部
+                      <span class="chip chip-orange">审批中 · 已读</span>
+                      <span class="chip chip-gray">串行 2/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #F59E0B;">宋</div>
+                      <span>审批人：<strong>宋美玲</strong> · 财务总监</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">等待审批人处理，预计 2 小时内回复</div>
+                  </div>
+                </div>
+
+                <!-- 节点 4：三级审批·总经理（待开始）-->
+                <div class="timeline-item pending">
+                  <div class="timeline-dot"><span class="timeline-dot-num">④</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ④ 三级审批 · 总经理
+                      <span class="chip chip-gray">待开始</span>
+                      <span class="chip chip-gray">串行 3/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #94A3B8;">李</div>
+                      <span>审批人：<strong>李娜</strong> · 平台总经理</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">需在一级审批通过后自动触发</div>
+                  </div>
+                </div>
+
+                <!-- 节点 5：准入完成（待开始）-->
+                <div class="timeline-item pending">
+                  <div class="timeline-dot"><span class="timeline-dot-num">⑤</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ⑤ 准入完成
+                      <span class="chip chip-gray">待开始</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">三级审批通过后自动归档，项目获得准入凭证</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右：关键指标 + 实时活动 + 催办 -->
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">关键指标</div>
+                </div>
+                <div class="metric-list">
+                  <div class="metric-row"><span class="metric-label">当前节点</span><span class="metric-tag">财务部审批 2/3</span></div>
+                  <div class="metric-row"><span class="metric-label">剩余节点</span><span class="metric-value">2 个（串行 / 完成）</span></div>
+                  <div class="metric-row"><span class="metric-label">已耗时</span><span class="metric-value">1 天 7 小时</span></div>
+                </div>
+              </div>
+
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">实时活动</div>
+                  <div class="approval-header-meta">最近 24h</div>
+                </div>
+                <div class="activity-list">
+                  <div class="activity-item"><div class="activity-avatar" style="background: #F59E0B; color: #fff;">宋</div><div class="activity-body"><div class="activity-text"><strong>宋美玲</strong>查看了审批单</div><div class="activity-time">10 分钟前</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">王</div><div class="activity-body"><div class="activity-text"><strong>王浩</strong>通过了一级审批节点</div><div class="activity-time">2 小时前 · 09:15</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #F59E0B; color: #fff;">系</div><div class="activity-body"><div class="activity-text">系统向审批节点发送催办</div><div class="activity-time">1 小时前</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #94A3B8; color: #fff;">审</div><div class="activity-body"><div class="activity-text">审批已自动 @王浩 @宋美玲</div><div class="activity-time">昨天 18:22</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">张</div><div class="activity-body"><div class="activity-text"><strong>张磊</strong>通过了一级审批</div><div class="activity-time">昨天 18:22</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #1E40AF; color: #fff;">张</div><div class="activity-body"><div class="activity-text"><strong>张磊</strong>提交了立项申请</div><div class="activity-time">昨天 16:45</div></div></div>
+                </div>
+              </div>
+
+              <div class="urge-card">
+                <div class="urge-icon">🔔</div>
+                <div class="urge-body">
+                  <div class="urge-title">宋美玲 已 2 小时未处理</div>
+                  <div class="urge-desc">建议催办或 @该审批人 加速处理</div>
+                </div>
+                <button class="btn-urge" onclick="alert('已发送催办')">立即催办</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Step 3 ========== -->
+
+        <!-- ========== Step 4：准入完成 ========== -->
+        <div id="step4Content" hidden>
+          <div class="card" style="padding: 60px 24px; text-align: center;">
+            <div style="font-size: 16px; color: var(--text-secondary);">准入完成</div>
+            <div style="margin-top: 8px; font-size: 13px; color: var(--text-tertiary);">立项编号：LX20260122001</div>
+          </div>
+        </div>
+        <!-- ========== /Step 4 ========== -->
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn btn-secondary" id="btnSave" style="display: none;">保存草稿</button>
+        <div style="flex: 1;"></div>
+        <button class="btn btn-secondary" id="btnPrev">返 回</button>
+        <button class="btn btn-primary" id="btnNext" disabled>发起尽调</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 添加关联企业弹窗 -->
+  <div id="companyModal" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
+    <div style="width: 880px; max-height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden;">
+      <!-- 弹窗 header -->
+      <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">关联企业信息</span>
+        <div style="flex: 1;"></div>
+        <button onclick="closeCompanyModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+
+      <!-- 弹窗 body -->
+      <div style="flex: 1; overflow-y: auto; padding: 20px 24px;">
+        <div class="info-banner">
+          <strong>工商信息：</strong>客户基本信息板块数据来源为天眼查，输入客户名称后会自动读取其他信息，请核对，不正确可以修改
+        </div>
+
+        <div class="form-grid form-grid-3">
+          <div class="form-field">
+            <label class="form-label">客户类别 <span class="required">*</span></label>
+            <select class="select" id="cmCustomerCategory">
+              <option>上游客户</option>
+              <option>下游客户</option>
+              <option>第三方物流</option>
+              <option>第三方仓储</option>
+            </select>
+          </div>
+          <div class="form-field company-search" style="grid-column: 2 / -1;">
+            <label class="form-label">企业名称 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="请输入企业全称" id="cmCompanyName" autocomplete="off">
+            <!-- 模糊匹配下拉 -->
+            <div class="company-suggest" id="companySuggest"></div>
+            <div class="form-help" id="cmHint">输入 ≥ 1 字符触发模糊匹配</div>
+          </div>
+
+          <!-- 自动带入字段（点击企业后填充并禁用） -->
+          <div class="form-field auto-fill">
+            <label class="form-label">法定代表人</label>
+            <input type="text" class="input" id="cmLegalRep" placeholder="自动带入" disabled>
+            <span class="auto-fill-tag" style="display: none;" id="cmAutoTag1">天眼查</span>
+          </div>
+          <div class="form-field auto-fill">
+            <label class="form-label">注册地址</label>
+            <input type="text" class="input" id="cmAddress" placeholder="自动带入" disabled>
+          </div>
+          <div class="form-field auto-fill">
+            <label class="form-label">社会统一信用代码</label>
+            <input type="text" class="input" id="cmCreditCode" placeholder="自动带入" disabled style="font-family: var(--font-mono); font-size: 13px;">
+          </div>
+          <div class="form-field auto-fill">
+            <label class="form-label">经营期限（止）</label>
+            <input type="text" class="input" id="cmExpireAt" placeholder="自动带入" disabled>
+          </div>
+          <div class="form-field auto-fill">
+            <label class="form-label">成立日期</label>
+            <input type="text" class="input" id="cmEstablishedAt" placeholder="自动带入" disabled>
+          </div>
+          <div class="form-field">
+            <label class="form-label">联系人姓名 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="请输入联系人完整姓名" id="cmContactName">
+          </div>
+          <div class="form-field">
+            <label class="form-label">联系人电话 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="请输入联系人电话号码" id="cmContactPhone">
+          </div>
+          <div class="form-field">
+            <label class="form-label">联系人邮箱</label>
+            <input type="text" class="input" placeholder="请输入联系人邮箱" id="cmContactEmail">
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label class="form-label">联系人地址</label>
+            <input type="text" class="input" placeholder="如：河南省郑州市金水区花园路 159 号" id="cmContactAddress" value="河南省郑州市金水区花园路 159 号">
+          </div>
+          <div class="form-field">
+            <label class="form-label">负责人姓名 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="请输入负责人姓名" id="cmOwnerName">
+          </div>
+          <div class="form-field">
+            <label class="form-label">负责人电话 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="请输入负责人电话" id="cmOwnerPhone">
+          </div>
+          <div class="form-field">
+            <label class="form-label">企业开户行信息 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="如：中国工商银行郑州金水支行" id="cmBankName" value="中国工商银行郑州金水支行">
+          </div>
+          <div class="form-field">
+            <label class="form-label">企业银行账号 <span class="required">*</span></label>
+            <input type="text" class="input" placeholder="请输入企业银行账号" id="cmBankAccount" value="6222 XXXX XXXX XXXX XXXX" style="font-family: var(--font-mono); font-size: 13px;">
+          </div>
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <label class="form-label">企业简称</label>
+            <input type="text" class="input" placeholder="请输入客户简称" id="cmShortName">
+          </div>
+        </div>
+      </div>
+
+      <!-- 弹窗 footer -->
+      <div style="padding: 14px 24px; border-top: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
+        <div style="flex: 1;"></div>
+        <button class="btn btn-secondary" onclick="closeCompanyModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmAddCompany()">确认添加</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 删除二次确认 modal -->
+  <div id="confirmRemoveModal" class="confirm-modal" style="display: none;">
+    <div class="confirm-overlay" onclick="closeConfirmRemove()"></div>
+    <div class="confirm-card">
+      <div class="confirm-icon danger">⚠</div>
+      <div class="confirm-title">确认删除</div>
+      <div class="confirm-text">
+        确定要删除企业「<strong id="confirmCompanyName"></strong>」吗？<br>
+        删除后将无法恢复，请谨慎操作。
+      </div>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeConfirmRemove()">取消</button>
+        <button class="btn btn-danger" id="confirmRemoveBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.31 已完成准入企业提示 modal（带"关闭提醒"按钮） -->
+  <div id="inProgressTipModal" style="display: none; position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
+    <div style="width: 520px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px; background: #F0FDF4; border-bottom-color: #86EFAC;">
+        <span id="inProgressTipTitle" style="font-size: 15px; font-weight: 600; color: #16A34A;">✓ 此企业已完成项目准入</span>
+        <div style="flex: 1;"></div>
+      </div>
+      <div id="inProgressTipBody" style="padding: 20px 24px;">
+        <!-- 动态填充 -->
+      </div>
+      <div style="padding: 14px 24px; border-top: 1px solid var(--border-default); display: flex; justify-content: flex-end; gap: 12px; background: #FAFBFC;">
+        <button class="btn btn-primary" onclick="closeInProgressTip()">关闭提醒</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.31 返回时内容丢失警告 modal -->
+  <div id="backConfirmModal" style="display: none; position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
+    <div style="width: 460px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+      <div style="padding: 18px 24px; border-bottom: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">⚠ 当前编辑内容将丢失</span>
+      </div>
+      <div style="padding: 20px 24px; font-size: 14px; color: var(--text-primary); line-height: 1.8;">
+        您在表单中填写了内容，直接返回将导致内容丢失。<br>
+        建议先保存当前填写，再返回列表页。
+      </div>
+      <div style="padding: 14px 24px; border-top: 1px solid var(--border-default); display: flex; justify-content: flex-end; gap: 12px; background: #FAFBFC;">
+        <button class="btn btn-secondary" onclick="closeBackConfirm()">取消</button>
+        <button class="btn btn-danger" onclick="confirmBack()">确认离开</button>
+      </div>
+    </div>
+  </div>
+  <script>
+    // ===== Mock 模糊匹配数据 =====
+    const mockCompanies = [
+      { name: "河南军牧原国际贸易有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "张志明", address: "河南省郑州市金水区花园路 159 号", establishedAt: "2009-01-01", expireAt: "2099-01-01" },
+      { name: "河南军牧原农副产品有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "李建国", address: "河南省郑州市金水区农业路 88 号", establishedAt: "2015-06-15", expireAt: "2065-06-14" },
+      { name: "河南军牧原食品集团股份有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "王志强", address: "河南省郑州市中原区建设路 200 号", establishedAt: "2012-03-20", expireAt: "2062-03-19" },
+      { name: "河南牧原食品股份有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "秦英林", address: "河南省南阳市内乡县灌涨镇", establishedAt: "2000-07-13", expireAt: "长期" },
+      { name: "郑州铁龙物流有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "陈伟", address: "河南省郑州市二七区解放路 100 号", establishedAt: "2008-09-01", expireAt: "2058-08-31" }
+    ];
+
+    // ===== v1.7.99.31 Mock 已完成项目准入企业（流程状态：执行中） =====
+    // 输入企业名称时，如果匹配这 3 家 → 自动带入全部 17 字段 + 风险报告 + 弹窗提示
+    const mockInProgressCompanies = [
+      {
+        name: "河南诚泽运输有限公司",
+        customerCategory: "上游客户",
+        creditCode: "9141XXXXXMA5XXXXXXX", legalRep: "陈建强", address: "河南省郑州市金水区花园路 159 号",
+        establishedAt: "2010-08-15", expireAt: "2055-12-31",
+        contactName: "王建国", contactPhone: "138 0000 XXXX", contactEmail: "xxx@example.com", contactAddress: "河南省郑州市金水区花园路 159 号",
+        ownerName: "李伟", ownerPhone: "139 0000 XXXX",
+        bankName: "中国工商银行郑州金水支行", bankAccount: "6222 XXXX XXXX XXXX XXXX",
+        shortName: "诚泽运输",
+        riskReport: {
+          summary: "5 项绿 / 3 项黄（含 1 项失信记录）",
+          scans: [
+            { name: "工商注册", status: "green", desc: "营业执照正常" },
+            { name: "法人代表", status: "green", desc: "无对外任职异常" },
+            { name: "股东信息", status: "green", desc: "股权结构清晰" },
+            { name: "对外投资", status: "green", desc: "3 项对外投资" },
+            { name: "诉讼记录", status: "green", desc: "近 3 年无重大诉讼" },
+            { name: "失信记录", status: "yellow", desc: "2024-03 有 1 条失信记录，已于 2024-08 解除" },
+            { name: "行政处罚", status: "yellow", desc: "2023-11 有 1 条行政处罚（罚款 5 万）" },
+            { name: "经营异常", status: "yellow", desc: "2024-05 被列入经营异常名录，2024-07 移出" }
+          ]
+        }
+      },
+      {
+        name: "杞县广润贸易有限公司",
+        customerCategory: "上游客户",
+        creditCode: "9141XXXXXMA5XXXXXXX", legalRep: "赵丽华", address: "河南省开封市杞县经四路 28 号",
+        establishedAt: "2008-04-22", expireAt: "长期",
+        contactName: "刘志强", contactPhone: "137 0000 XXXX", contactEmail: "xxx@example.com", contactAddress: "河南省开封市杞县经四路 28 号",
+        ownerName: "赵丽华", ownerPhone: "136 0000 XXXX",
+        bankName: "中国农业银行开封杞县支行", bankAccount: "6228 XXXX XXXX XXXX XXXX",
+        shortName: "广润贸易",
+        riskReport: {
+          summary: "6 项绿 / 2 项黄",
+          scans: [
+            { name: "工商注册", status: "green", desc: "营业执照正常" },
+            { name: "法人代表", status: "green", desc: "无异常" },
+            { name: "股东信息", status: "green", desc: "2 个股东" },
+            { name: "对外投资", status: "green", desc: "1 项对外投资" },
+            { name: "诉讼记录", status: "green", desc: "无重大诉讼" },
+            { name: "失信记录", status: "green", desc: "无失信记录" },
+            { name: "行政处罚", status: "yellow", desc: "2022-08 有 1 条行政处罚（警告）" },
+            { name: "经营异常", status: "yellow", desc: "2023-04 被列入经营异常名录，2023-06 移出" }
+          ]
+        }
+      },
+      {
+        name: "中原粮食集团有限公司",
+        customerCategory: "下游客户",
+        creditCode: "9141XXXXXMA5XXXXXXX", legalRep: "孙建辉", address: "河南省郑州市郑东新区商务外环路 30 号",
+        establishedAt: "2005-11-30", expireAt: "长期",
+        contactName: "周文博", contactPhone: "138 0000 XXXX", contactEmail: "xxx@example.com", contactAddress: "河南省郑州市郑东新区商务外环路 30 号",
+        ownerName: "孙建辉", ownerPhone: "139 0000 XXXX",
+        bankName: "中国建设银行郑州郑东支行", bankAccount: "6217 XXXX XXXX XXXX XXXX",
+        shortName: "中原粮食",
+        riskReport: {
+          summary: "8 项绿（全通过）",
+          scans: [
+            { name: "工商注册", status: "green", desc: "营业执照正常" },
+            { name: "法人代表", status: "green", desc: "无异常" },
+            { name: "股东信息", status: "green", desc: "5 个股东" },
+            { name: "对外投资", status: "green", desc: "8 项对外投资" },
+            { name: "诉讼记录", status: "green", desc: "无重大诉讼" },
+            { name: "失信记录", status: "green", desc: "无失信记录" },
+            { name: "行政处罚", status: "green", desc: "无行政处罚" },
+            { name: "经营异常", status: "green", desc: "无经营异常" }
+          ]
+        }
+      }
+    ];
+
+    // ===== Step 2 企业数据（A/B/C 3 家，v1.5 增加 C 自主 mock）=====
+    const COMPANIES = {
+      A: {
+        name: '河南军牧原国际贸易有限公司',
+        category: '上游客户',
+        icon: '🏢',
+        basic: {
+          '国家': '中国', '省份': '河南省', '客户类别': '上游企业',
+          '企业名称': '河南军牧原国际贸易有限公司',
+          '注册地址': '河南省郑州市金水区花园路 88 号',
+          '注册资本': '5,000 万人民币',
+          '企业性质': '有限责任公司（自然人投资或控股）',
+          '统一社会信用代码': '91XXXXXXMAXXXXXXXX',
+          '成立日期': '2005-01-02',
+          '经营期限（止）': '暂无固定期限',
+          '法定代表人': '何永兴',
+          '联系人姓名': '陈安生',
+          '联系人电话': '138 0000 XXXX',
+          '负责人姓名': '何世军',
+          '负责人电话': '138 0000 XXXX'
+        },
+        businessScope: '一般项目：消防器材销售；机械设备销售；电子产品销售；安防设备销售；交通及公共管理用标牌销售；劳动保护用品销售；建筑材料销售；日用百货销售；五金产品批发；办公用品销售；办公设备耗材销售；金属材料销售；消防技术服务；住宅水电安装维护服务（除依法须经批准的项目外，凭营业执照依法自主开展经营活动）',
+        risks: [
+          { name: '合作黑名单', status: 'ok' },
+          { name: '假国央企', status: 'ok' },
+          { name: '失信被执行人信息', status: 'ok' },
+          { name: '被执行人信息', status: 'ok' },
+          { name: '限制消费令信息', status: 'ok' },
+          { name: '终本案件', status: 'ok' },
+          { name: '税收违法信息', status: 'ok' },
+          { name: '行政/工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 2022-12-01 因「销售不合格消防产品」存在 行政处罚 5 万元，并已足额缴纳罚款。' },
+          // v1.7.99.264 新增 3 项判定
+          { name: '空壳企业识别', status: 'ok' },
+          { name: '关联交易风险', status: 'ok' },
+          { name: '资质缺失风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业经营范围内含「消防器材销售 / 消防技术服务」，但未在「国家企业信用信息公示系统」查到有效的「消防技术服务机构资质证书」及「消防产品合格证」，存在资质缺失风险。' }
+        ],
+        shareholders: [
+          { name: '何永兴', percent: '84%', tags: ['大股东', '实际控制人', '最终受益人'], date: '2001-05-18' },
+          { name: '何世军', percent: '16%', tags: [], date: '2001-05-18' }
+        ],
+        investments: [
+          { name: '诸暨致美投资有限公司', legalRep: '何永兴', capital: '100 万人民币', amount: '100 万人民币', ratio: '100%', date: '2009-12-02', status: '注销', statusColor: 'gray' },
+          { name: '诸暨致美暖通设备有限公司', legalRep: '何永兴', capital: '80 万人民币', amount: '80 万人民币', ratio: '100%', date: '2009-12-02', status: '存续', statusColor: 'green' },
+          { name: '浙江致美管业有限公司', legalRep: '何永兴', capital: '500 万人民币', amount: '500 万人民币', ratio: '100%', date: '2009-12-03', status: '注销', statusColor: 'gray' },
+          { name: '浙江橙晨机电有限公司', legalRep: '何仕君', capital: '2,000 万人民币', amount: '—', ratio: '90%', date: '2004-07-15', status: '存续', statusColor: 'green' },
+          { name: '恒森管业科技（浙江）有限公司', legalRep: '何泽森', capital: '10,000 万人民币', amount: '1,800 万人民币', ratio: '60%', date: '2022-12-30', status: '存续', statusColor: 'green' }
+        ]
+      },
+      B: {
+        name: '郑州铁龙物流有限公司',
+        category: '第三方物流',
+        icon: '🚚',
+        basic: {
+          '国家': '中国', '省份': '河南省', '客户类别': '第三方物流',
+          '企业名称': '郑州铁龙物流有限公司',
+          '注册地址': '河南省郑州市二七区解放路 100 号',
+          '注册资本': '1,000 万人民币',
+          '企业性质': '有限责任公司（自然人投资或控股）',
+          '统一社会信用代码': '91XXXXXXMAXXXXXXXX',
+          '成立日期': '2008-09-01',
+          '经营期限（止）': '2058-08-31',
+          '法定代表人': '陈伟',
+          '联系人姓名': '张磊',
+          '联系人电话': '138 0000 XXXX',
+          '负责人姓名': '陈伟',
+          '负责人电话': '138 0000 XXXX'
+        },
+        businessScope: '道路货物运输；货物运输代理；仓储服务（除危险化学品）；装卸搬运；物流信息咨询；普通货物仓储服务（除危险化学品等需许可审批的项目）；国内货物运输代理',
+        risks: [
+          { name: '合作黑名单', status: 'ok' },
+          { name: '假国央企', status: 'ok' },
+          { name: '失信被执行人信息', status: 'ok' },
+          { name: '被执行人信息', status: 'ok' },
+          { name: '限制消费令信息', status: 'ok' },
+          { name: '终本案件', status: 'ok' },
+          { name: '税收违法信息', status: 'ok' },
+          { name: '行政/工商违法处罚信息', status: 'ok' },
+          // v1.7.99.264 新增 3 项判定
+          { name: '空壳企业识别', status: 'ok' },
+          { name: '关联交易风险', status: 'ok' },
+          { name: '资质缺失风险', status: 'ok' }
+        ],
+        shareholders: [
+          { name: '郑州铁龙实业集团有限公司', percent: '60%', tags: ['大股东', '实际控制人'], date: '2008-09-01' },
+          { name: '陈伟', percent: '40%', tags: ['最终受益人'], date: '2008-09-01' }
+        ],
+        investments: [
+          { name: '河南铁龙冷链物流有限公司', legalRep: '陈伟', capital: '500 万人民币', amount: '500 万人民币', ratio: '100%', date: '2015-04-12', status: '存续', statusColor: 'green' },
+          { name: '河南铁龙信息科技有限公司', legalRep: '李娜', capital: '300 万人民币', amount: '240 万人民币', ratio: '80%', date: '2018-08-25', status: '存续', statusColor: 'green' },
+          { name: '郑州铁龙驾驶员培训有限公司', legalRep: '陈伟', capital: '100 万人民币', amount: '100 万人民币', ratio: '100%', date: '2010-06-08', status: '注销', statusColor: 'gray' }
+        ]
+      },
+      C: {
+        name: '郑州铁龙国际货运代理有限公司',
+        category: '第三方物流',
+        icon: '🚢',
+        basic: {
+          '国家': '中国', '省份': '河南省', '客户类别': '第三方物流',
+          '企业名称': '郑州铁龙国际货运代理有限公司',
+          '注册地址': '河南省郑州市管城区航海东路 88 号',
+          '注册资本': '500 万人民币',
+          '企业性质': '有限责任公司（自然人投资或控股）',
+          '统一社会信用代码': '91XXXXXXMAXXXXXXXX',
+          '成立日期': '2018-05-16',
+          '经营期限（止）': '2038-05-15',
+          '法定代表人': '王志强',
+          '联系人姓名': '李雪',
+          '联系人电话': '138 0000 XXXX',
+          '负责人姓名': '王志强',
+          '负责人电话': '138 0000 XXXX'
+        },
+        businessScope: '国际货物运输代理；海上国际货物运输代理；航空国际货物运输代理；陆路国际货物运输代理；报关报检服务；货物进出口；技术进出口；普通货物仓储服务',
+        risks: [
+          { name: '合作黑名单', status: 'ok' },
+          { name: '假国央企', status: 'ok' },
+          { name: '失信被执行人信息', status: 'ok' },
+          { name: '被执行人信息', status: 'ok' },
+          { name: '限制消费令信息', status: 'ok' },
+          { name: '终本案件', status: 'ok' },
+          { name: '税收违法信息', status: 'ok' },
+          { name: '合同纠纷诉讼', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 2024-03-15 因「货物运输合同违约金争议」存在 民事诉讼 25 万元，案件审理中。' },
+          // v1.7.99.264 新增 3 项判定
+          { name: '空壳企业识别', status: 'ok' },
+          { name: '关联交易风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业股东「郑州跨境电商产业园有限公司」与关联方「河南自贸区铁龙供应链管理有限公司」存在交叉持股，且后者在 2024-12-10 存在 1 笔 12 万元的合同违约诉讼，疑似存在关联交易风险。' },
+          { name: '资质缺失风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业经营范围内含「国际货物运输代理 / 报关报检服务」，但未在「商务部」查到有效的「国际货运代理企业备案表」及「海关报关企业注册登记证书」，存在资质缺失风险。' }
+        ],
+        shareholders: [
+          { name: '王志强', percent: '70%', tags: ['大股东', '实际控制人', '最终受益人'], date: '2018-05-16' },
+          { name: '郑州跨境电商产业园有限公司', percent: '30%', tags: [], date: '2020-09-10' }
+        ],
+        investments: [
+          { name: '郑州铁龙国际物流（香港）有限公司', legalRep: '王志强', capital: '10 万港币', amount: '10 万港币', ratio: '100%', date: '2019-11-20', status: '存续', statusColor: 'green' },
+          { name: '河南自贸区铁龙供应链管理有限公司', legalRep: '王志强', capital: '200 万人民币', amount: '130 万人民币', ratio: '65%', date: '2021-08-15', status: '存续', statusColor: 'green' }
+        ]
+      }
+    };
+
+    // ===== Step 2 渲染函数 =====
+    function renderCompany(c, key) {
+      // 基础信息字段（按 3 列 grid 排列）
+      const basicFields = [
+        ['国家', c.basic['国家'], 1], ['省份', c.basic['省份'], 1], ['客户类别', c.basic['客户类别'], 1],
+        ['企业名称', c.basic['企业名称'], 1], ['注册地址', c.basic['注册地址'], 2],
+        ['注册资本', c.basic['注册资本'], 1], ['企业性质', c.basic['企业性质'], 1], ['统一社会信用代码', c.basic['统一社会信用代码'], 1],
+        ['成立日期', c.basic['成立日期'], 1], ['经营期限（止）', c.basic['经营期限（止）'], 1], ['法定代表人', c.basic['法定代表人'], 1],
+        ['联系人姓名', c.basic['联系人姓名'], 1], ['联系人电话', c.basic['联系人电话'], 1], ['负责人姓名', c.basic['负责人姓名'], 1], ['负责人电话', c.basic['负责人电话'], 1]
+      ];
+      const basicGridHtml = basicFields.map(f => {
+        const spanStyle = f[2] > 1 ? ` style="grid-column: span ${f[2]};"` : '';
+        return `<div class="form-field"${spanStyle}><label class="form-label">${f[0]}</label><div class="form-value">${f[1]}</div></div>`;
+      }).join('');
+
+      // 风险项
+      const riskHtml = c.risks.map((r, i) => {
+        const isWarn = r.status === 'warn';
+        const descText = isWarn
+          ? r.desc.replace(/(\d{4}-\d{2}-\d{2})/g, m => `<mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">${m}</mark>`)
+          : '截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。';
+        return `
+          <div class="risk-item ${isWarn ? 'risk-warn' : ''}">
+            <div class="risk-num">${i + 1}</div>
+            <div class="risk-content">
+              <div class="risk-name">${r.name}</div>
+              <div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div>
+            </div>
+            <span class="risk-status ${r.status}">${isWarn ? '风险提示' : '暂无风险'}</span>
+          </div>`;
+      }).join('');
+
+      // 股东
+      const shareholdersHtml = c.shareholders.map(s => {
+        const tagsHtml = s.tags.map(t => {
+          const tagClass = t === '大股东' ? 'tag-blue' : t === '实际控制人' ? 'tag-purple' : 'tag-yellow';
+          return `<span class="tag ${tagClass}" style="margin-left: 4px;">${t}</span>`;
+        }).join('');
+        return `
+          <tr>
+            <td><span style="font-weight: 500;">${s.name}</span>${tagsHtml}</td>
+            <td><span style="color: var(--color-primary); font-weight: 600;">${s.percent}</span></td>
+            <td>${s.date}</td>
+          </tr>`;
+      }).join('');
+
+      // 对外投资
+      const investmentsHtml = c.investments.map(inv => `
+        <tr>
+          <td>${inv.name}</td>
+          <td>${inv.legalRep}</td>
+          <td class="col-num">${inv.capital}</td>
+          <td class="col-num">${inv.amount}</td>
+          <td>${inv.ratio}</td>
+          <td>${inv.date}</td>
+          <td><span class="tag tag-${inv.statusColor}">${inv.status}</span></td>
+        </tr>`).join('');
+
+      // 风险统计
+      const riskCount = c.risks.filter(r => r.status === 'warn').length;
+      const riskBadge = riskCount > 0 ? `<span class="risk-count-warn">${riskCount} 项风险</span>` : '';
+
+      return `
+        <div class="company-block" data-company="${key}">
+          <!-- 基础信息 -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header">
+              <div class="card-title">企业基础信息<span style="color: var(--text-tertiary); font-weight: 400; margin-left: 8px; font-size: 13px;">（${c.name}）</span></div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">数据来源：天眼查</div>
+            </div>
+            <div class="card-body">
+              <div class="form-grid form-grid-3">${basicGridHtml}</div>
+              <div class="form-field" style="margin-top: 16px;">
+                <label class="form-label">经营范围</label>
+                <div class="form-value-block">${c.businessScope}</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 风险扫描 -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header">
+              <div class="card-title">企业风险扫描结果</div>
+              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
+                <span>扫描时间：2026-07-17 15:46:04</span>
+                <span style="color: var(--text-tertiary);">|</span>
+                <span>11 项扫描</span>
+                ${riskBadge}
+              </div>
+            </div>
+            <div class="card-body" style="padding: 0;">${riskHtml}</div>
+          </div>
+
+          <!-- 股权关系 -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header">
+              <div class="card-title">客户股权关系</div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">数据来源：天眼查</div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <div style="padding: 20px 24px;">
+                <div class="subsection-title">股东信息</div>
+                <table class="table" style="margin-top: 8px;">
+                  <thead><tr><th style="width: 40%;">股东</th><th style="width: 30%;">持股比例</th><th style="width: 30%;">认缴出资日期</th></tr></thead>
+                  <tbody>${shareholdersHtml}</tbody>
+                </table>
+              </div>
+              <div style="padding: 4px 24px 20px; border-top: 1px solid var(--border-light);">
+                <div class="subsection-title" style="margin-top: 16px;">对外投资（${c.investments.length} 家）</div>
+                <table class="table" style="margin-top: 8px;">
+                  <thead><tr><th>被投资企业名称</th><th>被投资法定代表人</th><th>注册资本</th><th>投资数额</th><th>投资占比</th><th>注册时间</th><th>状态</th></tr></thead>
+                  <tbody>${investmentsHtml}</tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+          <!-- 图1模块：准入意见 + 关联报告上传 -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-body">
+              <div class="form-field" style="margin-bottom: 16px;">
+                <label class="form-label">准入意见</label>
+                <textarea class="textarea" rows="3" placeholder="请输入准入意见" data-company="${key}" oninput="saveOpinion('${key}', this.value)"></textarea>
+              </div>
+              <div class="form-field">
+                <label class="form-label">上传关联报告或附件</label>
+                <div class="dashed-upload" id="upload-area-${key}" onclick="triggerUpload('${key}')">
+                  <span class="upload-hint">选择本地文件上传，支持 word/pdf/jpg/jpeg/png</span>
+                  <input type="file" id="upload-${key}" style="display: none;" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png" multiple onchange="handleUpload('${key}', this.files)">
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>`;
+    }
+
+    // 全局状态：每个企业的意见 + 上传文件
+    window.__step2State = { opinions: {}, uploads: {} };
+
+    function renderStep2(companyKey) {
+      const container = document.getElementById('step2Container');
+      if (!container) return;
+      if (companyKey === 'all') {
+        container.innerHTML = renderCompany(COMPANIES.A, 'A') + renderCompany(COMPANIES.B, 'B') + renderCompany(COMPANIES.C, 'C');
+      } else {
+        container.innerHTML = renderCompany(COMPANIES[companyKey], companyKey);
+      }
+    }
+
+    function saveOpinion(key, val) {
+      window.__step2State.opinions[key] = val;
+    }
+
+    function triggerUpload(key) {
+      document.getElementById('upload-' + key).click();
+    }
+
+    function handleUpload(key, files) {
+      if (!files || files.length === 0) return;
+      window.__step2State.uploads[key] = window.__step2State.uploads[key] || [];
+      Array.from(files).forEach(f => {
+        window.__step2State.uploads[key].push({ name: f.name, size: f.size });
+      });
+      renderUploadList(key);
+    }
+
+    function renderUploadList(key) {
+      const area = document.getElementById('upload-area-' + key);
+      if (!area) return;
+      const list = window.__step2State.uploads[key] || [];
+      if (list.length === 0) {
+        area.classList.remove('has-files');
+        area.innerHTML = '<span class="upload-hint">选择本地文件上传，支持 word/pdf/jpg/jpeg/png</span><input type="file" id="upload-' + key + '" style="display: none;" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png" multiple onchange="handleUpload(\'' + key + '\', this.files)">';
+        return;
+      }
+      const items = list.map((f, i) => {
+        const sizeKB = (f.size / 1024).toFixed(1);
+        return `<div class="file-item"><span class="file-name">📎 ${f.name}</span><span class="file-size">${sizeKB} KB</span><span class="file-remove" onclick="removeFile('${key}', ${i})">×</span></div>`;
+      }).join('');
+      area.classList.add('has-files');
+      area.innerHTML = items + '<div style="margin-top: 8px; padding-top: 8px; border-top: 1px dashed var(--border-light); color: var(--text-tertiary); font-size: 12px; text-align: center; cursor: pointer;" onclick="triggerUpload(\'' + key + '\')">+ 继续添加</div><input type="file" id="upload-' + key + '" style="display: none;" accept=".doc,.docx,.pdf,.jpg,.jpeg,.png" multiple onchange="handleUpload(\'' + key + '\', this.files)">';
+    }
+
+    function removeFile(key, idx) {
+      window.__step2State.uploads[key].splice(idx, 1);
+      renderUploadList(key);
+    }
+    // 初始渲染由 updateStep(2) 触发（v1.5 改为按需渲染）
+
+    // ===== 弹窗控制 =====
+    function openCompanyModal() {
+      document.getElementById('companyModal').style.display = 'flex';
+      document.getElementById('cmCompanyName').focus();
+    }
+    function closeCompanyModal() {
+      document.getElementById('companyModal').style.display = 'none';
+      clearModal();
+    }
+    function clearModal() {
+      ['cmCompanyName', 'cmLegalRep', 'cmAddress', 'cmCreditCode', 'cmExpireAt', 'cmEstablishedAt',
+       'cmContactName', 'cmContactPhone', 'cmContactEmail', 'cmOwnerName', 'cmOwnerPhone', 'cmShortName'].forEach(id => {
+        document.getElementById(id).value = '';
+      });
+      document.getElementById('companySuggest').classList.remove('show');
+      document.getElementById('cmHint').textContent = '输入 ≥ 1 字符触发模糊匹配';
+    }
+
+    // ===== v1.7.99.31 已完成准入企业完整 17 字段自动带入 =====
+    function fillCompanyFull(c) {
+      // 客户类别
+      const catSelect = document.getElementById('cmCustomerCategory');
+      const catMap = { '上游客户': 0, '下游客户': 1, '第三方物流': 2, '第三方仓储': 3 };
+      if (catMap[c.customerCategory] !== undefined) catSelect.selectedIndex = catMap[c.customerCategory];
+      // 工商信息 5 字段
+      document.getElementById('cmCompanyName').value = c.name;
+      document.getElementById('cmLegalRep').value = c.legalRep;
+      document.getElementById('cmAddress').value = c.address;
+      document.getElementById('cmCreditCode').value = c.creditCode;
+      document.getElementById('cmExpireAt').value = c.expireAt;
+      document.getElementById('cmEstablishedAt').value = c.establishedAt;
+      // 联系人/负责人/银行 7 字段
+      document.getElementById('cmContactName').value = c.contactName;
+      document.getElementById('cmContactPhone').value = c.contactPhone;
+      document.getElementById('cmContactEmail').value = c.contactEmail;
+      document.getElementById('cmContactAddress').value = c.contactAddress;
+      document.getElementById('cmOwnerName').value = c.ownerName;
+      document.getElementById('cmOwnerPhone').value = c.ownerPhone;
+      document.getElementById('cmBankName').value = c.bankName;
+      document.getElementById('cmBankAccount').value = c.bankAccount;
+      document.getElementById('cmShortName').value = c.shortName;
+      // 显示"天眼查"标签
+      document.getElementById('cmAutoTag1').style.display = 'inline';
+      document.getElementById('cmHint').innerHTML = '<span style="color: var(--color-success);">✓ 全部 17 字段已从"已完成准入"数据带入，请核对</span>';
+    }
+
+    function showInProgressTip(c) {
+      // 弹窗内容
+      const yellowCount = c.riskReport.scans.filter(s => s.status === 'yellow').length;
+      const greenCount = c.riskReport.scans.filter(s => s.status === 'green').length;
+      document.getElementById('inProgressTipTitle').textContent = '✓ 此企业已完成项目准入';
+      document.getElementById('inProgressTipBody').innerHTML = `
+        <div style="font-size: 14px; color: var(--text-primary); line-height: 1.8;">
+          <p style="margin: 0 0 12px;">企业 <b>${c.name}</b>（流程状态：<b style="color: #16A34A;">执行中</b>）已由本平台完成项目准入。</p>
+          <p style="margin: 0 0 8px;">系统已自动带入：</p>
+          <ul style="margin: 0 0 12px; padding-left: 24px; color: var(--text-secondary); font-size: 13px;">
+            <li>全部 17 项企业基础信息（客户类别/工商信息/联系人/负责人/银行账户）</li>
+            <li>企业风险报告（首次录入时数据，<b>${greenCount}</b> 项绿 / <b style="color: #D97706;">${yellowCount}</b> 项黄）</li>
+          </ul>
+          <p style="margin: 0; color: var(--text-tertiary); font-size: 12px;">字段已自动填入下方表单，可继续核对/修改后点击「确认添加」。</p>
+        </div>
+      `;
+      document.getElementById('inProgressTipModal').style.display = 'flex';
+    }
+
+    function closeInProgressTip() {
+      document.getElementById('inProgressTipModal').style.display = 'none';
+    }
+
+    // ===== 模糊匹配 =====
+    document.getElementById('cmCompanyName').addEventListener('input', e => {
+      const kw = e.target.value.trim();
+      const suggest = document.getElementById('companySuggest');
+      const hint = document.getElementById('cmHint');
+      if (!kw) {
+        suggest.classList.remove('show');
+        hint.textContent = '输入 ≥ 1 字符触发模糊匹配';
+        return;
+      }
+      // v1.7.99.31 优先匹配"已完成准入"企业（执行中）
+      const inProgressMatch = mockInProgressCompanies.find(c => c.name.includes(kw) || c.shortName.includes(kw));
+      if (inProgressMatch) {
+        // 隐藏普通下拉项
+        suggest.classList.remove('show');
+        // 自动填全部 17 字段
+        fillCompanyFull(inProgressMatch);
+        // 弹窗提示
+        showInProgressTip(inProgressMatch);
+        return;
+      }
+      // 模糊匹配（按名称包含关键字）
+      const matches = mockCompanies.filter(c => c.name.includes(kw)).slice(0, 5);
+      if (matches.length === 0) {
+        suggest.innerHTML = '<div class="company-suggest-item" style="color: var(--text-tertiary); cursor: default;">无匹配结果</div>';
+        suggest.classList.add('show');
+        hint.textContent = '无匹配企业，请确认输入';
+        return;
+      }
+      suggest.innerHTML = matches.map((c, i) => `
+        <div class="company-suggest-item" data-idx="${i}">
+          <div class="name">${c.name}</div>
+          <div class="meta">${c.legalRep} · ${c.creditCode}</div>
+        </div>
+      `).join('');
+      // 绑定点击
+      suggest.querySelectorAll('.company-suggest-item[data-idx]').forEach(el => {
+        el.addEventListener('click', () => {
+          const idx = el.dataset.idx;
+          fillCompanyInfo(matches[idx]);
+          suggest.classList.remove('show');
+        });
+      });
+      suggest.classList.add('show');
+      hint.textContent = `找到 ${matches.length} 条匹配，点击下拉项自动带入工商信息`;
+    });
+
+    // ===== 字段自动带入 =====
+    function fillCompanyInfo(c) {
+      document.getElementById('cmLegalRep').value = c.legalRep;
+      document.getElementById('cmAddress').value = c.address;
+      document.getElementById('cmCreditCode').value = c.creditCode;
+      document.getElementById('cmExpireAt').value = c.expireAt;
+      document.getElementById('cmEstablishedAt').value = c.establishedAt;
+      // 显示"天眼查"标签
+      document.getElementById('cmAutoTag1').style.display = 'inline';
+      document.getElementById('cmHint').innerHTML = '<span style="color: var(--color-success);">✓ 工商信息已从天眼查带入，请核对</span>';
+    }
+
+    // ===== 确认添加 / 替换 =====
+    let _editingCard = null;  // 编辑模式：保存被编辑的卡片
+    function confirmAddCompany() {
+      // v1.7.99.23：校验 6 必填（联系人姓名/电话/负责人姓名/电话/企业开户行/银行账号）
+      const requiredFields = [
+        { id: 'cmContactName', label: '联系人姓名' },
+        { id: 'cmContactPhone', label: '联系人电话' },
+        { id: 'cmOwnerName', label: '负责人姓名' },
+        { id: 'cmOwnerPhone', label: '负责人电话' },
+        { id: 'cmBankName', label: '企业开户行信息' },
+        { id: 'cmBankAccount', label: '企业银行账号' },
+      ];
+      for (const f of requiredFields) {
+        const v = document.getElementById(f.id).value.trim();
+        if (!v) {
+          alert(`请填写${f.label}`);
+          document.getElementById(f.id).focus();
+          return;
+        }
+      }
+      const name = document.getElementById('cmCompanyName').value.trim();
+      if (!name) {
+        alert('请输入企业名称');
+        return;
+      }
+      const category = document.getElementById('cmCustomerCategory').value;
+      const categoryMap = { '上游客户': '上游企业', '下游客户': '下游企业', '第三方物流': '第三方物流', '第三方仓储': '第三方仓储' };
+      const iconMap = { '上游客户': '🏢', '下游客户': '🏪', '第三方物流': '🚚', '第三方仓储': '🏭' };
+      const credit = document.getElementById('cmCreditCode').value || '—';
+      const icon = iconMap[category] || '🏢';
+      const sub = `${categoryMap[category] || category} · ${credit}`;
+      if (_editingCard) {
+        // 编辑模式：替换原卡片内容
+        _editingCard.dataset.category = category;
+        _editingCard.dataset.credit = credit;
+        _editingCard.querySelector('.tag-card-icon').textContent = icon;
+        _editingCard.querySelector('.tag-card-title').textContent = name;
+        _editingCard.querySelector('.tag-card-sub').textContent = sub;
+        // 更新删除按钮的 onclick 参数（公司名变了）
+        const removeBtn = _editingCard.querySelector('.tag-card-action.remove');
+        if (removeBtn) {
+          removeBtn.setAttribute('onclick', `confirmRemoveCompany(this, '${name.replace(/'/g, "\\'")}')`);
+        }
+        _editingCard = null;
+      } else {
+        // 新增模式：append 新卡片
+        const wrap = document.getElementById('selectedCompanies');
+        const card = document.createElement('div');
+        card.className = 'tag-card';
+        card.dataset.category = category;
+        card.dataset.credit = credit;
+        card.innerHTML = `
+          <div class="tag-card-icon">${icon}</div>
+          <div style="flex: 1; min-width: 0;">
+            <div class="tag-card-title">${name}</div>
+            <div class="tag-card-sub">${sub}</div>
+          </div>
+          <div class="tag-card-actions">
+            <button class="tag-card-action edit" title="编辑" onclick="editCompany(this)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 1 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+            </button>
+            <button class="tag-card-action remove" title="删除" onclick="confirmRemoveCompany(this, '${name.replace(/'/g, "\\'")}')">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6h14z"/></svg>
+            </button>
+          </div>
+        `;
+        wrap.appendChild(card);
+      }
+      closeCompanyModal();
+      // v1.7.99.31：添加企业后更新 btnNext 状态
+      updateBtnNextState();
+    }
+
+    // ===== 编辑企业（打开弹窗预填，编辑模式保存）=====
+    function editCompany(btn) {
+      const card = btn.closest('.tag-card');
+      if (!card) return;
+      _editingCard = card;
+      // 解析数据
+      const name = card.querySelector('.tag-card-title').textContent;
+      const category = card.dataset.category || '上游客户';
+      const credit = card.dataset.credit || '';
+      // 打开弹窗
+      openCompanyModal();
+      // 预填
+      document.getElementById('cmCustomerCategory').value = category;
+      document.getElementById('cmCompanyName').value = name;
+      // 天眼查自动带入逻辑
+      const matched = mockCompanies.find(c => c.name === name);
+      if (matched) {
+        fillCompanyInfo(matched);
+      } else {
+        // 仅手动设置信用代码，其他天眼查字段空
+        document.getElementById('cmCreditCode').value = credit;
+      }
+    }
+
+    // ===== 删除二次确认 =====
+    let _pendingRemoveBtn = null;
+    function confirmRemoveCompany(btn, name) {
+      _pendingRemoveBtn = btn;
+      document.getElementById('confirmCompanyName').textContent = name;
+      const modal = document.getElementById('confirmRemoveModal');
+      modal.style.display = 'flex';
+    }
+    function closeConfirmRemove() {
+      const modal = document.getElementById('confirmRemoveModal');
+      modal.style.display = 'none';
+      _pendingRemoveBtn = null;
+    }
+    document.getElementById('confirmRemoveBtn').addEventListener('click', () => {
+      if (_pendingRemoveBtn) {
+        const card = _pendingRemoveBtn.closest('.tag-card');
+        if (card) card.remove();
+      }
+      closeConfirmRemove();
+      // v1.7.99.31：删除企业后更新 btnNext 状态
+      updateBtnNextState();
+    });
+
+    // 测试钩子：?modal=1 自动打开弹窗 + 触发模糊匹配 + 自动带入
+    if (location.search.includes('modal=1')) {
+      setTimeout(() => {
+        openCompanyModal();
+        // 输入 "军牧" 触发模糊匹配
+        const input = document.getElementById('cmCompanyName');
+        input.value = '军牧';
+        input.dispatchEvent(new Event('input'));
+        // 1s 后点击第一个匹配项触发自动带入
+        setTimeout(() => {
+          const first = document.querySelector('.company-suggest-item[data-idx="0"]');
+          if (first) first.click();
+        }, 500);
+      }, 800);
+    }
+
+    // 点击弹窗背景关闭
+    document.getElementById('companyModal').addEventListener('click', e => {
+      if (e.target.id === 'companyModal') closeCompanyModal();
+    });
+
+    // ESC 关闭
+    document.addEventListener('keydown', e => {
+      if (e.key === 'Escape') {
+        if (document.getElementById('confirmRemoveModal').style.display === 'flex') {
+          closeConfirmRemove();
+        } else if (document.getElementById('companyModal').style.display === 'flex') {
+          closeCompanyModal();
+        }
+      }
+    });
+
+    // ===== Step 切换逻辑 =====
+    let currentStep = 1;
+    function updateStep(n) {
+      n = Math.max(1, Math.min(4, n));
+      currentStep = n;
+      // 切换主内容显隐
+      [1, 2, 3, 4].forEach(i => {
+        const el = document.getElementById(`step${i}Content`);
+        if (el) el.hidden = (i !== n);
+      });
+      // v1.5 切到 step 2 时渲染（首次渲染）
+      if (n === 2) {
+        const c = document.getElementById('step2Container');
+        if (c && !c.dataset.rendered) {
+          renderStep2('all');
+          c.dataset.rendered = '1';
+        }
+      }
+      // 更新 stepper 状态
+      for (let i = 1; i <= 4; i++) {
+        const circle = document.getElementById(`stepCircle${i}`);
+        const label = document.getElementById(`stepLabel${i}`);
+        circle.classList.remove('completed', 'current');
+        if (i < n) {
+          circle.classList.add('completed');
+          circle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === n) {
+          circle.classList.add('current');
+          circle.textContent = i;
+        } else {
+          circle.textContent = i;
+        }
+      }
+      // 更新连接线
+      for (let i = 1; i <= 3; i++) {
+        const line = document.getElementById(`stepLine${i}`);
+        line.classList.toggle('completed', i < n);
+      }
+      // 更新底部按钮文案
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      btnPrev.style.visibility = (n === 1) ? 'hidden' : 'visible';
+      btnNext.textContent = (n === 4) ? '提交' : '下一步';
+      // v1.7.99.31：步骤切换后更新 btnNext 启用状态
+      updateBtnNextState();
+    }
+
+    // ===== v1.7.99.31 底部按钮：isDirty 维护 + 二次确认 + tag-card 联动 =====
+    let isDirty = false;
+    function getCompanyCount() {
+      return document.querySelectorAll('#selectedCompanies .tag-card').length;
+    }
+    function updateBtnNextState() {
+      const btn = document.getElementById('btnNext');
+      if (currentStep === 1) {
+        // step 1：tag-card 数组 ≥ 1 时启用
+        btn.disabled = getCompanyCount() === 0;
+      } else {
+        // step 2-4：始终启用
+        btn.disabled = false;
+      }
+    }
+    function showBackConfirm() {
+      document.getElementById('backConfirmModal').style.display = 'flex';
+    }
+    function closeBackConfirm() {
+      document.getElementById('backConfirmModal').style.display = 'none';
+    }
+    function confirmBack() {
+      closeBackConfirm();
+      isDirty = false;
+      // 跳到准入管理列表页
+      window.location.href = './project-list.html';
+    }
+
+    // 监听表单字段变化 → 维护 isDirty
+    document.querySelectorAll('[id^="step"][id$="Content"] input, [id^="step"][id$="Content"] select, [id^="step"][id$="Content"] textarea').forEach(el => {
+      el.addEventListener('input', () => { isDirty = true; });
+      el.addEventListener('change', () => { isDirty = true; });
+    });
+
+    // btnPrev（"返回"）：v1.7.99.31 检查 isDirty 弹二次确认
+    document.getElementById('btnPrev').addEventListener('click', () => {
+      if (currentStep === 1) {
+        // step 1：检查 isDirty
+        if (isDirty) {
+          showBackConfirm();
+          return;
+        }
+        // 没填内容直接跳列表页
+        window.location.href = './project-list.html';
+        return;
+      }
+      // step 2-4：原本的"上一步"行为
+      updateStep(currentStep - 1);
+      document.querySelector('[style*="overflow-y: auto"]').scrollTop = 0;
+    });
+    // btnNext（"发起尽调"）：v1.7.99.31 默认 disabled，step 1 tag-card ≥ 1 时启用
+    document.getElementById('btnNext').addEventListener('click', () => {
+      if (currentStep === 1) {
+        // v1.7.99.26 校验项目小组成员必填
+        if (selectedMembers.length === 0) {
+          alert('请选择项目小组成员');
+          document.getElementById('memberSearch').focus();
+          return;
+        }
+      }
+      if (currentStep === 4) {
+        alert('提交成功！');
+        return;
+      }
+      updateStep(currentStep + 1);
+      document.querySelector('[style*="overflow-y: auto"]').scrollTop = 0;
+    });
+    // btnSave（"保存草稿"）：保存 + 重置 isDirty
+    document.getElementById('btnSave').addEventListener('click', () => {
+      alert('草稿已保存');
+      isDirty = false;
+    });
+
+    // 初始化 btnNext 状态
+    updateBtnNextState();
+
+    // 关联企业 tabs 切换（v1.5 改为按企业切内容）
+    document.querySelectorAll('#companyTabs .risk-tab').forEach(t => {
+      t.addEventListener('click', () => {
+        document.querySelectorAll('#companyTabs .risk-tab').forEach(x => x.classList.remove('active'));
+        t.classList.add('active');
+        renderStep2(t.dataset.company);
+      });
+    });
+    // URL hook：?company=B 直接切到对应企业 tab（默认 'all'）
+    const companyMatch = location.search.match(/company=([ABC])/);
+    if (companyMatch) {
+      const cKey = companyMatch[1];
+      setTimeout(() => {
+        document.querySelectorAll('#companyTabs .risk-tab').forEach(t => {
+          if (t.dataset.company === cKey) t.click();
+        });
+      }, 100);
+    }
+
+    // URL hook：?step=N 直接进入第 N 步
+    const stepMatch = location.search.match(/step=(\d+)/);
+    if (stepMatch) {
+      const n = parseInt(stepMatch[1], 10);
+      if (n >= 1 && n <= 4) {
+        try { updateStep(n); } catch (e) { console.error('[updateStep error]', e); }
+      }
+    }
+
+    // ===== v1.7.99.25 总投资信息自动计算 =====
+    function updateInvestTotal() {
+      const ids = ['investOwn', 'investBank', 'investForeign', 'investOther'];
+      let total = 0;
+      ids.forEach(function(id) {
+        const v = parseFloat(document.getElementById(id).value) || 0;
+        total += v;
+      });
+      document.getElementById('investTotal').value = total.toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 2 });
+    }
+
+    // ===== v1.7.99.25 项目小组成员多选 + 模糊搜索 =====
+    const mockMembers = [
+      { id: 'U0001', name: '张磊' },
+      { id: 'U0002', name: '李雪' },
+      { id: 'U0003', name: '王芳' },
+      { id: 'U0004', name: '赵刚' },
+      { id: 'U0005', name: '刘洋' },
+      { id: 'U0006', name: '陈明' },
+      { id: 'U0007', name: '周建' },
+      { id: 'U0008', name: '吴敏' },
+      { id: 'U0009', name: '郑华' },
+      { id: 'U0010', name: '孙峰' },
+      { id: 'U0011', name: '钱伟' },
+      { id: 'U0012', name: '马丽' },
+    ];
+    const selectedMembers = [];  // 已选成员列表
+
+    function renderMemberChips() {
+      const wrap = document.getElementById('memberChips');
+      wrap.innerHTML = selectedMembers.map(function(m) {
+        return '<span class="member-chip" data-id="' + m.id + '">' + m.name + '<span class="member-chip-close" onclick="removeMember(\'' + m.id + '\')">×</span></span>';
+      }).join('');
+    }
+
+    function removeMember(id) {
+      const idx = selectedMembers.findIndex(function(m) { return m.id === id; });
+      if (idx >= 0) selectedMembers.splice(idx, 1);
+      renderMemberChips();
+    }
+
+    function addMember(m) {
+      if (selectedMembers.find(function(x) { return x.id === m.id; })) return;
+      selectedMembers.push(m);
+      renderMemberChips();
+      document.getElementById('memberSearch').value = '';
+      document.getElementById('memberSuggest').classList.remove('show');
+    }
+
+    document.getElementById('memberSearch').addEventListener('input', function() {
+      const kw = this.value.trim().toLowerCase();
+      const list = kw
+        ? mockMembers.filter(function(m) { return m.name.includes(kw) || m.id.toLowerCase().includes(kw); })
+        : mockMembers;
+      const html = list.map(function(m) {
+        const picked = selectedMembers.find(function(x) { return x.id === m.id; });
+        return '<div class="member-suggest-item' + (picked ? ' disabled' : '') + '" data-id="' + m.id + '">'
+          + '<span>' + m.name + '</span>'
+          + '<span class="member-id">' + m.id + (picked ? '（已选）' : '') + '</span>'
+          + '</div>';
+      }).join('');
+      const suggest = document.getElementById('memberSuggest');
+      suggest.innerHTML = html || '<div class="member-suggest-item disabled">无匹配成员</div>';
+      suggest.classList.add('show');
+      // 绑定点击
+      suggest.querySelectorAll('.member-suggest-item:not(.disabled)').forEach(function(item) {
+        item.addEventListener('click', function() {
+          const id = this.dataset.id;
+          const m = mockMembers.find(function(x) { return x.id === id; });
+          if (m) addMember(m);
+        });
+      });
+    });
+
+    document.getElementById('memberSearch').addEventListener('focus', function() {
+      this.dispatchEvent(new Event('input'));
+    });
+
+    document.addEventListener('click', function(e) {
+      const suggest = document.getElementById('memberSuggest');
+      if (!suggest.contains(e.target) && e.target.id !== 'memberSearch') {
+        suggest.classList.remove('show');
+      }
+    });
+  </script>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>

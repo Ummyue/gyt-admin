@@ -3,29 +3,85 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>项目详情 - 豫港通 v1.7.99.132</title>
+  <title>客户信息详情 - 豫港通 v1.7.99.130</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/pin-annotation.css">
   <style>
     /* v1.7.99.161 修复：footer-scenario 撑满 footer 宽度，让 <div style="flex:1"> 推右生效 */
     /* v1.7.99.177 修复：footer-scenario 加 gap: 12px，避免按钮挤在一起 */
     .footer-scenario { display: flex; align-items: center; width: 100%; gap: 12px; }
-    /* v1.7.99.249 项目描述 2×2 网格 + 总投资信息 3 列网格（强制布局，不被 .info-item 撑开单列） */
-    .project-desc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px 24px; }
-    .project-desc-grid .info-item { min-width: 0; }
-    .project-desc-grid .readonly-textarea { width: 100%; box-sizing: border-box; word-break: break-word; }
-    .invest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
-    .invest-grid .info-item { min-width: 0; }
+  </style>
+  <style>
+    /* v1.7.99.128：客户详情页重制为 5 tab 结构（对齐 project-detail.html） */
+    /* v1.7.99.128 经验：所有样式直接复用 design-system.css，inline 只放项目级差异 */
+    .page-body { padding: 20px 24px; }
+
+    /* v1.7.99.128 客户信息头：复用 project-detail info-grid 模式（3 列） */
+    .cd-meta-row {
+      display: flex; align-items: center; gap: 32px; flex-wrap: wrap;
+      font-size: 13px; color: var(--text-secondary); margin-top: 12px;
+    }
+    .cd-meta-row .meta-item { display: flex; align-items: center; gap: 6px; }
+    .cd-meta-row .meta-label { color: var(--text-tertiary); }
+    .cd-meta-row .meta-value { color: var(--text-primary); font-weight: 500; }
+    /* v1.7.99.128 仓储企业 tag（深蓝实心） */
+    .tag-warehouse {
+      display: inline-block; padding: 2px 10px; border-radius: 12px;
+      background: #1E40AF; color: #fff; font-size: 12px; font-weight: 500;
+    }
+
+    /* v1.7.99.190 客户股权关系 tab：按 project-detail.html 统一为 1 card 2 section（股东信息 + 对外投资） */
+    .equity-chain { padding: 8px 0; font-size: 13px; line-height: 2; }
+    .equity-chain .equity-path-label { font-weight: 600; color: var(--text-primary); margin: 8px 0 4px 0; }
+    .equity-chain .equity-row { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 4px 0; }
+    .equity-chain .equity-node {
+      display: inline-block; padding: 4px 12px; background: #EFF6FF; color: #1E40AF;
+      border: 1px solid #DBEAFE; border-radius: 16px; font-size: 12px; font-weight: 500;
+    }
+    .equity-chain .equity-ratio { color: #3B82F6; font-size: 12px; font-weight: 600; font-family: var(--font-mono); }
+    .equity-chain .equity-arrow { color: var(--text-tertiary); font-size: 14px; }
+    .equity-summary {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 12px; padding: 10px 16px;
+      background: #FAFBFC; border-radius: 6px;
+    }
+    .equity-summary .tag-root {
+      width: 22px; height: 22px; border-radius: 4px; background: #F59E0B; color: #fff;
+      font-size: 11px; font-weight: 600; display: flex; align-items: center; justify-content: center;
+    }
+    .equity-summary .summary-text { font-size: 13px; color: var(--text-primary); }
+    .equity-summary .summary-ratio { font-size: 13px; color: var(--text-tertiary); margin-left: auto; font-family: var(--font-mono); }
+
+    /* v1.7.99.128 关联项目信息：状态 tag 配色（沿用 v1.7.99.122） */
+    .status-tag {
+      display: inline-block; padding: 2px 8px; border-radius: 3px; font-size: 12px;
+    }
+    .status-tag.approving { background: #DBEAFE; color: #1E40AF; }
+    .status-tag.executing { background: #DCFCE7; color: #166534; }
+
+    /* v1.7.99.128 关联项目 8 列表格（沿用 v1.7.99.122） */
+    .project-table-wrap { overflow-x: auto; }
+    .project-table { width: 100%; min-width: 100%; border-collapse: collapse; font-size: 13px; }
+    .project-table-wrap .table { table-layout: fixed; }
+    .project-table th {
+      background: #F8FAFC; color: var(--text-tertiary); font-weight: 500;
+      padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light, #F1F5F9);
+    }
+    .project-table td { padding: 12px; border-bottom: 1px solid var(--border-light, #F1F5F9); color: var(--text-primary); }
+    .project-table tr:last-child td { border-bottom: none; }
+    .project-table .col-num { font-family: var(--font-mono); color: var(--color-primary, #1E40AF); }
+    .project-table .col-actions a {
+      color: var(--color-primary, #1E40AF); text-decoration: none; cursor: pointer;
+    }
+    .project-table .col-actions a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
-  <!-- 顶部 nav -->
   <div class="topbar">
     <div class="topbar-logo">
       <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
       <span>豫港通</span>
     </div>
-                    <div class="topbar-menu">
+    <div class="topbar-menu">
       <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
       <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
       <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
@@ -51,101 +107,59 @@
   </div>
 
   <div style="display: flex;">
-    <!-- 左侧菜单 -->
     <div class="sidemenu" id="leftSidemenu"></div>
 
-    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><!-- 主区 -->
-    <div style="flex: 1; display: flex; flex-direction: column; min-width: 0;">
-      <!-- 页面标题 -->
-      <div class="page-header">
-        <div class="breadcrumb">
-          <span>准入管理</span>
-          <span class="separator">/</span>
-          <span>项目准入</span>
-          <span class="separator">/</span>
-          <span class="current">项目详情</span>
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">准入管理</a>
+          <span class="sep">/</span>
+          <a href="#">客户管理</a>
+          <span class="sep">/</span>
+          <span class="current">客户信息详情</span>
         </div>
-      </div>
 
-      <!-- 内容区 -->
-      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
-
-        <!-- 项目信息头 + 企业选择 -->
+        <!-- ==================== 客户信息头（v1.7.99.128 对齐 project-detail 客户信息头结构） ==================== -->
         <div class="card" style="margin-bottom: 16px; padding: 20px 24px;">
           <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 24px;">
             <div style="flex: 1;">
-              <!-- v1.7.99.11：状态 tag 动态化（从 URL ?status= 读取，颜色按状态映射） -->
               <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
-                <span class="tag" id="projectStatusTag" style="background: #f1f5f9; color: #64748b;">—</span>
-                <h1 style="font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0;">河南军牧原玉米收购及加工项目</h1>
+                <span class="tag" id="customerStatusTag" style="background: #fef3c7; color: #a16207;">审核中</span>
+                <h1 style="font-size: 20px; font-weight: 600; color: var(--text-primary); margin: 0;">河南国际物流枢纽建设运营有限公司</h1>
               </div>
-              <div class="info-grid info-grid-3" style="row-gap: 8px;">
-                <div class="info-item">
-                  <span class="info-label">创建人</span>
-                  <span class="info-value">张爽</span>
+              <!-- v1.7.99.128 顶部 metadata（4 字段）—— 沿用 v1.7.99.122 区块 0 字段 -->
+              <div class="cd-meta-row">
+                <div class="meta-item">
+                  <span class="meta-label">企业简称：</span>
+                  <span class="meta-value">国际物流</span>
                 </div>
-                <div class="info-item">
-                  <span class="info-label">业务周期</span>
-                  <span class="info-value" style="font-family: var(--font-mono);">2026-07-12 ~ 2028-07-11</span>
+                <div class="meta-item">
+                  <span class="meta-label">法定代表人：</span>
+                  <span class="meta-value">陈晗</span>
                 </div>
-                <div class="info-item">
-                  <span class="info-label">创建时间</span>
-                  <span class="info-value">2026-07-12 12:22:32</span>
+                <div class="meta-item">
+                  <span class="meta-label">统一社会信用代码：</span>
+                  <span class="meta-value">91410000MA9M1W7W2G</span>
                 </div>
-                <div class="info-item">
-                  <span class="info-label">业务类型</span>
-                  <span class="info-value">存货业务</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">货物品类</span>
-                  <span class="info-value">谷物</span>
-                </div>
-                <div class="info-item">
-                  <span class="info-label">预计年销售额</span>
-                  <span class="info-value">¥ 50,000 万元</span>
-                </div>
-              </div>
-              <!-- v1.7.99.26：项目小组成员（只读展示） -->
-              <div class="info-item" style="margin-top: 12px; display: block;">
-                <span class="info-label">项目小组成员</span>
-                <div style="display: flex; flex-wrap: wrap; gap: 6px; margin-top: 4px;">
-                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">张磊</span>
-                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">李雪</span>
-                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">王芳</span>
-                  <span style="display: inline-flex; align-items: center; padding: 3px 8px; background: #EFF6FF; color: #1E40AF; border-radius: 4px; font-size: 12px; font-weight: 500;">赵刚</span>
+                <div class="meta-item">
+                  <span class="tag-warehouse">仓储企业</span>
                 </div>
               </div>
             </div>
-            <div style="display: flex; flex-direction: column; gap: 12px; min-width: 240px;">
-              <div class="form-field" style="margin: 0;">
-                <label class="form-label">选择企业</label>
-                <select class="select">
-                  <option>河南军牧原国际贸易有限公司</option>
-                  <option>郑州铁龙物流有限公司</option>
-                </select>
-              </div>
-              <div class="form-field" style="margin: 0;">
-                <label class="form-label">项目编号</label>
-                <div class="input" style="display: flex; align-items: center; justify-content: space-between; background: var(--bg-page);">
-                  <span style="font-family: var(--font-mono); font-size: 13px;">LX20260712001</span>
-                  <button class="btn-text" style="padding: 2px 6px;">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-                  </button>
-                </div>
-              </div>
-            </div>
+            <!-- v1.7.99.130：删除右侧 240px 块（选择关联企业 select + 客户编号）—— user 明确说"没有这个逻辑，直接删除" -->
           </div>
         </div>
 
-        <!-- 4 步骤条（v1.7.99.132：项目准入步骤条改回 v1.7.99.127 之前——user 反馈"项目准入的步骤条我哪条指令让你改了"——v1.7.99.127 我擅自改了项目准入的步骤名是错误的） -->
+        <!-- ==================== 4 步骤条（v1.7.99.127：与项目详情页步骤条统一） ==================== -->
         <div class="card" style="margin-bottom: 16px; padding: 16px 32px;">
           <div class="steps">
             <div class="step">
               <div class="step-circle completed">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
-              <!-- v1.7.99.132：项目准入步骤 1 改回 "项目信息录入"（v1.7.99.127 错误改成"企业信息录入"） -->
-              <div class="step-label">项目信息录入</div>
+              <div class="step-label">企业信息录入</div>
               <div class="step-time">2026-07-12 12:22</div>
             </div>
             <div class="step-line completed"></div>
@@ -162,152 +176,103 @@
               <div class="step-label">提交审批</div>
               <div class="step-time" style="color: var(--color-primary);">进行中</div>
             </div>
-            <div class="step-line" id="step4Line"></div>
-            <div class="step" id="step4Wrap">
-              <div class="step-circle" id="step4Circle">4</div>
-              <!-- v1.7.99.132：项目准入步骤 4 改回 "准入完成"（v1.7.99.127 错误改成"客户准入与项目关联完成"） -->
-              <div class="step-label">准入完成</div>
-              <div class="step-time" id="step4Time" style="visibility: hidden;">-</div>
+            <div class="step-line" id="cd-step4Line"></div>
+            <div class="step" id="cd-step4Wrap">
+              <div class="step-circle" id="cd-step4Circle">4</div>
+              <div class="step-label">客户准入与项目关联完成</div>
+              <div class="step-time" id="cd-step4Time" style="visibility: hidden;">-</div>
             </div>
           </div>
         </div>
 
-        <!-- v1.7.99.249 准入管理详情页顶部加 5 字段（按 user 2026-08-17 15:49 反馈 + 选"2 个独立 card"方案） -->
-        <!-- card 1：项目描述（v1.7.99.249：4 字段 textarea，2×2 网格） -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="card-header">
-            <div class="card-title">项目描述</div>
-          </div>
-          <div class="card-body">
-            <div class="project-desc-grid">
-              <div class="info-item">
-                <span class="info-label">项目主要内容</span>
-                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">本项目立足于河南军牧原玉米产区优势，通过"基地+农户"模式整合上游 5 万亩优质玉米种植资源，建设集收购、烘干、仓储、加工于一体的综合基地。计划年收购玉米 30 万吨，覆盖饲料加工、淀粉深加工、食品级玉米粉三大下游产业链。</div>
-              </div>
-              <div class="info-item">
-                <span class="info-label">预计收益</span>
-                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">项目运营期内（2026-2028）预计实现年销售额 5 亿元，年净利润 6000-8000 万元，投资回报率 25%-30%，内部收益率 IRR 约 18%。通过锁定下游核心客户（双汇、牧原等头部饲料企业），保障销售渠道稳定。</div>
-              </div>
-              <div class="info-item">
-                <span class="info-label">保障措施</span>
-                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">1. 价格风险：与下游签订长期框架协议锁定销量，玉米价格波动通过套期保值对冲；2. 信用风险：上游农户采用"订单农业+保底收购"模式，下游客户准入严格审查并要求预付款；3. 合规审查：项目通过农业农村部、国资委合规备案，符合国家粮食安全战略。</div>
-              </div>
-              <div class="info-item">
-                <span class="info-label">呈报事项</span>
-                <div class="readonly-textarea" style="padding: 10px 12px; background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; color: var(--text-primary); min-height: 60px; line-height: 1.6;">1. 需呈报集团董事会审批的项目总投资额 5 亿元，其中自有资金 1.2 亿元、银行贷款 3 亿元、利用外资 0.5 亿元、其他资金 0.3 亿元；2. 需呈报集团风控委员会的项目准入及限额核定；3. 需呈报集团资金管理部的资金调度方案及还款计划。</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- card 2：总投资信息（v1.7.99.249：5 字段，3 列网格，总投资额置顶自动计算） -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="card-header">
-            <div class="card-title">总投资信息</div>
-            <div style="font-size: 12px; color: var(--text-tertiary);">单位：万元；总投资额 = 自有资金 + 银行贷款 + 利用外资 + 其他资金（自动计算）</div>
-          </div>
-          <div class="card-body">
-            <div class="invest-grid">
-              <div class="info-item">
-                <span class="info-label">总投资额（万元）</span>
-                <span class="info-value" style="font-family: var(--font-mono); color: var(--color-primary); font-weight: 600; font-size: 16px;">50,000.00</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">自有资金（万元）</span>
-                <span class="info-value" style="font-family: var(--font-mono);">12,000.00</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">银行贷款（万元）</span>
-                <span class="info-value" style="font-family: var(--font-mono);">30,000.00</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">利用外资（万元）</span>
-                <span class="info-value" style="font-family: var(--font-mono);">5,000.00</span>
-              </div>
-              <div class="info-item">
-                <span class="info-label">其他资金（万元）</span>
-                <span class="info-value" style="font-family: var(--font-mono);">3,000.00</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Tab 切换（v1.7.99.106：6 Tab → 5 Tab，删「准入意见」+「审批记录」，新增「审批准入」/ 完成后变「审批准入详情」，附件按 status 动态显示 v1.7.99.74 保留） -->
+        <!-- ==================== 5 Tab 切换（v1.7.99.128：对齐 project-detail 5 tab 结构） ==================== -->
         <div class="tabs" style="margin-bottom: 16px;" id="detailTabs">
           <div class="tab active" data-tab="1">企业信息</div>
           <div class="tab" data-tab="2">风险扫描结果 <span style="color: var(--color-danger); font-weight: 500;">（1项风险）</span></div>
-          <div class="tab" data-tab="3">客户股权关系</div>
+          <div class="tab" data-tab="3">股权关系</div>
           <div class="tab" data-tab="4" id="tab4Label">审批准入</div>
-          <div class="tab" data-tab="5" id="tab5Attachment" hidden>附件</div>
+          <div class="tab" data-tab="5">关联项目</div>
         </div>
 
-        <!-- Tab 1：企业信息 -->
+        <!-- ========== Tab 1：企业信息（v1.7.99.128：合并 v1.7.99.122 工商信息 + 客户负责人 + 联系人 = 18 字段） ========== -->
         <div id="tab1Content">
-        <div class="card">
-          <div class="card-header">
-            <div class="card-title">基本信息</div>
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">基本信息</div>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <table class="info-table">
+                <tbody>
+                  <tr>
+                    <td class="info-label">企业名称</td>
+                    <td class="info-value">河南国际物流枢纽建设运营有限公司</td>
+                    <td class="info-label">企业简称</td>
+                    <td class="info-value">国际物流</td>
+                    <td class="info-label">客户类别</td>
+                    <td class="info-value"><span class="tag tag-blue">仓储企业</span></td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">法定代表人</td>
+                    <td class="info-value">陈晗</td>
+                    <td class="info-label">成立日期</td>
+                    <td class="info-value">2022-09-08</td>
+                    <td class="info-label">营业期限</td>
+                    <td class="info-value">2022-09-08 至 无固定期限</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">注册资本</td>
+                    <td class="info-value">¥ 300,000 万元</td>
+                    <td class="info-label">实缴资本</td>
+                    <td class="info-value">¥ 192,300 万元</td>
+                    <td class="info-label">企业类型</td>
+                    <td class="info-value">其他有限责任公司</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">工商注册号</td>
+                    <td class="info-value">410000000063001</td>
+                    <td class="info-label">组织机构代码</td>
+                    <td class="info-value">MA9M1W7W-2</td>
+                    <td class="info-label">统一社会信用代码</td>
+                    <td class="info-value" style="font-family: var(--font-mono); font-size: 13px;">91XXXXXXMAXXXXXXXX</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">所属地区</td>
+                    <td class="info-value">河南省/郑州市/中牟县</td>
+                    <td class="info-label">所属行业</td>
+                    <td class="info-value" colspan="3">交通运输、仓储和邮政业/多式联运和运输代理业/多式联运/多式联运</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">注册地址</td>
+                    <td class="info-value" colspan="5">河南省郑州市航空港区南海大道276号2号仓储服务中心1-9层101号</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">负责人姓名</td>
+                    <td class="info-value">张爽</td>
+                    <td class="info-label">负责人电话</td>
+                    <td class="info-value">138 0000 XXXX</td>
+                    <td class="info-label">客户负责人邮箱</td>
+                    <td class="info-value">business@example.com</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">联系人姓名</td>
+                    <td class="info-value">饶永生</td>
+                    <td class="info-label">联系人电话</td>
+                    <td class="info-value">156 0000 XXXX</td>
+                    <td class="info-label">联系人邮箱</td>
+                    <td class="info-value">business@example.com</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">经营范围</td>
+                    <td class="info-value" colspan="5" style="font-size: 12px; line-height: 1.7;">许可项目：国际道路货物运输；公共铁路运输；道路货物运输（不含危险货物）；水路普通货物运输；海关监管货物仓储服务（不含危险化学品、危险货物）；道路货物运输（网络货运）；城市配送运输服务（不含危险货物）；保税物流中心经营；在线数据处理与交易处理业务（经营类电子商务）；第二类增值电信业务；烟草制品零售；出版物零售；住宿服务；餐饮服务；酒类经营（依法须经批准的项目，经相关部门批准后方可开展经营活动，具体经营项目以相关部门批准文件或许可证件为准）一般项目：普通货物仓储服务（不含危险化学品等需许可审批的项目）；国内货物运输代理；国际货物运输代理；国际船舶代理；汽车零配件批发；汽车零配件零售；报关业务；报检业务；国际货物运输代理；海上国际货物运输代理；陆路国际货物运输代理；航空国际货物运输代理；无船承运业务；停车场服务；道路货物运输站经营；技术进出口；进出口代理；货物进出口；租赁服务（不含许可类租赁服务）；集装箱租赁服务；运输设备租赁服务；仓储设备租赁服务；信息技术咨询服务；信息系统集成服务；信息技术咨询服务；电动汽车充电站运营；电单车充电站运营；电动自行车充电站运营；通信设备销售；通讯设备修理；普通机械设备租赁服务；光伏发电业务；集中式快速充电站；电动自行车销售；电动自行车配件销售；电动自行车维修；电动自行车销售；汽车装饰用品销售；国内贸易代理；销售代理；贸易经纪；商业综合体管理服务；洗车服务；电子过磅服务；装卸搬运；供应链管理服务；企业管理咨询；食品销售（仅销售预包装食品）（除依法须经批准的项目外，凭营业执照依法自主开展经营活动）</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
           </div>
-          <div class="card-body" style="padding: 0;">
-            <table class="info-table">
-              <tbody>
-                <tr>
-                  <td class="info-label">企业名称</td>
-                  <td class="info-value">河南军牧原国际贸易有限公司</td>
-                  <td class="info-label">客户类别</td>
-                  <td class="info-value">
-                    <span class="tag tag-blue">上游客户</span>
-                  </td>
-                  <td class="info-label">国家</td>
-                  <td class="info-value">中国</td>
-                </tr>
-                <tr>
-                  <td class="info-label">注册地址</td>
-                  <td class="info-value">河南省郑州市金水区花园路 159 号</td>
-                  <td class="info-label">统一社会信用代码</td>
-                  <td class="info-value" style="font-family: var(--font-mono); font-size: 13px;">91XXXXXXMAXXXXXXXX</td>
-                  <td class="info-label">省份</td>
-                  <td class="info-value">河南</td>
-                </tr>
-                <tr>
-                  <td class="info-label">成立日期</td>
-                  <td class="info-value">2009-01-01</td>
-                  <td class="info-label">经营期限（止）</td>
-                  <td class="info-value">2099-01-01</td>
-                  <td class="info-label">法定代表人</td>
-                  <td class="info-value">张志明</td>
-                </tr>
-                <tr>
-                  <td class="info-label">联系人姓名</td>
-                  <td class="info-value">吴军</td>
-                  <td class="info-label">负责人姓名</td>
-                  <td class="info-value">胡志明</td>
-                  <td class="info-label">负责人电话</td>
-                  <td class="info-value">138 0000 XXXX</td>
-                </tr>
-                <tr>
-                  <td class="info-label">联系人电话</td>
-                  <td class="info-value">138 0000 XXXX</td>
-                  <td class="info-label">经营范围</td>
-                  <td class="info-value" colspan="3">粮食收购、销售；农副产品、饲料销售；货物进出口、技术进出口</td>
-                </tr>
-                <tr>
-                  <td class="info-label">联系人邮箱</td>
-                  <td class="info-value">business@example.com</td>
-                  <td class="info-label">注册资本</td>
-                  <td class="info-value">¥ 5,000 万元</td>
-                  <td class="info-label">实缴资本</td>
-                  <td class="info-value">¥ 5,000 万元</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
         </div>
         <!-- ========== /Tab 1 ========== -->
 
-        <!-- ========== Tab 2：风险扫描结果 ========== -->
+        <!-- ========== Tab 2：风险扫描结果（v1.7.99.128：对齐 project-detail Tab 2 风险扫描） ========== -->
         <div id="tab2Content" hidden>
           <div class="card" style="margin-bottom: 16px;">
             <div class="card-header">
@@ -414,7 +379,7 @@
         </div>
         <!-- ========== /Tab 2 ========== -->
 
-        <!-- ========== Tab 3：客户股权关系 ========== -->
+        <!-- ========== Tab 3：客户股权关系（v1.7.99.190：按 project-detail.html 统一为 1 card 2 section：股东信息 + 对外投资） ========== -->
         <div id="tab3Content" hidden>
           <div class="card">
             <div class="card-header">
@@ -435,24 +400,29 @@
                   <tbody>
                     <tr>
                       <td>
-                        <span style="font-weight: 500;">何永兴</span>
+                        <span style="font-weight: 500;">河南中豫国际港务集团有限公司</span>
                         <span class="tag tag-blue" style="margin-left: 8px;">大股东</span>
                         <span class="tag tag-purple" style="margin-left: 4px;">实际控制人</span>
                         <span class="tag tag-yellow" style="margin-left: 4px;">最终受益人</span>
                       </td>
-                      <td><span style="color: var(--color-primary); font-weight: 600;">84%</span></td>
-                      <td>2001-05-18</td>
+                      <td><span style="color: var(--color-primary); font-weight: 600;">—</span></td>
+                      <td>—</td>
                     </tr>
                     <tr>
-                      <td><span style="font-weight: 500;">何世军</span></td>
-                      <td>16%</td>
-                      <td>2001-05-18</td>
+                      <td><span style="font-weight: 500;">河南省临空产业园发展有限公司</span></td>
+                      <td>—</td>
+                      <td>—</td>
+                    </tr>
+                    <tr>
+                      <td><span style="font-weight: 500;">河南郑发产业投资有限公司</span></td>
+                      <td>—</td>
+                      <td>—</td>
                     </tr>
                   </tbody>
                 </table>
               </div>
               <div style="padding: 4px 24px 20px; border-top: 1px solid var(--border-light);">
-                <div class="subsection-title" style="margin-top: 16px;">对外投资（5 家）</div>
+                <div class="subsection-title" style="margin-top: 16px;">对外投资（3 家）</div>
                 <table class="table" style="margin-top: 8px;">
                   <thead>
                     <tr>
@@ -466,11 +436,9 @@
                     </tr>
                   </thead>
                   <tbody>
-                    <tr><td>诸暨致美投资有限公司</td><td>何永兴</td><td class="col-num">100 万人民币</td><td class="col-num">100 万人民币</td><td>100%</td><td>2009-12-02</td><td><span class="tag tag-gray">注销</span></td></tr>
-                    <tr><td>诸暨致美暖通设备有限公司</td><td>何永兴</td><td class="col-num">80 万人民币</td><td class="col-num">80 万人民币</td><td>100%</td><td>2009-12-02</td><td><span class="tag tag-green">存续</span></td></tr>
-                    <tr><td>浙江致美管业有限公司</td><td>何永兴</td><td class="col-num">500 万人民币</td><td class="col-num">500 万人民币</td><td>100%</td><td>2009-12-03</td><td><span class="tag tag-gray">注销</span></td></tr>
-                    <tr><td>浙江橙晨机电有限公司</td><td>何仕君</td><td class="col-num">2,000 万人民币</td><td class="col-num">—</td><td>90%</td><td>2004-07-15</td><td><span class="tag tag-green">存续</span></td></tr>
-                    <tr><td>恒森管业科技（浙江）有限公司</td><td>何泽森</td><td class="col-num">10,000 万人民币</td><td class="col-num">1,800 万人民币</td><td>60%</td><td>2022-12-30</td><td><span class="tag tag-green">存续</span></td></tr>
+                    <tr><td>河南国际陆港多式联运有限公司</td><td>陈晗</td><td class="col-num">50,000 万人民币</td><td class="col-num">20,000 万人民币</td><td>40%</td><td>2023-05-12</td><td><span class="tag tag-green">存续</span></td></tr>
+                    <tr><td>郑州国际物流园区开发有限公司</td><td>陈晗</td><td class="col-num">30,000 万人民币</td><td class="col-num">9,000 万人民币</td><td>30%</td><td>2022-11-08</td><td><span class="tag tag-green">存续</span></td></tr>
+                    <tr><td>河南中欧班列集结中心有限公司</td><td>张磊</td><td class="col-num">100,000 万人民币</td><td class="col-num">15,000 万人民币</td><td>15%</td><td>2024-02-20</td><td><span class="tag tag-green">存续</span></td></tr>
                   </tbody>
                 </table>
               </div>
@@ -479,7 +447,7 @@
         </div>
         <!-- ========== /Tab 3 ========== -->
 
-        <!-- ========== Tab 4：审批准入（v1.7.99.106 新增：合并原 Tab 4 准入意见 + Tab 5 审批记录，3 角色场景：发起前/可撤回/审批人处理，完成后变「审批准入详情」） ========== -->
+        <!-- ========== Tab 4：审批准入（v1.7.99.128：从 project-detail 复制，5 节点 time-line + 关键指标 + 实时活动 + 催办，3 角色场景：发起前/可撤回/审批人处理） ========== -->
         <div id="tab4Content" hidden>
           <!-- 顶部黄底提示（按状态显示/隐藏） -->
           <div id="approvalNoticeBar" class="approval-status" style="margin-bottom: 16px; display: none;">
@@ -490,10 +458,10 @@
                 <span class="tag tag-yellow">待审批</span>
                 <span class="tag tag-blue">外部 OA 系统</span>
               </div>
-              <div class="approval-status-desc">河南华信物产有限公司 · 准入申请 <strong>ADM-2026-0451</strong> 已提交至外部审批系统，当前在「<strong id="approvalCurrentNode">一级审批</strong>」阶段。</div>
+              <div class="approval-status-desc">河南国际物流枢纽建设运营有限公司 · 准入申请 <strong>ADM-2026-0308</strong> 已提交至外部审批系统，当前在「<strong id="approvalCurrentNode">一级审批</strong>」阶段。</div>
               <div class="approval-status-meta">
-                <div><span style="color: var(--text-tertiary);">申请编号</span> ADM-2026-0451</div>
-                <div><span style="color: var(--text-tertiary);">提交时间</span> 2026-07-19 16:45</div>
+                <div><span style="color: var(--text-tertiary);">申请编号</span> ADM-2026-0308</div>
+                <div><span style="color: var(--text-tertiary);">提交时间</span> 2026-07-15 09:30</div>
                               </div>
             </div>
             <button class="btn btn-danger-outline" id="withdrawBtn" style="display: none;">
@@ -503,7 +471,7 @@
           </div>
 
           <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;">
-            <!-- 左侧：审批进度 time-line（v1.7.99.106 沿用 v1.7.99.13 5 节点结构） -->
+            <!-- 左侧：审批进度 time-line（5 节点结构） -->
             <div class="card">
               <div class="card-header">
                 <div class="card-title">审批进度 <span style="color: var(--text-tertiary); font-weight: 400; font-size: 13px;">（共 5 个节点，当前进行中 ①）</span></div>
@@ -521,43 +489,39 @@
                       </div>
                       <div class="at-sub">张爽（业务部负责人）提交准入申请</div>
                       <div class="at-meta">
-                        <span>🕐 2026-07-19 16:45:23</span>
+                        <span>🕐 2026-07-15 09:30:23</span>
                         <span>📎 附件 4 份</span>
                       </div>
                     </div>
                   </div>
                   <!-- 节点 2（一级审批） -->
-                  <div class="at-item completed">
-                    <div class="at-circle">✓</div>
-                    <div class="at-content">
-                      <div class="at-title">
-                        <span class="at-name">② 一级审批</span>
-                        <span class="at-status ok">已通过</span>
-                      </div>
-                      <div class="at-sub">审批人：张爽（角色名称）</div>
-                      <div class="at-opinion">审批意见：同意，背景调查材料齐全，企业基本面良好，符合准入条件。</div>
-                      <div class="at-meta">
-                        <span>🕐 2026-07-19 18:22:10</span>
-                        <span>⏱ 历时 1 小时 37 分</span>
-                      </div>
-                    </div>
-                  </div>
-                  <!-- 节点 3（二级审批·进行中） -->
                   <div class="at-item current">
                     <div class="at-circle">⏳</div>
                     <div class="at-content">
                       <div class="at-title">
-                        <span class="at-name">③ 二级审批</span>
+                        <span class="at-name">② 一级审批</span>
                         <span class="at-status running">进行中</span>
                       </div>
-                      <div class="at-sub">审批人：宋英帆（审批部经理）</div>
+                      <div class="at-sub">审批人：张爽（业务部负责人）</div>
                       <div class="at-opinion">等待审批人处理，已等待 3 小时 30 分钟</div>
                       <div class="at-meta">
-                        <span>🕐 2026-07-19 22:00:10</span>
+                        <span>🕐 2026-07-15 13:00:10</span>
                         <span>⏱ 等待中</span>
                       </div>
-                      <!-- v1.7.99.177 修复：移除 v1.7.99.108 内嵌的"审批通过+驳回审批"（底部 footer 已固定显示，重复了） -->
-                      <!-- （v1.7.99.160 在底部固定底栏同步显示审批通过/驳回审批——user 反馈"不应该全部都加"） -->
+                      <!-- v1.7.99.177 修复：移除 v1.7.99.128 内嵌的"审批通过+驳回审批"（底部 footer 已固定显示，重复了） -->
+                      <!-- （v1.7.99.160 在底部固定底栏同步显示——user 反馈"不应该全部都加"） -->
+                    </div>
+                  </div>
+                  <!-- 节点 3（二级审批·待开始） -->
+                  <div class="at-item pending">
+                    <div class="at-circle">③</div>
+                    <div class="at-content">
+                      <div class="at-title">
+                        <span class="at-name">③ 二级审批</span>
+                        <span class="at-status pending">待开始</span>
+                      </div>
+                      <div class="at-sub">审批人：宋英帆（审批部经理）</div>
+                      <div class="at-meta">需在一级审批通过后自动触发</div>
                     </div>
                   </div>
                   <!-- 节点 4（三级审批·待开始） -->
@@ -598,15 +562,15 @@
                   <div class="kpi-list">
                     <div class="kpi-row">
                       <span class="kpi-label">当前节点</span>
-                      <span class="kpi-value blue">二级审批</span>
+                      <span class="kpi-value blue">一级审批</span>
                     </div>
                     <div class="kpi-row">
                       <span class="kpi-label">剩余节点</span>
-                      <span class="kpi-value">3 个（审核 / 复核 / 完成）</span>
+                      <span class="kpi-value">4 个（一级 / 二级 / 三级 / 完成）</span>
                     </div>
                     <div class="kpi-row">
                       <span class="kpi-label">已耗时</span>
-                      <span class="kpi-value">1 天 7 小时</span>
+                      <span class="kpi-value">1 天 2 小时</span>
                     </div>
                   </div>
                 </div>
@@ -622,49 +586,49 @@
                     <div class="activity-item">
                       <div class="activity-icon">👁</div>
                       <div class="activity-body">
-                        <div class="activity-text">宋英帆 查看了审批单</div>
+                        <div class="activity-text">张爽 查看了审批单</div>
                         <div class="activity-time">10 分钟前</div>
                       </div>
                     </div>
                     <div class="activity-item">
                       <div class="activity-icon">✓</div>
                       <div class="activity-body">
-                        <div class="activity-text">王浩 通过了「银行审查节点 1/3」</div>
+                        <div class="activity-text">李娜 通过了「客户准入与项目关联完成」</div>
                         <div class="activity-time">2 小时前 · 09:10</div>
                       </div>
                     </div>
                     <div class="activity-item">
                       <div class="activity-icon">🔔</div>
                       <div class="activity-body">
-                        <div class="activity-text">系统向会签节点发起催办</div>
+                        <div class="activity-text">系统向一级审批节点发起催办</div>
                         <div class="activity-time">3 小时前 · 08:45</div>
                       </div>
                     </div>
                     <div class="activity-item">
                       <div class="activity-icon">⏰</div>
                       <div class="activity-body">
-                        <div class="activity-text">邱占伍 查看了审批单</div>
+                        <div class="activity-text">王浩 查看了准入申请</div>
                         <div class="activity-time">5 小时前 · 06:30</div>
                       </div>
                     </div>
                     <div class="activity-item">
                       <div class="activity-icon">📨</div>
                       <div class="activity-body">
-                        <div class="activity-text">张爽 通过了「一级审批」</div>
-                        <div class="activity-time">昨天 · 18:22</div>
+                        <div class="activity-text">张爽 提交了准入申请</div>
+                        <div class="activity-time">昨天 · 09:30</div>
                       </div>
                     </div>
                   </div>
                 </div>
               </div>
 
-              <!-- 催办卡（v1.7.99.106 沿用 v1.7.99.13 黄底） -->
+              <!-- 催办卡（v1.7.99.128：沿用 project-detail 黄底） -->
               <div class="card" style="background: #FEF3C7; border: 1px solid #FCD34D;">
                 <div class="card-body" style="padding: 16px;">
                   <div style="display: flex; align-items: flex-start; gap: 12px;">
                     <div style="font-size: 18px;">⚠️</div>
                     <div style="flex: 1;">
-                      <div style="font-size: 13px; color: #92400E; font-weight: 500; margin-bottom: 4px;">宋英帆 已 2 小时未处理</div>
+                      <div style="font-size: 13px; color: #92400E; font-weight: 500; margin-bottom: 4px;">张爽 已 3 小时未处理</div>
                       <div style="font-size: 12px; color: #A16207; margin-bottom: 12px;">建议催办 @ 该审批人 加快处理</div>
                       <button class="btn btn-warning" style="background: #F59E0B; color: #fff; border: 0; padding: 4px 12px; font-size: 12px; border-radius: 4px;">立即催办</button>
                     </div>
@@ -676,40 +640,32 @@
         </div>
         <!-- ========== /Tab 4 ========== -->
 
-        <!-- ========== Tab 5：附件（v1.7.99.74 新增：执行中/已完结状态下展示客户准入报告附件，v1.7.99.106 沿用保留） ========== -->
+        <!-- ========== Tab 5：关联项目（v1.7.99.128：沿用 v1.7.99.122 区块 8 关联项目信息） ========== -->
         <div id="tab5Content" hidden>
           <div class="card">
             <div class="card-header">
-              <div class="card-title">客户准入附件</div>
-              <div style="font-size: 12px; color: var(--text-tertiary);">准入完成后归档的客户准入报告、承诺函、股权穿透图等附件</div>
+              <div class="card-title">关联项目信息</div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">客户作为参与方关联的所有项目</div>
             </div>
             <div class="card-body" style="padding: 0;">
-              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-light);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">客户准入尽调报告.pdf</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">2.4 MB · 上传人 张爽 · 2026-03-08 14:30</div>
-                </div>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
-              </div>
-              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-light);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">企业风控合规承诺函.pdf</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">856 KB · 上传人 张爽 · 2026-03-08 14:32</div>
-                </div>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
-              </div>
-              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">关联企业股权穿透图.pdf</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">1.2 MB · 上传人 李建国 · 2026-03-09 10:15</div>
-                </div>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
+              <div class="project-table-wrap">
+                <table class="project-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 13%;">立项申请编号</th>
+                      <th style="width: 22%;">项目名称</th>
+                      <th style="width: 18%;">上游企业</th>
+                      <th style="width: 18%;">下游企业</th>
+                      <th style="width: 8%;">业务类型</th>
+                      <th style="width: 8%;">货物品类</th>
+                      <th style="width: 7%;">状态</th>
+                      <th class="col-actions" style="width: 6%; text-align: right;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="relatedProjectTbody">
+                    <!-- v1.7.99.128 JS 渲染：2 行 mock（演示"关联多个项目"） -->
+                  </tbody>
+                </table>
               </div>
             </div>
           </div>
@@ -718,35 +674,28 @@
 
       </div>
 
-      <!-- 底部固定操作栏（v1.7.99.108 修复：按 user 3 张参考图实际，仅保留必要的底部按钮） -->
+      <!-- 底部固定操作栏（v1.7.99.130：删除 4 场景的"复制为新客户"按钮——user 明确说"没有这个逻辑，直接删除"） -->
       <div class="footer-actions" id="footerActions">
-        <!-- 场景 A：申请人发起前（status=审批中 + 步骤3未发起）→ 提交审批（按 user 参考图 3 实际） -->
+        <!-- 场景 A：申请人发起前（status=审核中 + 步骤3未发起）→ 提交审批 -->
         <div class="footer-scenario" data-scenario="pending-submit" style="display: none;">
           <button class="btn btn-secondary">导出详情</button>
           <div style="flex: 1;"></div>
-          <button class="btn btn-secondary">复制为新项目</button>
           <button class="btn btn-secondary">返回</button>
           <button class="btn btn-primary">提交审批</button>
         </div>
-        <!-- 场景 B：申请人发起后审批中（status=审批中 + 步骤3已发起 + 申请人视角）→ 顶部黄底撤回申请 + 底部仅复制为新项目（按 user 参考图 1 实际） -->
+        <!-- 场景 B：申请人发起后审批中（status=审核中 + 步骤3已发起 + 申请人视角）→ 顶部黄底撤回申请，底部无按钮 -->
         <div class="footer-scenario" data-scenario="approving-applicant" style="display: none;">
           <div style="flex: 1;"></div>
-          <button class="btn btn-secondary">复制为新项目</button>
         </div>
-        <!-- 场景 C：审批人处理中（status=审批中 + 步骤3进行中 + 审批人视角）→ 审批通过+驳回审批 内嵌到 time-line 二级审批节点下方（按 user 参考图 2 实际）+ 底部固定底栏同步显示审批通过/驳回审批（v1.7.99.160 按 user 反馈：让用户在非"审批准入" tab 下也能完成审批操作） -->
-        <!-- v1.7.99.189：底栏最左加"导出客户准入报告"按钮（user 反馈：审批中 + 执行中 2 个状态统一加） -->
+        <!-- 场景 C：审批人处理中（status=审核中 + 步骤3进行中 + 审批人视角）→ 审批通过+驳回审批 内嵌到 time-line 一级审批节点下方，底部固定底栏同步显示审批通过/驳回审批（v1.7.99.160 按 user 反馈：让用户在非"审批准入" tab 下也能完成审批操作） -->
         <div class="footer-scenario" data-scenario="approving-approver" style="display: none;">
-          <button class="btn btn-secondary">导出客户准入报告</button>
           <div style="flex: 1;"></div>
-          <button class="btn btn-secondary">复制为新项目</button>
           <button class="btn btn-primary">审批通过</button>
           <button class="btn btn-danger-outline">驳回审批</button>
         </div>
-        <!-- 场景 D：完成审批后（status=执行中 + 已完结）→ 复制为新项目 + 返回（只读）+ 导出客户准入报告（v1.7.99.189 新增左下方） -->
+        <!-- 场景 D：完成审批后（status=已完结）→ 返回（只读） -->
         <div class="footer-scenario" data-scenario="done" style="display: none;">
-          <button class="btn btn-secondary">导出客户准入报告</button>
           <div style="flex: 1;"></div>
-          <button class="btn btn-secondary">复制为新项目</button>
           <button class="btn btn-secondary">返回</button>
         </div>
       </div>
@@ -754,66 +703,72 @@
   </div>
 
   <script>
-    // ===== v1.7.99.106 Tab 切换（5 tab：1企业信息/2风险扫描/3客户股权关系/4审批准入/5附件） =====
+    // ===== v1.7.99.128 inline Utils fallback（v1.7.99.80 模式 + v1.7.99.123 关键经验）=====
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} },
+      nav: function(url) { window.location.href = url; }
+    };
+
+    // ===== v1.7.99.128 Tab 切换（5 tab：1企业信息/2风险扫描/3股权关系/4审批准入/5关联项目） =====
     function switchTab(n) {
       n = Math.max(1, Math.min(5, n));
-      [1, 2, 3, 4, 5].forEach(i => {
-        const el = document.getElementById(`tab${i}Content`);
+      [1, 2, 3, 4, 5].forEach(function(i) {
+        var el = document.getElementById('tab' + i + 'Content');
         if (el) el.hidden = (i !== n);
       });
       // tab 标签 active
-      document.querySelectorAll('#detailTabs .tab').forEach((t) => {
+      document.querySelectorAll('#detailTabs .tab').forEach(function(t) {
         t.classList.toggle('active', parseInt(t.dataset.tab, 10) === n);
       });
     }
     // 点击 tab 标签
-    document.querySelectorAll('#detailTabs .tab').forEach(t => {
-      t.addEventListener('click', () => {
-        const n = parseInt(t.dataset.tab, 10);
+    document.querySelectorAll('#detailTabs .tab').forEach(function(t) {
+      t.addEventListener('click', function() {
+        var n = parseInt(t.dataset.tab, 10);
         switchTab(n);
       });
     });
     // URL hook：?tab=N 直接进入指定 tab
-    const tabMatch = location.search.match(/tab=(\d+)/);
+    var tabMatch = location.search.match(/tab=(\d+)/);
     if (tabMatch) {
-      const n = parseInt(tabMatch[1], 10);
+      var n = parseInt(tabMatch[1], 10);
       if (n >= 1 && n <= 5) switchTab(n);
     }
 
-    // v1.7.99.106：状态/角色驱动（从 URL ?status= 和 ?role= 读取，决定按钮场景 + Tab 4 名称 + 顶部黄底）
+    // ===== v1.7.99.128：状态/角色驱动（从 URL ?status= 和 ?role= 读取，决定按钮场景 + Tab 4 名称 + 顶部黄底） =====
     (function() {
-      // 1. 状态 tag 颜色映射
+      // 1. 状态 tag 颜色映射（v1.7.99.128：客户状态机 6 状态：待提交/审核中/执行中/已完结/驳回/已作废）
       var statusMap = {
         '待提交': { bg: '#f1f5f9', color: '#64748b' },
         '审核中': { bg: '#fef3c7', color: '#a16207' },
-        '审批中': { bg: '#fef3c7', color: '#a16207' },
         '执行中': { bg: '#dbeafe', color: '#1e40af' },
         '已完结': { bg: '#dcfce7', color: '#15803d' },
-        '驳回':   { bg: '#fee2e2', color: '#b91c1c' }
+        '驳回':   { bg: '#fee2e2', color: '#b91c1c' },
+        '已作废': { bg: '#f3f4f6', color: '#6b7280' }
       };
       var statusMatch = location.search.match(/[?&]status=([^&]+)/);
       var roleMatch = location.search.match(/[?&]role=([^&]+)/);
-      var status = statusMatch ? decodeURIComponent(statusMatch[1]) : '审批中';
+      var status = statusMatch ? decodeURIComponent(statusMatch[1]) : '审核中';
       var role = roleMatch ? decodeURIComponent(roleMatch[1]) : 'approver';
-      var tag = document.getElementById('projectStatusTag');
+      var tag = document.getElementById('customerStatusTag');
       if (tag) {
         tag.textContent = status;
-        var style = statusMap[status] || statusMap['审批中'];
+        var style = statusMap[status] || statusMap['审核中'];
         tag.style.background = style.bg;
         tag.style.color = style.color;
       }
 
-      // 2. 决定 4 场景（v1.7.99.106 决策锁定）：
-      //    pending-submit：审批中 + 步骤3未发起 + 申请人视角 → 客户股权关系 active + 提交审批
-      //    approving-applicant：审批中 + 步骤3已发起 + 申请人视角 → 审批准入 active + 顶部撤回申请 + 底部只读
-      //    approving-approver：审批中 + 步骤3进行中 + 审批人视角 → 审批准入 active + 审批通过+驳回审批
-      //    done：已完结 → 审批准入详情 active + 复制为新项目+返回（只读）
+      // 2. 决定 4 场景（v1.7.99.128 决策锁定）：
+      //    pending-submit：审核中 + 步骤3未发起 + 申请人视角 → 股权关系 active + 提交审批
+      //    approving-applicant：审核中 + 步骤3已发起 + 申请人视角 → 审批准入 active + 顶部撤回申请 + 底部只读
+      //    approving-approver：审核中 + 步骤3进行中 + 审批人视角 → 审批准入 active + 审批通过+驳回审批
+      //    done：已完结 → 审批准入详情 active + 复制为新客户+返回（只读）
       var scenario = 'approving-approver'; // 默认
-      if (status === '审批中' && role === 'applicant-submit') {
+      if (status === '审核中' && role === 'applicant-submit') {
         scenario = 'pending-submit';
-      } else if (status === '审批中' && role === 'applicant') {
+      } else if (status === '审核中' && role === 'applicant') {
         scenario = 'approving-applicant';
-      } else if (status === '审批中' && role === 'approver') {
+      } else if (status === '审核中' && role === 'approver') {
         scenario = 'approving-approver';
       } else if (status === '已完结' || status === '执行中') {
         scenario = 'done';
@@ -825,13 +780,12 @@
       var activeScenario = document.querySelector('.footer-scenario[data-scenario="' + scenario + '"]');
       if (activeScenario) activeScenario.style.display = 'flex';
 
-      // v1.7.99.108 修复：time-line 内嵌审批操作按钮（审批通过+驳回审批）按 scenario 动态显示
-      // （按 user 参考图 2 实际：审批通过+驳回审批 内嵌到当前审批节点下方，不是底部按钮栏）
+      // v1.7.99.128：time-line 内嵌审批操作按钮（审批通过+驳回审批）按 scenario 动态显示
       document.querySelectorAll('.at-actions[data-show-scenario]').forEach(function(el) {
         el.style.display = (el.getAttribute('data-show-scenario') === scenario) ? 'flex' : 'none';
       });
 
-      // 3. Tab 4 名称动态：完成后变"审批准入详情"（v1.7.99.106 决策）
+      // 3. Tab 4 名称动态：完成后变"审批准入详情"
       var tab4Label = document.getElementById('tab4Label');
       if (tab4Label) {
         if (scenario === 'done') {
@@ -861,7 +815,7 @@
       }
 
       // 6. 默认 active tab（按场景）：
-      //    pending-submit → tab 3 客户股权关系
+      //    pending-submit → tab 3 股权关系
       //    approving-applicant/approver → tab 4 审批准入
       //    done → tab 4 审批准入详情
       //    默认（无 URL）→ tab 4 审批准入
@@ -870,17 +824,11 @@
       // 优先级：URL ?tab=N > 场景默认
       if (!tabMatch) switchTab(defaultTab);
 
-      // 7. v1.7.99.74：执行中/已完结状态下，tab 5「附件」显示
-      var tab5Attachment = document.getElementById('tab5Attachment');
-      if (tab5Attachment && (status === '执行中' || status === '已完结')) {
-        tab5Attachment.hidden = false;
-      }
-
-      // 8. v1.7.99.74：执行中/已完结状态下，4 步骤第 4 步变 completed
+      // 7. v1.7.99.128：执行中/已完结状态下，4 步骤第 4 步变 completed
       if (status === '执行中' || status === '已完结') {
-        var step4Circle = document.getElementById('step4Circle');
-        var step4Line = document.getElementById('step4Line');
-        var step4Time = document.getElementById('step4Time');
+        var step4Circle = document.getElementById('cd-step4Circle');
+        var step4Line = document.getElementById('cd-step4Line');
+        var step4Time = document.getElementById('cd-step4Time');
         if (step4Circle) {
           step4Circle.classList.add('completed');
           step4Circle.classList.remove('current');
@@ -896,11 +844,57 @@
         }
       }
     })();
+
+    // ===== v1.7.99.128 关联项目信息 mock（沿用 v1.7.99.122：演示"当前客户关联多个项目"——客户作为仓储方参与 2 个项目） =====
+    var RELATED_PROJECT_MOCK = [
+      {
+        no: 'LX20260804001',
+        name: '河南国际物流枢纽多式联运供应链项目',
+        up: '河南中豫港通供应链管理有限公司',
+        down: '国能濮阳热电有限公司',
+        type: '预付业务',
+        category: '谷物',
+        status: '审批中',
+        statusClass: 'approving'
+      },
+      {
+        no: 'LX20260804002',
+        name: '河南国际陆港多式联运项目',
+        up: '河南中豫港通供应链管理有限公司',
+        down: '华能陕西渭南热电有限公司',
+        type: '账期业务',
+        category: '淀粉',
+        status: '执行中',
+        statusClass: 'executing'
+      }
+    ];
+    (function() {
+      var tbody = document.getElementById('relatedProjectTbody');
+      if (!tbody) return;
+      tbody.innerHTML = RELATED_PROJECT_MOCK.map(function(r) {
+        return '<tr>' +
+          '<td class="col-num">' + r.no + '</td>' +
+          '<td>' + r.name + '</td>' +
+          '<td>' + r.up + '</td>' +
+          '<td>' + r.down + '</td>' +
+          '<td>' + r.type + '</td>' +
+          '<td>' + r.category + '</td>' +
+          '<td><span class="status-tag ' + r.statusClass + '">' + r.status + '</span></td>' +
+          '<td class="col-actions" style="text-align: right;"><a onclick="Utils.toast(\'查看项目详情：' + r.no + '\', \'info\')">详情</a></td>' +
+          '</tr>';
+      }).join('');
+    })();
+
+    // ===== v1.7.99.128 撤回申请按钮 + 提交审批按钮 + 审批通过/驳回审批按钮（沿用 project-detail 模式） =====
+    document.querySelectorAll('.footer-scenario button, .at-actions button').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var text = btn.textContent.trim();
+        Utils.toast(text + '（演示）', 'info');
+      });
+    });
   </script>
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
-  </div>
-  <!-- /main-content -->
 <script src="../assets/js/pin-annotation.js"></script>
 </body>
 </html>

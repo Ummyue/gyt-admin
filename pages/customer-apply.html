@@ -1,0 +1,1276 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增客户申请 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* ===== 信息 banner ===== */
+    .info-banner {
+      background: var(--color-info-light);
+      color: var(--text-secondary);
+      padding: 10px 16px;
+      border-radius: var(--radius-default);
+      font-size: 13px;
+      margin-bottom: 16px;
+      line-height: 1.6;
+    }
+    .info-banner strong { color: var(--color-info); }
+
+    /* ===== Step 1 自动带入字段 ===== */
+    .auto-fill { position: relative; }
+    .auto-fill .input[disabled] {
+      background: var(--bg-page);
+      color: var(--text-tertiary);
+      cursor: not-allowed;
+    }
+
+    /* ===== 关联项目展开 ===== */
+    .relation-toggle {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 13px;
+      color: var(--color-primary);
+      cursor: pointer;
+      padding: 10px 0;
+      user-select: none;
+    }
+    .relation-toggle svg {
+      transition: transform 0.2s;
+    }
+    .relation-toggle.collapsed svg { transform: rotate(-90deg); }
+    .relation-panel {
+      margin-top: 12px;
+      padding-top: 16px;
+      border-top: 1px dashed var(--border-default);
+    }
+    .relation-panel.collapsed { display: none; }
+    .relation-search {
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: 12px;
+    }
+    .relation-search input {
+      width: 320px;
+      padding: 7px 12px;
+      font-size: 13px;
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-default);
+      outline: none;
+    }
+    .relation-search input:focus { border-color: var(--color-primary); }
+    .relation-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 13px;
+    }
+    .relation-table th {
+      background: var(--bg-page);
+      color: var(--text-secondary);
+      font-weight: 500;
+      text-align: left;
+      padding: 10px 12px;
+      border-bottom: 1px solid var(--border-default);
+    }
+    .relation-table td {
+      padding: 12px;
+      border-bottom: 1px solid var(--border-light);
+      color: var(--text-primary);
+    }
+    .relation-table tr:hover td { background: var(--color-primary-lighter); }
+    .relation-table .project-no {
+      font-family: var(--font-mono);
+      color: var(--color-primary);
+    }
+    .required { color: var(--color-danger); }
+
+    /* ===== Step 2 风险报告样式（与 project-apply 一致） ===== */
+    .form-value {
+      font-size: 14px;
+      color: var(--text-primary);
+      line-height: 1.6;
+      min-height: 20px;
+    }
+    .form-value-block {
+      font-size: 13px;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      padding: 14px 16px;
+      background: var(--bg-page);
+      border-radius: var(--radius-default);
+      border: 1px solid var(--border-light);
+    }
+
+    /* ===== Step 3 提交审批 ===== */
+    .approval-status-card {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 20px 24px;
+      background: linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 100%);
+      border: 1px solid #BFDBFE;
+      border-radius: var(--radius-default);
+      margin-bottom: 16px;
+    }
+    .approval-status-icon {
+      width: 56px; height: 56px;
+      background: #fff;
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 2px 8px rgba(30,64,175,0.1);
+      flex-shrink: 0;
+      font-size: 28px;
+    }
+    .approval-status-body { flex: 1; min-width: 0; }
+    .approval-status-title {
+      display: flex; align-items: center; gap: 10px;
+      font-size: 18px; font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .approval-status-chips { display: flex; gap: 8px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; font-size: 12px;
+      border-radius: 4px; font-weight: 500;
+    }
+    .chip-orange { background: #FED7AA; color: #9A3412; }
+    .chip-blue { background: #DBEAFE; color: #1E40AF; }
+    .chip-green { background: #DCFCE7; color: #166534; }
+    .chip-red { background: #FEE2E2; color: #991B1B; }
+    .chip-gray { background: #F1F5F9; color: #475569; }
+    .approval-status-desc {
+      font-size: 13px; color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .approval-status-desc .link {
+      color: var(--color-primary); cursor: pointer; font-weight: 500;
+    }
+    .approval-status-actions { display: flex; gap: 8px; flex-shrink: 0; }
+    .btn-cancel-approval {
+      padding: 7px 16px;
+      background: #fff;
+      border: 1px solid #FCA5A5;
+      color: #B91C1C;
+      border-radius: var(--radius-default);
+      font-size: 13px;
+      cursor: pointer;
+    }
+    .btn-cancel-approval:hover { background: #FEF2F2; }
+
+    .approval-summary {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 16px;
+      padding: 16px 24px;
+      background: var(--bg-page);
+      border-radius: var(--radius-default);
+      margin-bottom: 16px;
+    }
+    .approval-summary-item .label {
+      font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px;
+    }
+    .approval-summary-item .value {
+      font-size: 14px; color: var(--text-primary); font-weight: 500;
+    }
+
+    .approval-grid {
+      display: grid;
+      grid-template-columns: 1fr 360px;
+      gap: 16px;
+    }
+    @media (max-width: 1100px) {
+      .approval-grid { grid-template-columns: 1fr; }
+    }
+    .approval-main-card {
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-default);
+      padding: 20px 24px;
+    }
+    .approval-aside {
+      display: flex; flex-direction: column; gap: 16px;
+    }
+    .approval-aside-card {
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-default);
+      padding: 16px 20px;
+    }
+
+    .approval-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 20px;
+    }
+    .approval-header-title {
+      font-size: 15px; font-weight: 600; color: var(--text-primary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .approval-header-title::before {
+      content: ""; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px;
+    }
+    .approval-header-meta { font-size: 12px; color: var(--text-tertiary); }
+
+    /* 时间线 */
+    .timeline { position: relative; padding-left: 32px; }
+    .timeline::before {
+      content: ""; position: absolute;
+      left: 12px; top: 12px; bottom: 12px;
+      width: 2px; background: var(--border-light);
+    }
+    .timeline-item { position: relative; padding-bottom: 24px; }
+    .timeline-item:last-child { padding-bottom: 0; }
+    .timeline-dot {
+      position: absolute; left: -28px; top: 2px;
+      width: 24px; height: 24px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+      background: #fff;
+      border: 2px solid var(--border-light);
+      color: var(--text-tertiary);
+    }
+    .timeline-item.done .timeline-dot {
+      background: var(--color-success);
+      border-color: var(--color-success);
+      color: #fff;
+    }
+    .timeline-item.done .timeline-dot::after {
+      content: "✓"; font-size: 14px;
+    }
+    .timeline-item.done .timeline-dot-num { display: none; }
+    .timeline-item.current .timeline-dot {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      color: #fff;
+    }
+    .timeline-item.pending .timeline-dot {
+      background: #F1F5F9; border-color: var(--border-default); color: var(--text-tertiary);
+    }
+    .timeline-content {
+      background: var(--bg-page);
+      border-radius: var(--radius-default);
+      padding: 12px 16px;
+      border: 1px solid var(--border-light);
+    }
+    .timeline-item.current .timeline-content {
+      background: #EFF6FF; border-color: #BFDBFE;
+    }
+    .timeline-title {
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 500; color: var(--text-primary);
+      margin-bottom: 6px;
+    }
+    .timeline-meta {
+      display: flex; gap: 16px; font-size: 12px; color: var(--text-tertiary);
+    }
+    .timeline-actor {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-secondary);
+      margin-top: 8px;
+    }
+    .timeline-actor .avatar {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--color-primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600;
+    }
+    .timeline-opinion {
+      font-size: 12px; color: var(--text-secondary);
+      padding: 8px 10px;
+      background: rgba(34,197,94,0.06);
+      border-left: 3px solid var(--color-success);
+      border-radius: 4px;
+      margin-top: 8px;
+    }
+    .timeline-subitem {
+      background: #fff;
+      border-radius: var(--radius-default);
+      padding: 10px 12px;
+      margin-top: 8px;
+      border: 1px solid var(--border-light);
+    }
+    .timeline-subitem-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 4px;
+    }
+    .timeline-subitem-name {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 13px; color: var(--text-primary); font-weight: 500;
+    }
+    .timeline-subitem-name .avatar {
+      width: 20px; height: 20px; border-radius: 50%;
+      background: var(--color-primary); color: #fff;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 600;
+    }
+    .timeline-subitem-opinion {
+      font-size: 12px; color: var(--text-tertiary);
+      margin-top: 4px; line-height: 1.5;
+    }
+    .timeline-remark {
+      display: inline-flex; align-items: center; gap: 3px;
+      font-size: 11px; color: var(--color-warning);
+      background: rgba(245,158,11,0.08);
+      padding: 1px 6px; border-radius: 3px;
+    }
+
+    /* 关键指标 */
+    .metric-list { display: flex; flex-direction: column; gap: 12px; }
+    .metric-row {
+      display: flex; justify-content: space-between; align-items: center;
+      font-size: 13px;
+    }
+    .metric-label { color: var(--text-tertiary); }
+    .metric-value { color: var(--text-primary); font-weight: 500; }
+    .metric-tag {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 8px; font-size: 12px;
+      background: rgba(30,64,175,0.08); color: var(--color-primary);
+      border-radius: 4px; font-weight: 500;
+    }
+
+    /* 实时活动 */
+    .activity-list { display: flex; flex-direction: column; }
+    .activity-item {
+      display: flex; gap: 10px; padding: 8px 0;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .activity-item:last-child { border-bottom: none; }
+    .activity-avatar {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--color-primary-lighter); color: var(--color-primary);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 600; flex-shrink: 0;
+    }
+    .activity-body { flex: 1; min-width: 0; }
+    .activity-text {
+      font-size: 12px; color: var(--text-secondary);
+      line-height: 1.5;
+    }
+    .activity-text strong { color: var(--text-primary); }
+    .activity-time { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* 催办卡片 */
+    .urge-card {
+      background: linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%);
+      border: 1px solid #FCD34D;
+      border-radius: var(--radius-default);
+      padding: 12px 16px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .urge-icon {
+      width: 32px; height: 32px;
+      background: #F59E0B; color: #fff;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; flex-shrink: 0;
+    }
+    .urge-body { flex: 1; min-width: 0; }
+    .urge-title {
+      font-size: 13px; color: #92400E; font-weight: 600;
+      margin-bottom: 2px;
+    }
+    .urge-desc {
+      font-size: 12px; color: #B45309; line-height: 1.5;
+    }
+    .btn-urge {
+      padding: 4px 10px;
+      background: #F59E0B; color: #fff;
+      border: none; border-radius: 4px;
+      font-size: 12px; cursor: pointer;
+      flex-shrink: 0;
+    }
+    /* v1.7.99.26 成员多选（复用 project-apply 样式） */
+    .member-select {
+      border: 1px solid var(--border-default);
+      border-radius: 6px;
+      padding: 6px 8px;
+      min-height: 38px;
+      background: #fff;
+      display: flex; flex-wrap: wrap; gap: 6px; align-items: center;
+      transition: border-color 0.15s;
+    }
+    .member-select:focus-within { border-color: var(--color-primary); }
+    .member-chips { display: contents; }
+    .member-chip {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 4px 3px 8px;
+      background: #EFF6FF; color: #1E40AF;
+      border-radius: 4px; font-size: 12px; font-weight: 500;
+    }
+    .member-chip-close {
+      cursor: pointer; width: 16px; height: 16px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 50%; color: #1E40AF; font-size: 14px; line-height: 1;
+    }
+    .member-chip-close:hover { background: #DBEAFE; }
+    .member-input-wrap { flex: 1; min-width: 180px; }
+    .member-input-wrap .input {
+      border: none; padding: 4px 0; font-size: 13px; background: transparent;
+    }
+    .member-input-wrap .input:focus { outline: none; }
+    .member-suggest {
+      position: absolute; top: 100%; left: 0; right: 0;
+      background: #fff; border: 1px solid var(--border-default);
+      border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+      max-height: 220px; overflow-y: auto; z-index: 100;
+      display: none;
+    }
+    .member-suggest.show { display: block; }
+    .member-suggest-item {
+      padding: 8px 12px; cursor: pointer; font-size: 13px;
+      display: flex; justify-content: space-between; align-items: center;
+    }
+    .member-suggest-item:hover { background: #F1F5F9; }
+    .member-suggest-item .member-id { color: var(--text-tertiary); font-size: 12px; }
+    .member-suggest-item.disabled { color: var(--text-tertiary); cursor: not-allowed; }
+    .member-suggest-item.disabled:hover { background: transparent; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+                    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-header">
+        <div class="breadcrumb">
+          <span>准入管理</span>
+          <span class="separator">/</span>
+          <span>客户管理</span>
+          <span class="separator">/</span>
+          <span class="current">新增客户申请</span>
+        </div>
+        <h1 class="page-title">新增客户申请</h1>
+      </div>
+
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+        <!-- 4 步骤条 -->
+        <div class="card" style="margin-bottom: 16px; padding: 16px 32px;">
+          <div class="steps" id="stepper">
+            <div class="step" data-step="1">
+              <div class="step-circle" id="stepCircle1">1</div>
+              <div class="step-label" id="stepLabel1">客户信息录入</div>
+            </div>
+            <div class="step-line" id="stepLine1"></div>
+            <div class="step" data-step="2">
+              <div class="step-circle" id="stepCircle2">2</div>
+              <div class="step-label" id="stepLabel2">企业尽调报告</div>
+            </div>
+            <div class="step-line" id="stepLine2"></div>
+            <div class="step" data-step="3">
+              <div class="step-circle" id="stepCircle3">3</div>
+              <div class="step-label" id="stepLabel3">提交审批</div>
+            </div>
+            <div class="step-line" id="stepLine3"></div>
+            <div class="step" data-step="4">
+              <div class="step-circle" id="stepCircle4">4</div>
+              <div class="step-label" id="stepLabel4">准入完成</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== Step 1：客户信息录入 ========== -->
+        <div id="step1Content">
+          <!-- 新增客户 -->
+          <div class="card" style="margin-bottom: 16px;">
+            <div class="card-header">
+              <div class="card-title">新增客户</div>
+            </div>
+            <div class="card-body">
+              <!-- 工商信息 banner -->
+              <div class="info-banner">
+                <strong>工商信息：</strong>客户基本信息板块数据来源为天眼查，输入客户名称后会自动读取其他信息，请核对，不正确可以修改
+              </div>
+
+              <!-- 客户基本信息字段 -->
+              <div class="form-grid form-grid-3">
+                <div class="form-field">
+                  <label class="form-label">客户类别 <span class="required">*</span></label>
+                  <select class="select" id="custCategory">
+                    <option>上游客户</option>
+                    <option>下游客户</option>
+                    <option>第三方物流</option>
+                    <option>第三方仓储</option>
+                  </select>
+                </div>
+                <div class="form-field">
+                  <label class="form-label">企业名称 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custName" placeholder="请输入企业全称" autocomplete="off">
+                </div>
+                <div class="form-field auto-fill">
+                  <label class="form-label">法定代表人</label>
+                  <input type="text" class="input" id="custLegalRep" placeholder="自动带入" disabled>
+                </div>
+                <div class="form-field auto-fill">
+                  <label class="form-label">注册地址</label>
+                  <input type="text" class="input" id="custAddress" placeholder="自动带入" disabled>
+                </div>
+                <div class="form-field auto-fill">
+                  <label class="form-label">社会统一信用代码</label>
+                  <input type="text" class="input" id="custCreditCode" placeholder="自动带入" disabled style="font-family: var(--font-mono); font-size: 13px;">
+                </div>
+                <div class="form-field auto-fill">
+                  <label class="form-label">经营期限（止）</label>
+                  <input type="text" class="input" id="custExpireAt" placeholder="自动带入" disabled>
+                </div>
+                <div class="form-field auto-fill">
+                  <label class="form-label">成立日期</label>
+                  <input type="text" class="input" id="custEstablishedAt" placeholder="自动带入" disabled>
+                </div>
+                <div class="form-field">
+                  <label class="form-label">联系人姓名 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custContactName" placeholder="请输入联系人完整姓名">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">联系人电话 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custContactPhone" placeholder="请输入联系人电话号码">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">联系人邮箱</label>
+                  <input type="text" class="input" id="custContactEmail" placeholder="请输入联系人邮箱">
+                </div>
+                <div class="form-field" style="grid-column: 1 / -1;">
+                  <label class="form-label">联系人地址</label>
+                  <input type="text" class="input" id="custContactAddress" placeholder="如：河南省郑州市金水区花园路 159 号" value="河南省郑州市金水区花园路 159 号">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">负责人姓名 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custOwnerName" placeholder="请输入负责人姓名">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">负责人电话 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custOwnerPhone" placeholder="请输入负责人电话">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">企业开户行信息 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custBankName" placeholder="如：中国工商银行郑州金水支行" value="中国工商银行郑州金水支行">
+                </div>
+                <div class="form-field">
+                  <label class="form-label">企业银行账号 <span class="required">*</span></label>
+                  <input type="text" class="input" id="custBankAccount" placeholder="请输入企业银行账号" value="6222 XXXX XXXX XXXX XXXX" style="font-family: var(--font-mono); font-size: 13px;">
+                </div>
+                <div class="form-field" style="grid-column: 1 / -1;">
+                  <label class="form-label">企业简称</label>
+                  <input type="text" class="input" id="custShortName" placeholder="请输入客户简称">
+                </div>
+                <div class="form-field" style="grid-column: 1 / -1;">
+                  <label class="form-label">项目小组成员 <span class="required">*</span></label>
+                  <div class="member-select" id="projectMembers">
+                    <div class="member-chips" id="memberChips"></div>
+                    <div class="member-input-wrap" style="position: relative;">
+                      <input type="text" class="input" id="memberSearch" placeholder="输入成员姓名/工号搜索，支持多选" autocomplete="off">
+                      <div class="member-suggest" id="memberSuggest"></div>
+                    </div>
+                  </div>
+                  <div class="form-help">支持多选，模糊搜索姓名/工号；选中后显示为标签</div>
+                </div>
+              </div>
+
+              <!-- 关联项目展开 -->
+              <div class="relation-toggle collapsed" id="relationToggle" onclick="toggleRelation()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                <span class="required">*</span>
+                <span style="font-weight: 500;">关联项目</span>
+              </div>
+              <div class="relation-panel collapsed" id="relationPanel">
+                <div class="relation-search">
+                  <input type="text" placeholder="输入项目名称/编号搜索项目" id="relationSearch">
+                </div>
+                <table class="relation-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 36px;"><input type="checkbox" id="relationCheckAll"></th>
+                      <th>立项申请编号</th>
+                      <th>项目名称</th>
+                      <th>上游企业</th>
+                      <th>下游企业</th>
+                      <th>业务类型</th>
+                      <th>品类</th>
+                    </tr>
+                  </thead>
+                  <tbody id="relationTableBody">
+                    <!-- 动态渲染 -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Step 1 ========== -->
+
+        <!-- ========== Step 2：企业尽调报告（单企业，复用 project-apply 组件） ========== -->
+        <div id="step2Content" hidden>
+          <div id="step2Container"></div>
+        </div>
+        <!-- ========== /Step 2 ========== -->
+
+        <!-- ========== Step 3：提交审批（按图 4 完整组件） ========== -->
+        <div id="step3Content" hidden>
+          <!-- 顶部状态卡片 -->
+          <div class="approval-status-card">
+            <div class="approval-status-icon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                审批进行中
+                <div class="approval-status-chips">
+                  <span class="chip chip-orange">⏸ 待审批</span>
+                  <span class="chip chip-blue">外部 OA 系统</span>
+                </div>
+              </div>
+              <div class="approval-status-desc">
+                河南军牧原国际贸易有限公司 · 准入申请 <strong style="color: var(--text-primary);">ADM-2026-0451</strong> 已提交至外部审批系统，当前在「<span class="link">风控部会签</span>」阶段（已 1/2 通过）。
+              </div>
+            </div>
+            <div class="approval-status-actions">
+              <button class="btn-cancel-approval" onclick="alert('已撤回申请')">↩ 撤回申请</button>
+            </div>
+          </div>
+
+          <!-- 摘要信息 -->
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请编号</div>
+              <div class="value" style="font-family: var(--font-mono);">ADM-2026-0451</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2026-07-19 16:45</div>
+            </div>
+          </div>
+
+          <!-- 左右两栏：审批进度 + 关键指标/活动 -->
+          <div class="approval-grid">
+            <!-- 左：审批进度时间线 -->
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta">共 5 个节点，当前进行中 ②</div>
+              </div>
+              <div class="timeline">
+                <!-- 节点 1：提交申请（已完成）-->
+                <div class="timeline-item done">
+                  <div class="timeline-dot"><span class="timeline-dot-num">①</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ① 提交申请
+                      <span class="chip chip-green">已通过</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar">张</div>
+                      <span><strong>张磊</strong>（运营方）提交准入申请</span>
+                    </div>
+                    <div class="timeline-meta">
+                      <span>🕐 2026-07-19 16:45:23</span>
+                      <span>📎 附件 4 份</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点 2：二级会签（进行中 1/2）-->
+                <div class="timeline-item current">
+                  <div class="timeline-dot"><span class="timeline-dot-num">②</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ① 二级会签 · 风控部 + 财务部
+                      <span class="chip chip-blue">进行中 1/2</span>
+                      <span class="chip chip-gray">会签 OR</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                      会签规则：任一人通过即通过（风控 OR 财务）；全部驳回则驳回
+                    </div>
+                    <!-- 子项：王浩·风控部负责人（已通过）-->
+                    <div class="timeline-subitem">
+                      <div class="timeline-subitem-header">
+                        <div class="timeline-subitem-name">
+                          <div class="avatar" style="background: #10B981;">王</div>
+                          <span><strong>王浩</strong> · 风控部负责人</span>
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                          <span class="chip chip-green">已通过</span>
+                          <span style="font-size: 11px; color: var(--text-tertiary);">2026-07-20 09:15</span>
+                        </div>
+                      </div>
+                      <div class="timeline-subitem-opinion">
+                        ✓ 可该风险可控（180 万贷款纠纷已结），财务健康度良好，同意准入。
+                      </div>
+                    </div>
+                    <!-- 子项：宋美玲·财务总监（审批中 已读）-->
+                    <div class="timeline-subitem">
+                      <div class="timeline-subitem-header">
+                        <div class="timeline-subitem-name">
+                          <div class="avatar" style="background: #F59E0B;">宋</div>
+                          <span><strong>宋美玲</strong> · 财务总监</span>
+                        </div>
+                        <div style="display: flex; gap: 6px; align-items: center;">
+                          <span class="chip chip-orange">审批中 · 已读</span>
+                        </div>
+                      </div>
+                      <div class="timeline-subitem-opinion">
+                        等待审批人处理，预计 2 小时内回复
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点 3：三级审批·总经理（待开始）-->
+                <div class="timeline-item pending">
+                  <div class="timeline-dot"><span class="timeline-dot-num">③</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ③ 三级审批 · 总经理
+                      <span class="chip chip-gray">待开始</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #94A3B8;">李</div>
+                      <span>审批人：<strong>李娜</strong> · 平台总经理</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                      需在二级会签通过后自动触发
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点 4：准入完成（待开始）-->
+                <div class="timeline-item pending">
+                  <div class="timeline-dot"><span class="timeline-dot-num">④</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ④ 准入完成
+                      <span class="chip chip-gray">待开始</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
+                      三级审批通过后自动归档，企业获得准入凭证
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右：关键指标 + 实时活动 + 催办 -->
+            <div class="approval-aside">
+              <!-- 关键指标 -->
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">关键指标</div>
+                </div>
+                <div class="metric-list">
+                  <div class="metric-row">
+                    <span class="metric-label">当前节点</span>
+                    <span class="metric-tag">风控部会签 1/2</span>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">剩余节点</span>
+                    <span class="metric-value">3 个（会签 / 三级 / 完成）</span>
+                  </div>
+                  <div class="metric-row">
+                    <span class="metric-label">已耗时</span>
+                    <span class="metric-value">1 天 7 小时</span>
+                  </div>
+                  <div class="metric-row">
+                  </div>
+                </div>
+              </div>
+
+              <!-- 实时活动 -->
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">实时活动</div>
+                  <div class="approval-header-meta">最近 24h</div>
+                </div>
+                <div class="activity-list">
+                  <div class="activity-item">
+                    <div class="activity-avatar" style="background: #F59E0B; color: #fff;">宋</div>
+                    <div class="activity-body">
+                      <div class="activity-text"><strong>宋美玲</strong>查看了审批单</div>
+                      <div class="activity-time">10 分钟前</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-avatar" style="background: #10B981; color: #fff;">王</div>
+                    <div class="activity-body">
+                      <div class="activity-text"><strong>王浩</strong>通过了会签子节点</div>
+                      <div class="activity-time">2 小时前 · 09:15</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-avatar" style="background: #F59E0B; color: #fff;">系</div>
+                    <div class="activity-body">
+                      <div class="activity-text">系统向会签节点发送催办</div>
+                      <div class="activity-time">1 小时前</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-avatar" style="background: #94A3B8; color: #fff;">会</div>
+                    <div class="activity-body">
+                      <div class="activity-text">会签已自动 @王浩 @宋美玲</div>
+                      <div class="activity-time">昨天 18:22</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-avatar" style="background: #10B981; color: #fff;">张</div>
+                    <div class="activity-body">
+                      <div class="activity-text"><strong>张磊</strong>通过了一级审批</div>
+                      <div class="activity-time">昨天 18:22</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-avatar" style="background: #1E40AF; color: #fff;">张</div>
+                    <div class="activity-body">
+                      <div class="activity-text"><strong>张磊</strong>提交了准入申请</div>
+                      <div class="activity-time">昨天 16:45</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 催办卡片 -->
+              <div class="urge-card">
+                <div class="urge-icon">🔔</div>
+                <div class="urge-body">
+                  <div class="urge-title">宋美玲 已 2 小时未处理</div>
+                  <div class="urge-desc">建议催办或 @该审批人 加速处理</div>
+                </div>
+                <button class="btn-urge" onclick="alert('已发送催办')">立即催办</button>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Step 3 ========== -->
+
+        <!-- ========== Step 4：准入完成 ========== -->
+        <div id="step4Content" hidden>
+          <div class="card" style="padding: 60px 24px; text-align: center;">
+            <div style="font-size: 48px; margin-bottom: 16px;">✅</div>
+            <div style="font-size: 18px; color: var(--color-success); font-weight: 600;">客户准入完成</div>
+            <div style="margin-top: 8px; font-size: 13px; color: var(--text-tertiary);">客户编号：KE-2026-0722-001</div>
+            <div style="margin-top: 24px;">
+              <button class="btn btn-secondary" onclick="window.location.href='./customer-list.html'">返回客户列表</button>
+            </div>
+          </div>
+        </div>
+        <!-- ========== /Step 4 ========== -->
+      </div>
+
+      <div class="footer-actions">
+        <button class="btn btn-secondary" id="btnSave">保存草稿</button>
+        <div style="flex: 1;"></div>
+        <button class="btn btn-secondary" id="btnPrev">上一步</button>
+        <button class="btn btn-primary" id="btnNext">下一步</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // ===== Mock 客户数据（5 家从天眼查模糊匹配） =====
+    const mockCustomers = [
+      { name: "河南军牧原国际贸易有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "张志明", address: "河南省郑州市金水区花园路 159 号", establishedAt: "2009-01-01", expireAt: "2099-01-01" },
+      { name: "河南军牧原农副产品有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "李建国", address: "河南省郑州市金水区农业路 88 号", establishedAt: "2015-06-15", expireAt: "2065-06-14" },
+      { name: "河南军牧原食品集团股份有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "王志强", address: "河南省郑州市中原区建设路 200 号", establishedAt: "2012-03-20", expireAt: "2062-03-19" },
+      { name: "河南牧原食品股份有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "秦英林", address: "河南省南阳市内乡县灌涨镇", establishedAt: "2000-07-13", expireAt: "长期" },
+      { name: "郑州铁龙物流有限公司", creditCode: "91XXXXXXMAXXXXXXXX", legalRep: "陈伟", address: "河南省郑州市二七区解放路 100 号", establishedAt: "2008-09-01", expireAt: "2058-08-31" }
+    ];
+
+    // ===== 关联项目 mock（5 行不同编号） =====
+    const mockProjects = [
+      { no: "LX20260122001", name: "木薯淀粉存货类供应链项目", upstream: "河南军牧原", downstream: "河南双汇", biz: "存货业务", cat: "淀粉" },
+      { no: "LX20260122002", name: "糖粉预付类业务供应链项目", upstream: "河南军牧原", downstream: "中远海运", biz: "预付业务", cat: "糖粉" },
+      { no: "LX20260122003", name: "玉米收购及加工项目", upstream: "中粮集团", downstream: "牧原食品", biz: "账期业务", cat: "谷物" },
+      { no: "LX20260122004", name: "农产品购销业务项目", upstream: "河北粮食", downstream: "河南牧原", biz: "购销业务", cat: "淀粉" },
+      { no: "LX20260122005", name: "冷链仓储服务项目", upstream: "郑州铁龙", downstream: "蒙牛乳业", biz: "仓储业务", cat: "淀粉" }
+    ];
+
+    // ===== 渲染关联项目表 =====
+    function renderRelationTable(filter) {
+      const body = document.getElementById('relationTableBody');
+      const data = filter
+        ? mockProjects.filter(p => p.no.includes(filter) || p.name.includes(filter))
+        : mockProjects;
+      body.innerHTML = data.map(p => `
+        <tr>
+          <td><input type="checkbox" class="relation-check"></td>
+          <td class="project-no">${p.no}</td>
+          <td>${p.name}</td>
+          <td>${p.upstream}</td>
+          <td>${p.downstream}</td>
+          <td>${p.biz}</td>
+          <td>${p.cat}</td>
+        </tr>
+      `).join('');
+    }
+    renderRelationTable();
+
+    // 关联项目展开/收起
+    function toggleRelation() {
+      const toggle = document.getElementById('relationToggle');
+      const panel = document.getElementById('relationPanel');
+      toggle.classList.toggle('collapsed');
+      panel.classList.toggle('collapsed');
+    }
+
+    // 关联项目搜索
+    document.getElementById('relationSearch').addEventListener('input', e => {
+      renderRelationTable(e.target.value.trim());
+    });
+
+    // 全选
+    document.getElementById('relationCheckAll').addEventListener('change', e => {
+      document.querySelectorAll('.relation-check').forEach(c => c.checked = e.target.checked);
+    });
+
+    // ===== 企业名称输入触发自动带入 =====
+    const nameInput = document.getElementById('custName');
+    const suggestBox = document.createElement('div');
+    suggestBox.className = 'company-suggest';
+    suggestBox.style.cssText = 'position:absolute;top:100%;left:0;right:0;margin-top:4px;background:#fff;border:1px solid var(--border-default);border-radius:var(--radius-default);box-shadow:var(--shadow-lg);max-height:240px;overflow-y:auto;z-index:100;display:none;';
+    nameInput.parentNode.appendChild(suggestBox);
+
+    nameInput.addEventListener('input', e => {
+      const q = e.target.value.trim();
+      if (!q) { suggestBox.style.display = 'none'; return; }
+      const matches = mockCustomers.filter(c => c.name.includes(q));
+      if (!matches.length) { suggestBox.style.display = 'none'; return; }
+      suggestBox.innerHTML = matches.map(c => `
+        <div class="company-suggest-item" data-name="${c.name}">
+          <div class="name">${c.name}</div>
+          <div class="meta">${c.creditCode} · ${c.legalRep}</div>
+        </div>
+      `).join('');
+      suggestBox.style.display = 'block';
+      suggestBox.querySelectorAll('.company-suggest-item').forEach(item => {
+        item.addEventListener('click', () => {
+          const c = mockCustomers.find(x => x.name === item.dataset.name);
+          if (c) {
+            nameInput.value = c.name;
+            document.getElementById('custLegalRep').value = c.legalRep;
+            document.getElementById('custLegalRep').removeAttribute('disabled');
+            document.getElementById('custAddress').value = c.address;
+            document.getElementById('custAddress').removeAttribute('disabled');
+            document.getElementById('custCreditCode').value = c.creditCode;
+            document.getElementById('custCreditCode').removeAttribute('disabled');
+            document.getElementById('custExpireAt').value = c.expireAt;
+            document.getElementById('custExpireAt').removeAttribute('disabled');
+            document.getElementById('custEstablishedAt').value = c.establishedAt;
+            document.getElementById('custEstablishedAt').removeAttribute('disabled');
+            suggestBox.style.display = 'none';
+          }
+        });
+      });
+    });
+
+    // ===== Step 2 单企业风险报告（复用 project-apply COMPANIES.A 的数据结构） =====
+    const CUSTOMER_COMPANY = {
+      name: '河南军牧原国际贸易有限公司',
+      category: '上游客户',
+      icon: '🏢',
+      basic: {
+        '国家': '中国', '省份': '河南省', '客户类别': '上游企业',
+        '企业名称': '河南军牧原国际贸易有限公司',
+        '注册地址': '河南省郑州市金水区花园路 88 号',
+        '注册资本': '5,000 万人民币',
+        '企业性质': '有限责任公司（自然人投资或控股）',
+        '统一社会信用代码': '91XXXXXXMAXXXXXXXX',
+        '成立日期': '2005-01-02',
+        '经营期限（止）': '暂无固定期限',
+        '法定代表人': '何永兴',
+        '联系人姓名': '陈安生',
+        '联系人电话': '138 0000 XXXX',
+        '负责人姓名': '何世军',
+        '负责人电话': '138 0000 XXXX'
+      },
+      businessScope: '一般项目：消防器材销售；机械设备销售；电子产品销售；安防设备销售；交通及公共管理用标牌销售；劳动保护用品销售；建筑材料销售；日用百货销售；五金产品批发；办公用品销售；办公设备耗材销售；金属材料销售；消防技术服务；住宅水电安装维护服务（除依法须经批准的项目外，凭营业执照依法自主开展经营活动）',
+      risks: [
+        { name: '合作黑名单', status: 'ok' },
+        { name: '假国央企', status: 'ok' },
+        { name: '失信被执行人信息', status: 'ok' },
+        { name: '被执行人信息', status: 'ok' },
+        { name: '限制消费令信息', status: 'ok' },
+        { name: '终本案件', status: 'ok' },
+        { name: '税收违法信息', status: 'ok' },
+        { name: '行政/工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 2022-12-01 因「销售不合格消防产品」存在 行政处罚 5 万元，并已足额缴纳罚款。' },
+        // v1.7.99.264 新增 3 项判定
+        { name: '空壳企业识别', status: 'ok' },
+        { name: '关联交易风险', status: 'ok' },
+        { name: '资质缺失风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业经营范围内含「消防器材销售 / 消防技术服务」，但未在「国家企业信用信息公示系统」查到有效的「消防技术服务机构资质证书」及「消防产品合格证」，存在资质缺失风险。' }
+      ],
+      shareholders: [
+        { name: '何永兴', percent: '84%', tags: ['大股东', '实际控制人', '最终受益人'], date: '2001-05-18' },
+        { name: '何世军', percent: '16%', tags: [], date: '2001-05-18' }
+      ],
+      investments: [
+        { name: '诸暨致美投资有限公司', legalRep: '何永兴', capital: '100 万人民币', ratio: '100%', date: '2009-12-02', status: '注销', statusColor: 'gray' },
+        { name: '诸暨致美暖通设备有限公司', legalRep: '何永兴', capital: '80 万人民币', ratio: '100%', date: '2009-12-02', status: '存续', statusColor: 'green' },
+        { name: '浙江致美管业有限公司', legalRep: '何永兴', capital: '500 万人民币', ratio: '100%', date: '2009-12-03', status: '注销', statusColor: 'gray' },
+        { name: '浙江橙晨机电有限公司', legalRep: '何仕君', capital: '2,000 万人民币', amount: '—', ratio: '90%', date: '2004-07-15', status: '存续', statusColor: 'green' },
+        { name: '恒森管业科技（浙江）有限公司', legalRep: '何泽森', capital: '10,000 万人民币', amount: '1,800 万人民币', ratio: '60%', date: '2022-12-30', status: '存续', statusColor: 'green' }
+      ]
+    };
+
+    function renderCustomerRiskReport() {
+      const c = CUSTOMER_COMPANY;
+      const basicRows = Object.entries(c.basic).map(([k, v]) => `
+        <div class="info-item">
+          <div class="info-label">${k}</div>
+          <div class="info-value">${v}</div>
+        </div>
+      `).join('');
+
+      const riskItems = c.risks.map((r, i) => `
+        <div class="risk-item ${r.status === 'warn' ? 'risk-warn' : ''}">
+          <div class="risk-num">${i + 1}</div>
+          <div class="risk-content">
+            <div class="risk-name">${r.name}</div>
+            ${r.desc ? `<div class="risk-desc">${r.desc}</div>` : ''}
+          </div>
+          <div class="risk-status ${r.status === 'warn' ? 'warn' : 'ok'}">${r.status === 'warn' ? '存在风险' : '无风险'}</div>
+        </div>
+      `).join('');
+
+      const shareholderRows = c.shareholders.map(s => `
+        <tr>
+          <td>${s.name}</td>
+          <td>${s.percent}</td>
+          <td>${s.tags.length ? s.tags.map(t => `<span class="tag tag-blue" style="margin-right: 4px;">${t}</span>`).join('') : '—'}</td>
+          <td>${s.date}</td>
+        </tr>
+      `).join('');
+
+      const investmentRows = c.investments.map(i => `
+        <tr>
+          <td>${i.name}</td>
+          <td>${i.legalRep}</td>
+          <td>${i.capital}</td>
+          <td>${i.amount || i.capital}</td>
+          <td>${i.ratio}</td>
+          <td>${i.date}</td>
+          <td><span class="tag tag-${i.statusColor}">${i.status}</span></td>
+        </tr>
+      `).join('');
+
+      return `
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">${c.icon} ${c.name} · 企业尽调报告</div>
+            <div style="font-size: 12px; color: var(--text-tertiary);">数据更新时间 2026-07-17 15:46</div>
+          </div>
+          <div class="card-body">
+            <!-- 基础信息 -->
+            <div class="subsection-title">基础信息</div>
+            <div class="info-grid">${basicRows}</div>
+
+            <!-- 经营范围 -->
+            <div class="subsection-title" style="margin-top: 20px;">经营范围</div>
+            <div class="form-value-block">${c.businessScope}</div>
+
+            <!-- 风险扫描 -->
+            <div class="subsection-title" style="margin-top: 20px;">风险扫描（8 类）</div>
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px;">
+              ${riskItems}
+            </div>
+
+            <!-- 股东信息 -->
+            <div class="subsection-title" style="margin-top: 20px;">股东信息</div>
+            <table class="cp-table">
+              <thead><tr><th>股东</th><th>持股比例</th><th>标签</th><th>认缴日期</th></tr></thead>
+              <tbody>${shareholderRows}</tbody>
+            </table>
+
+            <!-- 对外投资 -->
+            <div class="subsection-title" style="margin-top: 20px;">对外投资（5 条）</div>
+            <table class="cp-table">
+              <thead><tr><th>公司</th><th>法人</th><th>注册资本</th><th>实缴</th><th>持股</th><th>日期</th><th>状态</th></tr></thead>
+              <tbody>${investmentRows}</tbody>
+            </table>
+          </div>
+        </div>
+      `;
+    }
+
+    // ===== Step 切换逻辑（与 project-apply.html 一致） =====
+    let currentStep = 1;
+    function updateStep(n) {
+      n = Math.max(1, Math.min(4, n));
+      currentStep = n;
+      [1, 2, 3, 4].forEach(i => {
+        const el = document.getElementById(`step${i}Content`);
+        if (el) el.hidden = (i !== n);
+      });
+      // 切到 step 2 时首次渲染
+      if (n === 2) {
+        const c = document.getElementById('step2Container');
+        if (c && !c.dataset.rendered) {
+          c.innerHTML = renderCustomerRiskReport();
+          c.dataset.rendered = '1';
+        }
+      }
+      for (let i = 1; i <= 4; i++) {
+        const circle = document.getElementById(`stepCircle${i}`);
+        circle.classList.remove('completed', 'current');
+        if (i < n) {
+          circle.classList.add('completed');
+          circle.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
+        } else if (i === n) {
+          circle.classList.add('current');
+          circle.textContent = i;
+        } else {
+          circle.textContent = i;
+        }
+      }
+      for (let i = 1; i <= 3; i++) {
+        const line = document.getElementById(`stepLine${i}`);
+        line.classList.toggle('completed', i < n);
+      }
+      const btnPrev = document.getElementById('btnPrev');
+      const btnNext = document.getElementById('btnNext');
+      btnPrev.style.visibility = (n === 1) ? 'hidden' : 'visible';
+      btnNext.textContent = (n === 4) ? '提交' : '下一步';
+    }
+    document.getElementById('btnPrev').addEventListener('click', () => {
+      updateStep(currentStep - 1);
+      document.querySelector('[style*="overflow-y: auto"]').scrollTop = 0;
+    });
+    document.getElementById('btnNext').addEventListener('click', () => {
+      // v1.7.99.23 + v1.7.99.26：step 1 校验 6 必填 + 项目小组成员
+      if (currentStep === 1) {
+        const requiredFields = [
+          { id: 'custContactName', label: '联系人姓名' },
+          { id: 'custContactPhone', label: '联系人电话' },
+          { id: 'custOwnerName', label: '负责人姓名' },
+          { id: 'custOwnerPhone', label: '负责人电话' },
+          { id: 'custBankName', label: '企业开户行信息' },
+          { id: 'custBankAccount', label: '企业银行账号' },
+        ];
+        for (const f of requiredFields) {
+          const v = document.getElementById(f.id).value.trim();
+          if (!v) {
+            alert(`请填写${f.label}`);
+            document.getElementById(f.id).focus();
+            return;
+          }
+        }
+        // v1.7.99.26：项目小组成员必填
+        if (selectedMembers.length === 0) {
+          alert('请选择项目小组成员');
+          document.getElementById('memberSearch').focus();
+          return;
+        }
+      }
+      if (currentStep === 4) {
+        alert('提交成功！');
+        window.location.href = './customer-list.html';
+        return;
+      }
+      updateStep(currentStep + 1);
+      document.querySelector('[style*="overflow-y: auto"]').scrollTop = 0;
+    });
+    document.getElementById('btnSave').addEventListener('click', () => alert('草稿已保存'));
+
+    // ===== v1.7.99.26 项目小组成员多选 + 模糊搜索（复用 project-apply 逻辑） =====
+    const mockMembers = [
+      { id: 'U0001', name: '张磊' },
+      { id: 'U0002', name: '李雪' },
+      { id: 'U0003', name: '王芳' },
+      { id: 'U0004', name: '赵刚' },
+      { id: 'U0005', name: '刘洋' },
+      { id: 'U0006', name: '陈明' },
+      { id: 'U0007', name: '周建' },
+      { id: 'U0008', name: '吴敏' },
+      { id: 'U0009', name: '郑华' },
+      { id: 'U0010', name: '孙峰' },
+      { id: 'U0011', name: '钱伟' },
+      { id: 'U0012', name: '马丽' },
+    ];
+    const selectedMembers = [];
+
+    function renderMemberChips() {
+      const wrap = document.getElementById('memberChips');
+      wrap.innerHTML = selectedMembers.map(function(m) {
+        return '<span class="member-chip" data-id="' + m.id + '">' + m.name + '<span class="member-chip-close" onclick="removeMember(\'' + m.id + '\')">×</span></span>';
+      }).join('');
+    }
+    function removeMember(id) {
+      const idx = selectedMembers.findIndex(function(m) { return m.id === id; });
+      if (idx >= 0) selectedMembers.splice(idx, 1);
+      renderMemberChips();
+    }
+    function addMember(m) {
+      if (selectedMembers.find(function(x) { return x.id === m.id; })) return;
+      selectedMembers.push(m);
+      renderMemberChips();
+      document.getElementById('memberSearch').value = '';
+      document.getElementById('memberSuggest').classList.remove('show');
+    }
+    document.getElementById('memberSearch').addEventListener('input', function() {
+      const kw = this.value.trim().toLowerCase();
+      const list = kw
+        ? mockMembers.filter(function(m) { return m.name.includes(kw) || m.id.toLowerCase().includes(kw); })
+        : mockMembers;
+      const html = list.map(function(m) {
+        const picked = selectedMembers.find(function(x) { return x.id === m.id; });
+        return '<div class="member-suggest-item' + (picked ? ' disabled' : '') + '" data-id="' + m.id + '">'
+          + '<span>' + m.name + '</span>'
+          + '<span class="member-id">' + m.id + (picked ? '（已选）' : '') + '</span>'
+          + '</div>';
+      }).join('');
+      const suggest = document.getElementById('memberSuggest');
+      suggest.innerHTML = html || '<div class="member-suggest-item disabled">无匹配成员</div>';
+      suggest.classList.add('show');
+      suggest.querySelectorAll('.member-suggest-item:not(.disabled)').forEach(function(item) {
+        item.addEventListener('click', function() {
+          const id = this.dataset.id;
+          const m = mockMembers.find(function(x) { return x.id === id; });
+          if (m) addMember(m);
+        });
+      });
+    });
+    document.getElementById('memberSearch').addEventListener('focus', function() {
+      this.dispatchEvent(new Event('input'));
+    });
+    document.addEventListener('click', function(e) {
+      const suggest = document.getElementById('memberSuggest');
+      if (!suggest.contains(e.target) && e.target.id !== 'memberSearch') {
+        suggest.classList.remove('show');
+      }
+    });
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>
