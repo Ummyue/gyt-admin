@@ -1292,7 +1292,7 @@
     // 规则类型 → 规则名称 映射（按 user 2026-08-17 14:26 提供的内容）
     var RULE_NAME_MAP = {
       contract: [
-        { value: 'overdue_not_done', label: '合同超期未完结', checkItem: '合同执行期结束N天后，合同状态仍未更新为"已完结"or"已终止"，生成预警', detail: '合同#合同编号#执行期于#执行期截止日#结束，合同状态仍未变更为"已完结"或"已终止"，请尽快处理' },
+        { value: 'overdue_not_done', label: '合同超期未完结', checkItem: '合同执行期结束N天后，合同状态仍未更新为"已完结"，生成预警', detail: '合同#合同编号#执行期于#执行期截止日#结束，合同状态仍未变更为"已完结"，请尽快处理' },
         { value: 'overdue_unsigned_contract', label: '超期未上传有效单据（合同）', checkItem: '合同钉钉审核通过，超过N天，双签附件均未上传，生成预警', detail: '合同编号#合同编号#，已审核通过，超过N天，双签合同附件均未上传，请及时处理' },
         { value: 'overdue_unsigned_supplement', label: '超期未上传生效单据（补协）', checkItem: '补协钉钉审核通过，超过N天，双签补协附件均未上传，生成预警', detail: '补协编号#补协编号#，已审核通过，超过N天，黑红章补协附件、双红章补协附件均未上传，请及时处理' },
       ],
