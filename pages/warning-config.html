@@ -967,7 +967,7 @@
       </div>
       <!-- 表单内容 -->
       <div class="add-rule-body">
-        <!-- 1. 是否关联合同（radio） -->
+        <!-- 1. 是否关联合同（radio）v1.7.99.263.3 调整：决定后续字段是否显示 -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>是否关联合同</label>
           <div class="add-rule-radio-group">
@@ -975,11 +975,21 @@
             <label class="add-rule-radio"><input type="radio" name="priceRelContract" value="no" onchange="togglePriceContractRow()"><span>否</span></label>
           </div>
         </div>
-        <!-- 1.5. 关联合同选择控件（仅在"是否关联合同=是"时显示，v1.7.99.263 新增 + v1.7.99.263.1 改多选 + 加签订日期） -->
-        <div class="add-rule-row" id="priceContractRow">
+        <!-- 2. 业务类型（v1.7.99.263.3：先于「关联合同」出现；用户选完后才显示关联合同） -->
+        <div class="add-rule-row" id="priceBizTypeRow">
+          <label class="add-rule-label required"><span class="required-mark">*</span>业务类型</label>
+          <select class="add-rule-select" id="priceBizType" onchange="togglePriceContractRow()">
+            <option value="">请选择</option>
+            <option value="inventory" selected>存货业务</option>
+            <option value="trade">贸易业务</option>
+            <option value="logistics">物流业务</option>
+          </select>
+        </div>
+        <!-- 3. 关联合同选择控件（v1.7.99.263.3：默认隐藏，业务类型选完后才显示） -->
+        <div class="add-rule-row" id="priceContractRow" style="display: none;">
           <label class="add-rule-label required"><span class="required-mark">*</span>关联合同</label>
           <div class="price-contract-picker">
-            <!-- v1.7.99.263.1 新增：签订日期筛选（合同列表上方，radio=否 时禁用） -->
+            <!-- v1.7.99.263.1 签订日期筛选（合同列表上方） -->
             <div class="price-contract-filter-row">
               <label class="filter-label">签订日期</label>
               <div class="filter-date-range">
@@ -995,7 +1005,7 @@
               <div class="price-contract-tab" data-tab="purchase" onclick="switchPriceContractTab(this, 'purchase')">采购合同 <span class="count" id="priceContractCountPurchase">0</span></div>
               <div class="price-contract-tab" data-tab="sales" onclick="switchPriceContractTab(this, 'sales')">销售合同 <span class="count" id="priceContractCountSales">0</span></div>
             </div>
-            <!-- 合同列表（v1.7.99.263.1 改多选：radio → checkbox） -->
+            <!-- 合同列表（v1.7.99.263.3：树形父子集结构 + 折叠展开） -->
             <div class="price-contract-list" id="priceContractList">
               <!-- JS 动态渲染 -->
             </div>
@@ -1006,14 +1016,6 @@
               <button type="button" class="preview-clear" onclick="clearPriceContractSelection()">清除全部</button>
             </div>
           </div>
-        </div>
-        <!-- 2. 业务类型（1 选项：存货业务） -->
-        <div class="add-rule-row">
-          <label class="add-rule-label required"><span class="required-mark">*</span>业务类型</label>
-          <select class="add-rule-select" id="priceBizType">
-            <option value="">请选择</option>
-            <option value="inventory" selected>存货业务</option>
-          </select>
         </div>
         <!-- 3. 规则类型（18 选项价格对比） -->
         <div class="add-rule-row">
@@ -1215,7 +1217,18 @@
     .price-contract-filter-row .filter-date-sep { font-size: 12px; color: var(--text-tertiary); }
     .price-contract-filter-row .filter-reset { padding: 4px 10px; background: transparent; border: 1px solid #E5E7EB; border-radius: 3px; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
     .price-contract-filter-row .filter-reset:hover { color: var(--color-primary); border-color: var(--color-primary); }
-    .price-contract-list { border: 1px solid #E5E7EB; border-radius: 4px; max-height: 240px; overflow-y: auto; background: #fff; }
+    .price-contract-list { border: 1px solid #E5E7EB; border-radius: 4px; max-height: 280px; overflow-y: auto; background: #fff; }
+    /* v1.7.99.263.3 树形父子集样式（框架合同 + 子合同） */
+    .price-contract-table .row-framework { background: #F9FAFB; font-weight: 500; }
+    .price-contract-table .row-framework.selected { background: rgba(30, 64, 175, 0.08); }
+    .price-contract-table .row-child td:first-child { position: relative; padding-left: 32px; }
+    .price-contract-table .row-child .tree-connector { position: absolute; left: 16px; top: 50%; width: 8px; height: 1px; background: #CBD5E1; }
+    .price-contract-table .row-child .tree-connector::before { content: ''; position: absolute; left: -2px; top: -4px; width: 1px; height: 9px; background: #CBD5E1; }
+    .price-contract-table .row-child .col-code { font-size: 11px; color: var(--text-secondary); padding-left: 8px; }
+    .price-contract-table .tree-toggle { display: inline-block; width: 18px; text-align: center; font-size: 10px; color: var(--text-tertiary); cursor: pointer; user-select: none; margin-right: 2px; transition: color 0.15s; }
+    .price-contract-table .tree-toggle:hover { color: var(--color-primary); }
+    .price-contract-table .framework-badge { display: inline-block; padding: 1px 6px; background: #FEF3C7; color: #B45309; border-radius: 3px; font-size: 10px; font-weight: 600; margin-right: 6px; letter-spacing: 0.3px; }
+    .price-contract-table input[type="checkbox"]:indeterminate { background-color: var(--color-primary); }
     .price-contract-table { width: 100%; border-collapse: collapse; font-size: 12px; }
     .price-contract-table thead { position: sticky; top: 0; background: #F9FAFB; z-index: 1; }
     .price-contract-table th { padding: 8px 12px; font-weight: 500; color: var(--text-secondary); text-align: left; border-bottom: 1px solid #E5E7EB; white-space: nowrap; }
@@ -1329,15 +1342,22 @@
         // 默认值
         priceSelectedIndicators = ['动力煤 榆林 5500K 日更新', '动力煤 鄂尔多斯 5500K 日更新'];
         renderPriceSelectedIndicators();
-        // v1.7.99.263 合同选择控件初始化
+        // v1.7.99.263.3 合同选择控件初始化
         priceCurrentContractTab = 'all';
-        priceSelectedContracts = []; // v1.7.99.263.1 改数组
+        priceSelectedContracts = [];
+        // 重置「是否关联合同」radio 为「是」
+        var relYes = document.querySelector('input[name="priceRelContract"][value="yes"]');
+        if (relYes) relYes.checked = true;
+        // 重置「业务类型」select 为默认值（存货业务）
+        var bizTypeEl = document.getElementById('priceBizType');
+        if (bizTypeEl) bizTypeEl.value = 'inventory';
         // 清理日期筛选默认值
         var sStart = document.getElementById('priceSignDateStart');
         var sEnd = document.getElementById('priceSignDateEnd');
         if (sStart) sStart.value = '';
         if (sEnd) sEnd.value = '';
         renderPriceContractList();
+        // v1.7.99.263.3 触发联动：业务类型=存货业务 → 关联合同显示
         togglePriceContractRow();
         // 默认 tap 重置为 all
         document.querySelectorAll('.price-contract-tab').forEach(function(t) {
@@ -1364,33 +1384,63 @@
 
       // ===== v1.7.99.263 合同选择控件（价格波动 tap「关联合同」联动） =====
       // v1.7.99.263.1 改为多选 + 加签订日期筛选
-      // mock 合同数据：5 条（2 采购 + 3 销售），其中 2 条已关联其他规则（used: true）
+      // v1.7.99.263.3 改为树形父子集结构（框架合同 + 子合同）
+      // mock 合同数据：2 个框架合同（采购/销售各 1）+ 每个框架 2-3 个子合同 + 2 个普通合同
       var PRICE_MOCK_CONTRACTS = [
-        { id: 'c1', code: 'GTGYL-MSXS-20260127-S', type: 'sales',    typeLabel: '销售', party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-12-31', amount: '20000 吨', status: '执行中', used: true,  usedBy: '煤炭价格下跌预警' },
-        { id: 'c2', code: 'DLXLC-DSRMT-202203-0011', type: 'sales',  typeLabel: '销售', party: '天宇源国际',                 signDate: '2026-02-28', endDate: '2026-08-31', amount: '5000 吨',  status: '执行中', used: true,  usedBy: '超时未结算' },
-        { id: 'c3', code: 'GTGYL-MSXS-20260320-S', type: 'sales',    typeLabel: '销售', party: '河南全慧物资贸易有限公司',   signDate: '2026-03-20', endDate: '2027-03-19', amount: '12000 吨', status: '已生效', used: false, usedBy: null },
-        { id: 'c4', code: 'HNCIEGNMYB25(购)H03-05', type: 'purchase', typeLabel: '采购', party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-12-31', amount: '35000 吨', status: '执行中', used: false, usedBy: null },
-        { id: 'c5', code: 'GTGYL-PUR-20260510-P', type: 'purchase',  typeLabel: '采购', party: '内蒙古伊泰集团股份有限公司',  signDate: '2026-05-10', endDate: '2027-05-09', amount: '8000 吨',  status: '已生效', used: false, usedBy: null },
+        // 框架合同 1：采购框架
+        { id: 'f1', code: 'HNCIEGNMYB25(购)H03-05', type: 'purchase', typeLabel: '采购', isFramework: true, party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-12-31', amount: '35000 吨', status: '执行中', used: false, usedBy: null },
+        // 框架合同 1 的子合同（采购订单）
+        { id: 'f1-c1', code: 'HNCIEGN-PO-20260415-01', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-07-15', amount: '12000 吨', status: '执行中', used: false, usedBy: null },
+        { id: 'f1-c2', code: 'HNCIEGN-PO-20260520-02', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-05-20', endDate: '2026-08-20', amount: '10000 吨', status: '执行中', used: false, usedBy: null },
+        { id: 'f1-c3', code: 'HNCIEGN-PO-20260625-03', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-06-25', endDate: '2026-09-25', amount: '13000 吨', status: '已生效', used: false, usedBy: null },
+        // 框架合同 2：销售框架
+        { id: 'f2', code: 'GTGYL-FW-MSXS-20260127-S', type: 'sales', typeLabel: '销售', isFramework: true, party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-12-31', amount: '20000 吨', status: '执行中', used: true, usedBy: '煤炭价格下跌预警' },
+        // 框架合同 2 的子合同（销售订单）
+        { id: 'f2-c1', code: 'GTGYL-MSXS-20260127-S-01', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-06-30', amount: '5000 吨', status: '执行中', used: false, usedBy: null },
+        { id: 'f2-c2', code: 'GTGYL-MSXS-20260315-S-02', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-03-15', endDate: '2026-08-31', amount: '8000 吨', status: '执行中', used: false, usedBy: null },
+        { id: 'f2-c3', code: 'GTGYL-MSXS-20260520-S-03', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-05-20', endDate: '2026-10-31', amount: '7000 吨', status: '已生效', used: false, usedBy: null },
+        // 普通合同（无父子关系）
+        { id: 'c1', code: 'DLXLC-DSRMT-202203-0011', type: 'sales', typeLabel: '销售', isFramework: false, party: '天宇源国际', signDate: '2026-02-28', endDate: '2026-08-31', amount: '5000 吨', status: '执行中', used: true, usedBy: '超时未结算' },
+        { id: 'c2', code: 'GTGYL-PUR-20260510-P', type: 'purchase', typeLabel: '采购', isFramework: false, party: '内蒙古伊泰集团股份有限公司', signDate: '2026-05-10', endDate: '2027-05-09', amount: '8000 吨', status: '已生效', used: false, usedBy: null },
       ];
       var priceCurrentContractTab = 'all';
       var priceSelectedContracts = []; // v1.7.99.263.1 改多选：数组 [{id, code, type, ...}]
+      var priceContractExpanded = { 'f1': true, 'f2': true }; // v1.7.99.263.3 框架合同展开/折叠状态（默认全部展开）
 
-      // 「是否关联合同」radio 切换时：yes 显示 / no 隐藏 + 禁用签订日期
+      // v1.7.99.263.3 「是否关联合同」radio 切换 + 「业务类型」select 联动
+      // 规则：
+      //   radio=否 → 业务类型 + 关联合同 全部隐藏 + 清理已选 + 清理日期 + 业务类型重置
+      //   radio=是 + 业务类型未选 → 仅业务类型显示
+      //   radio=是 + 业务类型已选 → 业务类型 + 关联合同 都显示
       function togglePriceContractRow() {
         var yes = document.querySelector('input[name="priceRelContract"]:checked').value === 'yes';
-        document.getElementById('priceContractRow').style.display = yes ? '' : 'none';
-        // v1.7.99.263.1 签订日期 input 在「否」时也禁用
-        var sStart = document.getElementById('priceSignDateStart');
-        var sEnd = document.getElementById('priceSignDateEnd');
-        if (sStart) sStart.disabled = !yes;
-        if (sEnd) sEnd.disabled = !yes;
+        var bizTypeEl = document.getElementById('priceBizType');
+        var bizVal = bizTypeEl ? bizTypeEl.value : '';
+        var bizTypeRow = document.getElementById('priceBizTypeRow');
+        var contractRow = document.getElementById('priceContractRow');
+
         if (!yes) {
-          // 禁用时清掉选择 + 清理日期筛选（避免提交时仍带着已选/筛选）
+          // 关联合同 = 否：业务类型 + 关联合同 全部隐藏，状态全部清理
+          if (bizTypeRow) bizTypeRow.style.display = 'none';
+          if (contractRow) contractRow.style.display = 'none';
+          var sStart = document.getElementById('priceSignDateStart');
+          var sEnd = document.getElementById('priceSignDateEnd');
+          if (sStart) { sStart.disabled = true; sStart.value = ''; }
+          if (sEnd) { sEnd.disabled = true; sEnd.value = ''; }
           priceSelectedContracts = [];
-          if (sStart) sStart.value = '';
-          if (sEnd) sEnd.value = '';
+          if (bizTypeEl) bizTypeEl.value = '';
           renderPriceContractList();
           renderPriceContractSelectedPreview();
+        } else {
+          // 关联合同 = 是：业务类型必显示，关联合同按业务类型是否已选决定
+          if (bizTypeRow) bizTypeRow.style.display = '';
+          if (contractRow) contractRow.style.display = bizVal ? '' : 'none';
+          // 业务类型 select 启用；签订日期按关联合同显示状态联动
+          if (bizTypeEl) bizTypeEl.disabled = false;
+          var sStart2 = document.getElementById('priceSignDateStart');
+          var sEnd2 = document.getElementById('priceSignDateEnd');
+          if (sStart2) sStart2.disabled = !bizVal;
+          if (sEnd2) sEnd2.disabled = !bizVal;
         }
       }
 
@@ -1410,29 +1460,84 @@
         renderPriceContractList();
       }
 
-      // 按当前 tab + 签订日期 过滤并渲染列表
+      // v1.7.99.263.3 树形渲染：按当前 tab + 签订日期 过滤并渲染列表
+      // 渲染逻辑：
+      //   1. 先按 tap + 日期过滤所有合同
+      //   2. 区分：框架合同（isFramework=true）/ 普通合同（isFramework=false 且无 parentId）/ 子合同（有 parentId）
+      //   3. 框架合同行：▶/▼ 折叠按钮 + checkbox（indeterminate 三态）+ 合同信息
+      //   4. 框架合同展开时：显示其下子合同行（缩进 + 树形连接线）
+      //   5. 普通合同行：checkbox + 合同信息
       function renderPriceContractList() {
-        var start = document.getElementById('priceSignDateStart').value; // YYYY-MM-DD 或 ''
+        var start = document.getElementById('priceSignDateStart').value;
         var end = document.getElementById('priceSignDateEnd').value;
+        // 按 tab + 日期过滤
         var data = PRICE_MOCK_CONTRACTS.filter(function(c) {
-          // tap 过滤
           if (priceCurrentContractTab === 'purchase' && c.type !== 'purchase') return false;
           if (priceCurrentContractTab === 'sales' && c.type !== 'sales') return false;
-          // 签订日期范围过滤（按 signDate 比较）
           if (start && c.signDate < start) return false;
           if (end && c.signDate > end) return false;
           return true;
         });
+        // 框架合同（含子合同判定：只要父合同本身在 data 中就显示）
+        var frameworks = data.filter(function(c) { return c.isFramework; });
+        // 普通合同（无父无子的单条）
+        var standalones = data.filter(function(c) { return !c.isFramework && !c.parentId; });
+
         var html = '';
-        if (data.length === 0) {
+        if (frameworks.length === 0 && standalones.length === 0) {
           html = '<tr class="empty-row"><td colspan="6">当前筛选条件下暂无合同</td></tr>';
         } else {
-          data.forEach(function(c) {
+          // 渲染框架合同 + 子合同
+          frameworks.forEach(function(fw) {
+            var children = data.filter(function(c) { return c.parentId === fw.id; });
+            var expanded = priceContractExpanded[fw.id] !== false; // 默认展开
+            // 父合同选中状态计算：所有子合同都选 → checked + non-indeterminate；部分子合同选 → indeterminate
+            var selectedChildCount = priceSelectedContracts.filter(function(x) {
+              return children.some(function(ch) { return ch.id === x.id; });
+            }).length;
+            var allChildrenSelected = children.length > 0 && selectedChildCount === children.length;
+            var someChildrenSelected = selectedChildCount > 0 && selectedChildCount < children.length;
+            var parentChecked = allChildrenSelected;
+            var parentIndeterminate = someChildrenSelected;
+            var usedTag = fw.used ? '<span class="used-tag" title="已关联规则：' + (fw.usedBy || '') + '">已配置</span>' : '';
+            var typeClass = fw.type === 'purchase' ? 'col-type-purchase' : 'col-type-sales';
+            var arrowIcon = expanded ? '▼' : '▶';
+            html += ''
+              + '<tr class="row-framework ' + (parentChecked || parentIndeterminate ? 'selected' : '') + '" onclick="togglePriceContract(\'' + fw.id + '\')">'
+              + '  <td class="col-check">'
+              + '    <span class="tree-toggle" onclick="event.stopPropagation();togglePriceContractExpand(\'' + fw.id + '\')" title="' + (expanded ? '收起' : '展开') + '">' + arrowIcon + '</span>'
+              + '    <input type="checkbox" ' + (parentChecked ? 'checked' : '') + (parentIndeterminate ? ' data-indeterminate="true"' : '') + ' onclick="event.stopPropagation();togglePriceContract(\'' + fw.id + '\')">'
+              + '  </td>'
+              + '  <td class="col-code"><span class="framework-badge">框架</span>' + fw.code + usedTag + '</td>'
+              + '  <td>' + fw.party + '</td>'
+              + '  <td>' + fw.signDate + ' ~ ' + fw.endDate + '</td>'
+              + '  <td class="' + typeClass + '">' + fw.typeLabel + ' / ' + fw.amount + '</td>'
+              + '  <td class="col-status">' + fw.status + '</td>'
+              + '</tr>';
+            // 展开时渲染子合同
+            if (expanded) {
+              children.forEach(function(ch) {
+                var isSel = priceSelectedContracts.some(function(x) { return x.id === ch.id; });
+                var chTypeClass = ch.type === 'purchase' ? 'col-type-purchase' : 'col-type-sales';
+                html += ''
+                  + '<tr class="row-child ' + (isSel ? 'selected' : '') + '" onclick="togglePriceContract(\'' + ch.id + '\')">'
+                  + '  <td class="col-check"><span class="tree-connector"></span><input type="checkbox" ' + (isSel ? 'checked' : '') + ' onclick="event.stopPropagation();togglePriceContract(\'' + ch.id + '\')"></td>'
+                  + '  <td class="col-code"><span class="child-code">' + ch.code + '</span></td>'
+                  + '  <td>' + ch.party + '</td>'
+                  + '  <td>' + ch.signDate + ' ~ ' + ch.endDate + '</td>'
+                  + '  <td class="' + chTypeClass + '">' + ch.typeLabel + ' / ' + ch.amount + '</td>'
+                  + '  <td class="col-status">' + ch.status + '</td>'
+                  + '</tr>';
+              });
+            }
+          });
+          // 渲染普通合同
+          standalones.forEach(function(c) {
             var isSel = priceSelectedContracts.some(function(x) { return x.id === c.id; });
             var usedTag = c.used ? '<span class="used-tag" title="已关联规则：' + (c.usedBy || '') + '">已配置</span>' : '';
             var typeClass = c.type === 'purchase' ? 'col-type-purchase' : 'col-type-sales';
             html += ''
-              + '<tr class="' + (isSel ? 'selected' : '') + '" onclick="togglePriceContract(\'' + c.id + '\')">'
+              + '<tr class="row-standalone ' + (isSel ? 'selected' : '') + '" onclick="togglePriceContract(\'' + c.id + '\')">'
               + '  <td class="col-check"><input type="checkbox" ' + (isSel ? 'checked' : '') + ' onclick="event.stopPropagation();togglePriceContract(\'' + c.id + '\')"></td>'
               + '  <td class="col-code">' + c.code + usedTag + '</td>'
               + '  <td>' + c.party + '</td>'
@@ -1443,14 +1548,26 @@
           });
         }
         document.getElementById('priceContractList').innerHTML = '<table class="price-contract-table"><thead><tr><th class="col-check"></th><th>合同编号</th><th>对方企业</th><th>合同期限</th><th>类型 / 数量</th><th class="col-status">状态</th></tr></thead><tbody>' + html + '</tbody></table>';
+        // 渲染完后设置 indeterminate 状态（必须在 DOM 渲染完成后调用）
+        document.querySelectorAll('.price-contract-table input[type="checkbox"][data-indeterminate="true"]').forEach(function(cb) {
+          cb.indeterminate = true;
+        });
         updatePriceContractCounts();
       }
 
-      // v1.7.99.263.1 更新 3 个 tap 计数（按当前日期筛选后的数据）
+      // v1.7.99.263.3 切换框架合同展开/折叠
+      function togglePriceContractExpand(fwId) {
+        priceContractExpanded[fwId] = !(priceContractExpanded[fwId] !== false);
+        renderPriceContractList();
+      }
+
+      // v1.7.99.263.1 更新 3 个 tap 计数（按当前日期筛选后，框架合同 + 普通合同 = 总数；不含子合同）
       function updatePriceContractCounts() {
         var start = document.getElementById('priceSignDateStart').value;
         var end = document.getElementById('priceSignDateEnd').value;
+        // 框架合同 + 普通合同（不含子合同，因为子合同跟随父显示，不独立计数）
         var filtered = PRICE_MOCK_CONTRACTS.filter(function(c) {
+          if (c.parentId) return false; // 子合同不计数
           if (start && c.signDate < start) return false;
           if (end && c.signDate > end) return false;
           return true;
@@ -1463,15 +1580,38 @@
         document.getElementById('priceContractCountSales').textContent = sales;
       }
 
-      // v1.7.99.263.1 切换合同选中状态（多选 toggle）
+      // v1.7.99.263.3 切换合同选中状态（多选 + 父子联动）
+      // 父合同 toggle：选中则所有子合同都选中；未选中则所有子合同都取消
+      // 子合同 / 普通合同 toggle：仅切换自身
       function togglePriceContract(id) {
         var c = PRICE_MOCK_CONTRACTS.find(function(x) { return x.id === id; });
         if (!c) return;
-        var idx = priceSelectedContracts.findIndex(function(x) { return x.id === id; });
-        if (idx >= 0) {
-          priceSelectedContracts.splice(idx, 1);
+        if (c.isFramework) {
+          // 父合同 toggle：联动所有子合同
+          var children = PRICE_MOCK_CONTRACTS.filter(function(x) { return x.parentId === id; });
+          var allSelected = children.length > 0 && children.every(function(ch) {
+            return priceSelectedContracts.some(function(x) { return x.id === ch.id; });
+          });
+          // 先移除所有子合同
+          priceSelectedContracts = priceSelectedContracts.filter(function(x) {
+            return !children.some(function(ch) { return ch.id === x.id; });
+          });
+          if (!allSelected) {
+            // 全选所有子合同
+            children.forEach(function(ch) {
+              if (!priceSelectedContracts.some(function(x) { return x.id === ch.id; })) {
+                priceSelectedContracts.push(ch);
+              }
+            });
+          }
         } else {
-          priceSelectedContracts.push(c);
+          // 子合同 / 普通合同 toggle：仅切换自身
+          var idx = priceSelectedContracts.findIndex(function(x) { return x.id === id; });
+          if (idx >= 0) {
+            priceSelectedContracts.splice(idx, 1);
+          } else {
+            priceSelectedContracts.push(c);
+          }
         }
         renderPriceContractList();
         renderPriceContractSelectedPreview();
