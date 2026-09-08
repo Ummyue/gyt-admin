@@ -113,7 +113,13 @@
     return d.getFullYear() + '-' + p(d.getMonth()+1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
   }
   function getPageKey() {
-    return location.pathname;
+    // v1.7.99.262.6 fix: 兼容 CF Pages clean URL
+    // CF Pages: /app, /pages/foo (无 .html)
+    // 本地 file://: /path/to/file.html (带 .html)
+    // 统一归一化为无 .html 格式，与 v1.7.99.262 期间创建的老数据保持一致
+    var p = location.pathname;
+    if (p !== '/') p = p.replace(/\.html$/i, '');
+    return p;
   }
   function isLocked() {
     return Date.now() < state.lockedUntil;
@@ -366,9 +372,15 @@
       e.stopPropagation();
       if (state.pinMode || state.authorized) {
         openEditor(pin);
-      } else {
-        // 只读模式：显示 tooltip
+      } else if (pin.note) {
+        // 只读模式：显示 tooltip（仅当有备注）
         showTooltip(el, pin);
+      } else {
+        // v1.7.99.262.6 fix: 空备注 pin 在未授权状态下点击会「无反应」
+        // 提示用户需要解锁才能编辑/查看
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+          Utils.toast('该标记点暂无备注，请解锁后编辑', 'info');
+        }
       }
     });
     el.addEventListener('mouseenter', function() {
