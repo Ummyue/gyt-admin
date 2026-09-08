@@ -16,6 +16,13 @@
     .project-desc-grid .readonly-textarea { width: 100%; box-sizing: border-box; word-break: break-word; }
     .invest-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 24px; }
     .invest-grid .info-item { min-width: 0; }
+    /* v1.7.99.265 风控合规提醒：6 个分类 tap 切换 */
+    .risk-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-light); background: #F8FAFC; padding: 0 16px; overflow-x: auto; }
+    .risk-tab { padding: 10px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+    .risk-tab:hover { color: var(--color-primary); }
+    .risk-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .risk-tab .count { display: inline-block; margin-left: 4px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; min-width: 20px; text-align: center; }
+    .risk-panel { padding: 0; }
   </style>
 </head>
 <body>
@@ -232,10 +239,40 @@
           </div>
         </div>
 
-        <!-- Tab 切换（v1.7.99.106：6 Tab → 5 Tab，删「准入意见」+「审批记录」，新增「审批准入」/ 完成后变「审批准入详情」，附件按 status 动态显示 v1.7.99.74 保留） -->
+        <!-- v1.7.99.265 风控合规提醒：6 个分类 tap 切换（原 Tab 2 风险扫描结果迁移到下方独立 card） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">风控合规提醒</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
+              <span>扫描时间：2026-07-17 15:46:04</span>
+              <span style="color: var(--text-tertiary);">|</span>
+              <span>27 项扫描</span>
+              <span class="risk-count-warn">5 项风险</span>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <!-- 6 个分类 tap -->
+            <div class="risk-tabs" id="riskTabs">
+              <div class="risk-tab active" data-tab="trade" onclick="switchRiskTab('trade')">综合贸易风险 <span class="count" id="riskCountTrade">0</span></div>
+              <div class="risk-tab" data-tab="internal" onclick="switchRiskTab('internal')">内部数据 <span class="count" id="riskCountInternal">0</span></div>
+              <div class="risk-tab" data-tab="business" onclick="switchRiskTab('business')">经营风险 <span class="count" id="riskCountBusiness">0</span></div>
+              <div class="risk-tab" data-tab="judicial" onclick="switchRiskTab('judicial')">司法风险 <span class="count" id="riskCountJudicial">0</span></div>
+              <div class="risk-tab" data-tab="relation" onclick="switchRiskTab('relation')">关系发现 <span class="count" id="riskCountRelation">0</span></div>
+              <div class="risk-tab" data-tab="personnel" onclick="switchRiskTab('personnel')">人员风险 <span class="count" id="riskCountPersonnel">0</span></div>
+            </div>
+            <!-- 6 个 panel（默认全部 hidden，由 JS 切换显示） -->
+            <div class="risk-panel" id="riskPanelTrade"></div>
+            <div class="risk-panel" id="riskPanelInternal" hidden></div>
+            <div class="risk-panel" id="riskPanelBusiness" hidden></div>
+            <div class="risk-panel" id="riskPanelJudicial" hidden></div>
+            <div class="risk-panel" id="riskPanelRelation" hidden></div>
+            <div class="risk-panel" id="riskPanelPersonnel" hidden></div>
+          </div>
+        </div>
+
+        <!-- Tab 切换（v1.7.99.265：删除「风险扫描结果」Tab，迁移到下方独立 card「风控合规提醒」） -->
         <div class="tabs" style="margin-bottom: 16px;" id="detailTabs">
           <div class="tab active" data-tab="1">企业信息</div>
-          <div class="tab" data-tab="2">风险扫描结果 <span style="color: var(--color-danger); font-weight: 500;">（1项风险）</span></div>
           <div class="tab" data-tab="3">客户股权关系</div>
           <div class="tab" data-tab="4" id="tab4Label">审批准入</div>
           <div class="tab" data-tab="5" id="tab5Attachment" hidden>附件</div>
@@ -306,113 +343,6 @@
       </div>
         </div>
         <!-- ========== /Tab 1 ========== -->
-
-        <!-- ========== Tab 2：风险扫描结果 ========== -->
-        <div id="tab2Content" hidden>
-          <div class="card" style="margin-bottom: 16px;">
-            <div class="card-header">
-              <div class="card-title">企业风险扫描结果</div>
-              <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
-                <span>扫描时间：2026-07-17 15:46:04</span>
-                <span style="color: var(--text-tertiary);">|</span>
-                <span>11 项扫描</span>
-                <span class="risk-count-warn">1 项风险</span>
-              </div>
-            </div>
-            <div class="card-body" style="padding: 0;">
-              <div class="risk-item">
-                <div class="risk-num">1</div>
-                <div class="risk-content">
-                  <div class="risk-name">合作黑名单</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">2</div>
-                <div class="risk-content">
-                  <div class="risk-name">假国央企</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">3</div>
-                <div class="risk-content">
-                  <div class="risk-name">失信被执行人信息</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">4</div>
-                <div class="risk-content">
-                  <div class="risk-name">被执行人信息</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item" style="background: var(--color-primary-lighter);">
-                <div class="risk-num">5</div>
-                <div class="risk-content">
-                  <div class="risk-name">限制消费令信息</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">6</div>
-                <div class="risk-content">
-                  <div class="risk-name">终本案件</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">7</div>
-                <div class="risk-content">
-                  <div class="risk-name">税收违法信息</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item risk-warn">
-                <div class="risk-num">8</div>
-                <div class="risk-content">
-                  <div class="risk-name">行政/工商违法处罚信息</div>
-                  <div class="risk-desc" style="color: var(--color-danger);">截至 2026-07-17 15:46:04，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2022-12-01</mark> 因「销售不合格消防产品」存在 <strong>行政处罚 5 万元</strong>，并已足额缴纳罚款。</div>
-                </div>
-                <span class="risk-status warn">风险提示</span>
-              </div>
-              <!-- v1.7.99.264 新增 3 项判定 -->
-              <div class="risk-item">
-                <div class="risk-num">9</div>
-                <div class="risk-content">
-                  <div class="risk-name">空壳企业识别</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业已通过注册地址核验、社保参保人数核验、实缴资本核验、股东变更频次核验等综合指标排查，未识别出空壳企业特征。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">10</div>
-                <div class="risk-content">
-                  <div class="risk-name">关联交易风险</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业股权关系图谱中未识别出异常关联关系，与已知风险企业无共同股东或交叉任职情形。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-              <div class="risk-item">
-                <div class="risk-num">11</div>
-                <div class="risk-content">
-                  <div class="risk-name">资质缺失风险</div>
-                  <div class="risk-desc">截至 2026-07-17 15:46:04，该企业经营范围内各项业务所需资质（营业执照、行业许可证、信用评级等）均已通过国家企业信用信息公示系统核验有效。</div>
-                </div>
-                <span class="risk-status ok">暂无风险</span>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- ========== /Tab 2 ========== -->
 
         <!-- ========== Tab 3：客户股权关系 ========== -->
         <div id="tab3Content" hidden>
@@ -754,10 +684,10 @@
   </div>
 
   <script>
-    // ===== v1.7.99.106 Tab 切换（5 tab：1企业信息/2风险扫描/3客户股权关系/4审批准入/5附件） =====
+    // ===== v1.7.99.265 Tab 切换（4 tab：1企业信息/3客户股权关系/4审批准入/5附件；风险扫描迁移到独立 card） =====
     function switchTab(n) {
       n = Math.max(1, Math.min(5, n));
-      [1, 2, 3, 4, 5].forEach(i => {
+      [1, 3, 4, 5].forEach(i => {
         const el = document.getElementById(`tab${i}Content`);
         if (el) el.hidden = (i !== n);
       });
@@ -766,6 +696,115 @@
         t.classList.toggle('active', parseInt(t.dataset.tab, 10) === n);
       });
     }
+
+    // ===== v1.7.99.265 风控合规提醒：6 个分类 27 项扫描数据（按 user 2026-09-08 需求） =====
+    // 适用项目：LX20260205002 河南军牧原国际贸易有限公司（玉米收购加工）
+    var RISK_DATA = {
+      trade: {  // 综合贸易风险
+        label: '综合贸易风险',
+        items: [
+          { name: '空壳企业识别', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业已通过注册地址核验、社保参保人数核验、实缴资本核验、股东变更频次核验等综合指标排查，未识别出空壳企业特征。' },
+          { name: '关联交易风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业股东「张志明」同时担任「郑州牧原粮油有限公司」股东（持股 35%），并与该企业存在 2024-2025 年度玉米采购关联交易累计 1,200 万元，存在关联交易风险。' },
+          { name: '资质缺失风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业经营范围内含「粮食收购 / 货物进出口」，但未在「国家粮食和物资储备局」查到有效的「粮食收购许可证」，存在资质缺失风险。' }
+        ]
+      },
+      internal: {  // 内部数据
+        label: '内部数据',
+        items: [
+          { name: '合作黑名单', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业未在我司合作黑名单中。不排除因信息更新延迟导致的不一致情形。' },
+          { name: '假国央企', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业性质为「有限责任公司（自然人投资或控股）」，未发现冒用国央企资质或虚假宣传情形。' }
+        ]
+      },
+      business: {  // 经营风险
+        label: '经营风险',
+        items: [
+          { name: '税收违法信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在税收违法信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。' },
+          { name: '行政或工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2024-08-15</mark> 因「销售水分超标玉米」存在 <strong>行政处罚 8 万元</strong>，并已足额缴纳罚款。' }
+        ]
+      },
+      judicial: {  // 司法风险
+        label: '司法风险',
+        items: [
+          { name: '失信被执行人信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在失信被执行人信息。' },
+          { name: '被执行人信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在被执行人信息。' },
+          { name: '限制消费令信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在限制消费令信息。' },
+          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在终本案件。' }
+        ]
+      },
+      relation: {  // 关系发现
+        label: '关系发现',
+        items: [
+          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，未识别出该企业与其他已知风险企业存在隐性关联关系。' },
+          { name: '疑似实际控制人相同', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业实际控制人「张志明」与「郑州牧原粮油有限公司」实际控制人为同一人，存在疑似实际控制人相同情形，需重点关注关联交易公允性。' },
+          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业与我司现有合作企业网络中的最短关联路径为 2 层（通过实际控制人），未发现 1 层直接关联。' }
+        ]
+      },
+      personnel: {  // 人员风险
+        label: '人员风险',
+        items: [
+          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人和主要管理人员不存在限制出境记录。' },
+          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在终本案件。' },
+          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在历史限制消费令记录。' },
+          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在当前限制消费令。' },
+          { name: '法律诉讼', status: 'warn', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」涉及 1 笔 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2025-03-22</mark> 买卖合同纠纷诉讼，标的 35 万元，案件审理中。' },
+          { name: '历史法律诉讼', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史法律诉讼已结案，未发现尚未解决的法律风险。' },
+          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」未来 30 天内无开庭公告。' },
+          { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史开庭公告已结案。' },
+          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在被执行人记录。' },
+          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在司法协助记录。' },
+          { name: '历史被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史被执行人记录已结案。' },
+          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在失信被执行人记录。' },
+          { name: '历史失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史失信被执行人记录已结案。' }
+        ]
+      }
+    };
+
+    // 切换风险分类 tap
+    function switchRiskTab(key) {
+      document.querySelectorAll('.risk-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === key));
+      document.querySelectorAll('.risk-panel').forEach(p => p.hidden = (p.id !== 'riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)));
+    }
+
+    // 渲染单个 panel
+    function renderRiskPanel(key) {
+      var data = RISK_DATA[key];
+      if (!data) return;
+      var html = data.items.map(function(item, i) {
+        var isWarn = item.status === 'warn';
+        return '<div class="risk-item' + (isWarn ? ' risk-warn' : '') + '">'
+          + '<div class="risk-num">' + (i + 1) + '</div>'
+          + '<div class="risk-content">'
+          + '<div class="risk-name">' + item.name + '</div>'
+          + '<div class="risk-desc"' + (isWarn ? ' style="color: var(--color-danger);"' : '') + '>' + item.desc + '</div>'
+          + '</div>'
+          + '<span class="risk-status ' + item.status + '">' + (isWarn ? '风险提示' : '暂无风险') + '</span>'
+          + '</div>';
+      }).join('');
+      document.getElementById('riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)).innerHTML = html;
+    }
+
+    // 更新 6 个 tap 的计数
+    function updateRiskTabCounts() {
+      ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(function(key) {
+        var data = RISK_DATA[key];
+        if (!data) return;
+        var count = data.items.filter(function(x) { return x.status === 'warn'; }).length;
+        var el = document.getElementById('riskCount' + key.charAt(0).toUpperCase() + key.slice(1));
+        if (el) {
+          el.textContent = count;
+          el.parentElement.querySelector ? null : null;
+          if (count > 0) el.style.background = 'rgba(220, 38, 38, 0.1)';
+          if (count > 0) el.style.color = '#DC2626';
+        }
+      });
+    }
+
+    // 初始化：渲染 6 个 panel
+    function initRiskPanel() {
+      ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
+      updateRiskTabCounts();
+    }
+    initRiskPanel();
     // 点击 tab 标签
     document.querySelectorAll('#detailTabs .tab').forEach(t => {
       t.addEventListener('click', () => {
