@@ -1029,22 +1029,22 @@
           <label class="add-rule-label required"><span class="required-mark">*</span>规则类型</label>
           <select class="add-rule-select" id="priceRuleType" onchange="onPriceRuleTypeChange()">
             <option value="">请选择</option>
-            <option value="d1" selected>本期价格与指定日期价格对比</option>
-            <option value="d2">本期价格与当月月初价格对比</option>
-            <option value="d3">本期价格与上月同期价格对比</option>
-            <option value="d4">本期价格与上上月同期价格对比</option>
-            <option value="d5">本期价格与本年年初价格对比</option>
-            <option value="d6">本期价格与去年同期价格对比</option>
-            <option value="d7">本期价格与当月平均价格对比</option>
-            <option value="d8">本期价格与当月最高价格对比</option>
-            <option value="d9">本期价格与当月最低价格对比</option>
-            <option value="d10">本期价格与当年平均价格对比</option>
-            <option value="d11">本期价格与当年最高价格对比</option>
-            <option value="d12">本期价格与当年最低价格对比</option>
-            <option value="d13">本期价格与最近N个自然日内平均价格对比</option>
-            <option value="d14">本期价格与最近N个自然日内最高价格对比</option>
-            <option value="d15">本期价格与最近N个自然日内最低价格对比</option>
-            <option value="d16">本期价格与各地现货交易最高限价N对比</option>
+            <option value="d1" selected data-label-no="本期价格与指定日期价格对比" data-label-yes="合同价格与指定日期价格对比">本期价格与指定日期价格对比</option>
+            <option value="d2" data-label-no="本期价格与当月月初价格对比" data-label-yes="合同价格与当月月初价格对比">本期价格与当月月初价格对比</option>
+            <option value="d3" data-label-no="本期价格与上月同期价格对比" data-label-yes="合同价格与上月同期价格对比">本期价格与上月同期价格对比</option>
+            <option value="d4" data-label-no="本期价格与上上月同期价格对比" data-label-yes="合同价格与上上月同期价格对比">本期价格与上上月同期价格对比</option>
+            <option value="d5" data-label-no="本期价格与本年年初价格对比" data-label-yes="合同价格与本年年初价格对比">本期价格与本年年初价格对比</option>
+            <option value="d6" data-label-no="本期价格与去年同期价格对比" data-label-yes="合同价格与去年同期价格对比">本期价格与去年同期价格对比</option>
+            <option value="d7" data-label-no="本期价格与当月平均价格对比" data-label-yes="合同价格与当月平均价格对比">本期价格与当月平均价格对比</option>
+            <option value="d8" data-label-no="本期价格与当月最高价格对比" data-label-yes="合同价格与当月最高价格对比">本期价格与当月最高价格对比</option>
+            <option value="d9" data-label-no="本期价格与当月最低价格对比" data-label-yes="合同价格与当月最低价格对比">本期价格与当月最低价格对比</option>
+            <option value="d10" data-label-no="本期价格与当年平均价格对比" data-label-yes="合同价格与当年平均价格对比">本期价格与当年平均价格对比</option>
+            <option value="d11" data-label-no="本期价格与当年最高价格对比" data-label-yes="合同价格与当年最高价格对比">本期价格与当年最高价格对比</option>
+            <option value="d12" data-label-no="本期价格与当年最低价格对比" data-label-yes="合同价格与当年最低价格对比">本期价格与当年最低价格对比</option>
+            <option value="d13" data-label-no="本期价格与最近N个自然日内平均价格对比" data-label-yes="合同价格与最近N个自然日内平均价格对比">本期价格与最近N个自然日内平均价格对比</option>
+            <option value="d14" data-label-no="本期价格与最近N个自然日内最高价格对比" data-label-yes="合同价格与最近N个自然日内最高价格对比">本期价格与最近N个自然日内最高价格对比</option>
+            <option value="d15" data-label-no="本期价格与最近N个自然日内最低价格对比" data-label-yes="合同价格与最近N个自然日内最低价格对比">本期价格与最近N个自然日内最低价格对比</option>
+            <option value="d16" data-label-no="本期价格与各地现货交易最高限价N对比" data-label-yes="合同价格与各地现货交易最高限价N对比">本期价格与各地现货交易最高限价N对比</option>
           </select>
         </div>
         <!-- v1.7.99.270 配置自然日（仅规则类型为 d13/d14/d15 时显示） -->
@@ -1415,6 +1415,16 @@
         }
       }
 
+      // v1.7.99.272 关联合同=是时 规则类型选项「本期价格」→「合同价格」
+      function refreshPriceRuleTypeLabels(yes) {
+        var sel = document.getElementById('priceRuleType');
+        if (!sel) return;
+        Array.from(sel.options).forEach(function(opt) {
+          var label = yes ? opt.getAttribute('data-label-yes') : opt.getAttribute('data-label-no');
+          if (label) opt.textContent = label;
+        });
+      }
+
       // ===== v1.7.99.263 合同选择控件（价格波动 tap「关联合同」联动） =====
       // v1.7.99.263.1 改为多选 + 加签订日期筛选
       // v1.7.99.263.3 改为树形父子集结构（框架合同 + 子合同）
@@ -1459,6 +1469,8 @@
           // v1.7.99.271 关联合同=否时隐藏「参考价格」下的「签订日期」checkbox
           var signDateWrap = document.getElementById('priceRefSignDateWrap');
           if (signDateWrap) signDateWrap.style.display = 'none';
+          // v1.7.99.272 关联合同=否时 规则类型选项恢复「本期价格」
+          refreshPriceRuleTypeLabels(false);
           var sStart = document.getElementById('priceSignDateStart');
           var sEnd = document.getElementById('priceSignDateEnd');
           if (sStart) { sStart.disabled = true; sStart.value = ''; }
@@ -1471,6 +1483,8 @@
           // v1.7.99.271 关联合同=是时显示「参考价格」下的「签订日期」checkbox
           var signDateWrap2 = document.getElementById('priceRefSignDateWrap');
           if (signDateWrap2) signDateWrap2.style.display = '';
+          // v1.7.99.272 关联合同=是时 规则类型选项切换为「合同价格」
+          refreshPriceRuleTypeLabels(true);
           // 关联合同 = 是：业务类型必显示，关联合同按业务类型是否已选决定
           if (bizTypeRow) bizTypeRow.style.display = '';
           if (contractRow) contractRow.style.display = bizVal ? '' : 'none';
