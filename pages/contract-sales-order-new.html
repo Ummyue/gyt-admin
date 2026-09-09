@@ -396,7 +396,17 @@
               </div>
               <div class="form-field">
                 <label class="form-label">保证金调整方式</label>
-                <select class="select"><option value="">请选择调整方式</option><option>按合同金额调整</option><option>按实际货值调整</option><option>按市场行情调整</option><option>固定不变</option></select>
+                <div style="display: flex; gap: 12px; align-items: center;">
+                  <select class="select" id="marginAdjustMethod" style="flex: 1;" onchange="toggleOffsetRatioInput(this.value)">
+                    <option value="">请选择调整方式</option>
+                    <option value="no_adjust">暂不调整</option>
+                    <option value="offset">等比例冲抵货款</option>
+                  </select>
+                  <div id="offsetRatioInput" hidden style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                    <input type="number" class="input" style="width: 100px;" placeholder="冲抵比例" min="0" max="100" step="1" value="100">
+                    <span style="color: var(--text-tertiary); font-size: 13px;">%</span>
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -654,6 +664,12 @@
       document.querySelectorAll('.attach-name-required').forEach(function(row) {
         row.innerHTML = '<span class="required">*</span> ' + label;
       });
+    }
+
+    // v1.7.99.275 保证金调整方式：选择「等比例冲抵货款」时显示冲抵比例输入框
+    function toggleOffsetRatioInput(value) {
+      var input = document.getElementById('offsetRatioInput');
+      if (input) input.hidden = (value !== 'offset');
     }
 
     </script>
