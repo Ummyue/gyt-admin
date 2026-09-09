@@ -1080,15 +1080,12 @@
             <option value="amount">最大波动金额超过阈值触发报警</option>
           </select>
         </div>
-        <!-- 7. 参考价格（select + checkbox） -->
+        <!-- 7. 参考价格（v1.7.99.273：改为输入框 + 单位「元」+ 保留签订日期 checkbox） -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>参考价格</label>
           <div class="add-rule-price-ref-group">
-            <select class="add-rule-select add-rule-price-ref-select" id="priceRef">
-              <option value="none" selected>无</option>
-              <option value="contract">合同价</option>
-              <option value="market">市场价</option>
-            </select>
+            <input type="number" class="add-rule-input" id="priceRefValue" min="0" step="0.01" placeholder="请输入金额" style="flex: 1; max-width: 200px;">
+            <span style="font-size: 13px; color: var(--text-secondary);">元</span>
             <label class="add-rule-checkbox" id="priceRefSignDateWrap"><input type="checkbox" id="priceRefSignDate" checked><span>签订日期</span></label>
           </div>
         </div>
