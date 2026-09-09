@@ -1089,7 +1089,7 @@
               <option value="contract">合同价</option>
               <option value="market">市场价</option>
             </select>
-            <label class="add-rule-checkbox"><input type="checkbox" id="priceRefSignDate" checked><span>签订日期</span></label>
+            <label class="add-rule-checkbox" id="priceRefSignDateWrap"><input type="checkbox" id="priceRefSignDate" checked><span>签订日期</span></label>
           </div>
         </div>
         <!-- 8. 配置项（涨幅/跌幅 + 超过 + 数字 + %） -->
@@ -1456,6 +1456,9 @@
           // 关联合同 = 否：业务类型 + 关联合同 全部隐藏，状态全部清理
           if (bizTypeRow) bizTypeRow.style.display = 'none';
           if (contractRow) contractRow.style.display = 'none';
+          // v1.7.99.271 关联合同=否时隐藏「参考价格」下的「签订日期」checkbox
+          var signDateWrap = document.getElementById('priceRefSignDateWrap');
+          if (signDateWrap) signDateWrap.style.display = 'none';
           var sStart = document.getElementById('priceSignDateStart');
           var sEnd = document.getElementById('priceSignDateEnd');
           if (sStart) { sStart.disabled = true; sStart.value = ''; }
@@ -1465,6 +1468,9 @@
           renderPriceContractList();
           renderPriceContractSelectedPreview();
         } else {
+          // v1.7.99.271 关联合同=是时显示「参考价格」下的「签订日期」checkbox
+          var signDateWrap2 = document.getElementById('priceRefSignDateWrap');
+          if (signDateWrap2) signDateWrap2.style.display = '';
           // 关联合同 = 是：业务类型必显示，关联合同按业务类型是否已选决定
           if (bizTypeRow) bizTypeRow.style.display = '';
           if (contractRow) contractRow.style.display = bizVal ? '' : 'none';
