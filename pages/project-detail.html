@@ -289,71 +289,6 @@
         </div>
         <!-- /v1.7.99.274 stepPanel2 企业尽调报告（风控合规提醒） -->
 
-        <!-- v1.7.99.274 步骤 3：审批详情（原 tab4 审批进度） -->
-        <div id="stepPanel3" hidden>
-          <div class="card-header">
-            <div class="card-title">基本信息</div>
-          </div>
-          <div class="card-body" style="padding: 0;">
-            <table class="info-table">
-              <tbody>
-                <tr>
-                  <td class="info-label">企业名称</td>
-                  <td class="info-value">河南军牧原国际贸易有限公司</td>
-                  <td class="info-label">客户类别</td>
-                  <td class="info-value">
-                    <span class="tag tag-blue">上游客户</span>
-                  </td>
-                  <td class="info-label">国家</td>
-                  <td class="info-value">中国</td>
-                </tr>
-                <tr>
-                  <td class="info-label">注册地址</td>
-                  <td class="info-value">河南省郑州市金水区花园路 159 号</td>
-                  <td class="info-label">统一社会信用代码</td>
-                  <td class="info-value" style="font-family: var(--font-mono); font-size: 13px;">91XXXXXXMAXXXXXXXX</td>
-                  <td class="info-label">省份</td>
-                  <td class="info-value">河南</td>
-                </tr>
-                <tr>
-                  <td class="info-label">成立日期</td>
-                  <td class="info-value">2009-01-01</td>
-                  <td class="info-label">经营期限（止）</td>
-                  <td class="info-value">2099-01-01</td>
-                  <td class="info-label">法定代表人</td>
-                  <td class="info-value">张志明</td>
-                </tr>
-                <tr>
-                  <td class="info-label">联系人姓名</td>
-                  <td class="info-value">吴军</td>
-                  <td class="info-label">负责人姓名</td>
-                  <td class="info-value">胡志明</td>
-                  <td class="info-label">负责人电话</td>
-                  <td class="info-value">138 0000 XXXX</td>
-                </tr>
-                <tr>
-                  <td class="info-label">联系人电话</td>
-                  <td class="info-value">138 0000 XXXX</td>
-                  <td class="info-label">经营范围</td>
-                  <td class="info-value" colspan="3">粮食收购、销售；农副产品、饲料销售；货物进出口、技术进出口</td>
-                </tr>
-                <tr>
-                  <td class="info-label">联系人邮箱</td>
-                  <td class="info-value">business@example.com</td>
-                  <td class="info-label">注册资本</td>
-                  <td class="info-value">¥ 5,000 万元</td>
-                  <td class="info-label">实缴资本</td>
-                  <td class="info-value">¥ 5,000 万元</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-      </div>
-        </div>
-        <!-- ========== /Tab 1 ========== -->
-
         <!-- ========== v1.7.99.274 步骤 3：审批详情（原 Tab 4 审批进度） ========== -->
         <div id="stepPanel3" hidden>
           <div id="tab4Content">
@@ -697,6 +632,9 @@
       // v1.7.99.274 底部 footer 仅在第 3 步（审批详情）显示「审批通过/驳回审批」
       var footer = document.getElementById('footerActions');
       if (footer) footer.style.display = (n === 3) ? '' : 'none';
+      // v1.7.99.274.1 兼容旧 tab4Content（审批进度原 Tab 4 容器）：步骤 3 时显示，其他步骤隐藏
+      var tab4Content = document.getElementById('tab4Content');
+      if (tab4Content) tab4Content.hidden = (n !== 3);
     }
 
     // ===== v1.7.99.265 Tab 切换（4 tab：1企业信息/3客户股权关系/4审批准入/5附件；风险扫描迁移到独立 card） =====
