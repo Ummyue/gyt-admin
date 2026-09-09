@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保证金调整记录 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .detail-header { padding: 16px 24px; background: #fff; border-bottom: 1px solid var(--border-light); flex-direction: column; }
+    /* v1.7.99.201：顶部重排——1+3+3 布局
+       行 1：保 icon + 标题"保证金调整编号："+ 编号值 + 复制 + 已调整 tag
+       行 2：销售订单/单批次编号 / 卖方企业 / 买方企业（3 列）
+       行 3：调整方式 / 创建人 / 创建时间（3 列） */
+    .detail-header-row1 { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: nowrap; }
+    .detail-title-icon { width: 24px; height: 24px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 6px; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 12px; font-weight: 600; flex-shrink: 0; }
+    .detail-title-wrap { display: flex; align-items: center; gap: 12px; flex: 1; min-width: 0; }
+    .detail-title { font-size: 16px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
+    .status-badge { display: inline-block; padding: 2px 10px; font-size: 12px; font-weight: 500; border-radius: 3px; white-space: nowrap; }
+    .status-badge.adjusted { background: #ECFDF5; color: #059669; }
+    .detail-no-wrap { display: flex; align-items: center; gap: 6px; font-size: 13px; white-space: nowrap; }
+    .detail-no-wrap .label { color: var(--text-tertiary); }
+    .detail-no-wrap .value { color: var(--text-primary); font-family: var(--font-mono); }
+    .detail-header-row2, .detail-header-row3 { display: grid; grid-template-columns: 1.6fr 1fr 1fr; gap: 14px 32px; font-size: 13px; }
+    .detail-header-row2 { margin-bottom: 10px; }
+    .detail-header-row2 .item, .detail-header-row3 .item { display: flex; gap: 6px; min-width: 0; }
+    .detail-header-row2 .label, .detail-header-row3 .label { color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
+    .detail-header-row2 .value, .detail-header-row3 .value { color: var(--text-primary); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* row3 col1 内容比 row2 短（"调整方式" vs "销售订单/单批次编号"），允许 value 内容折行显示完整 */
+    .detail-header-row3 .item:nth-child(1) .value { white-space: normal; }
+    .detail-header-row2 .value a, .detail-header-row3 .value a { color: var(--color-primary); text-decoration: none; }
+    .icon-copy { width: 14px; height: 14px; color: var(--text-tertiary); cursor: pointer; margin-left: 4px; vertical-align: middle; flex-shrink: 0; }
+    .detail-tab { display: flex; gap: 24px; padding: 0 24px; border-bottom: 1px solid var(--border-light); background: #fff; }
+    .detail-tab-item { padding: 12px 0; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .detail-tab-item.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .tab-content { padding: 16px 24px; }
+    .info-section { background: #fff; border: 1px solid var(--border-light); border-radius: 6px; margin-bottom: 16px; }
+    .info-section-title { padding: 12px 20px; font-size: 14px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--border-light); margin: 0; }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+    .info-grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 32px; font-size: 13px; }
+    .info-grid-2 .item { display: flex; gap: 8px; }
+    .info-grid-2 .label { color: var(--text-tertiary); min-width: 130px; }
+    .info-grid-2 .value { color: var(--text-primary); }
+    .info-grid-2 .value a { color: var(--color-primary); text-decoration: none; }
+    .info-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 32px; font-size: 13px; }
+    .info-grid-3 .item { display: flex; gap: 8px; }
+    .info-grid-3 .label { color: var(--text-tertiary); min-width: 110px; }
+    .info-grid-3 .value { color: var(--text-primary); }
+    .info-grid-3 .value a { color: var(--color-primary); text-decoration: none; }
+    .op-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .op-table th, .op-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .op-table th { background: var(--bg-page); color: var(--text-secondary); font-weight: 500; }
+    .op-table tbody tr:hover { background: var(--bg-page); }
+    .attachment-toolbar { padding: 8px 16px; border-bottom: 1px solid var(--border-light); }
+    .attachment-toolbar a { color: var(--color-primary); text-decoration: none; font-size: 13px; }
+    /* v1.7.99.276 弹窗：设置等比例冲抵货款比例 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 999; display: none; }
+    .modal-overlay.open { display: block; }
+    .modal-panel {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 520px; max-width: 92vw; max-height: 88vh; background: #fff;
+      border-radius: 8px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      display: none; flex-direction: column; overflow: hidden; z-index: 1000;
+    }
+    .modal-panel.open { display: flex; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+    .modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 22px; line-height: 1; padding: 0 4px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 8px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-header">
+        <div style="display: flex; justify-content: space-between; align-items: center; padding: 12px 24px;">
+          <div class="breadcrumb"><span>资金管理</span><span class="separator">/</span><a href="./margin-pool.html" style="color: var(--text-tertiary); text-decoration: none;">保证金管理</a><span class="separator">/</span><span class="current">保证金调整记录</span></div>
+          <button class="btn btn-default" onclick="history.back()">返回</button>
+        </div>
+      </div>
+
+      <div class="detail-header">
+        <div class="detail-header-row1">
+          <div class="detail-title-icon">保</div>
+          <div class="detail-title-wrap">
+            <span class="detail-title">保证金调整编号：</span>
+            <span class="detail-no-wrap">
+              <span class="value" id="adjustNo">DLXLC-DSRMT-202203</span>
+              <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" onclick="copyAdjustNo()" title="复制编号">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </span>
+          </div>
+          <span class="status-badge adjusted">已调整</span>
+        </div>
+        <div class="detail-header-row2">
+          <div class="item"><span class="label">销售订单/单批次编号：</span><span class="value"><a href="#">DLXLC-DSRMT-202203-001</a>
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" title="复制">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </span></div>
+          <div class="item"><span class="label">卖方企业：</span><span class="value">XXXX 有限公司</span></div>
+          <div class="item"><span class="label">买方企业：</span><span class="value">XXXX 有限公司</span></div>
+        </div>
+        <div class="detail-header-row3">
+          <div class="item"><span class="label">调整方式：</span><span class="value">冲抵最后一笔货款</span></div>
+          <div class="item"><span class="label">创建人：</span><span class="value">业务一部　张三</span></div>
+          <div class="item"><span class="label">创建时间：</span><span class="value">2022-08-12 12:22:32</span></div>
+        </div>
+      </div>
+
+      <div class="detail-tab">
+        <span class="detail-tab-item active" onclick="switchTab('info', this)">保证金调整信息</span>
+        <span class="detail-tab-item" onclick="switchTab('log', this)">操作记录 (10)</span>
+      </div>
+
+      <div id="tab-info" class="tab-content">
+        <!-- 销售订单/单批次合同信息 -->
+        <div class="info-section">
+          <h3 class="info-section-title">销售订单/单批次合同信息</h3>
+          <div class="info-section-body">
+            <div class="info-grid-2">
+              <div class="item"><span class="label">卖方企业：</span><span class="value">河南中豫港通供应链管理有限公司</span></div>
+              <div class="item"><span class="label">买方企业：</span><span class="value">郑州信必达供应链管理有限公司</span></div>
+              <div class="item"><span class="label">品名：</span><span class="value">进口木薯淀粉</span></div>
+              <div class="item"><span class="label">计量单位：</span><span class="value">吨</span></div>
+              <div class="item"><span class="label">合同单价(元/吨)：</span><span class="value">3,400</span></div>
+              <div class="item"><span class="label">合同数量(吨)：</span><span class="value">20,000</span></div>
+              <div class="item"><span class="label">税率(%)：</span><span class="value">13</span></div>
+              <div class="item"><span class="label">签订日期：</span><span class="value">2026-01-22</span></div>
+              <div class="item"><span class="label">合同交货期限：</span><span class="value">2026-01-22 ~ 2026-12-31</span></div>
+              <div class="item"><span class="label">运输方式：</span><span class="value">火运</span></div>
+              <div class="item"><span class="label">业务实际负责人：</span><span class="value">张三-13328888888</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 保证金调整信息 -->
+        <div class="info-section">
+          <h3 class="info-section-title" style="display: flex; justify-content: space-between; align-items: center;">
+            <span>保证金调整信息</span>
+            <button type="button" class="btn-text" style="color: var(--color-primary); font-size: 13px; font-weight: 400;" onclick="openSetOffsetRatioDialog()" title="修改销售合同中已设置的等比例冲抵货款比例">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: -2px; margin-right: 2px;"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
+              设置等比例冲抵货款比例
+            </button>
+          </h3>
+          <div class="info-section-body">
+            <div class="info-grid-2">
+              <div class="item"><span class="label">调整方式：</span><span class="value">冲抵最后一笔货款</span></div>
+              <div class="item"><span class="label">调整前保证金金额：</span><span class="value">100000 元</span></div>
+              <div class="item"><span class="label">冲抵货款金额：</span><span class="value">100 元</span></div>
+              <div class="item" style="grid-column: 1 / -1;"><span class="label">情况说明：</span><span class="value">这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明这是情况说明</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 附件 -->
+        <div class="info-section">
+          <h3 class="info-section-title" style="display: flex; justify-content: space-between; align-items: center;">附件<a href="javascript:void(0)" style="color: var(--color-primary); font-size: 13px; font-weight: 400;">一键下载</a></h3>
+          <div class="info-section-body no-pad">
+            <table class="op-table">
+              <thead>
+                <tr>
+                  <th>单据类型</th>
+                  <th>文件名</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>相关凭证附件</td>
+                  <td><a href="javascript:void(0)" style="color: var(--color-primary); text-decoration: none;">44354657687.pdf</a></td>
+                  <td><a href="javascript:void(0)" style="color: var(--color-primary); text-decoration: none;">下载</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div id="tab-log" class="tab-content" style="display: none;">
+        <div class="info-section">
+          <table class="op-table">
+            <thead>
+              <tr>
+                <th style="width: 18%;">操作类型</th>
+                <th style="width: 12%;">操作人</th>
+                <th style="width: 16%;">所属公司</th>
+                <th>操作内容</th>
+                <th style="width: 18%;">操作时间</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>已调整</td>
+                <td>系统</td>
+                <td>XXXX 公司</td>
+                <td>保证金调整已完成</td>
+                <td>2021-11-15 12:22:32</td>
+              </tr>
+              <tr>
+                <td>调整中</td>
+                <td>张三</td>
+                <td>XXXX 公司</td>
+                <td>提交保证金调整</td>
+                <td>2021-11-15 12:22:32</td>
+              </tr>
+              <tr>
+                <td>已发起</td>
+                <td>张三</td>
+                <td>XXXX 公司</td>
+                <td>填写调整信息</td>
+                <td>2021-11-15 12:22:32</td>
+              </tr>
+              <tr>
+                <td>新建</td>
+                <td>张三</td>
+                <td>XXXX 公司</td>
+                <td>发起保证金调整</td>
+                <td>2021-11-14 12:22:32</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function switchTab(name, el) {
+      document.querySelectorAll('.detail-tab-item').forEach(function(i) { i.classList.remove('active'); });
+      if (el) el.classList.add('active');
+      document.getElementById('tab-info').style.display = (name === 'info') ? '' : 'none';
+      document.getElementById('tab-log').style.display = (name === 'log') ? '' : 'none';
+    }
+    function copyAdjustNo() {
+      var text = 'DLXLC-DSRMT-202203';
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() { Utils.toast('已复制：' + text, 'success'); });
+      } else {
+        Utils.toast('已复制：' + text, 'success');
+      }
+    }
+
+    // ===== v1.7.99.276 设置等比例冲抵货款比例：弹窗 =====
+    // 当前合同中已设置的等比例冲抵货款比例（mock，初始 100%，与销售合同页面合同 sales-order 100% 对齐）
+    var currentOffsetRatio = 100;
+
+    function openSetOffsetRatioDialog() {
+      // 防止重复打开
+      if (document.getElementById('setOffsetRatioOverlay')) return;
+      var html = ''
+        + '<div class="modal-overlay" id="setOffsetRatioOverlay" onclick="if(event.target===this) closeSetOffsetRatioDialog()"></div>'
+        + '<div class="modal-panel" id="setOffsetRatioModal" role="dialog" aria-labelledby="setOffsetRatioTitle">'
+        + '  <div class="modal-header">'
+        + '    <div class="modal-title" id="setOffsetRatioTitle">设置等比例冲抵货款比例</div>'
+        + '    <span class="modal-close" onclick="closeSetOffsetRatioDialog()" title="关闭">×</span>'
+        + '  </div>'
+        + '  <div class="modal-body">'
+        + '    <div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.7;">'
+        + '      <div><span style="color: var(--text-tertiary);">关联销售合同：</span><span style="font-family: var(--font-mono); font-weight: 600;">LX20260205002</span></div>'
+        + '      <div><span style="color: var(--text-tertiary);">关联销售订单：</span><span style="font-weight: 500;">河南中豫薯业 × 河南军牧原国际贸易有限公司</span></div>'
+        + '      <div><span style="color: var(--text-tertiary);">合同中已设置比例：</span><span style="font-family: var(--font-mono); color: var(--color-primary); font-weight: 700;" id="currentOffsetRatioReadonly">' + currentOffsetRatio + '</span> %</div>'
+        + '    </div>'
+        + '    <div class="form-field" style="margin-bottom: 12px;">'
+        + '      <label class="form-label" style="display: block; margin-bottom: 6px;">新的冲抵比例（%）<span style="color: var(--color-danger);">*</span></label>'
+        + '      <input type="number" class="input" id="newOffsetRatioInput" value="' + currentOffsetRatio + '" min="0" max="100" step="1" placeholder="请输入 0-100 之间的整数" style="width: 100%;">'
+        + '      <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 6px;">范围 0-100，整数；100% 表示全额冲抵货款，0% 表示不冲抵</div>'
+        + '    </div>'
+        + '  </div>'
+        + '  <div class="modal-footer">'
+        + '    <button type="button" class="btn btn-secondary" onclick="closeSetOffsetRatioDialog()">取消</button>'
+        + '    <button type="button" class="btn btn-primary" onclick="saveOffsetRatio()">保存</button>'
+        + '  </div>'
+        + '</div>';
+      document.body.insertAdjacentHTML('beforeend', html);
+      // 触发动画
+      requestAnimationFrame(function() {
+        document.getElementById('setOffsetRatioOverlay').classList.add('open');
+        document.getElementById('setOffsetRatioModal').classList.add('open');
+      });
+    }
+
+    function closeSetOffsetRatioDialog() {
+      var overlay = document.getElementById('setOffsetRatioOverlay');
+      var modal = document.getElementById('setOffsetRatioModal');
+      if (overlay) overlay.remove();
+      if (modal) modal.remove();
+    }
+
+    function saveOffsetRatio() {
+      var input = document.getElementById('newOffsetRatioInput');
+      if (!input) return;
+      var value = parseInt(input.value, 10);
+      if (isNaN(value) || value < 0 || value > 100) {
+        Utils.toast('请输入 0-100 之间的整数', 'error');
+        return;
+      }
+      var oldValue = currentOffsetRatio;
+      currentOffsetRatio = value;
+      // 更新详情页的"调整方式"或类似字段显示（如有）
+      var showEl = document.getElementById('offsetRatioDisplay');
+      if (showEl) showEl.textContent = value + ' %';
+      // 更新弹窗里的只读"合同中已设置比例"为新值
+      var readonlyEl = document.getElementById('currentOffsetRatioReadonly');
+      if (readonlyEl) readonlyEl.textContent = value;
+      Utils.toast('已保存，新的冲抵比例为 ' + value + ' %', 'success');
+      closeSetOffsetRatioDialog();
+      // 模拟同步合同（实际场景会调 API）
+      console.log('[v1.7.99.276] 冲抵比例已更新：', oldValue, '→', value);
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>
