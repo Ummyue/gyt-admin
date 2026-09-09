@@ -159,43 +159,41 @@
           </div>
         </div>
 
-        <!-- 4 步骤条（v1.7.99.132：项目准入步骤条改回 v1.7.99.127 之前——user 反馈"项目准入的步骤条我哪条指令让你改了"——v1.7.99.127 我擅自改了项目准入的步骤名是错误的） -->
+        <!-- 4 步骤条（v1.7.99.274：移到顶部 + 可点击切换 panel + 步骤名调整） -->
         <div class="card" style="margin-bottom: 16px; padding: 16px 32px;">
-          <div class="steps">
-            <div class="step">
-              <div class="step-circle completed">
+          <div class="steps" id="entrySteps">
+            <div class="step" onclick="switchEntryStep(1)" style="cursor: pointer;" title="点击查看项目基本信息">
+              <div class="step-circle completed" id="entryStep1Circle">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
-              <!-- v1.7.99.132：项目准入步骤 1 改回 "项目信息录入"（v1.7.99.127 错误改成"企业信息录入"） -->
-              <div class="step-label">项目信息录入</div>
+              <div class="step-label">项目基本信息</div>
               <div class="step-time">2026-07-12 12:22</div>
             </div>
             <div class="step-line completed"></div>
-            <div class="step">
-              <div class="step-circle completed">
+            <div class="step" onclick="switchEntryStep(2)" style="cursor: pointer;" title="点击查看企业尽调报告">
+              <div class="step-circle completed" id="entryStep2Circle">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
               </div>
               <div class="step-label">企业尽调报告</div>
               <div class="step-time">2026-07-15 09:10</div>
             </div>
             <div class="step-line completed"></div>
-            <div class="step">
-              <div class="step-circle current">3</div>
-              <div class="step-label">提交审批</div>
+            <div class="step" onclick="switchEntryStep(3)" style="cursor: pointer;" title="点击查看审批详情">
+              <div class="step-circle current" id="entryStep3Circle">3</div>
+              <div class="step-label">审批详情</div>
               <div class="step-time" style="color: var(--color-primary);">进行中</div>
             </div>
             <div class="step-line" id="step4Line"></div>
-            <div class="step" id="step4Wrap">
+            <div class="step" id="step4Wrap" onclick="switchEntryStep(4)" style="cursor: pointer;" title="点击查看准入完成">
               <div class="step-circle" id="step4Circle">4</div>
-              <!-- v1.7.99.132：项目准入步骤 4 改回 "准入完成"（v1.7.99.127 错误改成"客户准入与项目关联完成"） -->
               <div class="step-label">准入完成</div>
               <div class="step-time" id="step4Time" style="visibility: hidden;">-</div>
             </div>
           </div>
         </div>
 
-        <!-- v1.7.99.249 准入管理详情页顶部加 5 字段（按 user 2026-08-17 15:49 反馈 + 选"2 个独立 card"方案） -->
-        <!-- card 1：项目描述（v1.7.99.249：4 字段 textarea，2×2 网格） -->
+        <!-- v1.7.99.274 步骤 1：项目基本信息（项目描述 + 总投资信息） -->
+        <div id="stepPanel1">
         <div class="card" style="margin-bottom: 16px;">
           <div class="card-header">
             <div class="card-title">项目描述</div>
@@ -253,7 +251,11 @@
             </div>
           </div>
         </div>
+        </div>
+        <!-- /v1.7.99.274 stepPanel1 项目基本信息 -->
 
+        <!-- v1.7.99.274 步骤 2：企业尽调报告（风控合规提醒） -->
+        <div id="stepPanel2" hidden>
         <!-- v1.7.99.265 风控合规提醒：6 个分类 tap 切换（原 Tab 2 风险扫描结果迁移到下方独立 card） -->
         <div class="card" style="margin-bottom: 16px;">
           <div class="card-header">
@@ -284,18 +286,11 @@
             <div class="risk-panel" id="riskPanelPersonnel" hidden></div>
           </div>
         </div>
-
-        <!-- Tab 切换（v1.7.99.265：删除「风险扫描结果」Tab，迁移到下方独立 card「风控合规提醒」） -->
-        <div class="tabs" style="margin-bottom: 16px;" id="detailTabs">
-          <div class="tab active" data-tab="1">企业信息</div>
-          <div class="tab" data-tab="3">客户股权关系</div>
-          <div class="tab" data-tab="4" id="tab4Label">审批准入</div>
-          <div class="tab" data-tab="5" id="tab5Attachment" hidden>附件</div>
         </div>
+        <!-- /v1.7.99.274 stepPanel2 企业尽调报告（风控合规提醒） -->
 
-        <!-- Tab 1：企业信息 -->
-        <div id="tab1Content">
-        <div class="card">
+        <!-- v1.7.99.274 步骤 3：审批详情（原 tab4 审批进度） -->
+        <div id="stepPanel3" hidden>
           <div class="card-header">
             <div class="card-title">基本信息</div>
           </div>
@@ -359,73 +354,9 @@
         </div>
         <!-- ========== /Tab 1 ========== -->
 
-        <!-- ========== Tab 3：客户股权关系 ========== -->
-        <div id="tab3Content" hidden>
-          <div class="card">
-            <div class="card-header">
-              <div class="card-title">客户股权关系</div>
-              <div style="font-size: 12px; color: var(--text-tertiary);">数据来源：天眼查</div>
-            </div>
-            <div class="card-body" style="padding: 0;">
-              <div style="padding: 20px 24px;">
-                <div class="subsection-title">股东信息</div>
-                <table class="table" style="margin-top: 8px;">
-                  <thead>
-                    <tr>
-                      <th style="width: 40%;">股东</th>
-                      <th style="width: 30%;">持股比例</th>
-                      <th style="width: 30%;">认缴出资日期</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>
-                        <span style="font-weight: 500;">何永兴</span>
-                        <span class="tag tag-blue" style="margin-left: 8px;">大股东</span>
-                        <span class="tag tag-purple" style="margin-left: 4px;">实际控制人</span>
-                        <span class="tag tag-yellow" style="margin-left: 4px;">最终受益人</span>
-                      </td>
-                      <td><span style="color: var(--color-primary); font-weight: 600;">84%</span></td>
-                      <td>2001-05-18</td>
-                    </tr>
-                    <tr>
-                      <td><span style="font-weight: 500;">何世军</span></td>
-                      <td>16%</td>
-                      <td>2001-05-18</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-              <div style="padding: 4px 24px 20px; border-top: 1px solid var(--border-light);">
-                <div class="subsection-title" style="margin-top: 16px;">对外投资（5 家）</div>
-                <table class="table" style="margin-top: 8px;">
-                  <thead>
-                    <tr>
-                      <th>被投资企业名称</th>
-                      <th>被投资法定代表人</th>
-                      <th>注册资本</th>
-                      <th>投资数额</th>
-                      <th>投资占比</th>
-                      <th>注册时间</th>
-                      <th>状态</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr><td>诸暨致美投资有限公司</td><td>何永兴</td><td class="col-num">100 万人民币</td><td class="col-num">100 万人民币</td><td>100%</td><td>2009-12-02</td><td><span class="tag tag-gray">注销</span></td></tr>
-                    <tr><td>诸暨致美暖通设备有限公司</td><td>何永兴</td><td class="col-num">80 万人民币</td><td class="col-num">80 万人民币</td><td>100%</td><td>2009-12-02</td><td><span class="tag tag-green">存续</span></td></tr>
-                    <tr><td>浙江致美管业有限公司</td><td>何永兴</td><td class="col-num">500 万人民币</td><td class="col-num">500 万人民币</td><td>100%</td><td>2009-12-03</td><td><span class="tag tag-gray">注销</span></td></tr>
-                    <tr><td>浙江橙晨机电有限公司</td><td>何仕君</td><td class="col-num">2,000 万人民币</td><td class="col-num">—</td><td>90%</td><td>2004-07-15</td><td><span class="tag tag-green">存续</span></td></tr>
-                    <tr><td>恒森管业科技（浙江）有限公司</td><td>何泽森</td><td class="col-num">10,000 万人民币</td><td class="col-num">1,800 万人民币</td><td>60%</td><td>2022-12-30</td><td><span class="tag tag-green">存续</span></td></tr>
-                  </tbody>
-                </table>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- ========== /Tab 3 ========== -->
-
-        <!-- ========== Tab 4：审批准入（v1.7.99.106 新增：合并原 Tab 4 准入意见 + Tab 5 审批记录，3 角色场景：发起前/可撤回/审批人处理，完成后变「审批准入详情」） ========== -->
-        <div id="tab4Content" hidden>
+        <!-- ========== v1.7.99.274 步骤 3：审批详情（原 Tab 4 审批进度） ========== -->
+        <div id="stepPanel3" hidden>
+          <div id="tab4Content">
           <!-- 顶部黄底提示（按状态显示/隐藏） -->
           <div id="approvalNoticeBar" class="approval-status" style="margin-bottom: 16px; display: none;">
             <div class="approval-status-icon">⏳</div>
@@ -620,46 +551,87 @@
           </div>
         </div>
         <!-- ========== /Tab 4 ========== -->
+          </div>
+        </div>
+        <!-- /v1.7.99.274 stepPanel3 审批详情 -->
 
-        <!-- ========== Tab 5：附件（v1.7.99.74 新增：执行中/已完结状态下展示客户准入报告附件，v1.7.99.106 沿用保留） ========== -->
-        <div id="tab5Content" hidden>
-          <div class="card">
+        <!-- ========== v1.7.99.274 步骤 4：准入完成集合页（关键信息 + 下载完整报告） ========== -->
+        <div id="stepPanel4" hidden>
+          <div class="card" style="margin-bottom: 16px;">
             <div class="card-header">
-              <div class="card-title">客户准入附件</div>
-              <div style="font-size: 12px; color: var(--text-tertiary);">准入完成后归档的客户准入报告、承诺函、股权穿透图等附件</div>
+              <div class="card-title">准入完成 · 关键信息</div>
+              <div style="font-size: 12px; color: var(--text-tertiary);">摘选前 3 个步骤关键信息</div>
             </div>
-            <div class="card-body" style="padding: 0;">
-              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-light);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">客户准入尽调报告.pdf</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">2.4 MB · 上传人 张爽 · 2026-03-08 14:30</div>
-                </div>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
+            <div class="card-body">
+              <!-- 关键信息 1：项目基本信息 -->
+              <div style="margin-bottom: 20px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">① 项目基本信息</div>
+                <table class="info-table" style="width: 100%;">
+                  <tbody>
+                    <tr>
+                      <td class="info-label">项目名称</td>
+                      <td class="info-value">河南军牧原玉米收购及加工项目</td>
+                      <td class="info-label">立项编号</td>
+                      <td class="info-value">LX20260205002</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">业务类型</td>
+                      <td class="info-value">存货业务</td>
+                      <td class="info-label">货物品类</td>
+                      <td class="info-value">谷物</td>
+                    </tr>
+                    <tr>
+                      <td class="info-label">总投资额</td>
+                      <td class="info-value" style="color: var(--color-primary); font-weight: 600;">¥50,000.00 万元</td>
+                      <td class="info-label">预计年销售额</td>
+                      <td class="info-value">5 亿元</td>
+                    </tr>
+                  </tbody>
+                </table>
               </div>
-              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px; border-bottom: 1px solid var(--border-light);">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">企业风控合规承诺函.pdf</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">856 KB · 上传人 张爽 · 2026-03-08 14:32</div>
+              <!-- 关键信息 2：企业尽调报告 -->
+              <div style="margin-bottom: 20px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">② 企业尽调报告 · 风险扫描概览</div>
+                <div style="display: flex; gap: 12px; flex-wrap: wrap;">
+                  <div style="padding: 10px 16px; background: #FEF2F2; border-radius: 4px; min-width: 140px;">
+                    <div style="font-size: 12px; color: #6b7280;">风险项</div>
+                    <div style="font-size: 20px; font-weight: 600; color: #DC2626;">5 项</div>
+                  </div>
+                  <div style="padding: 10px 16px; background: #F0FDF4; border-radius: 4px; min-width: 140px;">
+                    <div style="font-size: 12px; color: #6b7280;">已通过项</div>
+                    <div style="font-size: 20px; font-weight: 600; color: #059669;">22 项</div>
+                  </div>
+                  <div style="padding: 10px 16px; background: #EFF6FF; border-radius: 4px; min-width: 140px;">
+                    <div style="font-size: 12px; color: #6b7280;">扫描总项</div>
+                    <div style="font-size: 20px; font-weight: 600; color: #1D4ED8;">27 项</div>
+                  </div>
                 </div>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
               </div>
-              <div class="attachment-item" style="display: flex; align-items: center; gap: 12px; padding: 14px 20px;">
-                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                <div style="flex: 1; min-width: 0;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">关联企业股权穿透图.pdf</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">1.2 MB · 上传人 李建国 · 2026-03-09 10:15</div>
+              <!-- 关键信息 3：审批详情 -->
+              <div style="margin-bottom: 20px;">
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">③ 审批详情 · 最终状态</div>
+                <div style="padding: 12px 16px; background: #F0FDF4; border-radius: 4px; border-left: 3px solid #10B981;">
+                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">✅ 审批通过 · 三级审批已全部通过</div>
+                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">审批完成时间：2026-07-30 15:00 · 审批人：张三（业务部）、李四（风控部）、王五（董事会）</div>
                 </div>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">查看</button>
-                <button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);">下载</button>
+              </div>
+              <!-- 下载完整报告 -->
+              <div style="border-top: 1px solid var(--border-light); padding-top: 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between;">
+                <div style="font-size: 13px; color: var(--text-primary);">
+                  📄 <strong>完整报告</strong>
+                  <span style="color: var(--text-tertiary); margin-left: 8px;">包含项目基本信息 + 风控合规详情 + 审批记录 + 准入附件</span>
+                </div>
+                <div style="display: flex; gap: 8px;">
+                  <button type="button" class="btn btn-secondary" onclick="Utils.toast('正在下载客户准入尽调报告.pdf...', 'info')">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    下载完整报告
+                  </button>
+                </div>
               </div>
             </div>
           </div>
         </div>
-        <!-- ========== /Tab 5 ========== -->
+        <!-- /v1.7.99.274 stepPanel4 准入完成 -->
 
       </div>
 
@@ -699,6 +671,34 @@
   </div>
 
   <script>
+    // ===== v1.7.99.274 步骤条点击切换 panel =====
+    function switchEntryStep(n) {
+      n = Math.max(1, Math.min(4, n));
+      [1, 2, 3, 4].forEach(function(i) {
+        var panel = document.getElementById('stepPanel' + i);
+        if (panel) panel.hidden = (i !== n);
+      });
+      // 步骤条样式联动
+      [1, 2, 3, 4].forEach(function(i) {
+        var circle = document.getElementById('entryStep' + i + 'Circle') || document.getElementById('step4Circle');
+        if (!circle) return;
+        circle.classList.remove('completed', 'current');
+        if (i < n) circle.classList.add('completed');
+        else if (i === n) circle.classList.add('current');
+        if (i === 4) {
+          var c4 = document.getElementById('step4Circle');
+          if (c4) {
+            c4.classList.remove('completed', 'current');
+            if (n === 4) c4.classList.add('completed');
+            else c4.textContent = 4;
+          }
+        }
+      });
+      // v1.7.99.274 底部 footer 仅在第 3 步（审批详情）显示「审批通过/驳回审批」
+      var footer = document.getElementById('footerActions');
+      if (footer) footer.style.display = (n === 3) ? '' : 'none';
+    }
+
     // ===== v1.7.99.265 Tab 切换（4 tab：1企业信息/3客户股权关系/4审批准入/5附件；风险扫描迁移到独立 card） =====
     function switchTab(n) {
       n = Math.max(1, Math.min(5, n));
@@ -1028,6 +1028,13 @@
           step4Time.textContent = status === '已完结' ? '2026-08-15 10:00' : '准入已完成';
         }
       }
+    })();
+    // v1.7.99.274 初始化：默认进入第 1 步（项目基本信息）
+    switchEntryStep(1);
+    // v1.7.99.274 初始化时隐藏 footer（原页面 footer 默认显示，现在按 step 联动）
+    (function() {
+      var footer = document.getElementById('footerActions');
+      if (footer) footer.style.display = 'none';
     })();
   </script>
   <script src="../shared/js/topnav-drawer.js"></script>
