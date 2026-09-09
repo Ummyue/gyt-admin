@@ -391,7 +391,7 @@
                 <label class="form-label">保证金比例（%） <span class="required">*</span></label>
                 <div style="display: flex; align-items: center; gap: 12px;">
                   <input type="text" class="input" placeholder="请输入保证金比例" style="flex: 1;">
-                  <label class="inline-check"><input type="checkbox"> 无保证金</label>
+                  <label class="inline-check"><input type="checkbox" id="noDepositCheckbox" onchange="toggleMarginAdjustByNoDeposit(this.checked)"> 无保证金</label>
                 </div>
               </div>
               <div class="form-field">
@@ -402,7 +402,7 @@
                     <option value="no_adjust">暂不调整</option>
                     <option value="offset">等比例冲抵货款</option>
                   </select>
-                  <div id="offsetRatioInput" hidden style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                  <div id="offsetRatioInput" style="display: none; align-items: center; gap: 6px; flex-shrink: 0;">
                     <input type="number" class="input" style="width: 100px;" placeholder="冲抵比例" min="0" max="100" step="1" value="100">
                     <span style="color: var(--text-tertiary); font-size: 13px;">%</span>
                   </div>
@@ -669,7 +669,19 @@
     // v1.7.99.275 保证金调整方式：选择「等比例冲抵货款」时显示冲抵比例输入框
     function toggleOffsetRatioInput(value) {
       var input = document.getElementById('offsetRatioInput');
-      if (input) input.hidden = (value !== 'offset');
+      if (input) input.style.display = (value === 'offset') ? 'flex' : 'none';
+    }
+
+    // v1.7.99.277 「无保证金」勾选时联动：禁用保证金调整方式 select + 重置 + 隐藏冲抵比例
+    function toggleMarginAdjustByNoDeposit(checked) {
+      var select = document.getElementById('marginAdjustMethod');
+      var input = document.getElementById('offsetRatioInput');
+      if (checked) {
+        if (select) { select.value = ''; select.disabled = true; }
+        if (input) input.style.display = 'none';
+      } else {
+        if (select) select.disabled = false;
+      }
     }
 
     </script>
