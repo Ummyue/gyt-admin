@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>编辑回款 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-primary); margin-bottom: 6px; }
+    .form-label .required { color: #DC2626; margin-right: 2px; }
+    .form-input, .form-select {
+      width: 100%; height: 32px; padding: 0 10px; border: 1px solid var(--border-default);
+      border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff;
+    }
+    .form-input:disabled, .form-select:disabled { background: #F9FAFB; color: var(--text-tertiary); cursor: not-allowed; }
+    .info-section { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .info-section-head {
+      padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .info-section-head::before {
+      content: ''; display: inline-block; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px;
+    }
+    .info-section-body { padding: 20px; }
+    .form-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px;
+    }
+    .form-grid .full { grid-column: 1 / -1; }
+    /* 蓝底提示条 */
+    .tip-box {
+      padding: 10px 16px; background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 4px; font-size: 13px; color: #1E40AF; margin-bottom: 16px;
+    }
+    .tip-box .label { font-weight: 600; margin-right: 8px; }
+    /* 附件单据类型/文件名称 表 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td {
+      border: 1px solid var(--border-light); padding: 10px 14px;
+      font-size: 13px; text-align: left;
+    }
+    .attach-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .attach-table td { color: var(--text-primary); }
+    .attach-table .upload-btn {
+      padding: 4px 14px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 12px;
+    }
+    .attach-table .upload-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    /* 3 张统计卡（v1.7.99.66 复用详情页；v1.7.99.278 增加第 4 张「保证金余额」） */
+    .stat-card-grid {
+      display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 16px;
+    }
+    .stat-card { padding: 18px 20px; border-radius: 8px; border: 1px solid; }
+    .stat-card .label { font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .stat-card .value { font-size: 22px; font-weight: 600; font-family: var(--font-mono); }
+    .stat-card.total { background: #EFF6FF; border-color: #BFDBFE; }
+    .stat-card.total .value { color: #1E40AF; }
+    .stat-card.claimed { background: #FEF3C7; border-color: #FDE68A; }
+    .stat-card.claimed .value { color: #A16207; }
+    .stat-card.remain { background: #D1FAE5; border-color: #A7F3D0; }
+    .stat-card.remain .value { color: #047857; }
+    /* v1.7.99.278 保证金余额（紫色调，等比例冲抵货款相关） */
+    .stat-card.deposit { background: #F3E8FF; border-color: #DDD6FE; }
+    .stat-card.deposit .value { color: #6B21A8; }
+    /* 认领明细 6 列 */
+    .claim-table { width: 100%; border-collapse: collapse; }
+    .claim-table th, .claim-table td {
+      border: 1px solid var(--border-light); padding: 10px 14px;
+      font-size: 13px; text-align: left; vertical-align: top;
+    }
+    .claim-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .claim-table td { color: var(--text-primary); }
+    .claim-table .bizline-info { color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
+    .bizline-link { color: var(--color-primary); font-weight: 500; }
+    /* 认领类型下拉（v1.7.99.66 图 4） */
+    .claim-type-select {
+      position: relative; display: inline-block;
+    }
+    .claim-type-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      min-width: 120px; padding: 4px 10px; border: 1px solid var(--border-default);
+      border-radius: 4px; background: #fff; cursor: pointer; font-size: 13px;
+    }
+    .claim-type-trigger .arrow {
+      display: inline-block; width: 8px; height: 8px;
+      border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg); margin-left: 6px; color: var(--text-tertiary);
+    }
+    .claim-type-dropdown {
+      position: absolute; top: calc(100% + 2px); left: 0; min-width: 140px;
+      background: #fff; border: 1px solid var(--border-light); border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 100; display: none;
+    }
+    .claim-type-dropdown.open { display: block; }
+    .claim-type-dropdown .item {
+      padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-primary);
+    }
+    .claim-type-dropdown .item:hover { background: #F3F4F6; }
+    .claim-type-dropdown .item.active { background: #DBEAFE; color: var(--color-primary); }
+    /* radio */
+    .radio-group { display: flex; gap: 16px; align-items: center; }
+    .radio-item { display: inline-flex; align-items: center; gap: 4px; cursor: pointer; font-size: 13px; }
+    .radio-item input[type="radio"] { accent-color: var(--color-primary); }
+    /* 新增行 */
+    .add-row { text-align: center; padding: 12px; color: var(--color-primary); cursor: pointer; }
+    .add-row:hover { background: #F9FAFB; }
+    .add-row .icon { display: inline-block; width: 12px; height: 12px; position: relative; margin-right: 6px; vertical-align: middle; }
+    .add-row .icon::before, .add-row .icon::after { content: ''; position: absolute; background: currentColor; }
+    .add-row .icon::before { width: 12px; height: 1.5px; top: 5px; left: 0; }
+    .add-row .icon::after { width: 1.5px; height: 12px; left: 5px; top: 0; }
+    /* 底部按钮 */
+    .form-footer {
+      display: flex; justify-content: center; gap: 12px; padding: 20px 0 40px 0;
+    }
+    .form-footer .btn-cancel {
+      padding: 8px 24px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 14px;
+    }
+    .form-footer .btn-submit {
+      padding: 8px 24px; border: 0; border-radius: 4px;
+      background: #1E40AF; color: #fff; cursor: pointer; font-size: 14px;
+    }
+    .form-footer .btn-submit:hover { background: #1E3A8A; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./receipt-list.html">资金管理</a>
+          <span class="sep">/</span>
+          <a href="./receipt-list.html">回款管理</a>
+          <span class="sep">/</span>
+          <span class="current">编辑回款</span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="page-h1" style="margin: 0 0 14px 0;">编辑回款</h1>
+
+        <!-- 区块 1：回款信息（v1.7.99.66 11 字段 3 列 4 行带 * 必填） -->
+        <div class="info-section">
+          <div class="info-section-head">回款信息</div>
+          <div class="info-section-body">
+            <div class="form-grid">
+              <div>
+                <label class="form-label"><span class="required">*</span>回款编号</label>
+                <input type="text" class="form-input" value="961416" disabled>
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>回款方式</label>
+                <select class="form-select"><option>商业承兑汇票</option><option>电子银行承兑汇票</option><option>电汇</option></select>
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>回款方</label>
+                <select class="form-select"><option>郑州信必达国际供应链有限公司</option></select>
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>回款方账号名称</label>
+                <select class="form-select"><option>郑州信必达国际供应链有限公司</option></select>
+              </div>
+              <div>
+                <label class="form-label">回款方开户行</label>
+                <input type="text" class="form-input" value="中国银行郑州金水支行营业部">
+              </div>
+              <div>
+                <label class="form-label">回款方银行账号</label>
+                <input type="text" class="form-input" value="258591781150">
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>收款账号名称</label>
+                <select class="form-select"><option>河南中豫港通供应链管理有限公司</option></select>
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>收款账号开户行</label>
+                <input type="text" class="form-input" value="华夏银行股份有限公司郑州九如路支行">
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>收款账号</label>
+                <input type="text" class="form-input" value="1555700000802788">
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>回款日期</label>
+                <input type="text" class="form-input" value="2026-07-28" placeholder="选择日期">
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>回款金额</label>
+                <input type="text" class="form-input" value="229467.09">
+              </div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：附件信息（v1.7.99.66 蓝底提示 + 单据类型/文件名称 + 上传按钮） -->
+        <div class="info-section">
+          <div class="info-section-head">附件信息</div>
+          <div class="info-section-body">
+            <div class="tip-box">
+              <span class="label">回款凭证：</span>可支持格式为 jpg、jpeg、png、pdf 的附件，支持多张，单个附件大小不得超过 100MB 的文件。
+            </div>
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">单据类型</th>
+                  <th>文件名称</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>回款凭证</td>
+                  <td><button class="upload-btn" type="button" onclick="uploadAttach()">上传</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：回款认领（v1.7.99.66 3 统计卡 + 6 列认领明细表 + 新增行） -->
+        <div class="info-section">
+          <div class="info-section-head">回款认领</div>
+          <div class="info-section-body">
+            <div class="stat-card-grid">
+              <div class="stat-card total">
+                <div class="label">回款金额(元)</div>
+                <div class="value">229,467.09</div>
+              </div>
+              <div class="stat-card claimed">
+                <div class="label">已认领金额(元)</div>
+                <div class="value">229,467.09</div>
+              </div>
+              <div class="stat-card remain">
+                <div class="label">可认领金额(元)</div>
+                <div class="value">0</div>
+              </div>
+              <!-- v1.7.99.278：保证金余额展示（合同等比例冲抵货款场景） -->
+              <div class="stat-card deposit">
+                <div class="label">保证金余额(元)</div>
+                <div class="value">87,500.00</div>
+              </div>
+            </div>
+
+            <table class="claim-table">
+              <thead>
+                <tr>
+                  <th style="width: 10%;"><span class="required">*</span>认领类型</th>
+                  <th style="width: 10%;"><span class="required">*</span>收款类型</th>
+                  <th>认领信息</th>
+                  <th style="width: 12%;text-align: right;">下游结算金额(元)</th>
+                  <th style="width: 12%;text-align: right;">已认领金额(元)</th>
+                  <th style="width: 12%;text-align: right;"><span class="required">*</span>本次认领金额(元)</th>
+                  <th style="width: 6%;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="claimTbody">
+                <tr>
+                  <td>
+                    <div class="claim-type-select">
+                      <div class="claim-type-trigger" onclick="toggleClaimType(this)">
+                        <span>业务线回款</span><span class="arrow"></span>
+                      </div>
+                      <div class="claim-type-dropdown">
+                        <div class="item active" onclick="selectClaimType(this, '业务线回款')">业务线回款</div>
+                        <div class="item" onclick="selectClaimType(this, '非业务线回款')">非业务线回款</div>
+                        <div class="item" onclick="selectClaimType(this, '非线上业务回款')">非线上业务回款</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td>
+                    <div class="radio-group">
+                      <label class="radio-item"><input type="radio" name="recv_type_1" value="保证金" onchange="toggleDepositOffset(this)"> 保证金</label>
+                      <label class="radio-item"><input type="radio" name="recv_type_1" value="货款" checked onchange="toggleDepositOffset(this)"> 货款</label>
+                    </div>
+                  </td>
+                  <td>
+                    <div><a href="./business-line-detail.html?no=SKYWX202607050001" class="bizline-link">业务线号：SKYWX202607050001 <span style="font-size: 12px;">✎</span></a></div>
+                    <div class="bizline-info">业务线名称：河南诚泽运输有限公司 - 河南中豫港通供应链管理有限公司 - 郑州信必达国际供应链有限公司</div>
+                    <div class="bizline-info">采购合同：GTGYL-MSXS-20260127-s　签订日期：2026-01-27</div>
+                    <div class="bizline-info">销售合同：YL-MSXS-20260127-s　签订日期：2026-01-27</div>
+                  </td>
+                  <td style="text-align: right; font-family: var(--font-mono);">61,873,413.91</td>
+                  <td style="text-align: right; font-family: var(--font-mono);">229,467.09</td>
+                  <td style="text-align: right;">
+                    <input type="text" class="form-input" value="229467.09" style="text-align: right;">
+                    <!-- v1.7.99.278 选择「货款」时回显：含本次保证金冲抵货款金额 -->
+                    <div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">
+                      含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元
+                      <div style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;">（按合同冲抵比例 78.57% 计算）</div>
+                    </div>
+                  </td>
+                  <td><a href="javascript:void(0)" style="color: #DC2626;" onclick="delClaimRow(this)">删除</a></td>
+                </tr>
+              </tbody>
+            </table>
+            <div class="add-row" onclick="addClaimRow()"><span class="icon"></span>新增</div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="form-footer">
+          <button class="btn-cancel" onclick="cancel()">取消</button>
+          <button class="btn-submit" onclick="submitForm()">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function cancel() {
+      if (confirm('确定要取消编辑吗？未保存的内容将丢失。')) {
+        window.location.href = './receipt-list.html';
+      }
+    }
+    function submitForm() {
+      if (!confirm('确定提交本次编辑？\n\n提交后回款认领将按本次认领金额生效。')) return;
+      Utils.toast('提交成功（mock）', 'success');
+      setTimeout(function() { window.location.href = './receipt-list.html'; }, 800);
+    }
+    function uploadAttach() { Utils.toast('上传回款凭证（mock）', 'info'); }
+    /* 认领类型下拉（v1.7.99.66 图 4） */
+    function toggleClaimType(trigger) {
+      var dropdown = trigger.nextElementSibling;
+      var isOpen = dropdown.classList.contains('open');
+      // 关闭所有
+      document.querySelectorAll('.claim-type-dropdown').forEach(function(d) { d.classList.remove('open'); });
+      if (!isOpen) dropdown.classList.add('open');
+    }
+    function selectClaimType(item, label) {
+      var dropdown = item.parentElement;
+      var trigger = dropdown.previousElementSibling;
+      trigger.querySelector('span').textContent = label;
+      dropdown.querySelectorAll('.item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      dropdown.classList.remove('open');
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.claim-type-select')) {
+        document.querySelectorAll('.claim-type-dropdown').forEach(function(d) { d.classList.remove('open'); });
+      }
+    });
+    /* 认领明细操作 */
+    function addClaimRow() {
+      var tbody = document.getElementById('claimTbody');
+      var idx = tbody.rows.length + 1;
+      var newRow = document.createElement('tr');
+      newRow.innerHTML = '<td><div class="claim-type-select">'
+        + '<div class="claim-type-trigger" onclick="toggleClaimType(this)"><span>业务线回款</span><span class="arrow"></span></div>'
+        + '<div class="claim-type-dropdown">'
+        +   '<div class="item active" onclick="selectClaimType(this, \'业务线回款\')">业务线回款</div>'
+        +   '<div class="item" onclick="selectClaimType(this, \'非业务线回款\')">非业务线回款</div>'
+        +   '<div class="item" onclick="selectClaimType(this, \'非线上业务回款\')">非线上业务回款</div>'
+        + '</div></div></td>'
+        + '<td><div class="radio-group"><label class="radio-item"><input type="radio" name="recv_type_' + idx + '" value="保证金" onchange="toggleDepositOffset(this)"> 保证金</label>'
+        + '<label class="radio-item"><input type="radio" name="recv_type_' + idx + '" value="货款" checked onchange="toggleDepositOffset(this)"> 货款</label></div></td>'
+        + '<td><div style="color: var(--text-tertiary);">请选择业务线</div></td>'
+        + '<td style="text-align: right; color: var(--text-tertiary);">—</td>'
+        + '<td style="text-align: right; color: var(--text-tertiary);">—</td>'
+        + '<td style="text-align: right;"><input type="text" class="form-input" placeholder="0.00" style="text-align: right;">'
+        + '<div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元<div style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;">（按合同冲抵比例 78.57% 计算）</div></div></td>'
+        + '<td><a href="javascript:void(0)" style="color: #DC2626;" onclick="delClaimRow(this)">删除</a></td>';
+      tbody.appendChild(newRow);
+      // v1.7.99.278 新增行默认「货款」checked，立即显示回显
+      var checkedRadio = newRow.querySelector('input[type=radio][value="货款"]');
+      if (checkedRadio) toggleDepositOffset(checkedRadio);
+    }
+    function delClaimRow(link) {
+      if (!confirm('确定删除该认领行？')) return;
+      var tr = link.closest('tr');
+      tr.parentNode.removeChild(tr);
+    }
+
+    // v1.7.99.278 选择「货款」时显示含本次保证金冲抵货款金额回显；「保证金」时不显示
+    function toggleDepositOffset(radio) {
+      var tr = radio.closest('tr');
+      if (!tr) return;
+      var display = tr.querySelector('.deposit-offset-row');
+      if (!display) return;
+      // 找到同一 tr 内被选中的 radio
+      var checked = tr.querySelector('input[type=radio]:checked');
+      if (checked && checked.value === '货款') {
+        display.style.display = 'block';
+      } else {
+        display.style.display = 'none';
+      }
+    }
+    // 初始化：默认「货款」checked，需要显示回显
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('.claim-table input[type=radio]:checked').forEach(function(r) {
+        toggleDepositOffset(r);
+      });
+    });
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>
