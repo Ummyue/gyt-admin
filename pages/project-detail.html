@@ -491,7 +491,7 @@
 
         <!-- ========== v1.7.99.274 步骤 4：准入完成集合页（关键信息 + 下载完整报告） ========== -->
         <div id="stepPanel4" hidden>
-          <div class="card" style="margin-bottom: 16px; position: relative; overflow: hidden;">
+          <div class="card" style="margin-bottom: 16px;">
             <div class="card-header">
               <div class="card-title">准入完成 · 关键信息</div>
               <div style="font-size: 12px; color: var(--text-tertiary);">摘选前 3 个步骤关键信息</div>
@@ -541,12 +541,32 @@
                   </div>
                 </div>
               </div>
-              <!-- 关键信息 3：审批详情 -->
+              <!-- 关键信息 3：准入完成 · 状态卡（v1.7.99.274.5 把原来的简单绿条升级为正式状态卡，徽标融入页面信息架构） -->
               <div style="margin-bottom: 20px;">
-                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 8px;">③ 审批详情 · 最终状态</div>
-                <div style="padding: 12px 16px; background: #F0FDF4; border-radius: 4px; border-left: 3px solid #10B981;">
-                  <div style="font-size: 13px; color: var(--text-primary); font-weight: 500;">✅ 审批通过 · 三级审批已全部通过</div>
-                  <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">审批完成时间：2026-07-30 15:00 · 审批人：张三（业务部）、李四（风控部）、王五（董事会）</div>
+                <div style="font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px;">③ 准入完成 · 最终状态</div>
+                <div style="padding: 18px 20px; background: linear-gradient(135deg, #F0FDF4 0%, #DCFCE7 100%); border: 1px solid #BBF7D0; border-radius: 8px; display: flex; align-items: center; gap: 16px;">
+                  <!-- 左侧圆形 ✓ 图标 -->
+                  <div style="width: 52px; height: 52px; border-radius: 50%; background: linear-gradient(135deg, #10B981 0%, #059669 100%); display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25); flex-shrink: 0;">
+                    <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                      <polyline points="20 6 9 17 4 12"/>
+                    </svg>
+                  </div>
+                  <!-- 中间文字 -->
+                  <div style="flex: 1; min-width: 0;">
+                    <div style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px;">
+                      <span style="font-size: 16px; font-weight: 700; color: #065F46; letter-spacing: 0.5px;">准入完成</span>
+                      <span style="padding: 2px 8px; background: #FFFFFF; color: #047857; font-size: 10px; font-weight: 700; letter-spacing: 1px; border-radius: 999px; border: 1px solid #A7F3D0;">✓ APPROVED</span>
+                    </div>
+                    <div style="font-size: 12px; color: #047857; line-height: 1.7;">
+                      审批完成时间：<span style="font-family: var(--font-mono); font-weight: 600;">2026-07-30 15:00</span>　·　审批人：张爽（业务部）、李四（风控部）、王五（董事会）　·　准入编号：<span style="font-family: var(--font-mono); font-weight: 600;">ADM-2026-0451</span>
+                    </div>
+                  </div>
+                  <!-- 右侧：完成度 -->
+                  <div style="text-align: right; flex-shrink: 0; padding-left: 16px; border-left: 1px solid #BBF7D0;">
+                    <div style="font-size: 11px; color: #065F46; line-height: 1.6;">三级审批</div>
+                    <div style="font-size: 18px; font-weight: 700; color: #047857; font-family: var(--font-mono); line-height: 1.4;">3 / 3</div>
+                    <div style="font-size: 11px; color: #047857; line-height: 1.6;">全部通过</div>
+                  </div>
                 </div>
               </div>
               <!-- 下载完整报告 -->
@@ -560,54 +580,6 @@
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                     下载完整报告
                   </button>
-                </div>
-              </div>
-
-              <!-- v1.7.99.274.4 准入通过徽标（B 端现代规范：圆角矩形 + 绿色渐变 + 柔和阴影 + 玻璃感） -->
-              <div class="approval-badge" aria-label="准入通过徽标" style="
-                position: absolute;
-                right: 32px;
-                bottom: 96px;
-                width: 232px;
-                padding: 14px 16px;
-                border-radius: 12px;
-                background: linear-gradient(135deg, #10B981 0%, #059669 100%);
-                box-shadow: 0 6px 20px rgba(16, 185, 129, 0.28), 0 1px 2px rgba(0,0,0,0.04);
-                opacity: 0.92;
-                pointer-events: none;
-                z-index: 1;
-                font-family: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Microsoft YaHei', sans-serif;
-              ">
-                <!-- 右上角小标签：APPROVED -->
-                <div style="position: absolute; top: -8px; right: 12px; padding: 2px 8px; background: #FFFFFF; color: #047857; font-size: 10px; font-weight: 700; letter-spacing: 1.5px; border-radius: 999px; box-shadow: 0 1px 3px rgba(0,0,0,0.08);">✓ APPROVED</div>
-                <!-- 主体：左侧图标 + 右侧文字 -->
-                <div style="display: flex; align-items: center; gap: 12px;">
-                  <!-- 左侧圆形 ✓ 图标 -->
-                  <div style="
-                    width: 40px;
-                    height: 40px;
-                    border-radius: 50%;
-                    background: rgba(255, 255, 255, 0.2);
-                    border: 1.5px solid rgba(255, 255, 255, 0.5);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    flex-shrink: 0;
-                  ">
-                    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
-                      <polyline points="20 6 9 17 4 12"/>
-                    </svg>
-                  </div>
-                  <!-- 右侧文字 -->
-                  <div style="flex: 1; min-width: 0; color: #FFFFFF;">
-                    <div style="font-size: 16px; font-weight: 700; letter-spacing: 1px; line-height: 1.3;">准入通过</div>
-                    <div style="font-size: 11px; font-weight: 500; opacity: 0.85; margin-top: 3px; font-family: var(--font-mono); letter-spacing: 0.3px;">ADM-2026-0451</div>
-                  </div>
-                </div>
-                <!-- 底部细线分隔 + 日期 -->
-                <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(255, 255, 255, 0.18); display: flex; justify-content: space-between; align-items: center; color: rgba(255,255,255,0.85); font-size: 11px;">
-                  <span>通过时间</span>
-                  <span style="font-family: var(--font-mono); font-weight: 600;">2026-09-08</span>
                 </div>
               </div>
             </div>
