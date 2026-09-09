@@ -491,7 +491,7 @@
 
         <!-- ========== v1.7.99.274 步骤 4：准入完成集合页（关键信息 + 下载完整报告） ========== -->
         <div id="stepPanel4" hidden>
-          <div class="card" style="margin-bottom: 16px;">
+          <div class="card" style="margin-bottom: 16px; position: relative; overflow: hidden;">
             <div class="card-header">
               <div class="card-title">准入完成 · 关键信息</div>
               <div style="font-size: 12px; color: var(--text-tertiary);">摘选前 3 个步骤关键信息</div>
@@ -561,6 +561,51 @@
                     下载完整报告
                   </button>
                 </div>
+              </div>
+
+              <!-- v1.7.99.274.3 通过准入印章 UI（B 端规范：双环 + SVG 弧形文字 + 半透明 + 微旋转） -->
+              <div class="approval-stamp" aria-label="准入通过印章" style="
+                position: absolute;
+                right: 40px;
+                bottom: 88px;
+                width: 168px;
+                height: 168px;
+                opacity: 0.55;
+                transform: rotate(-8deg);
+                pointer-events: none;
+                z-index: 1;
+              ">
+                <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" width="168" height="168">
+                  <!-- 印章底色：淡红色光晕（增加层次） -->
+                  <circle cx="100" cy="100" r="94" fill="rgba(220, 38, 38, 0.04)" />
+                  <!-- 外环（粗） -->
+                  <circle cx="100" cy="100" r="92" fill="none" stroke="#DC2626" stroke-width="3.5" />
+                  <!-- 外环（细，模拟骑缝章双线） -->
+                  <circle cx="100" cy="100" r="86" fill="none" stroke="#DC2626" stroke-width="1.2" />
+                  <!-- 内环（粗） -->
+                  <circle cx="100" cy="100" r="58" fill="none" stroke="#DC2626" stroke-width="2.5" />
+                  <!-- 内环（细） -->
+                  <circle cx="100" cy="100" r="54" fill="none" stroke="#DC2626" stroke-width="0.8" />
+                  <!-- 上弧文字：机构名称 -->
+                  <defs>
+                    <path id="stampTopArc" d="M 100,100 m -78,0 a 78,78 0 0,1 156,0" fill="none"/>
+                    <path id="stampBottomArc" d="M 100,100 m 78,0 a 78,78 0 0,1 -156,0" fill="none"/>
+                  </defs>
+                  <text fill="#DC2626" font-size="11.5" font-weight="700" letter-spacing="3.5" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif">
+                    <textPath href="#stampTopArc" startOffset="50%" text-anchor="middle">豫港通供应链 · 准入通过</textPath>
+                  </text>
+                  <!-- 下弧文字：准入编码 -->
+                  <text fill="#DC2626" font-size="9.5" font-weight="600" letter-spacing="2" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif">
+                    <textPath href="#stampBottomArc" startOffset="50%" text-anchor="middle">ADM-2026-0451 · 2026-09-08</textPath>
+                  </text>
+                  <!-- 中央：通过 -->
+                  <text x="100" y="92" text-anchor="middle" fill="#DC2626" font-size="22" font-weight="800" letter-spacing="6" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif">通 过</text>
+                  <!-- 中央：准入 -->
+                  <text x="100" y="120" text-anchor="middle" fill="#DC2626" font-size="14" font-weight="700" letter-spacing="3" font-family="-apple-system, BlinkMacSystemFont, 'PingFang SC', sans-serif">准 入</text>
+                  <!-- 左右装饰五角星 -->
+                  <text x="18" y="106" text-anchor="middle" fill="#DC2626" font-size="14" font-weight="700">★</text>
+                  <text x="182" y="106" text-anchor="middle" fill="#DC2626" font-size="14" font-weight="700">★</text>
+                </svg>
               </div>
             </div>
           </div>
