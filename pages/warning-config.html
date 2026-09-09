@@ -1554,11 +1554,13 @@
               + '</tr>';
           });
         }
-        document.getElementById('priceContractList').innerHTML = '<table class="price-contract-table"><thead><tr><th class="col-check"></th><th>合同编号</th><th>对方企业</th><th>合同期限</th><th>类型 / 数量</th><th class="col-status">状态</th></tr></thead><tbody>' + html + '</tbody></table>';
+        document.getElementById('priceContractList').innerHTML = '<table class="price-contract-table"><thead><tr><th class="col-check"><input type="checkbox" id="priceContractCheckAll" onclick="event.stopPropagation();toggleAllPriceContracts(this)"></th><th>合同编号</th><th>对方企业</th><th>合同期限</th><th>类型 / 数量</th><th class="col-status">状态</th></tr></thead><tbody>' + html + '</tbody></table>';
         // 渲染完后设置 indeterminate 状态（必须在 DOM 渲染完成后调用）
         document.querySelectorAll('.price-contract-table input[type="checkbox"][data-indeterminate="true"]').forEach(function(cb) {
           cb.indeterminate = true;
         });
+        // v1.7.99.269 全选 checkbox 三态（全部未选=false / 全部选中=true / 部分=indeterminate）
+        updatePriceContractCheckAll();
         updatePriceContractCounts();
       }
 
@@ -1585,6 +1587,73 @@
         document.getElementById('priceContractCountAll').textContent = all;
         document.getElementById('priceContractCountPurchase').textContent = purchase;
         document.getElementById('priceContractCountSales').textContent = sales;
+      }
+
+      // v1.7.99.269 全选 checkbox 状态联动（根据当前列表内可见合同的选中情况）
+      function updatePriceContractCheckAll() {
+        var allCb = document.getElementById('priceContractCheckAll');
+        if (!allCb) return;
+        // 选所有非 framework 父合同 checkbox（父合同的选中状态由子决定，但点击全选时按子合同 toggle 即可）
+        var rowCbs = document.querySelectorAll('.price-contract-table tbody input[type="checkbox"]:not([data-indeterminate="true"])');
+        // 排除 framework 父 checkbox（父的勾选状态联动子，所以只统计子 + 普通）
+        var leafCbs = document.querySelectorAll('.price-contract-table tbody tr.row-child input[type="checkbox"], .price-contract-table tbody tr.row-standalone input[type="checkbox"]');
+        if (leafCbs.length === 0) {
+          allCb.checked = false;
+          allCb.indeterminate = false;
+          return;
+        }
+        var checkedCount = Array.from(leafCbs).filter(function(cb) { return cb.checked; }).length;
+        allCb.checked = checkedCount === leafCbs.length;
+        allCb.indeterminate = checkedCount > 0 && checkedCount < leafCbs.length;
+      }
+
+      // v1.7.99.269 全选/取消全选当前列表内所有可见合同（子合同 + 普通合同，不动 framework 父）
+      function toggleAllPriceContracts(allCb) {
+        var shouldCheck = allCb.checked;
+        // 选所有子合同 + 普通合同
+        var leafCbs = document.querySelectorAll('.price-contract-table tbody tr.row-child input[type="checkbox"], .price-contract-table tbody tr.row-standalone input[type="checkbox"]');
+        // 提取所有 id
+        var leafIds = [];
+        leafCbs.forEach(function(cb) {
+          // 从 onclick 属性提取 id（或者从 onchange 父 tr 提取，但更稳的方式：扫描 data 列表）
+          // 这里我们直接遍历 PRICE_MOCK_CONTRACTS + 重新比对
+        });
+        // 简化方案：直接遍历 PRICE_MOCK_CONTRACTS，按当前筛选条件，决定每个 leaf 是否需要 toggle
+        var start = document.getElementById('priceSignDateStart').value;
+        var end = document.getElementById('priceSignDateEnd').value;
+        var currentLeafIds = [];
+        PRICE_MOCK_CONTRACTS.forEach(function(c) {
+          // 只选子合同 + 普通合同（父合同由子联动）
+          if (c.isFramework) return;
+          // tap 过滤
+          if (priceCurrentContractTab === 'purchase' && c.type !== 'purchase') return;
+          if (priceCurrentContractTab === 'sales' && c.type !== 'sales') return;
+          // 日期过滤
+          if (start && c.signDate < start) return;
+          if (end && c.signDate > end) return;
+          currentLeafIds.push(c.id);
+        });
+        // 计算当前已选数
+        var currentSelectedCount = currentLeafIds.filter(function(id) {
+          return priceSelectedContracts.some(function(x) { return x.id === id; });
+        }).length;
+        // 全部未选 → 全选；部分或全部已选 → 取消全选
+        if (currentSelectedCount === 0) {
+          // 全选：把所有 leaf 加入 priceSelectedContracts
+          currentLeafIds.forEach(function(id) {
+            if (!priceSelectedContracts.some(function(x) { return x.id === id; })) {
+              var found = PRICE_MOCK_CONTRACTS.find(function(x) { return x.id === id; });
+              if (found) priceSelectedContracts.push(found);
+            }
+          });
+        } else {
+          // 取消全选：把所有可见 leaf 从 priceSelectedContracts 移除
+          priceSelectedContracts = priceSelectedContracts.filter(function(x) {
+            return !currentLeafIds.includes(x.id);
+          });
+        }
+        renderPriceContractList();
+        renderPriceContractSelectedPreview();
       }
 
       // v1.7.99.263.3 切换合同选中状态（多选 + 父子联动）
