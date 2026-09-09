@@ -1027,7 +1027,7 @@
         <!-- 3. 规则类型（18 选项价格对比） -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>规则类型</label>
-          <select class="add-rule-select" id="priceRuleType">
+          <select class="add-rule-select" id="priceRuleType" onchange="onPriceRuleTypeChange()">
             <option value="">请选择</option>
             <option value="d1" selected>本期价格与指定日期价格对比</option>
             <option value="d2">本期价格与当月月初价格对比</option>
@@ -1046,6 +1046,15 @@
             <option value="d15">本期价格与最近N个自然日内最低价格对比</option>
             <option value="d16">本期价格与各地现货交易最高限价N对比</option>
           </select>
+        </div>
+        <!-- v1.7.99.270 配置自然日（仅规则类型为 d13/d14/d15 时显示） -->
+        <div class="add-rule-row" id="priceRuleDaysRow" style="display: none;">
+          <label class="add-rule-label required"><span class="required-mark">*</span>配置自然日</label>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 13px; color: var(--text-secondary);">最近</span>
+            <input type="number" class="add-rule-input" id="priceRuleDays" min="1" max="365" value="7" style="width: 100px;">
+            <span style="font-size: 13px; color: var(--text-secondary);">个自然日内</span>
+          </div>
         </div>
         <!-- 4. 规则名称（input） -->
         <div class="add-rule-row">
@@ -1358,6 +1367,9 @@
         // 重置「业务类型」select 为默认值（存货业务）
         var bizTypeEl = document.getElementById('priceBizType');
         if (bizTypeEl) bizTypeEl.value = 'inventory';
+        // v1.7.99.270 重置「规则类型」为 d1（不显示配置自然日）
+        var ruleTypeEl = document.getElementById('priceRuleType');
+        if (ruleTypeEl) ruleTypeEl.value = 'd1';
         // 清理日期筛选默认值
         var sStart = document.getElementById('priceSignDateStart');
         var sEnd = document.getElementById('priceSignDateEnd');
@@ -1366,6 +1378,8 @@
         renderPriceContractList();
         // v1.7.99.263.3 触发联动：业务类型=存货业务 → 关联合同显示
         togglePriceContractRow();
+        // v1.7.99.270 重置配置自然日显隐
+        onPriceRuleTypeChange();
         // 默认 tap 重置为 all
         document.querySelectorAll('.price-contract-tab').forEach(function(t) {
           t.classList.toggle('active', t.getAttribute('data-tab') === 'all');
@@ -1387,6 +1401,18 @@
       function updatePriceRemarkCount() {
         var v = document.getElementById('priceRemark').value || '';
         document.getElementById('priceRemarkCount').textContent = v.length;
+      }
+
+      // v1.7.99.270 规则类型切换：d13/d14/d15（最近N个自然日）显示「配置自然日」输入框
+      function onPriceRuleTypeChange() {
+        var v = document.getElementById('priceRuleType').value;
+        var daysRow = document.getElementById('priceRuleDaysRow');
+        if (!daysRow) return;
+        if (v === 'd13' || v === 'd14' || v === 'd15') {
+          daysRow.style.display = '';
+        } else {
+          daysRow.style.display = 'none';
+        }
       }
 
       // ===== v1.7.99.263 合同选择控件（价格波动 tap「关联合同」联动） =====
