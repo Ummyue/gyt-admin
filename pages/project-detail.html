@@ -38,6 +38,34 @@
     .case-status { display: inline-block; padding: 1px 8px; border-radius: 3px; font-size: 11px; font-weight: 500; }
     .case-status-warn { background: rgba(220, 38, 38, 0.1); color: #DC2626; }
     .case-status-ok { background: rgba(16, 185, 129, 0.1); color: #059669; }
+    /* v1.7.99.279 合规问卷弹窗 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 999; display: none; }
+    .modal-overlay.open { display: block; }
+    .modal-panel {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 720px; max-width: 92vw; max-height: 88vh; background: #fff;
+      border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      display: none; flex-direction: column; overflow: hidden; z-index: 1000;
+    }
+    .modal-panel.open { display: flex; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); }
+    .modal-title { font-size: 16px; font-weight: 600; color: #92400E; }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 22px; line-height: 1; padding: 0 4px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #F8FAFC; }
+    .modal-footer .spacer { flex: 1; }
+    .survey-question { background: #fff; border: 1px solid var(--border-light); border-radius: 6px; padding: 14px 16px; margin-bottom: 12px; transition: all 0.15s; }
+    .survey-question:hover { border-color: #FDE68A; background: #FFFBEB; }
+    .survey-q-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; line-height: 1.5; }
+    .survey-q-title .q-num { color: #F59E0B; font-weight: 700; margin-right: 6px; }
+    .survey-options { display: flex; gap: 12px; flex-wrap: wrap; }
+    .survey-opt { display: flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--text-secondary); transition: all 0.15s; }
+    .survey-opt:hover { border-color: #F59E0B; }
+    .survey-opt.active { background: linear-gradient(135deg, #FEF3C7 0%, #FDE68A 100%); border-color: #F59E0B; color: #92400E; font-weight: 600; }
+    .survey-q-extra { margin-top: 10px; padding: 10px 12px; background: #F8FAFC; border-radius: 4px; border: 1px dashed var(--border-light); }
+    .survey-q-extra label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
+    .survey-q-extra input { width: 100%; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; box-sizing: border-box; }
   </style>
 </head>
 <body>
@@ -256,8 +284,24 @@
 
       <!-- v1.7.99.274 步骤 2：企业尽调报告（风控合规提醒） -->
       <div id="stepPanel2" hidden>
-      <!-- v1.7.99.274.6 工商信息（按 select 切换企业） -->
-      <div id="basicInfoContainer"></div>
+        <!-- v1.7.99.279 合规问卷触发卡 -->
+        <div class="card" style="margin-bottom: 16px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-color: #FDE68A;">
+          <div class="card-body" style="display: flex; align-items: center; gap: 16px;">
+            <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);">
+              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H1l3-3m0 6l-3-3"/><path d="M11 13h8"/><path d="M11 17h8"/><circle cx="12" cy="12" r="10"/></svg>
+            </div>
+            <div style="flex: 1;">
+              <div style="font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px;">合规问卷 · 生成风控提醒</div>
+              <div style="font-size: 12px; color: #A16207; line-height: 1.5;">针对 8 项合规考察项填写问卷，系统将根据答案动态生成风控合规提醒项</div>
+            </div>
+            <button type="button" class="btn" onclick="openComplianceSurveyDialog()" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; border: 0; padding: 8px 20px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span id="surveyBtnText">开始填写</span>
+            </button>
+          </div>
+        </div>
+        <!-- v1.7.99.274.6 工商信息（按 select 切换企业） -->
+        <div id="basicInfoContainer"></div>
       <!-- v1.7.99.274.6 股权关系（按 select 切换企业） -->
       <div id="equityInfoContainer" style="margin-top: 16px;"></div>
       <!-- v1.7.99.265 风控合规提醒：6 个分类 tap 切换（原 Tab 2 风险扫描结果迁移到下方独立 card） -->
@@ -1147,14 +1191,234 @@
     if (warnEl) warnEl.textContent = totalWarn;
   }
 
+    // ===== v1.7.99.279 合规问卷：8 个问题 + 根据答案生成风控提醒 =====
+    var surveyAnswers = {};
+    var surveyHasRun = {};
+
+    function openComplianceSurveyDialog() {
+      if (document.getElementById('complianceSurveyOverlay')) return;
+      var answers = surveyAnswers[currentCompanyId] || {};
+      var c = COMPANIES[currentCompanyId];
+      window.__surveyTemp = Object.assign({}, answers);
+
+      var questions = [
+        { id: 'q1', num: 1, title: '开展单笔＞500 万大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
+        { id: 'q2', num: 2, title: '无历史业务记录、本次开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
+        { id: 'q3', num: 3, title: '拟交易商品品类不在工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
+        { id: 'q4', num: 4, title: '品牌类商品是否有正规授权书或授权已过期？', options: [{v: 'authorized', l: '已授权'}, {v: 'unauthorized', l: '未授权'}], defaultV: answers.q4 || '' },
+        {
+          id: 'q5', num: 5, title: '是否涉及仓储业务？',
+          options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5 || '',
+          conditional: function(state) {
+            var html = '<div class="survey-q-extra" id="q5_extra" style="' + (state.q5 === 'yes' ? '' : 'display:none') + '">';
+            html += '<label style="margin-top:0;">5.1 是否有对应仓储协议？</label>';
+            html += '<div class="survey-options">';
+            html += '<div class="survey-opt' + (state.q5a === 'yes' ? ' active' : '') + '" data-q="q5a" data-v="yes" onclick="selectSurveyOption(this)">是</div>';
+            html += '<div class="survey-opt' + (state.q5a === 'no' ? ' active' : '') + '" data-q="q5a" data-v="no" onclick="selectSurveyOption(this)">否</div>';
+            html += '</div>';
+            html += '<div class="survey-q-extra" id="q5b_extra" style="' + (state.q5a === 'yes' ? '' : 'display:none') + '; margin-top:8px;">';
+            html += '<label>5.2 请填写对应仓储协议编号</label>';
+            html += '<input type="text" id="q5b_input" placeholder="如：CC-AG-2026-001" value="' + (state.q5b || '') + '">';
+            html += '</div></div>';
+            return html;
+          }
+        },
+        { id: 'q6', num: 6, title: '是否有固定物流合作方且运输资质齐全？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6 || '' },
+        { id: 'q7', num: 7, title: '检测到上下游企业均为贸易类企业，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7 || '' },
+        { id: 'q8', num: 8, title: '本次合作的' + c.shortName + '在近期贸易活动中频繁变更合作方，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8 || '' }
+      ];
+
+      var questionsHtml = questions.map(function(q) {
+        var optsHtml = q.options.map(function(o) {
+          var cls = q.defaultV === o.v ? ' active' : '';
+          return '<div class="survey-opt' + cls + '" data-q="' + q.id + '" data-v="' + o.v + '" onclick="selectSurveyOption(this)">' + o.l + '</div>';
+        }).join('');
+        var extraHtml = q.conditional ? q.conditional(answers) : '';
+        return '<div class="survey-question" data-qid="' + q.id + '">'
+          + '<div class="survey-q-title"><span class="q-num">' + q.num + '.</span>' + q.title + '</div>'
+          + '<div class="survey-options">' + optsHtml + '</div>'
+          + extraHtml + '</div>';
+      }).join('');
+
+      var html = ''
+        + '<div class="modal-overlay" id="complianceSurveyOverlay" onclick="if(event.target===this) closeComplianceSurveyDialog()"></div>'
+        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog">'
+        + '  <div class="modal-header">'
+        + '    <div class="modal-title">合规问卷 · ' + c.shortName + '</div>'
+        + '    <span class="modal-close" onclick="closeComplianceSurveyDialog()" title="关闭">×</span>'
+        + '  </div>'
+        + '  <div class="modal-body">'
+        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.7;">'
+        +      '<span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500;">' + c.name + '</span>　|　'
+        +      '<span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260205002</span><br>'
+        +      '请如实填写以下 8 项合规考察项。系统会根据答案自动在「风控合规提醒」中生成对应风险条目。'
+        +    '</div>'
+        +    questionsHtml
+        + '  </div>'
+        + '  <div class="modal-footer">'
+        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="surveyProgress">0</span> / 8 已答</span>'
+        +    '<div class="spacer"></div>'
+        +    '<button type="button" class="btn btn-secondary" onclick="closeComplianceSurveyDialog()">取消</button>'
+        +    '<button type="button" class="btn" onclick="submitComplianceSurvey()" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; border: 0;">提交并生成风控</button>'
+        + '  </div>'
+        + '</div>';
+      document.body.insertAdjacentHTML('beforeend', html);
+      requestAnimationFrame(function() {
+        document.getElementById('complianceSurveyOverlay').classList.add('open');
+        document.getElementById('complianceSurveyModal').classList.add('open');
+      });
+      bindSurveyConditional();
+      updateSurveyProgress();
+    }
+
+    function selectSurveyOption(el) {
+      var q = el.dataset.q;
+      var v = el.dataset.v;
+      var qid = q.split('_')[0];
+      var siblings = el.parentElement.querySelectorAll('.survey-opt');
+      siblings.forEach(function(s) { s.classList.remove('active'); });
+      el.classList.add('active');
+      if (!window.__surveyTemp) window.__surveyTemp = {};
+      window.__surveyTemp[q] = v;
+      if (qid === 'q5') {
+        var extra = document.getElementById('q5_extra');
+        if (extra) extra.style.display = (v === 'yes') ? 'block' : 'none';
+        if (v === 'no') {
+          if (window.__surveyTemp.q5a) delete window.__surveyTemp.q5a;
+          if (window.__surveyTemp.q5b) delete window.__surveyTemp.q5b;
+          var bExtra = document.getElementById('q5b_extra');
+          if (bExtra) bExtra.style.display = 'none';
+          var bInput = document.getElementById('q5b_input');
+          if (bInput) bInput.value = '';
+          var q5aOpts = document.querySelectorAll('[data-q="q5a"]');
+          q5aOpts.forEach(function(o) { o.classList.remove('active'); });
+        }
+      }
+      if (q === 'q5a') {
+        var bExtra = document.getElementById('q5b_extra');
+        if (bExtra) bExtra.style.display = (v === 'yes') ? 'block' : 'none';
+        if (v === 'no') {
+          if (window.__surveyTemp.q5b) delete window.__surveyTemp.q5b;
+          var bInput = document.getElementById('q5b_input');
+          if (bInput) bInput.value = '';
+        }
+      }
+      updateSurveyProgress();
+    }
+
+    function bindSurveyConditional() {
+      var bInput = document.getElementById('q5b_input');
+      if (bInput) {
+        bInput.addEventListener('input', function() {
+          if (!window.__surveyTemp) window.__surveyTemp = {};
+          window.__surveyTemp.q5b = bInput.value.trim();
+        });
+      }
+    }
+
+    function updateSurveyProgress() {
+      var temp = window.__surveyTemp || {};
+      var count = 0;
+      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) count++; });
+      var el = document.getElementById('surveyProgress');
+      if (el) el.textContent = count;
+    }
+
+    function closeComplianceSurveyDialog() {
+      var overlay = document.getElementById('complianceSurveyOverlay');
+      var modal = document.getElementById('complianceSurveyModal');
+      if (overlay) overlay.remove();
+      if (modal) modal.remove();
+      window.__surveyTemp = null;
+    }
+
+    function submitComplianceSurvey() {
+      var temp = window.__surveyTemp || {};
+      var answered = 0;
+      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) answered++; });
+      if (answered < 8) {
+        Utils.toast('请完成全部 8 项问卷（已答 ' + answered + ' / 8）', 'error');
+        return;
+      }
+      if (temp.q5 === 'yes' && temp.q5a === 'yes' && !temp.q5b) {
+        Utils.toast('请填写仓储协议编号（5.2）', 'error');
+        return;
+      }
+      surveyAnswers[currentCompanyId] = Object.assign({}, temp);
+      var newRisks = generateRisksFromSurvey(surveyAnswers[currentCompanyId]);
+      mergeSurveyRisks(currentCompanyId, newRisks);
+      surveyHasRun[currentCompanyId] = true;
+      renderAllRiskPanels();
+      updateRiskTabCounts();
+      var btnText = document.getElementById('surveyBtnText');
+      if (btnText) btnText.textContent = '重新填写（已生成 ' + newRisks.length + ' 项风险）';
+      closeComplianceSurveyDialog();
+      Utils.toast('合规问卷已提交，已生成 ' + newRisks.length + ' 项风控提醒', 'success');
+    }
+
+    function generateRisksFromSurvey(answers) {
+      var c = COMPANIES[currentCompanyId];
+      var risks = [];
+      if (answers.q1 === 'yes') {
+        risks.push({ tab: 'trade', name: '大额贸易风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次交易为单笔金额＞500 万的大额贸易，需关注资金来源、付款方式及交易背景真实性。' });
+      }
+      if (answers.q2 === 'yes') {
+        risks.push({ tab: 'trade', name: '历史业务缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，与 ' + c.shortName + ' 无历史业务记录且本次新增大额贸易品类，需重点关注首次合作风险及新增品类市场风险。' });
+      }
+      if (answers.q3 === 'yes') {
+        risks.push({ tab: 'trade', name: '超范围经营风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次拟交易商品品类不在 ' + c.shortName + ' 工商登记的经营范围内，存在超范围经营风险，需核查实际履约能力。' });
+      }
+      if (answers.q4 === 'unauthorized') {
+        risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
+      }
+      if (answers.q5 === 'yes') {
+        if (answers.q5a === 'yes' && answers.q5b) {
+          risks.push({ tab: 'business', name: '仓储协议完备', status: 'ok', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 已签订仓储协议（编号：' + answers.q5b + '），仓储业务合规。' });
+        } else if (answers.q5a === 'yes' && !answers.q5b) {
+          risks.push({ tab: 'business', name: '仓储协议编号缺失', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务并签订协议，但未填写协议编号，请补充。' });
+        } else {
+          risks.push({ tab: 'business', name: '仓储协议缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务但未签订对应仓储协议，存在合规风险。' });
+        }
+      }
+      if (answers.q6 === 'no') {
+        risks.push({ tab: 'business', name: '物流资质缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 无固定物流合作方或运输资质不全，需补充完整物流资质证明。' });
+      }
+      if (answers.q7 === 'yes') {
+        risks.push({ tab: 'relation', name: '上下游贸易类风险', status: 'warn', desc: '截至 ' + c.scanTime + '，检测到 ' + c.shortName + ' 的上下游企业均为贸易类企业，存在贸易背景真实性风险，可能涉及循环贸易。' });
+      }
+      if (answers.q8 === 'yes') {
+        risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 在近期贸易活动中频繁变更合作方，存在经营不稳定风险，需重点关注履约能力。' });
+      }
+      return risks;
+    }
+
+    function mergeSurveyRisks(companyId, newRisks) {
+      var c = COMPANIES[companyId];
+      newRisks.forEach(function(risk) {
+        var arr = c[risk.tab];
+        if (!arr || !arr.items) return;
+        var exists = arr.items.some(function(it) { return it._fromSurvey && it.name === risk.name; });
+        if (!exists) {
+          arr.items.push(Object.assign({}, risk, { _fromSurvey: true }));
+        } else {
+          for (var i = 0; i < arr.items.length; i++) {
+            if (arr.items[i]._fromSurvey && arr.items[i].name === risk.name) {
+              arr.items[i] = Object.assign({}, risk, { _fromSurvey: true });
+              break;
+            }
+          }
+        }
+      });
+    }
+
     // 初始化：渲染 6 个 panel + 工商信息 + 股权关系
-  function initRiskPanel() {
-    renderBasicInfo();
-    renderEquityInfo();
-    ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
-    updateRiskTabCounts();
-  }
-  initRiskPanel();
+    function initRiskPanel() {
+      renderBasicInfo();
+      renderEquityInfo();
+      ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
+      updateRiskTabCounts();
+    }
+    initRiskPanel();
     // 点击 tab 标签
   document.querySelectorAll('#detailTabs .tab').forEach(t => {
     t.addEventListener('click', () => {
