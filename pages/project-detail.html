@@ -23,6 +23,28 @@
     .risk-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
     .risk-tab .count { display: inline-block; margin-left: 4px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; min-width: 20px; text-align: center; }
     .risk-panel { padding: 0; }
+    /* v1.7.99.280 风控合规提醒表格：5 列（检查分类/校验项/检查规则/检查过程/校验结果） */
+    .risk-table-wrap { padding: 12px 16px 16px; overflow-x: auto; }
+    .risk-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; table-layout: fixed; }
+    .risk-table thead th { background: #F1F5F9; color: var(--text-secondary); font-weight: 500; font-size: 12px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+    .risk-table thead th.risk-th-category { width: 96px; }
+    .risk-table thead th.risk-th-name { width: 130px; }
+    .risk-table thead th.risk-th-rule { width: 200px; text-align: center; }
+    .risk-table thead th.risk-th-result { width: 96px; text-align: center; }
+    .risk-table tbody td { padding: 12px 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-primary); vertical-align: top; line-height: 1.65; }
+    .risk-table tbody tr:last-child td { border-bottom: none; }
+    .risk-table tbody tr.risk-row { transition: background 0.15s; }
+    .risk-table tbody tr.risk-row:hover { background: var(--bg-hover); }
+    .risk-table tbody tr.risk-row-warn { background: #FEF2F2; }
+    .risk-table tbody tr.risk-row-warn:hover { background: #FEE2E2; }
+    .risk-td-category { color: var(--text-secondary); font-size: 13px; }
+    .risk-td-name { font-weight: 500; color: var(--text-primary); }
+    .risk-td-rule { color: var(--text-secondary); text-align: center; font-size: 12px; }
+    .risk-td-desc .risk-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.7; }
+    .risk-td-result { text-align: center; }
+    .risk-result-tag { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .risk-result-ok { background: rgba(16, 185, 129, 0.12); color: #047857; }
+    .risk-result-warn { background: rgba(220, 38, 38, 0.12); color: #B91C1C; }
     /* v1.7.99.266 人员风险展开/收起（多条明细子表） */
     .risk-cases-count { display: inline-block; margin-left: 6px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; }
     .risk-toggle { display: inline-flex; align-items: center; gap: 4px; margin-top: 8px; padding: 4px 10px; background: #F1F5F9; border: 1px solid #E2E8F0; border-radius: 4px; font-size: 12px; color: var(--color-primary); cursor: pointer; user-select: none; transition: all 0.15s; }
@@ -1099,15 +1121,82 @@
     document.querySelectorAll('.risk-panel').forEach(p => p.hidden = (p.id !== 'riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)));
   }
 
-    // 渲染单个 panel
+    // v1.7.99.280 风控合规提醒：按图 2 5 列表头（检查分类/校验项/检查规则/检查过程/校验结果）渲染
+    // 映射表：item.name → 检查分类 + 检查规则（item 自带 category/rule 时优先）
+  function getRiskMeta(key, item) {
+    if (item.category && item.rule) return { category: item.category, rule: item.rule };
+    var map = RISK_RULE_MAP[item.name];
+    if (map) return { category: map.category, rule: map.rule };
+    return { category: RISK_TAB_DEFAULT_CATEGORY[key] || '综合合规类', rule: '按风险模型规则校验' };
+  }
+  var RISK_TAB_DEFAULT_CATEGORY = {
+    trade: '主体准入类',
+    internal: '主体准入类',
+    business: '经营行为类',
+    judicial: '合规记录类',
+    relation: '关联关系类',
+    personnel: '人员合规类'
+  };
+  var RISK_RULE_MAP = {
+    // trade
+    '空壳企业识别':           { category: '主体准入类', rule: '上下游客户是否准入（负面清单核验）' },
+    '关联交易风险':           { category: '关联关系类', rule: '上下游客户是否准入（负面清单核验）' },
+    '资质缺失风险':           { category: '主体准入类', rule: '上下游客户是否准入（负面清单核验）' },
+    '物流合作稳定性':         { category: '经营行为类', rule: '核心客户运单量是否稳定' },
+    '大额贸易风险':           { category: '贸易实质类', rule: '单笔交易金额是否超过限额' },
+    '历史业务缺失风险':       { category: '贸易实质类', rule: '首次合作是否需重点关注' },
+    '超范围经营风险':         { category: '主体准入类', rule: '经营品类需在工商登记范围内' },
+    '品牌授权缺失风险':       { category: '贸易实质类', rule: '品牌类商品需有正规授权' },
+    // internal
+    '合作黑名单':             { category: '主体准入类', rule: '是否在我司合作黑名单内' },
+    '假国央企':               { category: '主体准入类', rule: '是否冒用国央企资质' },
+    '历史运单异常':           { category: '经营行为类', rule: '历史运单轨迹是否异常' },
+    // business
+    '税收违法信息':           { category: '经营行为类', rule: '是否列入税收违法名单' },
+    '行政或工商违法处罚信息': { category: '合规记录类', rule: '是否受到行政处罚' },
+    '经营异常':               { category: '经营行为类', rule: '是否列入经营异常名录' },
+    '行政处罚':               { category: '合规记录类', rule: '近 3 年是否有重大行政处罚' },
+    '严重违法':               { category: '合规记录类', rule: '是否列入严重违法失信企业名单' },
+    '车辆规模':               { category: '经营行为类', rule: '运输车辆规模是否匹配业务范围' },
+    '仓储协议完备':           { category: '经营行为类', rule: '仓储业务是否签订对应协议' },
+    '仓储协议编号缺失':       { category: '经营行为类', rule: '仓储协议编号是否完整' },
+    '仓储协议缺失风险':       { category: '经营行为类', rule: '仓储业务是否签订对应协议' },
+    '物流资质缺失风险':       { category: '经营行为类', rule: '物流合作方资质是否齐全' },
+    // judicial
+    '失信被执行人信息':       { category: '合规记录类', rule: '是否列入失信被执行人' },
+    '被执行人信息':           { category: '合规记录类', rule: '是否列入被执行人' },
+    '限制消费令信息':         { category: '合规记录类', rule: '是否被限制消费' },
+    '终本案件':               { category: '合规记录类', rule: '是否存在终本案件' },
+    '法律诉讼':               { category: '合规记录类', rule: '是否涉及法律诉讼' },
+    '历史法律诉讼':           { category: '合规记录类', rule: '历史诉讼是否结案' },
+    '开庭公告':               { category: '合规记录类', rule: '未来 30 天内是否有开庭公告' },
+    '历史开庭公告':           { category: '合规记录类', rule: '历史开庭公告是否结案' },
+    '被执行人':               { category: '合规记录类', rule: '是否列入被执行人' },
+    '司法协助':               { category: '合规记录类', rule: '是否存在司法协助记录' },
+    '历史被执行人':           { category: '合规记录类', rule: '历史是否曾被列为被执行人' },
+    '失信被执行人':           { category: '合规记录类', rule: '是否列入失信被执行人' },
+    '历史失信被执行人':       { category: '合规记录类', rule: '历史是否曾被列为失信被执行人' },
+    '限制出境':               { category: '人员合规类', rule: '法定代表人/主要管理人员是否被限制出境' },
+    '历史限制消费令':         { category: '人员合规类', rule: '法定代表人历史是否被限制消费' },
+    '限制消费令':             { category: '人员合规类', rule: '法定代表人是否被限制消费' },
+    // relation
+    '疑似关系发现':           { category: '关联关系类', rule: '是否与其他风险企业存在隐性关联' },
+    '疑似实际控制人相同':     { category: '关联关系类', rule: '实控人是否与其他企业相同' },
+    '最短路径发现':           { category: '关联关系类', rule: '关联路径层数是否在阈值内' },
+    '上下游贸易类风险':       { category: '关联关系类', rule: '上下游是否均为贸易类企业' },
+    '合作方频繁变更风险':     { category: '关联关系类', rule: '合作方是否稳定' }
+  };
+
+    // 渲染单个 panel（v1.7.99.280：表格 5 列）
   function renderRiskPanel(key) {
     var data = COMPANIES[currentCompanyId][key];
     if (!data) return;
-    var html = data.items.map(function(item, i) {
+    var rows = data.items.map(function(item, i) {
       var isWarn = item.status === 'warn';
       var hasCases = Array.isArray(item.cases) && item.cases.length > 0;
-        // 每个 item 唯一 id 用于展开/收起
       var itemId = key + '_item_' + i;
+      var meta = getRiskMeta(key, item);
+        // 司法案件明细（嵌入「检查过程」列下方，保留可展开）
       var casesHtml = '';
       if (hasCases) {
         casesHtml = '<div class="risk-cases" id="' + itemId + '_cases" hidden>'
@@ -1133,17 +1222,36 @@
           + '<span class="toggle-text">展开 ' + item.cases.length + ' 条明细</span>'
           + '</div>';
       }
-      return '<div class="risk-item' + (isWarn ? ' risk-warn' : '') + '">'
-        + '<div class="risk-num">' + (i + 1) + '</div>'
-        + '<div class="risk-content">'
-        + '<div class="risk-name">' + item.name + (hasCases ? ' <span class="risk-cases-count">' + item.cases.length + ' 条</span>' : '') + '</div>'
-        + '<div class="risk-desc"' + (isWarn ? ' style="color: var(--color-danger);"' : '') + '>' + item.desc + '</div>'
-        + toggleHtml
-        + casesHtml
-        + '</div>'
-        + '<span class="risk-status ' + item.status + '">' + (isWarn ? '风险提示' : '暂无风险') + '</span>'
-        + '</div>';
+      var resultTag = isWarn
+        ? '<span class="risk-result-tag risk-result-warn">⚠ 风险提示</span>'
+        : '<span class="risk-result-tag risk-result-ok">✓ 通过</span>';
+      return '<tr class="risk-row' + (isWarn ? ' risk-row-warn' : '') + '">'
+        + '<td class="risk-td-category">' + meta.category + '</td>'
+        + '<td class="risk-td-name">'
+          + item.name
+          + (hasCases ? ' <span class="risk-cases-count">' + item.cases.length + ' 条</span>' : '')
+        + '</td>'
+        + '<td class="risk-td-rule">' + meta.rule + '</td>'
+        + '<td class="risk-td-desc">'
+          + '<div class="risk-desc"' + (isWarn ? ' style="color: var(--color-danger);"' : '') + '>' + item.desc + '</div>'
+          + toggleHtml
+          + casesHtml
+        + '</td>'
+        + '<td class="risk-td-result">' + resultTag + '</td>'
+        + '</tr>';
     }).join('');
+    var html = '<div class="risk-table-wrap">'
+      + '<table class="risk-table">'
+      + '<thead><tr>'
+      + '<th class="risk-th-category">检查分类</th>'
+      + '<th class="risk-th-name">校验项</th>'
+      + '<th class="risk-th-rule">检查规则</th>'
+      + '<th class="risk-th-desc">检查过程</th>'
+      + '<th class="risk-th-result">校验结果</th>'
+      + '</tr></thead>'
+      + '<tbody>' + rows + '</tbody>'
+      + '</table>'
+      + '</div>';
     document.getElementById('riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)).innerHTML = html;
   }
 
@@ -1373,7 +1481,7 @@
       }
       if (answers.q5 === 'yes') {
         if (answers.q5a === 'yes' && answers.q5b) {
-          risks.push({ tab: 'business', name: '仓储协议完备', status: 'ok', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 已签订仓储协议（编号：' + answers.q5b + '），仓储业务合规。' });
+          risks.push({ tab: 'business', name: '仓储协议完备', status: 'ok', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 已签订仓储协议（编号：' + answers.q5b + '），仓储业务合规。', category: '经营行为类', rule: '仓储业务是否签订对应协议' });
         } else if (answers.q5a === 'yes' && !answers.q5b) {
           risks.push({ tab: 'business', name: '仓储协议编号缺失', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务并签订协议，但未填写协议编号，请补充。' });
         } else {
