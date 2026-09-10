@@ -339,6 +339,42 @@
     .member-select-compact .member-chip { padding: 2px 3px 2px 6px; font-size: 11px; }
     .member-select-compact .member-input-wrap { min-width: 100px; }
     .member-select-compact .member-input-wrap .input { padding: 2px 0; font-size: 12px; }
+    /* v1.7.99.281 合规问卷弹窗（与 project-detail 一致） */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 999; display: none; }
+    .modal-overlay.open { display: block; }
+    .modal-panel {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 720px; max-width: 92vw; max-height: 88vh; background: #fff;
+      border-radius: 10px; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+      display: none; flex-direction: column; overflow: hidden; z-index: 1000;
+    }
+    .modal-panel.open { display: flex; }
+    .modal-header { padding: 16px 20px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); }
+    .modal-title { font-size: 16px; font-weight: 600; color: #92400E; }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 22px; line-height: 1; padding: 0 4px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-light); display: flex; justify-content: space-between; align-items: center; gap: 8px; background: #F8FAFC; }
+    .modal-footer .spacer { flex: 1; }
+    .survey-question { background: #fff; border: 1px solid var(--border-light); border-radius: 6px; padding: 14px 16px; margin-bottom: 12px; transition: all 0.15s; }
+    .survey-question:hover { border-color: #FDE68A; background: #FFFBEB; }
+    .survey-q-title { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 10px; line-height: 1.5; }
+    .survey-q-title .q-num { color: #F59E0B; font-weight: 700; margin-right: 6px; }
+    .survey-options { display: flex; gap: 12px; flex-wrap: wrap; }
+    .survey-opt { display: flex; align-items: center; gap: 4px; padding: 4px 12px; border: 1px solid var(--border-light); border-radius: 4px; cursor: pointer; font-size: 13px; color: var(--text-secondary); transition: all 0.15s; }
+    .survey-opt:hover { border-color: #F59E0B; }
+    .survey-opt.active { background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-color: #F59E0B; color: #92400E; font-weight: 500; }
+    .survey-q-extra { margin-top: 10px; padding-left: 0; }
+    .survey-q-extra label { display: block; font-size: 12px; font-weight: 500; color: var(--text-secondary); margin-bottom: 6px; }
+    .survey-q-extra .input { width: 100%; box-sizing: border-box; }
+    /* v1.7.99.281 合规问卷 banner（步骤2 顶部） */
+    .apply-survey-banner { display: flex; align-items: center; gap: 14px; padding: 14px 18px; margin-bottom: 16px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1px solid #FDE68A; border-radius: 8px; }
+    .apply-survey-banner-icon { width: 40px; height: 40px; border-radius: 50%; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; display: flex; align-items: center; justify-content: center; font-size: 20px; flex-shrink: 0; }
+    .apply-survey-banner-body { flex: 1; min-width: 0; }
+    .apply-survey-banner-title { font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 2px; }
+    .apply-survey-banner-desc { font-size: 12px; color: #B45309; line-height: 1.5; }
+    .apply-survey-banner-btn { padding: 8px 20px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; border: 0; border-radius: 6px; font-size: 13px; font-weight: 500; cursor: pointer; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25); transition: all 0.15s; white-space: nowrap; }
+    .apply-survey-banner-btn:hover { transform: translateY(-1px); box-shadow: 0 4px 12px rgba(245, 158, 11, 0.35); }
   </style>
 </head>
 <body>
@@ -392,17 +428,17 @@
           <div class="steps" id="stepper">
             <div class="step" data-step="1">
               <div class="step-circle" id="stepCircle1">1</div>
-              <div class="step-label" id="stepLabel1">项目信息录入</div>
+              <div class="step-label" id="stepLabel1">项目基本信息</div>
             </div>
             <div class="step-line" id="stepLine1"></div>
             <div class="step" data-step="2">
               <div class="step-circle" id="stepCircle2">2</div>
-              <div class="step-label" id="stepLabel2">企业风险报告</div>
+              <div class="step-label" id="stepLabel2">企业尽调报告</div>
             </div>
             <div class="step-line" id="stepLine2"></div>
             <div class="step" data-step="3">
               <div class="step-circle" id="stepCircle3">3</div>
-              <div class="step-label" id="stepLabel3">提交审批</div>
+              <div class="step-label" id="stepLabel3">审批详情</div>
             </div>
             <div class="step-line" id="stepLine3"></div>
             <div class="step" data-step="4">
@@ -574,8 +610,20 @@
         </div>
         <!-- ========== /Step 1 ========== -->
 
-        <!-- ========== Step 2：企业风险报告（v1.1 + v1.4 tab 切换 + v1.5 图1模块） ========== -->
+        <!-- ========== Step 2：企业尽调报告（v1.7.99.281 改名 + 加合规问卷 banner） ========== -->
         <div id="step2Content" hidden>
+          <!-- v1.7.99.281 合规问卷 banner（步骤1 提交后已自动生成，点此重新填写） -->
+          <div class="apply-survey-banner">
+            <div class="apply-survey-banner-icon">📋</div>
+            <div class="apply-survey-banner-body">
+              <div class="apply-survey-banner-title">合规问卷 · 生成风控提醒</div>
+              <div class="apply-survey-banner-desc" id="applySurveyBannerText">针对 8 项合规考察项填写问卷，系统将根据答案动态生成风控合规提醒项</div>
+            </div>
+            <button type="button" class="apply-survey-banner-btn" id="applySurveyBannerBtn" onclick="openApplyComplianceSurveyDialog()">
+              <span class="apply-survey-btn-label">开始填写</span>
+            </button>
+          </div>
+
           <!-- 关联企业 tabs -->
           <div class="card" style="margin-bottom: 16px; padding: 0;">
             <div style="display: flex; align-items: center; justify-content: space-between; padding: 0 24px;">
@@ -776,7 +824,7 @@
         <button class="btn btn-secondary" id="btnSave" style="display: none;">保存草稿</button>
         <div style="flex: 1;"></div>
         <button class="btn btn-secondary" id="btnPrev">返 回</button>
-        <button class="btn btn-primary" id="btnNext" disabled>发起尽调</button>
+        <button class="btn btn-primary" id="btnNext" disabled>下一步</button>
       </div>
     </div>
   </div>
@@ -1626,6 +1674,217 @@
       }
     });
 
+    // ===== v1.7.99.281 合规问卷：步骤1 提交后自动弹出，提交后切到步骤2 =====
+    // 简化版：当前企业固定为 A（apply 第一个关联企业），完整 COMPANIES + 风险表格在 v1.7.99.282 步骤2 重做后回写
+    var applyCurrentCompanyId = 'A';
+    var applySurveyAnswers = {};   // { A: {q1:'yes',q2:'no',...}, ... }
+    var applySurveyHasRun = {};    // { A: true, ... }
+    var applySurveyRiskCount = {}; // { A: 5, ... } 问卷生成的风险数（用于 banner 显示）
+
+    var APPLY_SURVEY_COMPANIES = {
+      A: { name: '河南军牧原国际贸易有限公司', shortName: '河南军牧原', scanTime: '2026-07-17 15:46:04' },
+      B: { name: '郑州铁龙物流有限公司',       shortName: '郑州铁龙',  scanTime: '2026-07-17 16:02:18' },
+      C: { name: '中原粮食集团有限公司',       shortName: '中原粮食',  scanTime: '2026-07-18 09:15:30' }
+    };
+
+    function openApplyComplianceSurveyDialog() {
+      if (document.getElementById('complianceSurveyOverlay')) return;
+      var answers = applySurveyAnswers[applyCurrentCompanyId] || {};
+      var c = APPLY_SURVEY_COMPANIES[applyCurrentCompanyId];
+      window.__applySurveyTemp = Object.assign({}, answers);
+
+      var questions = [
+        { id: 'q1', num: 1, title: '开展单笔＞500 万大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
+        { id: 'q2', num: 2, title: '无历史业务记录、本次开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
+        { id: 'q3', num: 3, title: '拟交易商品品类不在工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
+        { id: 'q4', num: 4, title: '品牌类商品是否有正规授权书或授权已过期？', options: [{v: 'authorized', l: '已授权'}, {v: 'unauthorized', l: '未授权'}], defaultV: answers.q4 || '' },
+        {
+          id: 'q5', num: 5, title: '是否涉及仓储业务？',
+          options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5 || '',
+          conditional: function(state) {
+            var html = '<div class="survey-q-extra" id="apply_q5_extra" style="' + (state.q5 === 'yes' ? '' : 'display:none') + '">';
+            html += '<label style="margin-top:0;">5.1 是否有对应仓储协议？</label>';
+            html += '<div class="survey-options">';
+            html += '<div class="survey-opt' + (state.q5a === 'yes' ? ' active' : '') + '" data-q="applyq5a" data-v="yes" onclick="selectApplySurveyOption(this)">是</div>';
+            html += '<div class="survey-opt' + (state.q5a === 'no' ? ' active' : '') + '" data-q="applyq5a" data-v="no" onclick="selectApplySurveyOption(this)">否</div>';
+            html += '</div>';
+            html += '<div class="survey-q-extra" id="apply_q5b_extra" style="' + (state.q5a === 'yes' ? '' : 'display:none') + '; margin-top:8px;">';
+            html += '<label>5.2 请填写对应仓储协议编号</label>';
+            html += '<input type="text" id="apply_q5b_input" placeholder="如：CC-AG-2026-001" value="' + (state.q5b || '') + '">';
+            html += '</div></div>';
+            return html;
+          }
+        },
+        { id: 'q6', num: 6, title: '是否有固定物流合作方且运输资质齐全？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6 || '' },
+        { id: 'q7', num: 7, title: '检测到上下游企业均为贸易类企业，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7 || '' },
+        { id: 'q8', num: 8, title: '本次合作的' + c.shortName + '在近期贸易活动中频繁变更合作方，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8 || '' }
+      ];
+
+      var questionsHtml = questions.map(function(q) {
+        var optsHtml = q.options.map(function(o) {
+          var cls = q.defaultV === o.v ? ' active' : '';
+          return '<div class="survey-opt' + cls + '" data-q="' + q.id + '" data-v="' + o.v + '" onclick="selectApplySurveyOption(this)">' + o.l + '</div>';
+        }).join('');
+        var extraHtml = q.conditional ? q.conditional(answers) : '';
+        return '<div class="survey-question" data-qid="' + q.id + '">'
+          + '<div class="survey-q-title"><span class="q-num">' + q.num + '.</span>' + q.title + '</div>'
+          + '<div class="survey-options">' + optsHtml + '</div>'
+          + extraHtml + '</div>';
+      }).join('');
+
+      var html = ''
+        + '<div class="modal-overlay" id="complianceSurveyOverlay" onclick="if(event.target===this) closeApplyComplianceSurveyDialog()"></div>'
+        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog">'
+        + '  <div class="modal-header">'
+        + '    <div class="modal-title">合规问卷 · ' + c.shortName + '</div>'
+        + '    <span class="modal-close" onclick="closeApplyComplianceSurveyDialog()" title="关闭">×</span>'
+        + '  </div>'
+        + '  <div class="modal-body">'
+        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.7;">'
+        +      '<span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500;">' + c.name + '</span>　|　'
+        +      '<span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260122001</span><br>'
+        +      '请如实填写以下 8 项合规考察项。系统会根据答案自动在「企业尽调报告」风控合规提醒中生成对应风险条目。'
+        +    '</div>'
+        +    questionsHtml
+        + '  </div>'
+        + '  <div class="modal-footer">'
+        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="applySurveyProgress">0</span> / 8 已答</span>'
+        +    '<div class="spacer"></div>'
+        +    '<button type="button" class="btn btn-secondary" onclick="closeApplyComplianceSurveyDialog()">取消</button>'
+        +    '<button type="button" class="btn" onclick="submitApplyComplianceSurvey()" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; border: 0;">提交并生成风控</button>'
+        + '  </div>'
+        + '</div>';
+      document.body.insertAdjacentHTML('beforeend', html);
+      requestAnimationFrame(function() {
+        document.getElementById('complianceSurveyOverlay').classList.add('open');
+        document.getElementById('complianceSurveyModal').classList.add('open');
+      });
+      bindApplySurveyConditional();
+      updateApplySurveyProgress();
+    }
+
+    function selectApplySurveyOption(el) {
+      var q = el.dataset.q;          // 可能是 "q5" 或 "applyq5a"
+      var v = el.dataset.v;
+      var qid = q.indexOf('q5') === 0 ? q : q.split('_')[0];   // 兼容 applyq5a
+      var siblings = el.parentElement.querySelectorAll('.survey-opt');
+      siblings.forEach(function(s) { s.classList.remove('active'); });
+      el.classList.add('active');
+      if (!window.__applySurveyTemp) window.__applySurveyTemp = {};
+      // 标准化 key：applyq5a → q5a
+      var key = q.replace(/^apply/, '');
+      window.__applySurveyTemp[key] = v;
+      if (qid === 'q5' || key === 'q5') {
+        var extra = document.getElementById('apply_q5_extra');
+        if (extra) extra.style.display = (v === 'yes') ? 'block' : 'none';
+        if (v === 'no') {
+          if (window.__applySurveyTemp.q5a) delete window.__applySurveyTemp.q5a;
+          if (window.__applySurveyTemp.q5b) delete window.__applySurveyTemp.q5b;
+          var bExtra = document.getElementById('apply_q5b_extra');
+          if (bExtra) bExtra.style.display = 'none';
+          var bInput = document.getElementById('apply_q5b_input');
+          if (bInput) bInput.value = '';
+          var q5aOpts = document.querySelectorAll('[data-q="applyq5a"]');
+          q5aOpts.forEach(function(o) { o.classList.remove('active'); });
+        }
+      }
+      if (q === 'applyq5a') {
+        var bExtra2 = document.getElementById('apply_q5b_extra');
+        if (bExtra2) bExtra2.style.display = (v === 'yes') ? 'block' : 'none';
+        if (v === 'no') {
+          if (window.__applySurveyTemp.q5b) delete window.__applySurveyTemp.q5b;
+          var bInput2 = document.getElementById('apply_q5b_input');
+          if (bInput2) bInput2.value = '';
+        }
+      }
+      updateApplySurveyProgress();
+    }
+
+    function bindApplySurveyConditional() {
+      var bInput = document.getElementById('apply_q5b_input');
+      if (bInput) {
+        bInput.addEventListener('input', function() {
+          if (!window.__applySurveyTemp) window.__applySurveyTemp = {};
+          window.__applySurveyTemp.q5b = bInput.value.trim();
+        });
+      }
+    }
+
+    function updateApplySurveyProgress() {
+      var temp = window.__applySurveyTemp || {};
+      var count = 0;
+      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) count++; });
+      var el = document.getElementById('applySurveyProgress');
+      if (el) el.textContent = count;
+    }
+
+    function closeApplyComplianceSurveyDialog() {
+      var overlay = document.getElementById('complianceSurveyOverlay');
+      var modal = document.getElementById('complianceSurveyModal');
+      if (overlay) overlay.remove();
+      if (modal) modal.remove();
+      window.__applySurveyTemp = null;
+    }
+
+    function submitApplyComplianceSurvey() {
+      var temp = window.__applySurveyTemp || {};
+      var answered = 0;
+      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) answered++; });
+      if (answered < 8) {
+        alert('请完成全部 8 项问卷（已答 ' + answered + ' / 8）');
+        return;
+      }
+      if (temp.q5 === 'yes' && temp.q5a === 'yes' && !temp.q5b) {
+        alert('请填写仓储协议编号（5.2）');
+        return;
+      }
+      applySurveyAnswers[applyCurrentCompanyId] = Object.assign({}, temp);
+      applySurveyHasRun[applyCurrentCompanyId] = true;
+      var count = countApplySurveyRisks(applySurveyAnswers[applyCurrentCompanyId]);
+      applySurveyRiskCount[applyCurrentCompanyId] = count;
+      closeApplyComplianceSurveyDialog();
+      // 切到步骤2 + 滚动到顶部
+      updateStep(2);
+      var scroller = document.querySelector('[style*="overflow-y: auto"]');
+      if (scroller) scroller.scrollTop = 0;
+      // 更新 banner 文案
+      refreshApplySurveyBanner();
+      alert('合规问卷已提交，已生成 ' + count + ' 项风控提醒（提交报告后将在风险表格中体现）');
+    }
+
+    // 计算问卷生成的风险数（v1.7.99.282 重做步骤2 时替换为实际渲染）
+    function countApplySurveyRisks(answers) {
+      var n = 0;
+      if (answers.q1 === 'yes') n++;
+      if (answers.q2 === 'yes') n++;
+      if (answers.q3 === 'yes') n++;
+      if (answers.q4 === 'unauthorized') n++;
+      if (answers.q5 === 'yes') n++;            // 仓储协议完备/缺失/编号缺失（1 项）
+      if (answers.q6 === 'no') n++;
+      if (answers.q7 === 'yes') n++;
+      if (answers.q8 === 'yes') n++;
+      return n;
+    }
+
+    // 刷新步骤2 banner 文案
+    function refreshApplySurveyBanner() {
+      var btn = document.getElementById('applySurveyBannerBtn');
+      var text = document.getElementById('applySurveyBannerText');
+      if (!btn || !text) return;
+      if (applySurveyHasRun[applyCurrentCompanyId]) {
+        var n = applySurveyRiskCount[applyCurrentCompanyId] || 0;
+        text.textContent = '已生成 ' + n + ' 项风控提醒';
+        btn.querySelector('.apply-survey-btn-label').textContent = '重新填写问卷';
+        btn.style.background = 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)';
+        btn.style.color = '#047857';
+      } else {
+        text.textContent = '针对 8 项合规考察项填写问卷，系统将根据答案动态生成风控合规提醒项';
+        btn.querySelector('.apply-survey-btn-label').textContent = '开始填写';
+        btn.style.background = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
+        btn.style.color = '#fff';
+      }
+    }
+
     // ===== Step 切换逻辑 =====
     let currentStep = 1;
     function updateStep(n) {
@@ -1643,6 +1902,8 @@
           renderStep2('all');
           c.dataset.rendered = '1';
         }
+        // v1.7.99.281 刷新合规问卷 banner 文案
+        if (typeof refreshApplySurveyBanner === 'function') refreshApplySurveyBanner();
       }
       // 更新 stepper 状态
       for (let i = 1; i <= 4; i++) {
@@ -1723,7 +1984,8 @@
       updateStep(currentStep - 1);
       document.querySelector('[style*="overflow-y: auto"]').scrollTop = 0;
     });
-    // btnNext（"发起尽调"）：v1.7.99.31 默认 disabled，step 1 tag-card ≥ 1 时启用
+    // btnNext（"下一步"）：v1.7.99.31 默认 disabled，step 1 tag-card ≥ 1 时启用
+    // v1.7.99.281：步骤1 → 自动弹合规问卷 → 提交后切到步骤2
     document.getElementById('btnNext').addEventListener('click', () => {
       if (currentStep === 1) {
         // v1.7.99.26 校验项目小组成员必填
@@ -1732,6 +1994,9 @@
           document.getElementById('memberSearch').focus();
           return;
         }
+        // v1.7.99.281 弹合规问卷（提交后由 submitApplyComplianceSurvey 切到步骤2）
+        openApplyComplianceSurveyDialog();
+        return;
       }
       if (currentStep === 4) {
         alert('提交成功！');
