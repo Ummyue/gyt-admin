@@ -108,6 +108,18 @@
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [                                                                                                {
+          ts: '2026-09-10T17:05:00',
+          version: 'v1.7.99.293',
+          module: '保证金管理-保证金调整下方加「回款信息」模块（冲抵最后一笔货款触发）',
+          summary: '保证金调整页（pages/margin-adjust.html）新增「回款信息」模块。1) 需求：user 2026-09-10 16:58 反馈保证金调整模块下方加「回款信息」模块，显示「合同已回款金额（元）」+「合同未回款金额（元）」，样式参考业务线回款认领页 3 列 stat-card + 业务线回款明细表，触发条件=调整方式选择「冲抵最后一笔货款」；2) 改造方案：a) 保证金调整信息区块（区块 2）后、附件区块（区块 3）前新增「回款信息」info-section（默认 display:none），结构 = 2 个 stat-card（合同已回款金额 蓝渐变 #EFF6FF→#DBEAFE 数字 #1E40AF + 合同未回款金额 黄渐变 #FFFBEB→#FEF3C7 数字 #B45309）+ 1 张业务线回款明细表（5 列：认领类型/收款类型/认领信息/下游结算金额(元)/已认领金额(元)）；b) 表格 1 行 mock：业务线回款/货款/SKYWX202607050001 河南诚泽运输→河南中豫港通→郑州信必达国际 / 采购合同 GTGYL-MSXS-20260127-s 2026-01-27 / 销售合同 YL-MSXS-20260127-s 2026-01-27 / 下游结算金额 61,873,413.91 / 已认领金额 229,467.09（业务线号可点击蓝色 + 链接 + 复制图标 SVG）；c) 联动：switchMode 函数 mode===\'冲抵\' 时 refundInfoBlock.style.display=\'\'，其他模式（转移/退款）都 display:none；d) 新增 CSS：.refund-stat-row grid 1fr 1fr gap 14px + .refund-stat-card padding 18px 20px 圆角 10px + .refund-stat-label 13px 灰 + .refund-stat-value 24px 加粗等宽 + .refund-stat-blue/.refund-stat-amber 渐变配色 + .refund-detail-table 1px border-light 圆角 6px + 12px padding + .refund-link #1E40AF 蓝色 + .refund-line-meta 灰小字 + 0.7 opacity 复制 SVG icon；3) 验证：playwright 验证 5 步（默认 hidden / 冲抵 shown 标签=合同已回款金额(元)+合同未回款金额(元) 值=229,467.09+0.00 / 转移 hidden / 退款 hidden / 再次冲抵 shown）+ 表格 1 行 5 列内容全 OK + 0 page error；4) 注：stat-card 渐变参考图 2 业务线回款认领页视觉但只用 2 列（已回款/未回款，区别于图 2 的 3 列：回款/已认领/可认领，因为保证金调整上下文只关心「已收/未收」2 态，3 列会让卡片单薄），明细表 5 列结构与图 2 完全一致。',
+          changes: [
+            { type: 'add', location: 'pages/margin-adjust.html 区块 2.5「回款信息」', before: null, after: '<div class="info-section" id="refundInfoBlock" style="display: none;"> + 2 个 stat-card（合同已回款金额 229,467.09 蓝渐变 + 合同未回款金额 0.00 黄渐变）+ 1 张业务线回款明细表（5 列 1 行 mock：SKYWX202607050001 业务线号 + 业务线名称 河南诚泽运输-河南中豫港通-郑州信必达国际 + 采购合同 GTGYL-MSXS-20260127-s + 销售合同 YL-MSXS-20260127-s + 下游结算 61,873,413.91 + 已认领 229,467.09）' },
+            { type: 'add', location: 'pages/margin-adjust.html <style>', before: null, after: '.refund-stat-row grid 1fr 1fr / .refund-stat-card padding 18px 20px 圆角 10px / .refund-stat-blue 蓝渐变 #EFF6FF→#DBEAFE 数字 #1E40AF / .refund-stat-amber 黄渐变 #FFFBEB→#FEF3C7 数字 #B45309 / .refund-detail-table 5 列圆角 6px / .refund-link 蓝色 / .refund-line 12px 灰 / 复制 SVG icon' },
+            { type: 'modify', location: 'pages/margin-adjust.html switchMode JS', before: 'v1.7.99.67 switchMode 只控制 amountLabel/amountInput/transferBlock/refundBlock 4 个变量', after: 'v1.7.99.293 switchMode 新增 refundInfoBlock 变量，mode===\'冲抵\' 时 display=\'\'，mode===\'转移\' 或 mode===\'退款\' 时 display=none' },
+            { type: 'modify', location: 'app.html <title>', before: 'v1.7.99.292', after: 'v1.7.99.293' }
+          ],
+        },
+{
           ts: '2026-09-07T15:13:00',
           version: 'v1.7.99.261',
           module: '合规验证报告-3 个双段式卡片视觉一致性优化（字号/尺寸/色块占比统一）',

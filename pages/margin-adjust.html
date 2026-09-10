@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保证金调整 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-primary); margin-bottom: 6px; }
+    .form-label .required { color: #DC2626; margin-right: 2px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 6px 10px; border: 1px solid var(--border-default);
+      border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff; box-sizing: border-box;
+    }
+    .form-input { height: 32px; }
+    .form-input:disabled, .form-select:disabled, .form-textarea:disabled { background: #F9FAFB; color: var(--text-tertiary); cursor: not-allowed; }
+    .form-textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+    /* 区块 */
+    .info-section { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .info-section-head {
+      padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .info-section-head::before {
+      content: ''; display: inline-block; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px;
+    }
+    .info-section-body { padding: 20px; }
+    /* 合同信息网格 3 列 */
+    .contract-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 20px; }
+    .contract-item { display: flex; flex-direction: column; gap: 4px; }
+    .contract-item .label { font-size: 12px; color: var(--text-tertiary); }
+    .contract-item .value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    /* 调整方式下拉触发器（紫色 v1.7.99.67） */
+    .adjust-type-select { position: relative; display: inline-block; width: 100%; }
+    .adjust-type-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; height: 32px; padding: 0 10px; border: 1px solid #7C3AED;
+      border-radius: 4px; background: #F5F3FF; cursor: pointer; font-size: 13px;
+      color: var(--text-tertiary);
+    }
+    .adjust-type-trigger.has-value { background: #fff; color: var(--text-primary); }
+    .adjust-type-trigger .left { display: flex; align-items: center; gap: 6px; }
+    .adjust-type-trigger .left .icon {
+      display: inline-block; width: 12px; height: 12px; border: 1.5px solid #7C3AED;
+      border-radius: 2px; position: relative;
+    }
+    .adjust-type-trigger .left .icon::after {
+      content: ''; position: absolute; width: 6px; height: 3px;
+      border-left: 1.5px solid #7C3AED; border-bottom: 1.5px solid #7C3AED;
+      transform: rotate(-45deg); top: 2px; left: 2px;
+    }
+    .adjust-type-trigger .right { display: flex; align-items: center; gap: 8px; }
+    .adjust-type-trigger .help {
+      width: 16px; height: 16px; border-radius: 50%; background: #E5E7EB;
+      color: var(--text-tertiary); display: flex; align-items: center; justify-content: center;
+      font-size: 11px; cursor: help;
+    }
+    .adjust-type-trigger .arrow {
+      display: inline-block; width: 8px; height: 8px;
+      border-right: 1.5px solid currentColor; border-bottom: 1.5px solid currentColor;
+      transform: rotate(45deg); color: #7C3AED;
+    }
+    .adjust-type-dropdown {
+      position: absolute; top: calc(100% + 2px); left: 0; width: 100%;
+      background: #fff; border: 1px solid var(--border-light); border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 100; display: none;
+      max-height: 240px; overflow-y: auto;
+    }
+    .adjust-type-dropdown.open { display: block; }
+    .adjust-type-dropdown .item {
+      padding: 10px 12px; cursor: pointer; font-size: 13px; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .adjust-type-dropdown .item:last-child { border-bottom: 0; }
+    .adjust-type-dropdown .item:hover { background: #F5F3FF; }
+    .adjust-type-dropdown .item.active { background: #F5F3FF; color: #7C3AED; font-weight: 500; }
+    /* 调整信息 5 字段 3 列 2 行 */
+    .adjust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; }
+    .adjust-grid .full { grid-column: 1 / -1; }
+    /* 蓝底提示条 */
+    .tip-box {
+      padding: 10px 16px; background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 4px; font-size: 13px; color: #1E40AF; margin-bottom: 16px;
+    }
+    .tip-box .label { font-weight: 600; margin-right: 8px; }
+    /* 附件表 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td {
+      border: 1px solid var(--border-light); padding: 10px 14px;
+      font-size: 13px; text-align: left; vertical-align: middle;
+    }
+    .attach-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .attach-table .upload-btn {
+      padding: 4px 14px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 12px; color: var(--text-primary);
+    }
+    .attach-table .upload-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .attach-table .file-item { display: flex; align-items: center; gap: 8px; }
+    .attach-table .file-item .file-time { font-size: 11px; color: var(--text-tertiary); }
+    .attach-table .file-item .file-remove { color: #DC2626; cursor: pointer; }
+    /* 转移模式 - 选择合同按钮 + 合同回显 */
+    .select-contract-btn {
+      display: inline-flex; align-items: center; gap: 6px; padding: 8px 20px;
+      border: 1px solid #1E40AF; border-radius: 4px; background: #EFF6FF;
+      color: #1E40AF; cursor: pointer; font-size: 13px;
+    }
+    .select-contract-btn:hover { background: #DBEAFE; }
+    .contract-echo {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px;
+      padding: 16px; background: #F9FAFB; border: 1px solid var(--border-light);
+      border-radius: 4px; margin-top: 12px;
+    }
+    .contract-echo .item { display: flex; flex-direction: column; gap: 4px; }
+    .contract-echo .item .label { font-size: 12px; color: var(--text-tertiary); }
+    .contract-echo .item .value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .contract-echo .empty {
+      grid-column: 1 / -1; text-align: center; padding: 40px; color: var(--text-tertiary);
+      font-size: 13px;
+    }
+    /* 底部按钮 */
+    .form-footer {
+      display: flex; justify-content: center; gap: 12px; padding: 20px 0 40px 0;
+    }
+    .form-footer .btn-cancel {
+      padding: 8px 24px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 14px;
+    }
+    .form-footer .btn-submit {
+      padding: 8px 24px; border: 0; border-radius: 4px;
+      background: #1E40AF; color: #fff; cursor: pointer; font-size: 14px;
+    }
+    /* 二次确认弹窗（480px） */
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: #fff; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      width: 480px; max-width: 90vw; overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header .title { font-size: 14px; font-weight: 600; }
+    .modal-header .close { color: var(--text-tertiary); cursor: pointer; font-size: 18px; line-height: 1; }
+    .modal-body { padding: 24px 20px; }
+    .modal-body .warning {
+      display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px;
+    }
+    .modal-body .warning .icon {
+      width: 20px; height: 20px; background: #F59E0B; color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+    .modal-body .warning .text { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    .modal-body .desc { font-size: 13px; color: var(--text-tertiary); line-height: 1.6; }
+    .modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .modal-footer .btn-default {
+      padding: 6px 16px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 13px;
+    }
+    .modal-footer .btn-primary {
+      padding: 6px 16px; border: 0; border-radius: 4px;
+      background: #1E40AF; color: #fff; cursor: pointer; font-size: 13px;
+    }
+    /* 侧边抽屉（1440px） */
+    .drawer-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 998;
+      display: none;
+    }
+    .drawer-mask.show { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0; width: 1440px; max-width: 90vw;
+      background: #fff; z-index: 999; transform: translateX(100%);
+      transition: transform 0.3s; display: flex; flex-direction: column;
+    }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-header .title { font-size: 16px; font-weight: 600; }
+    .drawer-header .close { font-size: 22px; color: var(--text-tertiary); cursor: pointer; line-height: 1; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .drawer-chips {
+      display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;
+    }
+    .drawer-chips .chip {
+      padding: 4px 12px; border: 1px solid #1E40AF; border-radius: 14px; color: #1E40AF;
+      font-size: 12px; background: #EFF6FF; cursor: pointer;
+    }
+    .drawer-filter {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; margin-bottom: 16px;
+    }
+    .drawer-filter .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-filter .filter-item .label { font-size: 12px; color: var(--text-tertiary); }
+    .drawer-filter .filter-item .input, .drawer-filter .filter-item .select {
+      padding: 6px 10px; border: 1px solid var(--border-default); border-radius: 4px; font-size: 13px;
+    }
+    /* 回款信息 stat-card（v1.7.99.293 仿图 2 渐变风格） */
+    .refund-stat-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 16px; }
+    .refund-stat-card {
+      padding: 18px 20px; border-radius: 10px; border: 1px solid transparent; position: relative;
+    }
+    .refund-stat-card .refund-stat-label { font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .refund-stat-card .refund-stat-value { font-size: 24px; font-weight: 700; font-family: var(--font-mono); }
+    .refund-stat-blue {
+      background: linear-gradient(135deg, #EFF6FF 0%, #DBEAFE 100%);
+      border-color: #BFDBFE;
+    }
+    .refund-stat-blue .refund-stat-value { color: #1E40AF; }
+    .refund-stat-amber {
+      background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%);
+      border-color: #FDE68A;
+    }
+    .refund-stat-amber .refund-stat-value { color: #B45309; }
+    /* 回款信息明细表 */
+    .refund-detail-table {
+      width: 100%; border-collapse: collapse; font-size: 13px; background: #fff;
+      border: 1px solid var(--border-light); border-radius: 6px; overflow: hidden;
+    }
+    .refund-detail-table th {
+      padding: 10px 12px; background: #F9FAFB; border-bottom: 1px solid var(--border-light);
+      font-weight: 500; color: var(--text-secondary); text-align: left;
+    }
+    .refund-detail-table td {
+      padding: 12px; border-bottom: 1px solid var(--border-light); color: var(--text-primary);
+      vertical-align: top;
+    }
+    .refund-detail-table tbody tr:last-child td { border-bottom: none; }
+    .refund-detail-table .refund-line { font-size: 12px; line-height: 1.7; color: var(--text-secondary); }
+    .refund-detail-table .refund-line-meta { color: var(--text-tertiary); margin-left: 6px; }
+    .refund-detail-table .refund-link { color: #1E40AF; text-decoration: none; }
+    .refund-detail-table .refund-link:hover { text-decoration: underline; }
+    .refund-detail-table .refund-link-icon { vertical-align: -1px; margin-left: 2px; opacity: 0.7; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./margin-pool.html">资金管理</a>
+          <span class="sep">/</span>
+          <a href="./margin-pool.html">保证金管理</a>
+          <span class="sep">/</span>
+          <span class="current">保证金调整</span>
+        </div>
+
+        <!-- 区块 1：销售订单/单批次合同信息（v1.7.99.67 11 字段 3 列 4 行） -->
+        <div class="info-section">
+          <div class="info-section-head">销售订单/单批次合同信息</div>
+          <div class="info-section-body">
+            <div class="contract-grid">
+              <div class="contract-item"><span class="label">卖方企业</span><span class="value">河南中豫港通供应链管理有限公司</span></div>
+              <div class="contract-item"><span class="label">买方企业</span><span class="value">郑州信必达供应链管理有限公司</span></div>
+              <div class="contract-item"><span class="label">品名</span><span class="value">进口木薯淀粉</span></div>
+              <div class="contract-item"><span class="label">计量单位</span><span class="value">吨</span></div>
+              <div class="contract-item"><span class="label">合同单价(元/吨)</span><span class="value">3,400</span></div>
+              <div class="contract-item"><span class="label">合同数量(吨)</span><span class="value">20,000</span></div>
+              <div class="contract-item"><span class="label">税率(%)</span><span class="value">13</span></div>
+              <div class="contract-item"><span class="label">签订日期</span><span class="value">2026-01-22</span></div>
+              <div class="contract-item"><span class="label">合同交货期限</span><span class="value">2026-01-22 ~ 2026-12-31</span></div>
+              <div class="contract-item"><span class="label">运输方式</span><span class="value">火运</span></div>
+              <div class="contract-item"><span class="label">业务实际负责人</span><span class="value">张三-13328888888</span></div>
+              <div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：保证金调整信息（v1.7.99.67 5 字段 3 列 2 行 + 动态模式） -->
+        <div class="info-section">
+          <div class="info-section-head">保证金调整信息</div>
+          <div class="info-section-body">
+            <div class="adjust-grid" id="adjustGrid">
+              <div>
+                <label class="form-label"><span class="required">*</span>调整方式</label>
+                <div class="adjust-type-select">
+                  <div class="adjust-type-trigger" id="adjustTypeTrigger" onclick="toggleAdjustType()">
+                    <span class="left"><span class="icon"></span><span id="adjustTypeText">选择调整方式</span></span>
+                    <span class="right"><span class="help" title="冲抵最后一笔货款 / 转移为另一笔业务的保证金 / 保证金退款">?</span><span class="arrow"></span></span>
+                  </div>
+                  <div class="adjust-type-dropdown" id="adjustTypeDropdown">
+                    <div class="item" onclick="selectAdjustType(this, '冲抵最后一笔货款')">冲抵最后一笔货款</div>
+                    <div class="item" onclick="selectAdjustType(this, '转移为另一笔业务的保证金')">转移为另一笔业务的保证金</div>
+                    <div class="item" onclick="selectAdjustType(this, '保证金退款')">保证金退款</div>
+                  </div>
+                </div>
+              </div>
+              <div>
+                <label class="form-label"><span class="required">*</span>当前保证金(元)</label>
+                <input type="text" class="form-input" value="100000" disabled>
+              </div>
+              <div id="amountField">
+                <label class="form-label"><span class="required">*</span>冲抵货款金额(元)</label>
+                <input type="text" class="form-input" id="amountInput" placeholder="请输入冲抵金额" value="100000">
+              </div>
+              <div class="full">
+                <label class="form-label"><span class="required">*</span>情况说明</label>
+                <textarea class="form-textarea" placeholder="请输入情况说明，最多 1000 字" maxlength="1000"></textarea>
+              </div>
+              <!-- 模式 B 专属：选择销售订单（贸易）合同按钮 + 合同回显 -->
+              <div class="full" id="transferContractBlock" style="display: none;">
+                <label class="form-label">选择调整后的销售订单（贸易）合同</label>
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+                  <span style="font-size: 12px; color: var(--text-tertiary);">选择要关联的销售订单/单批次合同</span>
+                  <button class="select-contract-btn" onclick="openContractDrawer()">+ 选择销售订单（贸易）合同</button>
+                </div>
+                <div class="contract-echo" id="contractEcho">
+                  <div class="empty">— 暂未选择 —</div>
+                </div>
+              </div>
+              <!-- 模式 C 专属：4 个字段 -->
+              <div id="refundBlock" style="display: none;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2.5：回款信息（v1.7.99.293 冲抵最后一笔货款时显示） -->
+        <div class="info-section" id="refundInfoBlock" style="display: none;">
+          <div class="info-section-head">回款信息</div>
+          <div class="info-section-body">
+            <div class="refund-stat-row">
+              <div class="refund-stat-card refund-stat-blue">
+                <div class="refund-stat-label">合同已回款金额(元)</div>
+                <div class="refund-stat-value">229,467.09</div>
+              </div>
+              <div class="refund-stat-card refund-stat-amber">
+                <div class="refund-stat-label">合同未回款金额(元)</div>
+                <div class="refund-stat-value">0.00</div>
+              </div>
+            </div>
+            <table class="refund-detail-table">
+              <thead>
+                <tr>
+                  <th style="width: 12%;">认领类型</th>
+                  <th style="width: 10%;">收款类型</th>
+                  <th>认领信息</th>
+                  <th style="width: 14%;">下游结算金额(元)</th>
+                  <th style="width: 14%;">已认领金额(元)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>业务线回款</td>
+                  <td>货款</td>
+                  <td>
+                    <div class="refund-line">业务线号：<a href="javascript:void(0);" class="refund-link">SKYWX202607050001 <svg class="refund-link-icon" viewBox="0 0 1024 1024" width="11" height="11" fill="currentColor" aria-hidden="true"><path d="M864 128H352c-17.7 0-32 14.3-32 32v64c0 17.7 14.3 32 32 32h512v512c0 17.7 14.3 32 32 32h64c17.7 0 32-14.3 32-32V160c0-17.7-14.3-32-32-32zM160 256c-17.7 0-32 14.3-32 32v544c0 17.7 14.3 32 32 32h544c17.7 0 32-14.3 32-32V352c0-17.7-14.3-32-32-32H160z"/></svg></a></div>
+                    <div class="refund-line">业务线名称：河南诚泽运输有限公司 - 河南中豫港通供应链管理有限公司 - 郑州信必达国际供应链有限公司</div>
+                    <div class="refund-line">采购合同：GTGYL-MSXS-20260127-s <span class="refund-line-meta">签订日期：2026-01-27</span></div>
+                    <div class="refund-line">销售合同：YL-MSXS-20260127-s <span class="refund-line-meta">签订日期：2026-01-27</span></div>
+                  </td>
+                  <td>61,873,413.91</td>
+                  <td>229,467.09</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：附件 -->
+        <div class="info-section">
+          <div class="info-section-head">附件</div>
+          <div class="info-section-body">
+            <div class="tip-box">
+              <span class="label">附件上传要求：</span>可支持格式为 png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100MB 的文件。
+            </div>
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">单据类型</th>
+                  <th>文件名称</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>相关凭证附件</td>
+                  <td>
+                    <div class="file-item">
+                      <button class="upload-btn" type="button" onclick="uploadAttach()">+ 上传</button>
+                      <span style="color: #1E40AF;">44354657687.pdf</span>
+                      <span class="file-remove" onclick="removeFile(this)">×</span>
+                      <span class="file-time">2023-12-12 12:23:32</span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="form-footer">
+          <button class="btn-cancel" onclick="confirmCancel()">取消</button>
+          <button class="btn-submit" onclick="confirmSubmit()">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 取消确认弹窗（v1.7.99.67 图 5） -->
+  <div class="modal-mask" id="cancelModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="title">取消确认</span>
+        <span class="close" onclick="closeModal('cancelModal')">×</span>
+      </div>
+      <div class="modal-body">
+        <div class="warning">
+          <span class="icon">!</span>
+          <span class="text">确定要进行取消操作吗？</span>
+        </div>
+        <div class="desc">取消后，数据不会被保存。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('cancelModal')">取消</button>
+        <button class="btn-primary" onclick="doCancel()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提交确认弹窗（v1.7.99.67 图 5） -->
+  <div class="modal-mask" id="submitModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="title">提交确认</span>
+        <span class="close" onclick="closeModal('submitModal')">×</span>
+      </div>
+      <div class="modal-body">
+        <div class="warning">
+          <span class="icon">!</span>
+          <span class="text">请确认信息填写完成并提交？</span>
+        </div>
+        <div class="desc" id="submitDesc">提交后，保证金调整信息将直接保存到系统中。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('submitModal')">取消</button>
+        <button class="btn-primary" onclick="doSubmit()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 选择销售订单（贸易）合同 侧边抽屉（v1.7.99.67 图 6） -->
+  <div class="drawer-mask" id="drawerMask" onclick="closeContractDrawer()"></div>
+  <div class="drawer" id="contractDrawer">
+    <div class="drawer-header">
+      <span class="title">选择要关联的销售订单/单批次合同</span>
+      <span class="close" onclick="closeContractDrawer()">×</span>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-chips">
+        <span class="chip">XSLLC-OSjGfH7-20230123-1001</span>
+        <span class="chip">XSLLC-OSjGfH7-20230123-1002</span>
+        <span class="chip" style="background: #fff;">+ 添加条件</span>
+      </div>
+      <div class="drawer-filter">
+        <div class="filter-item"><span class="label">订单/单批次合同编号</span><input class="input" placeholder="请输入订单/单批次合同编号"></div>
+        <div class="filter-item"><span class="label">买方企业</span><input class="input" placeholder="请输入买方企业"></div>
+        <div class="filter-item"><span class="label">卖方企业</span><input class="input" placeholder="请输入卖方企业"></div>
+        <div class="filter-item"><span class="label">品名</span><input class="input" placeholder="请输入品名"></div>
+        <div class="filter-item"><span class="label">签订日期</span><input class="input" placeholder="请选择日期范围"></div>
+        <div class="filter-item"><span class="label">&nbsp;</span><div style="display:flex; gap:6px;"><button class="btn btn-primary" style="height:32px; padding: 0 12px;">查询</button><button class="btn btn-default" style="height:32px; padding: 0 12px;">重置</button></div></div>
+      </div>
+      <table class="cp-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th style="width: 6%;">&nbsp;</th>
+            <th>订单/单批次合同编号</th>
+            <th>买方企业</th>
+            <th>业务类型</th>
+            <th>品名</th>
+            <th>合同数量(吨)</th>
+            <th>合同金额(元)</th>
+            <th>签订日期</th>
+          </tr>
+        </thead>
+        <tbody id="contractTbody"></tbody>
+      </table>
+      <div class="cp-pagination" style="padding: 12px 0;">
+        <div>共 12 条记录 · 第 1 / 1 页</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div class="cp-pagination-pages">
+            <div class="cp-pagination-page">‹</div>
+            <div class="cp-pagination-page active">1</div>
+            <div class="cp-pagination-page">›</div>
+          </div>
+          <select class="cp-pagination-size"><option>10 条/页</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" style="height: 32px; padding: 0 16px;" onclick="closeContractDrawer()">取消</button>
+      <button class="btn btn-primary" style="height: 32px; padding: 0 16px;" onclick="confirmContract()">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    var currentMode = ''; // '' | '冲抵' | '转移' | '退款'
+    var selectedContract = null;
+
+    /* ========== 调整方式下拉（v1.7.99.67 图 4） ========== */
+    function toggleAdjustType() {
+      var d = document.getElementById('adjustTypeDropdown');
+      d.classList.toggle('open');
+    }
+    function selectAdjustType(item, label) {
+      var trigger = document.getElementById('adjustTypeTrigger');
+      trigger.classList.add('has-value');
+      document.getElementById('adjustTypeText').textContent = label;
+      document.querySelectorAll('#adjustTypeDropdown .item').forEach(function(i) { i.classList.remove('active'); });
+      item.classList.add('active');
+      document.getElementById('adjustTypeDropdown').classList.remove('open');
+      // 切换模式
+      if (label === '冲抵最后一笔货款') switchMode('冲抵');
+      else if (label === '转移为另一笔业务的保证金') switchMode('转移');
+      else if (label === '保证金退款') switchMode('退款');
+    }
+    document.addEventListener('click', function(e) {
+      if (!e.target.closest('.adjust-type-select')) {
+        document.getElementById('adjustTypeDropdown').classList.remove('open');
+      }
+    });
+
+    /* ========== 模式切换（v1.7.99.67 图 5+6+7） ========== */
+    function switchMode(mode) {
+      currentMode = mode;
+      var amountLabel = document.querySelector('#amountField .form-label');
+      var amountInput = document.getElementById('amountInput');
+      var transferBlock = document.getElementById('transferContractBlock');
+      var refundBlock = document.getElementById('refundBlock');
+      var refundInfoBlock = document.getElementById('refundInfoBlock');
+
+      if (mode === '冲抵') {
+        amountLabel.innerHTML = '<span class="required">*</span>冲抵货款金额(元)';
+        amountInput.placeholder = '请输入冲抵金额';
+        transferBlock.style.display = 'none';
+        refundBlock.style.display = 'none';
+        refundBlock.innerHTML = '';
+        // v1.7.99.293 冲抵最后一笔货款时显示「回款信息」模块
+        if (refundInfoBlock) refundInfoBlock.style.display = '';
+      } else if (mode === '转移') {
+        amountLabel.innerHTML = '<span class="required">*</span>转移金额(元)';
+        amountInput.placeholder = '请输入转移金额';
+        transferBlock.style.display = '';
+        refundBlock.style.display = 'none';
+        refundBlock.innerHTML = '';
+        if (refundInfoBlock) refundInfoBlock.style.display = 'none';
+      } else if (mode === '退款') {
+        amountLabel.innerHTML = '<span class="required">*</span>申请退款金额(元)';
+        amountInput.placeholder = '请输入申请退款金额';
+        transferBlock.style.display = 'none';
+        // 模式 C 4 字段：收款账号名称/收款账号开户行/收款账号/退款日期
+        refundBlock.style.display = '';
+        refundBlock.classList.add('full');
+        refundBlock.innerHTML = '<div class="adjust-grid" style="grid-column: 1 / -1; padding: 12px; background: #F9FAFB; border: 1px solid var(--border-light); border-radius: 4px; margin-top: 8px;">'
+          + '<div><label class="form-label"><span class="required">*</span>收款账号名称</label><select class="form-select"><option>请选择收款账号名称</option></select></div>'
+          + '<div><label class="form-label"><span class="required">*</span>收款账号开户行</label><input class="form-input" value="xxx 有限公司"></div>'
+          + '<div><label class="form-label"><span class="required">*</span>收款账号</label><input class="form-input" placeholder="-"></div>'
+          + '<div><label class="form-label"><span class="required">*</span>退款日期</label><input class="form-input" placeholder="请选择退款日期"></div>'
+          + '</div>';
+        if (refundInfoBlock) refundInfoBlock.style.display = 'none';
+      }
+    }
+
+    /* ========== 提交描述（按模式动态变化） ========== */
+    function confirmSubmit() {
+      if (!currentMode) { Utils.toast('请先选择调整方式', 'error'); return; }
+      var desc = document.getElementById('submitDesc');
+      if (currentMode === '冲抵') {
+        desc.textContent = '提交后，保证金调整信息将直接保存到系统中。';
+      } else if (currentMode === '转移') {
+        desc.textContent = '提交后，保证金调整信息将直接保存到系统中。';
+      } else if (currentMode === '退款') {
+        desc.textContent = '提交后，保证金调整信息将直接保存到系统中。';
+      }
+      openModal('submitModal');
+    }
+
+    /* ========== 二次确认弹窗 ========== */
+    function openModal(id) { document.getElementById(id).classList.add('show'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function confirmCancel() {
+      // 检查表单是否填写
+      var has = document.querySelector('textarea').value.trim() || document.getElementById('amountInput').value;
+      if (has) { openModal('cancelModal'); }
+      else { doCancel(); }
+    }
+    function doCancel() { closeModal('cancelModal'); window.location.href = './margin-pool.html'; }
+    function doSubmit() {
+      closeModal('submitModal');
+      Utils.toast('保证金调整信息已保存，返回列表页', 'success');
+      setTimeout(function() { window.location.href = './margin-pool.html'; }, 1200);
+    }
+
+    /* ========== 附件上传 ========== */
+    function uploadAttach() { Utils.toast('上传附件（mock）', 'info'); }
+    function removeFile(btn) {
+      if (!confirm('确定移除该附件？')) return;
+      var item = btn.closest('.file-item');
+      item.parentElement.innerHTML = '<button class="upload-btn" type="button" onclick="uploadAttach()">+ 上传</button>';
+    }
+
+    /* ========== 选择合同抽屉（v1.7.99.67 图 6） ========== */
+    var CONTRACTS_MOCK = [
+      { id: 1, no: 'GTGYL-MSXS-20260127-1', buyer: '郑州金谷粮油供应管理有限公司', type: '存货类', product: '木薯淀粉', qty: 20000, amount: 68000000, date: '2026-01-27',
+        seller: '郑州金谷粮油供应管理有限公司', sellerPhone: '138 0000 XXXX', sellerAddr: '河南省郑州市金水区花园路 1 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '货到付款', contractAmount: 68000000, deadline: '2027-01-27',
+        delivered: 2335, deliveryProgress: 12, ownership: '郑州金谷粮油供应管理有限公司' },
+      { id: 2, no: 'GTGYL-MSXS-20260127-2', buyer: '河南诚泽运输有限公司', type: '订单类', product: '木薯淀粉', qty: 18100, amount: 60166000, date: '2026-01-28',
+        seller: '河南诚泽运输有限公司', sellerPhone: '138 0001 XXXX', sellerAddr: '河南省郑州市二七区解放路 88 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '月结30天', contractAmount: 60166000, deadline: '2026-12-31',
+        delivered: 5430, deliveryProgress: 30, ownership: '河南诚泽运输有限公司' },
+      { id: 3, no: 'GTGYL-MSXS-20260127-3', buyer: '郑州信必达供应链管理有限公司', type: '预付款类', product: '糖粉', qty: 20000, amount: 130000000, date: '2026-02-15',
+        seller: '郑州信必达供应链管理有限公司', sellerPhone: '138 0002 XXXX', sellerAddr: '河南省郑州市郑东新区商务外环路 22 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '预付 50%', contractAmount: 130000000, deadline: '2026-12-31',
+        delivered: 12000, deliveryProgress: 60, ownership: '郑州信必达供应链管理有限公司' },
+      { id: 4, no: 'GTGYL-MSXS-20260127-4', buyer: '山东金粮农业有限公司', type: '存货类', product: '谷物', qty: 15000, amount: 45000000, date: '2026-02-20',
+        seller: '山东金粮农业有限公司', sellerPhone: '138 0003 XXXX', sellerAddr: '山东省济南市市中区经四路 188 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '货到付款', contractAmount: 45000000, deadline: '2026-12-31',
+        delivered: 8500, deliveryProgress: 57, ownership: '山东金粮农业有限公司' },
+      { id: 5, no: 'GTGYL-MSXS-20260127-5', buyer: '河北粮产股份有限公司', type: '订单类', product: '玉米', qty: 20000, amount: 56000000, date: '2026-02-25',
+        seller: '河北粮产股份有限公司', sellerPhone: '138 0004 XXXX', sellerAddr: '河北省石家庄市裕华区槐安东路 88 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '月结15天', contractAmount: 56000000, deadline: '2026-12-31',
+        delivered: 4200, deliveryProgress: 21, ownership: '河北粮产股份有限公司' },
+      { id: 6, no: 'GTGYL-MSXS-20260127-6', buyer: '重庆基创建设开发有限公司', type: '预付款类', product: '木薯淀粉', qty: 10000, amount: 34000000, date: '2026-03-01',
+        seller: '重庆基创建设开发有限公司', sellerPhone: '138 0005 XXXX', sellerAddr: '重庆市渝中区民族路 188 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '预付 30%', contractAmount: 34000000, deadline: '2026-12-31',
+        delivered: 7000, deliveryProgress: 70, ownership: '重庆基创建设开发有限公司' },
+      { id: 7, no: 'GTGYL-MSXS-20260127-7', buyer: '郑州铁龙物流有限公司', type: '订单类', product: '糖粉', qty: 12000, amount: 78000000, date: '2026-03-05',
+        seller: '郑州铁龙物流有限公司', sellerPhone: '138 0006 XXXX', sellerAddr: '河南省郑州市管城回族区东大街 188 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '月结30天', contractAmount: 78000000, deadline: '2026-12-31',
+        delivered: 3600, deliveryProgress: 30, ownership: '郑州铁龙物流有限公司' },
+      { id: 8, no: 'GTGYL-MSXS-20260127-8', buyer: '山西金能煤业股份有限公司', type: '存货类', product: '谷物', qty: 20000, amount: 54000000, date: '2026-03-10',
+        seller: '山西金能煤业股份有限公司', sellerPhone: '138 0007 XXXX', sellerAddr: '山西省太原市迎泽区迎泽大街 22 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '货到付款', contractAmount: 54000000, deadline: '2026-12-31',
+        delivered: 11400, deliveryProgress: 57, ownership: '山西金能煤业股份有限公司' },
+      { id: 9, no: 'GTGYL-MSXS-20260127-9', buyer: '国能濮阳热电有限公司', type: '订单类', product: '玉米', qty: 18000, amount: 50400000, date: '2026-03-15',
+        seller: '国能濮阳热电有限公司', sellerPhone: '138 0008 XXXX', sellerAddr: '河南省濮阳市华龙区黄河东路 188 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '月结15天', contractAmount: 50400000, deadline: '2026-12-31',
+        delivered: 0, deliveryProgress: 0, ownership: '国能濮阳热电有限公司' },
+      { id: 10, no: 'GTGYL-MSXS-20260127-10', buyer: '国电投河南电力燃料有限公司', type: '预付款类', product: '木薯淀粉', qty: 15000, amount: 51000000, date: '2026-03-20',
+        seller: '国电投河南电力燃料有限公司', sellerPhone: '138 0009 XXXX', sellerAddr: '河南省郑州市金水区农业东路 22 号',
+        buyerCo: '河南中豫港通供应链管理有限公司', settlement: '预付 40%', contractAmount: 51000000, deadline: '2026-12-31',
+        delivered: 4500, deliveryProgress: 30, ownership: '国电投河南电力燃料有限公司' }
+    ];
+    function renderContractTable() {
+      var tbody = document.getElementById('contractTbody');
+      if (!tbody) return;
+      tbody.innerHTML = CONTRACTS_MOCK.map(function(c) {
+        return '<tr>'
+          + '<td><input type="radio" name="selectContract" value="' + c.id + '"></td>'
+          + '<td class="col-num">' + c.no + '</td>'
+          + '<td>' + c.buyer + '</td>'
+          + '<td>' + c.type + '</td>'
+          + '<td>' + c.product + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + c.qty.toLocaleString('zh-CN') + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + c.amount.toLocaleString('zh-CN') + '</td>'
+          + '<td>' + c.date + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+    function openContractDrawer() {
+      if (currentMode !== '转移') { Utils.toast('请先选择「转移为另一笔业务的保证金」', 'error'); return; }
+      document.getElementById('drawerMask').classList.add('show');
+      document.getElementById('contractDrawer').classList.add('open');
+      renderContractTable();
+    }
+    function closeContractDrawer() {
+      document.getElementById('drawerMask').classList.remove('show');
+      document.getElementById('contractDrawer').classList.remove('open');
+    }
+    function confirmContract() {
+      var radio = document.querySelector('input[name="selectContract"]:checked');
+      if (!radio) { Utils.toast('请选择一份合同', 'error'); return; }
+      var id = parseInt(radio.value);
+      selectedContract = CONTRACTS_MOCK.find(function(c) { return c.id === id; });
+      if (selectedContract) {
+        renderContractEcho(selectedContract);
+      }
+      closeContractDrawer();
+      Utils.toast('已选择合同：' + selectedContract.no, 'success');
+    }
+    function renderContractEcho(c) {
+      document.getElementById('contractEcho').innerHTML = ''
+        + '<div class="item"><span class="label">合同编号(批次)</span><span class="value" style="color: #1E40AF;">' + c.no + '</span></div>'
+        + '<div class="item"><span class="label">卖方企业</span><span class="value">' + c.seller + '</span></div>'
+        + '<div class="item"><span class="label">合同类型</span><span class="value">' + c.type + '</span></div>'
+        + '<div class="item"><span class="label">买方企业</span><span class="value">' + c.buyerCo + '</span></div>'
+        + '<div class="item"><span class="label">卖方联系电话</span><span class="value">' + c.sellerPhone + '</span></div>'
+        + '<div class="item"><span class="label">卖方地址</span><span class="value">' + c.sellerAddr + '</span></div>'
+        + '<div class="item"><span class="label">业务负责人</span><span class="value">王芳-13900000000</span></div>'
+        + '<div class="item"><span class="label">合同金额(元)</span><span class="value" style="font-family: var(--font-mono);">' + c.contractAmount.toLocaleString('zh-CN') + '</span></div>'
+        + '<div class="item"><span class="label">合同数量(吨)</span><span class="value" style="font-family: var(--font-mono);">' + c.qty.toLocaleString('zh-CN') + '</span></div>'
+        + '<div class="item"><span class="label">履约期限</span><span class="value">' + c.date + ' ~ ' + c.deadline + '</span></div>'
+        + '<div class="item"><span class="label">累计交付数量(吨)</span><span class="value" style="font-family: var(--font-mono);">' + c.delivered.toLocaleString('zh-CN') + '</span></div>'
+        + '<div class="item"><span class="label">合同交付进度</span><span class="value">' + c.deliveryProgress + '%</span></div>';
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>
