@@ -1315,6 +1315,11 @@
     var surveyAnswers = {};
     var surveyHasRun = {};
 
+    // v1.7.99.290 登录者企业（平台公司）+ 项目上下游企业（弹窗顶部展示）
+    var DETAIL_LOGIN_COMPANY = { name: '河南豫港通供应链管理有限公司', shortName: '豫港通供应链' };
+    var DETAIL_PROJECT_UPSTREAM = ['河南军牧原国际贸易有限公司', '郑州铁龙物流有限公司'];
+    var DETAIL_PROJECT_DOWNSTREAM = ['中原粮食集团有限公司'];
+
     function openComplianceSurveyDialog() {
       if (document.getElementById('complianceSurveyOverlay')) return;
       var answers = surveyAnswers[currentCompanyId] || {};
@@ -1380,10 +1385,19 @@
         + '    <span class="modal-close" onclick="closeComplianceSurveyDialog()" title="关闭">×</span>'
         + '  </div>'
         + '  <div class="modal-body">'
-        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.7;">'
-        +      '<span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500;">' + c.name + '</span>　|　'
-        +      '<span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260205002</span><br>'
-        +      '请如实填写以下 8 项合规考察项。系统会根据答案自动在「风控合规提醒」中生成对应风险条目。'
+        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.85;">'
+        +      '<div>'
+        +        '<span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500; color: var(--text-primary);">' + DETAIL_LOGIN_COMPANY.name + '</span>　|　'
+        +        '<span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260205002</span>'
+        +      '</div>'
+        +      '<div style="margin-top: 4px;">'
+        +        '<span style="color: var(--text-tertiary);">项目上下游企业：</span>'
+        +        '<span style="color: var(--text-primary);">'
+        +          DETAIL_PROJECT_UPSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(59, 130, 246, 0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px;">↑ ' + n + '</span>'; }).join('')
+        +          DETAIL_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
+        +        '</span>'
+        +      '</div>'
+        +      '<div style="margin-top: 6px; color: var(--text-tertiary);">请如实填写以下 8 项合规考察项。系统会根据答案自动在「企业尽调报告」风控合规提醒中生成对应风险条目。</div>'
         +    '</div>'
         +    questionsHtml
         + '  </div>'
