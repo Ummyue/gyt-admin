@@ -1980,7 +1980,12 @@
           return '<div class="survey-opt' + cls + '" data-q="' + q.id + '" data-v="' + o.v + '" onclick="selectApplySurveyOption(this)">' + o.l + '</div>';
         }).join('');
         var extraHtml = q.conditional ? q.conditional(answers) : '';
-        return '<div class="survey-question" data-qid="' + q.id + '">'
+        // v1.7.99.291 条件子项（q4a / q5a）当前置条件未满足时整张卡片隐藏
+        var cardHidden = '';
+        if (q.id === 'q4a' && answers.q4 !== 'yes') cardHidden = ' style="display:none"';
+        if (q.id === 'q5a' && answers.q5 !== 'yes') cardHidden = ' style="display:none"';
+        if (q.id === 'q5b' && !(answers.q5 === 'yes' && answers.q5a === 'yes')) cardHidden = ' style="display:none"';
+        return '<div class="survey-question" data-qid="' + q.id + '"' + cardHidden + '>'
           + '<div class="survey-q-title"><span class="q-num">' + q.num + '.</span>' + q.title + '</div>'
           + '<div class="survey-options">' + optsHtml + '</div>'
           + extraHtml + '</div>';
@@ -2039,7 +2044,10 @@
       if (!window.__applySurveyTemp) window.__applySurveyTemp = {};
       window.__applySurveyTemp[key] = v;
       // v1.7.99.288 q4=否时隐藏 q4a_extra + 清空 q4a
+      // v1.7.99.291 同步切换 4.1 整张卡片 display（conditional 在卡片内）
       if (qid === 'q4') {
+        var q4aCard = document.querySelector('.survey-question[data-qid="q4a"]');
+        if (q4aCard) q4aCard.style.display = (v === 'yes') ? '' : 'none';
         var q4aExtra = document.getElementById('apply_q4a_extra');
         if (q4aExtra) q4aExtra.style.display = (v === 'yes') ? 'block' : 'none';
         if (v === 'no') {
