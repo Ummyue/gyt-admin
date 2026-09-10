@@ -1056,6 +1056,15 @@
             <span style="font-size: 13px; color: var(--text-secondary);">个自然日内</span>
           </div>
         </div>
+        <!-- v1.7.99.285 指定日期（仅规则类型为 d1「合同价格与指定日期价格对比 / 本期价格与指定日期价格对比」时显示，与「规则类型」从属关联） -->
+        <div class="add-rule-row add-rule-child-row" id="priceRuleDateRow" style="display: none;">
+          <label class="add-rule-label required"><span class="required-mark">*</span>指定日期</label>
+          <div class="add-rule-child-content">
+            <span class="add-rule-child-tip">基于上方「规则类型」展开</span>
+            <input type="date" class="add-rule-input" id="priceRuleDate" style="max-width: 200px;">
+            <span style="font-size: 12px; color: var(--text-tertiary); margin-left: 8px;">系统将以该日期作为「参考价格」基准日</span>
+          </div>
+        </div>
         <!-- 4. 规则名称（input） -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>规则名称</label>
@@ -1086,7 +1095,7 @@
           <div class="add-rule-price-ref-group">
             <input type="number" class="add-rule-input" id="priceRefValue" min="0" step="0.01" placeholder="请输入金额" style="flex: 1; max-width: 200px;">
             <span style="font-size: 13px; color: var(--text-secondary);">元</span>
-            <label class="add-rule-checkbox" id="priceRefSignDateWrap"><input type="checkbox" id="priceRefSignDate" checked><span>签订日期</span></label>
+            <label class="add-rule-checkbox" id="priceRefSignDateWrap"><input type="checkbox" id="priceRefSignDate" checked><span>引用合同单价</span></label>
           </div>
         </div>
         <!-- 8. 配置项（涨幅/跌幅 + 超过 + 数字 + %） -->
@@ -1178,6 +1187,12 @@
     .add-rule-help:hover { color: var(--color-primary); border-color: var(--color-primary); }
     .add-rule-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
     .add-rule-row { margin-bottom: 18px; }
+    /* v1.7.99.285 关联项从属样式（指定日期等条件联动控件） */
+    .add-rule-child-row { margin-bottom: 14px; }
+    .add-rule-child-row .add-rule-label { color: var(--color-primary); font-weight: 500; margin-bottom: 4px; }
+    .add-rule-child-content { position: relative; display: flex; align-items: center; flex-wrap: wrap; gap: 8px; padding: 10px 12px 10px 16px; background: linear-gradient(90deg, rgba(59, 130, 246, 0.04) 0%, #F8FAFC 100%); border-left: 3px solid var(--color-primary); border-radius: 0 4px 4px 0; }
+    .add-rule-child-content::before { content: ''; position: absolute; left: -3px; top: -14px; width: 1px; height: 12px; background: var(--color-primary); opacity: 0.4; }
+    .add-rule-child-tip { font-size: 11px; color: var(--color-primary); background: rgba(59, 130, 246, 0.1); padding: 1px 8px; border-radius: 10px; margin-right: 4px; font-weight: 500; }
     .add-rule-label { display: block; font-size: 13px; color: var(--text-primary); margin-bottom: 6px; font-weight: 500; }
     .add-rule-label.required::after { content: ''; }
     .add-rule-label .required-mark { color: #DC2626; margin-right: 2px; }
@@ -1404,11 +1419,13 @@
       function onPriceRuleTypeChange() {
         var v = document.getElementById('priceRuleType').value;
         var daysRow = document.getElementById('priceRuleDaysRow');
-        if (!daysRow) return;
-        if (v === 'd13' || v === 'd14' || v === 'd15') {
-          daysRow.style.display = '';
-        } else {
-          daysRow.style.display = 'none';
+        var dateRow = document.getElementById('priceRuleDateRow');
+        if (daysRow) {
+          daysRow.style.display = (v === 'd13' || v === 'd14' || v === 'd15') ? '' : 'none';
+        }
+        // v1.7.99.285 d1「合同价格与指定日期价格对比 / 本期价格与指定日期价格对比」时显示「指定日期」
+        if (dateRow) {
+          dateRow.style.display = (v === 'd1') ? '' : 'none';
         }
       }
 
