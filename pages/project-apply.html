@@ -339,7 +339,35 @@
     .member-select-compact .member-chip { padding: 2px 3px 2px 6px; font-size: 11px; }
     .member-select-compact .member-input-wrap { min-width: 100px; }
     .member-select-compact .member-input-wrap .input { padding: 2px 0; font-size: 12px; }
-    /* v1.7.99.281 合规问卷弹窗（与 project-detail 一致） */
+    /* v1.7.99.282 风控合规提醒：5 列（检查分类/校验项/检查规则/检查过程/校验结果） */
+    .risk-table-wrap { padding: 0; overflow-x: auto; }
+    .risk-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; table-layout: fixed; }
+    .risk-table thead th { background: #F1F5F9; color: var(--text-secondary); font-weight: 500; font-size: 12px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
+    .risk-table thead th.risk-th-category { width: 96px; }
+    .risk-table thead th.risk-th-name { width: 130px; }
+    .risk-table thead th.risk-th-rule { width: 200px; text-align: left; }
+    .risk-table thead th.risk-th-result { width: 96px; text-align: center; }
+    .risk-table tbody td { padding: 12px 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-primary); vertical-align: top; line-height: 1.65; }
+    .risk-table tbody tr:last-child td { border-bottom: none; }
+    .risk-table tbody tr.risk-row { transition: background 0.15s; }
+    .risk-table tbody tr.risk-row:hover { background: var(--bg-hover); }
+    .risk-table tbody tr.risk-row-warn { background: #FEF2F2; }
+    .risk-table tbody tr.risk-row-warn:hover { background: #FEE2E2; }
+    .risk-td-category { color: var(--text-secondary); font-size: 13px; }
+    .risk-td-name { font-weight: 500; color: var(--text-primary); }
+    .risk-td-rule { color: var(--text-secondary); text-align: left; font-size: 12px; line-height: 1.7; }
+    .risk-rule-list { margin: 0; padding-left: 18px; }
+    .risk-rule-list li { margin-bottom: 2px; }
+    .risk-td-desc .risk-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.7; }
+    .risk-td-result { text-align: center; }
+    .risk-result-tag { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    .risk-result-ok { background: rgba(16, 185, 129, 0.12); color: #047857; }
+    .risk-result-warn { background: rgba(220, 38, 38, 0.12); color: #B91C1C; }
+    .risk-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-light); background: #F8FAFC; padding: 0 16px; overflow-x: auto; }
+    .risk-tab { padding: 10px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
+    .risk-tab:hover { color: var(--color-primary); }
+    .risk-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .risk-tab .count { display: inline-block; margin-left: 4px; padding: 1px 6px; background: rgba(30, 64, 175, 0.1); color: var(--color-primary); border-radius: 10px; font-size: 11px; font-weight: 500; min-width: 20px; text-align: center; }
     .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.5); z-index: 999; display: none; }
     .modal-overlay.open { display: block; }
     .modal-panel {
@@ -1220,22 +1248,22 @@
         return `<div class="form-field"${spanStyle}><label class="form-label">${f[0]}</label><div class="form-value">${f[1]}</div></div>`;
       }).join('');
 
-      // 风险项
-      const riskHtml = c.risks.map((r, i) => {
-        const isWarn = r.status === 'warn';
-        const descText = isWarn
-          ? r.desc.replace(/(\d{4}-\d{2}-\d{2})/g, m => `<mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">${m}</mark>`)
-          : '截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。';
-        return `
-          <div class="risk-item ${isWarn ? 'risk-warn' : ''}">
-            <div class="risk-num">${i + 1}</div>
-            <div class="risk-content">
-              <div class="risk-name">${r.name}</div>
-              <div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div>
-            </div>
-            <span class="risk-status ${r.status}">${isWarn ? '风险提示' : '暂无风险'}</span>
-          </div>`;
+      // 风险项 v1.7.99.282：6 tab + 5 列表格（与 project-detail 一致）
+      const riskGroups = applyGroupRisksByTab(c.risks);
+      const riskTabsHtml = ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].map(t => {
+        const labels = { trade: '综合贸易风险', internal: '内部数据', business: '经营风险', judicial: '司法风险', relation: '关系发现', personnel: '人员风险' };
+        const count = riskGroups[t].length;
+        return `<div class="risk-tab ${t === 'trade' ? 'active' : ''}" data-apply-risk-tab="${t}" onclick="switchApplyRiskTab('${key}', '${t}')">${labels[t]} <span class="count">${count}</span></div>`;
       }).join('');
+      const riskPanelHtml = ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].map(t => {
+        return `<div class="apply-risk-panel" data-apply-company="${key}" data-apply-tab="${t}" ${t === 'trade' ? '' : 'hidden'}></div>`;
+      }).join('');
+      const riskTotal = c.risks.length;
+      const riskWarn = c.risks.filter(r => r.status === 'warn').length;
+      const riskBadgeHtml = riskWarn > 0 ? `<span class="risk-count-warn">${riskWarn} 项风险</span>` : '';
+      // 把分组结果存到全局（renderStep2 渲染完 DOM 后再写表格）
+      window.__applyRiskGroups = window.__applyRiskGroups || {};
+      window.__applyRiskGroups[key] = riskGroups;
 
       // 股东
       const shareholdersHtml = c.shareholders.map(s => {
@@ -1284,18 +1312,21 @@
             </div>
           </div>
 
-          <!-- 风险扫描 -->
+          <!-- 风险扫描 v1.7.99.282：风控合规提醒 6 tab + 5 列表格 -->
           <div class="card" style="margin-bottom: 16px;">
             <div class="card-header">
-              <div class="card-title">企业风险扫描结果</div>
+              <div class="card-title">风控合规提醒</div>
               <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
                 <span>扫描时间：2026-07-17 15:46:04</span>
                 <span style="color: var(--text-tertiary);">|</span>
-                <span>11 项扫描</span>
-                ${riskBadge}
+                <span>${riskTotal} 项扫描</span>
+                ${riskBadgeHtml}
               </div>
             </div>
-            <div class="card-body" style="padding: 0;">${riskHtml}</div>
+            <div class="card-body" style="padding: 0;">
+              <div class="risk-tabs">${riskTabsHtml}</div>
+              ${riskPanelHtml}
+            </div>
           </div>
 
           <!-- 股权关系 -->
@@ -1352,10 +1383,86 @@
       } else {
         container.innerHTML = renderCompany(COMPANIES[companyKey], companyKey);
       }
+      // v1.7.99.282 渲染 6 tab 风险表格（DOM 已插入）
+      renderAllApplyRiskPanels();
+    }
+
+    // v1.7.99.282 渲染所有企业的 6 tab 风险表格
+    function renderAllApplyRiskPanels() {
+      const groups = window.__applyRiskGroups || {};
+      Object.keys(groups).forEach(function(key) {
+        const riskGroups = groups[key];
+        ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(function(t) {
+          const el = document.querySelector(`.apply-risk-panel[data-apply-company="${key}"][data-apply-tab="${t}"]`);
+          if (!el) return;
+          const items = riskGroups[t] || [];
+          const rows = items.map((r, i) => {
+            const isWarn = r.status === 'warn';
+            const meta = applyGetRiskMeta(r.name);
+            const descText = r.desc
+              ? r.desc.replace(/(\d{4}-\d{2}-\d{2})/g, m => `<mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">${m}</mark>`)
+              : '截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。';
+            const ruleHtml = Array.isArray(meta.rule)
+              ? '<ol class="risk-rule-list">' + meta.rule.map(x => '<li>' + x + '</li>').join('') + '</ol>'
+              : meta.rule;
+            const tag = isWarn
+              ? '<span class="risk-result-tag risk-result-warn">⚠ 风险提示</span>'
+              : '<span class="risk-result-tag risk-result-ok">✓ 通过</span>';
+            return `<tr class="risk-row ${isWarn ? 'risk-row-warn' : ''}">
+              <td class="risk-td-category">${meta.category}</td>
+              <td class="risk-td-name">${r.name}</td>
+              <td class="risk-td-rule">${ruleHtml}</td>
+              <td class="risk-td-desc"><div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div></td>
+              <td class="risk-td-result">${tag}</td>
+            </tr>`;
+          }).join('');
+          el.innerHTML = rows
+            ? `<div class="risk-table-wrap"><table class="risk-table">
+                <thead><tr>
+                  <th class="risk-th-category">检查分类</th>
+                  <th class="risk-th-name">校验项</th>
+                  <th class="risk-th-rule">检查规则（负面清单）</th>
+                  <th>检查过程</th>
+                  <th class="risk-th-result">校验结果</th>
+                </tr></thead>
+                <tbody>${rows}</tbody>
+              </table></div>`
+            : '<div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px;">本分类暂无风险项</div>';
+        });
+      });
     }
 
     function saveOpinion(key, val) {
       window.__step2State.opinions[key] = val;
+    }
+
+    // v1.7.99.282 风控合规提醒 tab 切换（apply）
+    function switchApplyRiskTab(companyKey, tab) {
+      // 当前企业内 tab 切换
+      var tabs = document.querySelectorAll(`.risk-tab[data-apply-risk-tab][onclick*="${companyKey}"]`);
+      tabs.forEach(function(t) { t.classList.toggle('active', t.dataset.applyRiskTab === tab); });
+      var panels = document.querySelectorAll(`.apply-risk-panel[data-apply-company="${companyKey}"]`);
+      panels.forEach(function(p) { p.hidden = (p.dataset.applyTab !== tab); });
+    }
+
+    // v1.7.99.282 问卷生成的风险写回 c.risks（按 6 tab 合并 + _fromSurvey 标记去重）
+    function mergeApplySurveyRisks(companyKey, newRisks) {
+      var c = COMPANIES[companyKey];
+      if (!c || !c.risks) return;
+      newRisks.forEach(function(risk) {
+        var tab = APPLY_RISK_TAB_BY_NAME[risk.name] || 'trade';
+        var exists = c.risks.some(function(it) { return it._fromSurvey && it.name === risk.name; });
+        if (!exists) {
+          c.risks.push(Object.assign({}, risk, { _fromSurvey: true, _surveyTab: tab }));
+        } else {
+          for (var i = 0; i < c.risks.length; i++) {
+            if (c.risks[i]._fromSurvey && c.risks[i].name === risk.name) {
+              c.risks[i] = Object.assign({}, risk, { _fromSurvey: true, _surveyTab: tab });
+              break;
+            }
+          }
+        }
+      });
     }
 
     function triggerUpload(key) {
@@ -1687,6 +1794,133 @@
       C: { name: '中原粮食集团有限公司',       shortName: '中原粮食',  scanTime: '2026-07-18 09:15:30' }
     };
 
+    // v1.7.99.282 风控合规提醒：检查分类/规则 映射表（与 project-detail 一致）
+    var APPLY_RISK_TAB_DEFAULT_CATEGORY = {
+      trade: '主体准入类',
+      internal: '主体准入类',
+      business: '经营行为类',
+      judicial: '合规记录类',
+      relation: '关联关系类',
+      personnel: '人员合规类'
+    };
+    // item.name → 检查分类 + 检查规则（6 tab 适配）
+    var APPLY_RISK_TAB_BY_NAME = {
+      // trade
+      '空壳企业识别': 'trade',
+      '关联交易风险': 'trade',
+      '资质缺失风险': 'trade',
+      '物流合作稳定性': 'trade',
+      '大额贸易风险': 'trade',
+      '历史业务缺失风险': 'trade',
+      '超范围经营风险': 'trade',
+      '品牌授权缺失风险': 'trade',
+      '上下游贸易类风险': 'relation',
+      '合作方频繁变更风险': 'relation',
+      // internal
+      '合作黑名单': 'internal',
+      '假国央企': 'internal',
+      '历史运单异常': 'internal',
+      // business
+      '税收违法信息': 'business',
+      '行政或工商违法处罚信息': 'business',
+      '行政/工商违法处罚信息': 'business',
+      '经营异常': 'business',
+      '行政处罚': 'business',
+      '严重违法': 'business',
+      '车辆规模': 'business',
+      '仓储协议完备': 'business',
+      '仓储协议编号缺失': 'business',
+      '仓储协议缺失风险': 'business',
+      '物流资质缺失风险': 'business',
+      // judicial
+      '失信被执行人信息': 'judicial',
+      '被执行人信息': 'judicial',
+      '限制消费令信息': 'judicial',
+      '终本案件': 'judicial',
+      '法律诉讼': 'judicial',
+      '历史法律诉讼': 'judicial',
+      '开庭公告': 'judicial',
+      '历史开庭公告': 'judicial',
+      '被执行人': 'judicial',
+      '司法协助': 'judicial',
+      '历史被执行人': 'judicial',
+      '失信被执行人': 'judicial',
+      '历史失信被执行人': 'judicial',
+      // personnel
+      '限制出境': 'personnel',
+      '历史限制消费令': 'personnel',
+      '限制消费令': 'personnel'
+    };
+    var APPLY_RISK_RULE_MAP = {
+      // trade
+      '空壳企业识别':           { category: '主体准入类', rule: [
+        '成立时间＜6 个月且拟开展单笔＞500 万大额贸易，预警或禁止交易',
+        '社保人数≤1 人',
+        '注册地址为虚拟/集群/托管地址、一址多企≥5 家',
+        '长期零申报、非正常户、走逃失联、欠税≥3 次，拦截并纳入黑名单',
+        '无实缴资本、经营范围宽泛无具体品类',
+        '无历史业务记录、偶然开展大额新增品类贸易'
+      ] },
+      '关联交易风险':           { category: '关联关系类', rule: '上下游客户是否准入（负面清单核验）' },
+      '资质缺失风险':           { category: '主体准入类', rule: '上下游客户是否准入（负面清单核验）' },
+      '物流合作稳定性':         { category: '经营行为类', rule: '核心客户运单量是否稳定' },
+      '大额贸易风险':           { category: '贸易实质类', rule: '单笔交易金额是否超过限额' },
+      '历史业务缺失风险':       { category: '贸易实质类', rule: '首次合作是否需重点关注' },
+      '超范围经营风险':         { category: '主体准入类', rule: '经营品类需在工商登记范围内' },
+      '品牌授权缺失风险':       { category: '贸易实质类', rule: '品牌类商品需有正规授权' },
+      // internal
+      '合作黑名单':             { category: '主体准入类', rule: '是否在我司合作黑名单内' },
+      '假国央企':               { category: '主体准入类', rule: '是否冒用国央企资质' },
+      '历史运单异常':           { category: '经营行为类', rule: '历史运单轨迹是否异常' },
+      // business
+      '税收违法信息':           { category: '经营行为类', rule: '是否列入税收违法名单' },
+      '行政或工商违法处罚信息': { category: '合规记录类', rule: '是否受到行政处罚' },
+      '行政/工商违法处罚信息':  { category: '合规记录类', rule: '是否受到行政处罚' },
+      '经营异常':               { category: '经营行为类', rule: '是否列入经营异常名录' },
+      '行政处罚':               { category: '合规记录类', rule: '近 3 年是否有重大行政处罚' },
+      '严重违法':               { category: '合规记录类', rule: '是否列入严重违法失信企业名单' },
+      '车辆规模':               { category: '经营行为类', rule: '运输车辆规模是否匹配业务范围' },
+      '仓储协议完备':           { category: '经营行为类', rule: '仓储业务是否签订对应协议' },
+      '仓储协议编号缺失':       { category: '经营行为类', rule: '仓储协议编号是否完整' },
+      '仓储协议缺失风险':       { category: '经营行为类', rule: '仓储业务是否签订对应协议' },
+      '物流资质缺失风险':       { category: '经营行为类', rule: '物流合作方资质是否齐全' },
+      // judicial
+      '失信被执行人信息':       { category: '合规记录类', rule: '是否列入失信被执行人' },
+      '被执行人信息':           { category: '合规记录类', rule: '是否列入被执行人' },
+      '限制消费令信息':         { category: '合规记录类', rule: '是否被限制消费' },
+      '终本案件':               { category: '合规记录类', rule: '是否存在终本案件' },
+      '法律诉讼':               { category: '合规记录类', rule: '是否涉及法律诉讼' },
+      '历史法律诉讼':           { category: '合规记录类', rule: '历史诉讼是否结案' },
+      '开庭公告':               { category: '合规记录类', rule: '未来 30 天内是否有开庭公告' },
+      '历史开庭公告':           { category: '合规记录类', rule: '历史开庭公告是否结案' },
+      '被执行人':               { category: '合规记录类', rule: '是否列入被执行人' },
+      '司法协助':               { category: '合规记录类', rule: '是否存在司法协助记录' },
+      '历史被执行人':           { category: '合规记录类', rule: '历史是否曾被列为被执行人' },
+      '失信被执行人':           { category: '合规记录类', rule: '是否列入失信被执行人' },
+      '历史失信被执行人':       { category: '合规记录类', rule: '历史是否曾被列为失信被执行人' },
+      // personnel
+      '限制出境':               { category: '人员合规类', rule: '法定代表人/主要管理人员是否被限制出境' },
+      '历史限制消费令':         { category: '人员合规类', rule: '法定代表人历史是否被限制消费' },
+      '限制消费令':             { category: '人员合规类', rule: '法定代表人是否被限制消费' }
+    };
+
+    // 把 c.risks 扁平数组按 6 tab 分组
+    function applyGroupRisksByTab(risks) {
+      var groups = { trade: [], internal: [], business: [], judicial: [], relation: [], personnel: [] };
+      risks.forEach(function(r) {
+        var tab = APPLY_RISK_TAB_BY_NAME[r.name] || 'trade';
+        groups[tab].push(r);
+      });
+      return groups;
+    }
+
+    // 取某 item 的 category/rule
+    function applyGetRiskMeta(name) {
+      var m = APPLY_RISK_RULE_MAP[name];
+      if (m) return m;
+      return { category: '综合合规类', rule: '按风险模型规则校验' };
+    }
+
     function openApplyComplianceSurveyDialog() {
       if (document.getElementById('complianceSurveyOverlay')) return;
       var answers = applySurveyAnswers[applyCurrentCompanyId] || {};
@@ -1694,7 +1928,7 @@
       window.__applySurveyTemp = Object.assign({}, answers);
 
       var questions = [
-        { id: 'q1', num: 1, title: '开展单笔＞500 万大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
+        { id: 'q1', num: 1, title: '是否将开展单笔>500万的大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
         { id: 'q2', num: 2, title: '无历史业务记录、本次开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
         { id: 'q3', num: 3, title: '拟交易商品品类不在工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
         { id: 'q4', num: 4, title: '品牌类商品是否有正规授权书或授权已过期？', options: [{v: 'authorized', l: '已授权'}, {v: 'unauthorized', l: '未授权'}], defaultV: answers.q4 || '' },
@@ -1840,8 +2074,17 @@
       }
       applySurveyAnswers[applyCurrentCompanyId] = Object.assign({}, temp);
       applySurveyHasRun[applyCurrentCompanyId] = true;
-      var count = countApplySurveyRisks(applySurveyAnswers[applyCurrentCompanyId]);
+      // v1.7.99.282 把问卷生成的风险合并到 c.risks
+      var newRisks = generateApplySurveyRisks(applySurveyAnswers[applyCurrentCompanyId], applyCurrentCompanyId);
+      mergeApplySurveyRisks(applyCurrentCompanyId, newRisks);
+      var count = newRisks.length;
       applySurveyRiskCount[applyCurrentCompanyId] = count;
+      // 刷新 __applyRiskGroups（不重渲整个 step2 避免重置滚动）
+      var cObj = COMPANIES[applyCurrentCompanyId];
+      if (cObj && window.__applyRiskGroups) {
+        window.__applyRiskGroups[applyCurrentCompanyId] = applyGroupRisksByTab(cObj.risks);
+        renderAllApplyRiskPanels();
+      }
       closeApplyComplianceSurveyDialog();
       // 切到步骤2 + 滚动到顶部
       updateStep(2);
@@ -1849,22 +2092,47 @@
       if (scroller) scroller.scrollTop = 0;
       // 更新 banner 文案
       refreshApplySurveyBanner();
-      alert('合规问卷已提交，已生成 ' + count + ' 项风控提醒（提交报告后将在风险表格中体现）');
+      alert('合规问卷已提交，已生成 ' + count + ' 项风控提醒');
     }
 
-    // 计算问卷生成的风险数（v1.7.99.282 重做步骤2 时替换为实际渲染）
-    function countApplySurveyRisks(answers) {
-      var n = 0;
-      if (answers.q1 === 'yes') n++;
-      if (answers.q2 === 'yes') n++;
-      if (answers.q3 === 'yes') n++;
-      if (answers.q4 === 'unauthorized') n++;
-      if (answers.q5 === 'yes') n++;            // 仓储协议完备/缺失/编号缺失（1 项）
-      if (answers.q6 === 'no') n++;
-      if (answers.q7 === 'yes') n++;
-      if (answers.q8 === 'yes') n++;
-      return n;
+    // v1.7.99.282 根据问卷答案生成具体风险项（与 project-detail generateRisksFromSurvey 等价）
+    function generateApplySurveyRisks(answers, companyKey) {
+      var c = APPLY_SURVEY_COMPANIES[companyKey];
+      var risks = [];
+      if (answers.q1 === 'yes') {
+        risks.push({ tab: 'trade', name: '大额贸易风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次交易为单笔金额＞500 万的大额贸易，需关注资金来源、付款方式及交易背景真实性。' });
+      }
+      if (answers.q2 === 'yes') {
+        risks.push({ tab: 'trade', name: '历史业务缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，与 ' + c.shortName + ' 无历史业务记录且本次新增大额贸易品类，需重点关注首次合作风险及新增品类市场风险。' });
+      }
+      if (answers.q3 === 'yes') {
+        risks.push({ tab: 'trade', name: '超范围经营风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次拟交易商品品类不在 ' + c.shortName + ' 工商登记的经营范围内，存在超范围经营风险，需核查实际履约能力。' });
+      }
+      if (answers.q4 === 'unauthorized') {
+        risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
+      }
+      if (answers.q5 === 'yes') {
+        if (answers.q5a === 'yes' && answers.q5b) {
+          risks.push({ tab: 'business', name: '仓储协议完备', status: 'ok', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 已签订仓储协议（编号：' + answers.q5b + '），仓储业务合规。', category: '经营行为类', rule: '仓储业务是否签订对应协议' });
+        } else if (answers.q5a === 'yes' && !answers.q5b) {
+          risks.push({ tab: 'business', name: '仓储协议编号缺失', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务并签订协议，但未填写协议编号，请补充。' });
+        } else {
+          risks.push({ tab: 'business', name: '仓储协议缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务但未签订对应仓储协议，存在合规风险。' });
+        }
+      }
+      if (answers.q6 === 'no') {
+        risks.push({ tab: 'business', name: '物流资质缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 无固定物流合作方或运输资质不全，需补充完整物流资质证明。' });
+      }
+      if (answers.q7 === 'yes') {
+        risks.push({ tab: 'relation', name: '上下游贸易类风险', status: 'warn', desc: '截至 ' + c.scanTime + '，检测到 ' + c.shortName + ' 的上下游企业均为贸易类企业，存在贸易背景真实性风险，可能涉及循环贸易。' });
+      }
+      if (answers.q8 === 'yes') {
+        risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 在近期贸易活动中频繁变更合作方，存在经营不稳定风险，需重点关注履约能力。' });
+      }
+      return risks;
     }
+
+    // v1.7.99.282 问卷风险数通过 generateApplySurveyRisks 实时计算，countApplySurveyRisks 已被替代
 
     // 刷新步骤2 banner 文案
     function refreshApplySurveyBanner() {
