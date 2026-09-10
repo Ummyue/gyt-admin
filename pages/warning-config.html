@@ -1080,10 +1080,10 @@
             <option value="low">低</option>
           </select>
         </div>
-        <!-- 6. 考核项 -->
+        <!-- 6. 考核项（v1.7.99.286 联动：amount → 配置项单位 % 改「元」） -->
         <div class="add-rule-row">
           <label class="add-rule-label required"><span class="required-mark">*</span>考核项</label>
-          <select class="add-rule-select" id="priceCheckItem">
+          <select class="add-rule-select" id="priceCheckItem" onchange="onPriceCheckItemChange()">
             <option value="">请选择</option>
             <option value="range" selected>最大波动幅度超过阈值触发预警</option>
             <option value="amount">最大波动金额超过阈值触发报警</option>
@@ -1108,7 +1108,7 @@
             </select>
             <span class="add-rule-config-text">超过</span>
             <input type="number" class="add-rule-input add-rule-config-input" id="priceConfigValue" min="0" step="0.01" placeholder="请输入考核阈值">
-            <span class="add-rule-config-text">%</span>
+            <span class="add-rule-config-text" id="priceConfigUnit">%</span>
           </div>
         </div>
         <!-- 9. 规则明细（综合描述 textarea） -->
@@ -1427,6 +1427,14 @@
         if (dateRow) {
           dateRow.style.display = (v === 'd1') ? '' : 'none';
         }
+      }
+
+      // v1.7.99.286 考核项联动配置项单位：range → %，amount → 元
+      function onPriceCheckItemChange() {
+        var v = document.getElementById('priceCheckItem').value;
+        var unit = document.getElementById('priceConfigUnit');
+        if (!unit) return;
+        unit.textContent = (v === 'amount') ? '元' : '%';
       }
 
       // v1.7.99.272 关联合同=是时 规则类型选项「本期价格」→「合同价格」
