@@ -1323,11 +1323,23 @@
 
       var questions = [
         { id: 'q1', num: 1, title: '是否将开展单笔>500万的大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
-        { id: 'q2', num: 2, title: '无历史业务记录、本次开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
-        { id: 'q3', num: 3, title: '拟交易商品品类不在工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
-        { id: 'q4', num: 4, title: '品牌类商品是否有正规授权书或授权已过期？', options: [{v: 'authorized', l: '已授权'}, {v: 'unauthorized', l: '未授权'}], defaultV: answers.q4 || '' },
+        { id: 'q2', num: 2, title: '与' + c.shortName + '无历史业务记录、本次将开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
+        { id: 'q3', num: 3, title: '拟交易商品品类不在' + c.name + '的工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
+        // v1.7.99.288 q4 拆分为前提 + 条件子项：先问「是否涉及品牌类商品」，是→展开 4.1 品牌授权
+        { id: 'q4', num: 4, title: '是否涉及品牌类商品品类交易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q4 || '' },
         {
-          id: 'q5', num: 5, title: '是否涉及仓储业务？',
+          id: 'q4a', num: '4.1', title: '品牌类商品是否有正规授权书或授权已过期？', options: [], defaultV: answers.q4a || '',
+          conditional: function(state) {
+            return '<div class="survey-q-extra" id="q4a_extra" style="' + (state.q4 === 'yes' ? '' : 'display:none') + '">'
+              + '<label style="margin-top:0;">基于上方「是否涉及品牌类商品品类交易？」展开</label>'
+              + '<div class="survey-options">'
+              + '<div class="survey-opt' + (state.q4a === 'authorized' ? ' active' : '') + '" data-q="q4a" data-v="authorized" onclick="selectSurveyOption(this)">已授权</div>'
+              + '<div class="survey-opt' + (state.q4a === 'unauthorized' ? ' active' : '') + '" data-q="q4a" data-v="unauthorized" onclick="selectSurveyOption(this)">未授权</div>'
+              + '</div></div>';
+          }
+        },
+        {
+          id: 'q5', num: 5, title: '本项目是否涉及仓储业务？',
           options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5 || '',
           conditional: function(state) {
             var html = '<div class="survey-q-extra" id="q5_extra" style="' + (state.q5 === 'yes' ? '' : 'display:none') + '">';
@@ -1343,7 +1355,7 @@
             return html;
           }
         },
-        { id: 'q6', num: 6, title: '是否有固定物流合作方且运输资质齐全？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6 || '' },
+        { id: 'q6', num: 6, title: c.name + '是否有固定物流合作方且运输资质齐全？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6 || '' },
         { id: 'q7', num: 7, title: '检测到上下游企业均为贸易类企业，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7 || '' },
         { id: 'q8', num: 8, title: '本次合作的' + c.shortName + '在近期贸易活动中频繁变更合作方，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8 || '' }
       ];
@@ -1400,6 +1412,16 @@
       el.classList.add('active');
       if (!window.__surveyTemp) window.__surveyTemp = {};
       window.__surveyTemp[q] = v;
+      if (qid === 'q4') {
+        // v1.7.99.288 q4=否时隐藏 q4a_extra + 清空 q4a
+        var q4aExtra = document.getElementById('q4a_extra');
+        if (q4aExtra) q4aExtra.style.display = (v === 'yes') ? 'block' : 'none';
+        if (v === 'no') {
+          if (window.__surveyTemp.q4a) delete window.__surveyTemp.q4a;
+          var q4aOpts = document.querySelectorAll('[data-q="q4a"]');
+          q4aOpts.forEach(function(o) { o.classList.remove('active'); });
+        }
+      }
       if (qid === 'q5') {
         var extra = document.getElementById('q5_extra');
         if (extra) extra.style.display = (v === 'yes') ? 'block' : 'none';
@@ -1460,6 +1482,11 @@
         Utils.toast('请完成全部 8 项问卷（已答 ' + answered + ' / 8）', 'error');
         return;
       }
+      // v1.7.99.288 q4=是时必填 q4a（条件子项）
+      if (temp.q4 === 'yes' && !temp.q4a) {
+        Utils.toast('请回答 4.1 品牌授权情况', 'error');
+        return;
+      }
       if (temp.q5 === 'yes' && temp.q5a === 'yes' && !temp.q5b) {
         Utils.toast('请填写仓储协议编号（5.2）', 'error');
         return;
@@ -1488,7 +1515,7 @@
       if (answers.q3 === 'yes') {
         risks.push({ tab: 'trade', name: '超范围经营风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次拟交易商品品类不在 ' + c.shortName + ' 工商登记的经营范围内，存在超范围经营风险，需核查实际履约能力。' });
       }
-      if (answers.q4 === 'unauthorized') {
+      if (answers.q4a === 'unauthorized') {
         risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
       }
       if (answers.q5 === 'yes') {
