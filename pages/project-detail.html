@@ -1410,7 +1410,7 @@
         +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="surveyProgress">0</span> / 8 已答</span>'
         +    '<div class="spacer"></div>'
         +    '<button type="button" class="btn btn-secondary" onclick="closeComplianceSurveyDialog()">取消</button>'
-        +    '<button type="button" class="btn btn-default" onclick="closeComplianceSurveyDialog()">暂不填写</button>'
+        +    '<button type="button" class="btn btn-secondary" onclick="skipComplianceSurvey()">暂不填写</button>'
         +    '<button type="button" class="btn btn-primary" onclick="submitComplianceSurvey()">提交风控问卷</button>'
         + '  </div>'
         + '</div>';
@@ -1495,6 +1495,11 @@
       if (overlay) overlay.remove();
       if (modal) modal.remove();
       window.__surveyTemp = null;
+    }
+
+    // v1.7.99.292 「暂不填写」= 关闭弹窗 + 留在当前详情页面（不跳路由）
+    function skipComplianceSurvey() {
+      closeComplianceSurveyDialog();
     }
 
     function submitComplianceSurvey() {

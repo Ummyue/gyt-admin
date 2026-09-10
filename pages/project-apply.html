@@ -2019,7 +2019,7 @@
         +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="applySurveyProgress">0</span> / 8 已答</span>'
         +    '<div class="spacer"></div>'
         +    '<button type="button" class="btn btn-secondary" onclick="closeApplyComplianceSurveyDialog()">取消</button>'
-        +    '<button type="button" class="btn btn-default" onclick="closeApplyComplianceSurveyDialog()">暂不填写</button>'
+        +    '<button type="button" class="btn btn-secondary" onclick="skipApplyComplianceSurvey()">暂不填写</button>'
         +    '<button type="button" class="btn btn-primary" onclick="submitApplyComplianceSurvey()">提交风控问卷</button>'
         + '  </div>'
         + '</div>';
@@ -2106,6 +2106,14 @@
       if (overlay) overlay.remove();
       if (modal) modal.remove();
       window.__applySurveyTemp = null;
+    }
+
+    // v1.7.99.292 「暂不填写」= 关闭弹窗 + 跳转到企业尽调报告（步骤 2）
+    function skipApplyComplianceSurvey() {
+      closeApplyComplianceSurveyDialog();
+      updateStep(2);
+      var scroller = document.querySelector('[style*="overflow-y: auto"]');
+      if (scroller) scroller.scrollTop = 0;
     }
 
     function submitApplyComplianceSurvey() {
