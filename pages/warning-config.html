@@ -1276,6 +1276,8 @@
     .price-contract-table .col-check { width: 32px; text-align: center; }
     .price-contract-table .col-check input[type="checkbox"] { margin: 0; cursor: pointer; width: 14px; height: 14px; accent-color: var(--color-primary); }
     .price-contract-table .col-code { font-family: var(--font-mono); font-size: 11px; color: var(--text-secondary); }
+    .price-contract-table .col-category { width: 80px; font-size: 12px; color: var(--text-secondary); }
+    .price-contract-table .col-productName { width: 100px; font-size: 12px; color: var(--text-primary); font-weight: 500; }
     .price-contract-table .col-type-purchase { color: #1E40AF; font-weight: 500; }
     .price-contract-table .col-type-sales { color: #D97706; font-weight: 500; }
     .price-contract-table .col-status { font-size: 11px; }
@@ -1459,20 +1461,20 @@
       // mock 合同数据：2 个框架合同（采购/销售各 1）+ 每个框架 2-3 个子合同 + 2 个普通合同
       var PRICE_MOCK_CONTRACTS = [
         // 框架合同 1：采购框架
-        { id: 'f1', code: 'HNCIEGNMYB25(购)H03-05', type: 'purchase', typeLabel: '采购', isFramework: true, party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-12-31', amount: '35000 吨', status: '执行中', used: false, usedBy: null },
+        { id: 'f1', code: 'HNCIEGNMYB25(购)H03-05', type: 'purchase', typeLabel: '采购', isFramework: true, party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-12-31', amount: '35000 吨', status: '执行中', used: false, usedBy: null, category: '煤炭', productName: '动力煤' },
         // 框架合同 1 的子合同（采购订单）
-        { id: 'f1-c1', code: 'HNCIEGN-PO-20260415-01', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-07-15', amount: '12000 吨', status: '执行中', used: false, usedBy: null },
-        { id: 'f1-c2', code: 'HNCIEGN-PO-20260520-02', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-05-20', endDate: '2026-08-20', amount: '10000 吨', status: '执行中', used: false, usedBy: null },
-        { id: 'f1-c3', code: 'HNCIEGN-PO-20260625-03', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-06-25', endDate: '2026-09-25', amount: '13000 吨', status: '已生效', used: false, usedBy: null },
+        { id: 'f1-c1', code: 'HNCIEGN-PO-20260415-01', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-04-15', endDate: '2026-07-15', amount: '12000 吨', status: '执行中', used: false, usedBy: null, category: '煤炭', productName: '动力煤' },
+        { id: 'f1-c2', code: 'HNCIEGN-PO-20260520-02', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-05-20', endDate: '2026-08-20', amount: '10000 吨', status: '执行中', used: false, usedBy: null, category: '煤炭', productName: '动力煤' },
+        { id: 'f1-c3', code: 'HNCIEGN-PO-20260625-03', type: 'purchase', typeLabel: '采购', isFramework: false, parentId: 'f1', party: '陕西陕煤供应链管理有限公司', signDate: '2026-06-25', endDate: '2026-09-25', amount: '13000 吨', status: '已生效', used: false, usedBy: null, category: '煤炭', productName: '动力煤' },
         // 框架合同 2：销售框架
-        { id: 'f2', code: 'GTGYL-FW-MSXS-20260127-S', type: 'sales', typeLabel: '销售', isFramework: true, party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-12-31', amount: '20000 吨', status: '执行中', used: true, usedBy: '煤炭价格下跌预警' },
+        { id: 'f2', code: 'GTGYL-FW-MSXS-20260127-S', type: 'sales', typeLabel: '销售', isFramework: true, party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-12-31', amount: '20000 吨', status: '执行中', used: true, usedBy: '煤炭价格下跌预警', category: '煤炭', productName: '无烟煤' },
         // 框架合同 2 的子合同（销售订单）
-        { id: 'f2-c1', code: 'GTGYL-MSXS-20260127-S-01', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-06-30', amount: '5000 吨', status: '执行中', used: false, usedBy: null },
-        { id: 'f2-c2', code: 'GTGYL-MSXS-20260315-S-02', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-03-15', endDate: '2026-08-31', amount: '8000 吨', status: '执行中', used: false, usedBy: null },
-        { id: 'f2-c3', code: 'GTGYL-MSXS-20260520-S-03', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-05-20', endDate: '2026-10-31', amount: '7000 吨', status: '已生效', used: false, usedBy: null },
+        { id: 'f2-c1', code: 'GTGYL-MSXS-20260127-S-01', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-01-27', endDate: '2026-06-30', amount: '5000 吨', status: '执行中', used: false, usedBy: null, category: '煤炭', productName: '无烟煤' },
+        { id: 'f2-c2', code: 'GTGYL-MSXS-20260315-S-02', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-03-15', endDate: '2026-08-31', amount: '8000 吨', status: '执行中', used: false, usedBy: null, category: '煤炭', productName: '无烟煤' },
+        { id: 'f2-c3', code: 'GTGYL-MSXS-20260520-S-03', type: 'sales', typeLabel: '销售', isFramework: false, parentId: 'f2', party: '郑州信必达国际供应链有限公司', signDate: '2026-05-20', endDate: '2026-10-31', amount: '7000 吨', status: '已生效', used: false, usedBy: null, category: '煤炭', productName: '无烟煤' },
         // 普通合同（无父子关系）
-        { id: 'c1', code: 'DLXLC-DSRMT-202203-0011', type: 'sales', typeLabel: '销售', isFramework: false, party: '天宇源国际', signDate: '2026-02-28', endDate: '2026-08-31', amount: '5000 吨', status: '执行中', used: true, usedBy: '超时未结算' },
-        { id: 'c2', code: 'GTGYL-PUR-20260510-P', type: 'purchase', typeLabel: '采购', isFramework: false, party: '内蒙古伊泰集团股份有限公司', signDate: '2026-05-10', endDate: '2027-05-09', amount: '8000 吨', status: '已生效', used: false, usedBy: null },
+        { id: 'c1', code: 'DLXLC-DSRMT-202203-0011', type: 'sales', typeLabel: '销售', isFramework: false, party: '天宇源国际', signDate: '2026-02-28', endDate: '2026-08-31', amount: '5000 吨', status: '执行中', used: true, usedBy: '超时未结算', category: '煤炭', productName: '焦煤' },
+        { id: 'c2', code: 'GTGYL-PUR-20260510-P', type: 'purchase', typeLabel: '采购', isFramework: false, party: '内蒙古伊泰集团股份有限公司', signDate: '2026-05-10', endDate: '2027-05-09', amount: '8000 吨', status: '已生效', used: false, usedBy: null, category: '煤炭', productName: '动力煤' },
       ];
       var priceCurrentContractTab = 'all';
       var priceSelectedContracts = []; // v1.7.99.263.1 改多选：数组 [{id, code, type, ...}]
@@ -1590,6 +1592,8 @@
               + '    <input type="checkbox" ' + (parentChecked ? 'checked' : '') + (parentIndeterminate ? ' data-indeterminate="true"' : '') + ' onclick="event.stopPropagation();togglePriceContract(\'' + fw.id + '\')">'
               + '  </td>'
               + '  <td class="col-code"><span class="framework-badge">框架</span>' + fw.code + usedTag + '</td>'
+              + '  <td class="col-category">' + (fw.category || '—') + '</td>'
+              + '  <td class="col-productName">' + (fw.productName || '—') + '</td>'
               + '  <td>' + fw.party + '</td>'
               + '  <td>' + fw.signDate + ' ~ ' + fw.endDate + '</td>'
               + '  <td class="' + typeClass + '">' + fw.typeLabel + ' / ' + fw.amount + '</td>'
@@ -1604,6 +1608,8 @@
                   + '<tr class="row-child ' + (isSel ? 'selected' : '') + '" onclick="togglePriceContract(\'' + ch.id + '\')">'
                   + '  <td class="col-check"><span class="tree-connector"></span><input type="checkbox" ' + (isSel ? 'checked' : '') + ' onclick="event.stopPropagation();togglePriceContract(\'' + ch.id + '\')"></td>'
                   + '  <td class="col-code"><span class="child-code">' + ch.code + '</span></td>'
+                  + '  <td class="col-category">' + (ch.category || '—') + '</td>'
+                  + '  <td class="col-productName">' + (ch.productName || '—') + '</td>'
                   + '  <td>' + ch.party + '</td>'
                   + '  <td>' + ch.signDate + ' ~ ' + ch.endDate + '</td>'
                   + '  <td class="' + chTypeClass + '">' + ch.typeLabel + ' / ' + ch.amount + '</td>'
@@ -1621,6 +1627,8 @@
               + '<tr class="row-standalone ' + (isSel ? 'selected' : '') + '" onclick="togglePriceContract(\'' + c.id + '\')">'
               + '  <td class="col-check"><input type="checkbox" ' + (isSel ? 'checked' : '') + ' onclick="event.stopPropagation();togglePriceContract(\'' + c.id + '\')"></td>'
               + '  <td class="col-code">' + c.code + usedTag + '</td>'
+              + '  <td class="col-category">' + (c.category || '—') + '</td>'
+              + '  <td class="col-productName">' + (c.productName || '—') + '</td>'
               + '  <td>' + c.party + '</td>'
               + '  <td>' + c.signDate + ' ~ ' + c.endDate + '</td>'
               + '  <td class="' + typeClass + '">' + c.typeLabel + ' / ' + c.amount + '</td>'
@@ -1628,7 +1636,7 @@
               + '</tr>';
           });
         }
-        document.getElementById('priceContractList').innerHTML = '<table class="price-contract-table"><thead><tr><th class="col-check"><input type="checkbox" id="priceContractCheckAll" onclick="event.stopPropagation();toggleAllPriceContracts(this)"></th><th>合同编号</th><th>对方企业</th><th>合同期限</th><th>类型 / 数量</th><th class="col-status">状态</th></tr></thead><tbody>' + html + '</tbody></table>';
+        document.getElementById('priceContractList').innerHTML = '<table class="price-contract-table"><thead><tr><th class="col-check"><input type="checkbox" id="priceContractCheckAll" onclick="event.stopPropagation();toggleAllPriceContracts(this)"></th><th>合同编号</th><th class="col-category">品类</th><th class="col-productName">品名</th><th>对方企业</th><th>合同期限</th><th>类型 / 数量</th><th class="col-status">状态</th></tr></thead><tbody>' + html + '</tbody></table>';
         // 渲染完后设置 indeterminate 状态（必须在 DOM 渲染完成后调用）
         document.querySelectorAll('.price-contract-table input[type="checkbox"][data-indeterminate="true"]').forEach(function(cb) {
           cb.indeterminate = true;

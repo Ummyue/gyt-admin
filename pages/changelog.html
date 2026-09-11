@@ -108,6 +108,18 @@
       // === Baseline 记录：v1.7.99.166~173（user 已认可的最近修改） ===
       // localStorage 中已有的记录会叠加在 baseline 之上（unshift）
       var BASELINE = [                                                                                                {
+          ts: '2026-09-11T11:35:00',
+          version: 'v1.7.99.294',
+          module: '预警规则配置-关联合同列表增加「品类」「品名」字段',
+          summary: '预警规则配置新建弹窗（pages/warning-config.html）关联合同列表加 2 列。1) 需求：user 2026-09-11 11:31 反馈在合同列表中增加品类与品名字段显示（红框位置在「合同编号」和「对方企业」之间）；2) 改造方案：a) PRICE_MOCK_CONTRACTS 10 条数据全部加 2 个字段：category（品类：煤炭/钢材/铁矿等） + productName（品名：动力煤/无烟煤/焦煤/铁矿石等），mock 数据：f1 框架+子合同 = 煤炭/动力煤 / f2 框架+子合同 = 煤炭/无烟煤 / c1 = 煤炭/焦煤 / c2 = 煤炭/动力煤（同一框架父子合同保持品类品名一致，业务含义合理）；b) 3 处 td 插入 2 列：框架合同行 (line 1589+) + 子合同行 (line 1605+) + 普通合同行 (line 1620+)，每行新增 <td class="col-category"> + <td class="col-productName">，无值兜底显示「—」；c) thead 表头 (line 1631) 加 <th class="col-category">品类</th> + <th class="col-productName">品名</th>，位置在「合同编号」之后、「对方企业」之前；d) CSS 新增 .col-category 80px 灰 12px + .col-productName 100px 加粗 12px；3) 注：业务品种 select (#ruleProductLine) 是另一回事（业务品种下拉），不要混淆——这次改的是关联合同列表的 2 列展示字段；4) 验证：playwright 验证表头 8 列（含 checkbox 空列）+ 10 行全部含品类/品名正确（f1/f2 框架行 煤炭/动力煤/无烟煤 + 6 个子合同继承 + c1 焦煤 + c2 动力煤）+ 0 page error。',
+          changes: [
+            { type: 'add', location: 'pages/warning-config.html PRICE_MOCK_CONTRACTS 10 条数据', before: null, after: '每条加 2 个字段：category（品类）+ productName（品名），mock：f1/f1-c1/c2/c3=煤炭/动力煤 / f2/f2-c1/c2/c3=煤炭/无烟煤 / c1=煤炭/焦煤 / c2=煤炭/动力煤' },
+            { type: 'modify', location: 'pages/warning-config.html 关联合同列表 3 处 td', before: 'v1.7.99.263 6 列 td：checkbox / 合同编号 / 对方企业 / 合同期限 / 类型数量 / 状态', after: 'v1.7.99.294 8 列 td：checkbox / 合同编号 / 品类 / 品名 / 对方企业 / 合同期限 / 类型数量 / 状态' },
+            { type: 'modify', location: 'pages/warning-config.html 关联合同列表 thead', before: 'v1.7.99.263 表头 7 列（含 checkbox 空）：合同编号 / 对方企业 / 合同期限 / 类型数量 / 状态', after: 'v1.7.99.294 表头 9 列（含 checkbox 空）：合同编号 / 品类 / 品名 / 对方企业 / 合同期限 / 类型数量 / 状态' },
+            { type: 'add', location: 'pages/warning-config.html <style>', before: null, after: '.col-category 80px 灰 12px + .col-productName 100px 加粗 12px' }
+          ],
+        },
+{
           ts: '2026-09-10T17:05:00',
           version: 'v1.7.99.293',
           module: '保证金管理-保证金调整下方加「回款信息」模块（冲抵最后一笔货款触发）',
