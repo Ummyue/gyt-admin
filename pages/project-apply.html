@@ -116,10 +116,52 @@
       box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
     }
 
-    /* v1.7.99.298 客户准入材料上传（弹窗内） */
+    /* v1.7.99.307 客户准入材料 · 紧凑分组折叠布局（v1.7.99.298 升级版，替换冗长列表） */
     .cm-material-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light); }
     .cm-material-section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
     .cm-material-section-hint { font-size: 12px; color: var(--text-tertiary); margin-bottom: 14px; line-height: 1.5; }
+
+    .cm-mats-summary { display: flex; align-items: center; gap: 8px; padding: 0 0 12px; border-bottom: 1px solid var(--border-light); margin-bottom: 12px; flex-wrap: wrap; }
+    .cm-mats-summary .sum-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .cm-mats-summary .sum-chip.req-done { background: rgba(16,185,129,0.12); color: #047857; }
+    .cm-mats-summary .sum-chip.req-pending { background: rgba(220,38,38,0.1); color: #B91C1C; }
+    .cm-mats-summary .sum-chip.opt { background: rgba(100,116,139,0.1); color: #475569; }
+    .cm-mats-summary .sum-toggle-all { margin-left: auto; padding: 4px 10px; background: #F1F5F9; border: 1px solid var(--border-light); border-radius: 4px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+    .cm-mats-summary .sum-toggle-all:hover { background: #E2E8F0; }
+
+    .cm-mats-group { border: 1px solid var(--border-light); border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+    .cm-mats-group-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #F8FAFC; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .cm-mats-group-header:hover { background: #F1F5F9; }
+    .cm-mats-group-header .group-icon { font-size: 10px; color: var(--text-tertiary); transition: transform 0.15s; display: inline-block; width: 12px; }
+    .cm-mats-group-header.collapsed .group-icon { transform: rotate(-90deg); }
+    .cm-mats-group-header .group-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .cm-mats-group-header .group-progress { margin-left: auto; font-size: 12px; color: var(--text-secondary); }
+    .cm-mats-group-header .group-progress.done { color: #047857; font-weight: 500; }
+    .cm-mats-group-body { background: #fff; }
+
+    .cm-mat-row { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--border-light); align-items: center; transition: background 0.15s; }
+    .cm-mat-row:hover { background: #F8FAFC; }
+    .cm-mat-row .row-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .cm-mat-row .row-num { color: var(--text-tertiary); font-size: 12px; min-width: 24px; }
+    .cm-mat-row .row-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .cm-mat-row .req-star { color: #DC2626; font-weight: 700; font-size: 13px; }
+    .cm-mat-row .req-tag-mini { padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 500; }
+    .cm-mat-row .req-tag-mini.req { background: rgba(220,38,38,0.1); color: #B91C1C; }
+    .cm-mat-row .req-tag-mini.opt { background: rgba(100,116,139,0.1); color: #64748B; }
+    .cm-mat-row .file-count { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; background: rgba(59,130,246,0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px; }
+    .cm-mat-row .file-count.missing { background: rgba(220,38,38,0.08); color: #DC2626; }
+    .cm-mat-row .file-count.zero { background: #F1F5F9; color: var(--text-tertiary); }
+    .cm-mat-row .row-right { display: flex; align-items: center; gap: 6px; }
+    .cm-mat-row .cm-upload-trigger { padding: 3px 10px; font-size: 11px; gap: 3px; }
+    .cm-mat-row .row-toggle { background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 11px; padding: 2px 4px; }
+    .cm-mat-row .row-toggle:hover { color: var(--text-primary); }
+
+    .cm-mat-files-expanded { padding: 6px 14px 12px 44px; border-top: 1px dashed var(--border-light); background: #FAFBFC; }
+    .cm-mat-files-expanded .empty-hint { padding: 8px 12px; color: #B91C1C; background: #FEF2F2; border: 1px dashed rgba(220,38,38,0.3); border-radius: 4px; font-size: 12px; }
+    .cm-mat-files-expanded .empty-hint.opt { color: var(--text-tertiary); background: #F1F5F9; border-color: var(--border-light); }
+    .cm-mat-files-expanded .cm-material-file { margin-bottom: 4px; }
+
+    /* 兼容旧类（v1.7.99.298 旧实现），保留但不主动使用 */
     .cm-material-row { display: grid; grid-template-columns: 200px 1fr; gap: 12px; padding: 10px 0; border-bottom: 1px solid var(--border-light); align-items: start; }
     .cm-material-row:last-child { border-bottom: none; }
     .cm-material-label { font-size: 13px; color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 4px; padding-top: 6px; }
@@ -1772,27 +1814,149 @@
       return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
     }
 
+    // v1.7.99.307 重构 renderCmMaterials：分组折叠 + 每行紧凑布局
     function renderCmMaterials() {
-      var html = CUSTOMER_MATERIALS.map(function(m, idx) {
-        var reqTag = m.required
-          ? '<span class="req-tag-inline">必填</span>'
-          : '<span class="optional-tag-inline">非必填</span>';
-        var reqStar = m.required ? '<span class="req-star">*</span>' : '';
-        return '<div class="cm-material-row" id="cm_mat_' + m.key + '_row">'
-          + '<div class="cm-material-label">' + (idx + 1) + '. ' + m.name + ' ' + reqStar + reqTag + '</div>'
-          + '<div class="cm-material-upload">'
-          + '<label class="cm-upload-trigger">'
-          + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
-          + '<span>📎 选择文件</span>'
-          + '</label>'
-          + '<div class="cm-material-files" id="cm_mat_' + m.key + '_files"></div>'
-          + '</div>'
-          + '</div>';
-      }).join('');
-      document.getElementById('cmMaterialsList').innerHTML = html;
-      // 重置暂存 + 已上传预览
+      // 1. 重置暂存
       Object.keys(_cmMaterials).forEach(function(k){ delete _cmMaterials[k]; });
       CUSTOMER_MATERIALS.forEach(function(m){ _cmMaterials[m.key] = []; });
+
+      // 2. 按必填 / 非必填分组
+      var reqList = CUSTOMER_MATERIALS.filter(function(m){ return m.required; });
+      var optList = CUSTOMER_MATERIALS.filter(function(m){ return !m.required; });
+
+      // 3. 渲染单行
+      function rowHtml(m, idx) {
+        var files = _cmMaterials[m.key] || [];
+        var fileCountCls = files.length > 0 ? '' : (m.required ? 'missing' : 'zero');
+        var fileCountText = files.length > 0 ? ('📎 ' + files.length + ' 个文件') : (m.required ? '⚠ 未上传' : '○ 未上传');
+        return '<div class="cm-mat-row" data-mat-key="' + m.key + '">'
+          + '<div class="row-left">'
+          + '<span class="row-num">' + (idx + 1) + '.</span>'
+          + '<span class="row-name">' + m.name + '</span>'
+          + (m.required ? '<span class="req-star">*</span>' : '')
+          + '<span class="req-tag-mini ' + (m.required ? 'req' : 'opt') + '">' + (m.required ? '必填' : '非必填') + '</span>'
+          + '<span class="file-count ' + fileCountCls + '" data-file-count="' + m.key + '">' + fileCountText + '</span>'
+          + '</div>'
+          + '<div class="row-right">'
+          + '<label class="cm-upload-trigger" style="padding: 3px 10px;">'
+          + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
+          + '<span>📎 上传</span>'
+          + '</label>'
+          + '<button type="button" class="row-toggle" onclick="toggleCmMatFiles(\'' + m.key + '\')" title="展开/收起文件列表">▼</button>'
+          + '</div>'
+          + '</div>'
+          + '<div class="cm-mat-files-expanded" id="cm_mat_' + m.key + '_files_wrap" style="display:none;">'
+          + '<div class="cm-material-files" id="cm_mat_' + m.key + '_files"></div>'
+          + '</div>';
+      }
+
+      // 4. 渲染分组
+      function groupHtml(title, list, defaultOpen) {
+        var bodyCls = defaultOpen ? '' : 'collapsed';
+        var display = defaultOpen ? '' : 'display:none;';
+        return '<div class="cm-mats-group">'
+          + '<div class="cm-mats-group-header" data-group="' + title + '" onclick="toggleCmMatsGroup(this)" style="' + (defaultOpen ? '' : '') + '">'
+          + '<span class="group-icon">▼</span>'
+          + '<span class="group-title">' + title + '</span>'
+          + '<span class="group-count">（' + list.length + ' 项）</span>'
+          + '<span class="group-progress" id="cm_mat_group_' + (title.indexOf('必填') >= 0 ? 'req' : 'opt') + '_progress">0 / ' + list.length + '</span>'
+          + '</div>'
+          + '<div class="cm-mats-group-body" style="' + display + '">'
+          + list.map(function(m, i){ return rowHtml(m, i); }).join('')
+          + '</div>'
+          + '</div>';
+      }
+
+      // 5. 顶部摘要
+      var html = '<div class="cm-mats-summary">'
+        + '<span class="sum-chip req-pending" id="cm_mat_req_summary">必填 0 / ' + reqList.length + ' ⚠</span>'
+        + '<span class="sum-chip opt" id="cm_mat_opt_summary">非必填 0 / ' + optList.length + '</span>'
+        + '<button type="button" class="sum-toggle-all" onclick="toggleCmMatsAll(this)">全部展开</button>'
+        + '</div>'
+        + groupHtml('必填材料', reqList, true)
+        + groupHtml('非必填材料', optList, false);
+
+      document.getElementById('cmMaterialsList').innerHTML = html;
+      // 重渲所有材料文件区（包含已暂存的文件）
+      CUSTOMER_MATERIALS.forEach(function(m){ renderCmMaterialFiles(m.key); });
+      updateCmMatsSummary();
+    }
+
+    // v1.7.99.307 折叠/展开单材料的文件列表
+    function toggleCmMatFiles(key) {
+      var wrap = document.getElementById('cm_mat_' + key + '_files_wrap');
+      if (!wrap) return;
+      var open = wrap.style.display !== 'none';
+      wrap.style.display = open ? 'none' : '';
+      // 同步 row 上的 ▼ 图标
+      var btn = document.querySelector('.cm-mat-row[data-mat-key="' + key + '"] .row-toggle');
+      if (btn) btn.textContent = open ? '▼' : '▲';
+    }
+
+    // v1.7.99.307 折叠/展开分组
+    function toggleCmMatsGroup(headerEl) {
+      var body = headerEl.nextElementSibling;
+      if (!body) return;
+      var collapsed = headerEl.classList.toggle('collapsed');
+      body.style.display = collapsed ? 'none' : '';
+    }
+
+    // v1.7.99.307 一键全部展开/收起
+    function toggleCmMatsAll(btn) {
+      var headers = document.querySelectorAll('.cm-mats-group-header');
+      // 判断当前状态：全部展开 = 至少有一个 body 显示 → 全部收起
+      var anyShown = false;
+      headers.forEach(function(h){
+        var b = h.nextElementSibling;
+        if (b && b.style.display !== 'none') anyShown = true;
+      });
+      headers.forEach(function(h){
+        var b = h.nextElementSibling;
+        if (!b) return;
+        if (anyShown) {
+          h.classList.add('collapsed');
+          b.style.display = 'none';
+        } else {
+          h.classList.remove('collapsed');
+          b.style.display = '';
+        }
+      });
+      if (btn) btn.textContent = anyShown ? '全部展开' : '全部收起';
+    }
+
+    // v1.7.99.307 顶部摘要计数实时更新
+    function updateCmMatsSummary() {
+      var reqList = CUSTOMER_MATERIALS.filter(function(m){ return m.required; });
+      var optList = CUSTOMER_MATERIALS.filter(function(m){ return !m.required; });
+      var reqDone = reqList.filter(function(m){ return (_cmMaterials[m.key] || []).length > 0; }).length;
+      var optDone = optList.filter(function(m){ return (_cmMaterials[m.key] || []).length > 0; }).length;
+      var reqChip = document.getElementById('cm_mat_req_summary');
+      var optChip = document.getElementById('cm_mat_opt_summary');
+      var reqProg = document.getElementById('cm_mat_group_req_progress');
+      var optProg = document.getElementById('cm_mat_group_opt_progress');
+      if (reqChip) {
+        reqChip.textContent = reqDone >= reqList.length ? '必填 ' + reqDone + ' / ' + reqList.length + ' ✓' : '必填 ' + reqDone + ' / ' + reqList.length + ' ⚠';
+        reqChip.className = 'sum-chip ' + (reqDone >= reqList.length ? 'req-done' : 'req-pending');
+      }
+      if (optChip) optChip.textContent = '非必填 ' + optDone + ' / ' + optList.length;
+      if (reqProg) {
+        reqProg.textContent = reqDone + ' / ' + reqList.length + ' 已上传';
+        if (reqDone >= reqList.length) reqProg.classList.add('done');
+      }
+      if (optProg) optProg.textContent = optDone + ' / ' + optList.length + ' 已上传';
+      // 更新单行的 file-count chip
+      CUSTOMER_MATERIALS.forEach(function(m){
+        var n = (_cmMaterials[m.key] || []).length;
+        var fc = document.querySelector('.cm-mat-row[data-mat-key="' + m.key + '"] .file-count');
+        if (!fc) return;
+        if (n > 0) {
+          fc.textContent = '📎 ' + n + ' 个文件';
+          fc.classList.remove('missing', 'zero');
+        } else {
+          fc.textContent = m.required ? '⚠ 未上传' : '○ 未上传';
+          fc.className = 'file-count ' + (m.required ? 'missing' : 'zero');
+        }
+      });
     }
 
     function handleCmMaterialUpload(input) {
@@ -1823,17 +1987,28 @@
 
     function renderCmMaterialFiles(key) {
       var files = _cmMaterials[key] || [];
-      var html = files.map(function(f, fi) {
-        return '<div class="cm-material-file">'
-          + '<span class="cm-file-icon">' + getCmFileIcon(f.type) + '</span>'
-          + '<span class="cm-file-name">' + f.name + '</span>'
-          + '<span class="cm-file-meta">' + formatCmFileSize(f.size) + '</span>'
-          + '<button type="button" class="cm-file-btn" onclick="previewCmFile(\'' + key + '\', ' + fi + ')">预览</button>'
-          + '<button type="button" class="cm-file-btn danger" onclick="deleteCmFile(\'' + key + '\', ' + fi + ')">删除</button>'
-          + '</div>';
-      }).join('');
+      var m = CUSTOMER_MATERIALS.find(function(x){ return x.key === key; });
+      var html;
+      if (files.length === 0) {
+        // v1.7.99.307 空状态：根据是否必填切换文案
+        var emptyText = m && m.required ? '⚠ 未上传（必填）' : '○ 未上传';
+        var emptyCls = (m && m.required) ? 'empty-hint' : 'empty-hint opt';
+        html = '<div class="' + emptyCls + '">' + emptyText + '</div>';
+      } else {
+        html = files.map(function(f, fi) {
+          return '<div class="cm-material-file">'
+            + '<span class="cm-file-icon">' + getCmFileIcon(f.type) + '</span>'
+            + '<span class="cm-file-name">' + f.name + '</span>'
+            + '<span class="cm-file-meta">' + formatCmFileSize(f.size) + '</span>'
+            + '<button type="button" class="cm-file-btn" onclick="previewCmFile(\'' + key + '\', ' + fi + ')">预览</button>'
+            + '<button type="button" class="cm-file-btn danger" onclick="deleteCmFile(\'' + key + '\', ' + fi + ')">删除</button>'
+            + '</div>';
+        }).join('');
+      }
       var el = document.getElementById('cm_mat_' + key + '_files');
       if (el) el.innerHTML = html;
+      // v1.7.99.307 同步更新顶部摘要 + 单行 file-count chip
+      if (typeof updateCmMatsSummary === 'function') updateCmMatsSummary();
     }
 
     function previewCmFile(key, fi) {

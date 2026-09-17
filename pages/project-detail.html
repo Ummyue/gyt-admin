@@ -103,7 +103,76 @@
     .survey-q-extra label { display: block; font-size: 12px; color: var(--text-secondary); margin-bottom: 6px; }
     .survey-q-extra input { width: 100%; padding: 6px 10px; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; box-sizing: border-box; }
 
-    /* v1.7.99.298 客户准入材料附件回显 */
+    /* v1.7.99.308 合规问卷 · 详情页企业切换 tabs */
+    .detail-survey-tab {
+      padding: 4px 12px;
+      border: 1px solid #FDE68A;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.7);
+      color: #92400E;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .detail-survey-tab:hover { background: #FEF3C7; border-color: #F59E0B; }
+    .detail-survey-tab.active {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: #fff;
+      border-color: #D97706;
+      box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
+    }
+
+    /* v1.7.99.307 客户准入材料 · 紧凑分组折叠布局（替换原 grid 1:2 长列表） */
+    .materials-summary { display: flex; align-items: center; gap: 8px; padding: 0 0 12px; border-bottom: 1px solid var(--border-light); margin-bottom: 12px; flex-wrap: wrap; }
+    .materials-summary .sum-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
+    .materials-summary .sum-chip.req-done { background: rgba(16,185,129,0.12); color: #047857; }
+    .materials-summary .sum-chip.req-pending { background: rgba(220,38,38,0.1); color: #B91C1C; }
+    .materials-summary .sum-chip.opt { background: rgba(100,116,139,0.1); color: #475569; }
+    .materials-summary .sum-toggle-all { margin-left: auto; padding: 4px 10px; background: #F1F5F9; border: 1px solid var(--border-light); border-radius: 4px; font-size: 12px; color: var(--text-secondary); cursor: pointer; }
+    .materials-summary .sum-toggle-all:hover { background: #E2E8F0; }
+
+    .materials-group { border: 1px solid var(--border-light); border-radius: 6px; margin-bottom: 8px; overflow: hidden; }
+    .materials-group-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #F8FAFC; cursor: pointer; user-select: none; transition: background 0.15s; }
+    .materials-group-header:hover { background: #F1F5F9; }
+    .materials-group-header .group-icon { font-size: 10px; color: var(--text-tertiary); transition: transform 0.15s; display: inline-block; width: 12px; }
+    .materials-group-header.collapsed .group-icon { transform: rotate(-90deg); }
+    .materials-group-header .group-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .materials-group-header .group-count { font-size: 11px; color: var(--text-tertiary); margin-left: 4px; }
+    .materials-group-header .group-progress { margin-left: auto; font-size: 12px; color: var(--text-secondary); }
+    .materials-group-header .group-progress.done { color: #047857; font-weight: 500; }
+    .materials-group-body { background: #fff; }
+
+    .material-row-c { display: grid; grid-template-columns: 1fr auto; gap: 12px; padding: 8px 14px; border-top: 1px solid var(--border-light); align-items: center; transition: background 0.15s; }
+    .material-row-c:hover { background: #F8FAFC; }
+    .material-row-c .row-left { display: flex; align-items: center; gap: 6px; min-width: 0; }
+    .material-row-c .row-num { color: var(--text-tertiary); font-size: 12px; min-width: 24px; }
+    .material-row-c .row-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .material-row-c .req-star { color: #DC2626; font-weight: 700; font-size: 13px; }
+    .material-row-c .req-tag-mini { padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 500; }
+    .material-row-c .req-tag-mini.req { background: rgba(220,38,38,0.1); color: #B91C1C; }
+    .material-row-c .req-tag-mini.opt { background: rgba(100,116,139,0.1); color: #64748B; }
+    .material-row-c .file-count { display: inline-flex; align-items: center; gap: 3px; padding: 2px 8px; background: rgba(59,130,246,0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px; }
+    .material-row-c .file-count.missing { background: rgba(220,38,38,0.08); color: #DC2626; }
+    .material-row-c .file-count.zero { background: #F1F5F9; color: var(--text-tertiary); }
+    .material-row-c .row-right { display: flex; align-items: center; gap: 6px; }
+    .material-row-c .row-toggle { background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 11px; padding: 2px 4px; }
+    .material-row-c .row-toggle:hover { color: var(--text-primary); }
+
+    .material-files-expanded { padding: 6px 14px 12px 44px; border-top: 1px dashed var(--border-light); background: #FAFBFC; }
+    .material-files-expanded .empty-hint { padding: 8px 12px; color: #B91C1C; background: #FEF2F2; border: 1px dashed rgba(220,38,38,0.3); border-radius: 4px; font-size: 12px; }
+    .material-files-expanded .empty-hint.opt { color: var(--text-tertiary); background: #F1F5F9; border-color: var(--border-light); }
+    .material-files-expanded .file-item { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: #fff; border: 1px solid var(--border-light); border-radius: 4px; font-size: 13px; margin-bottom: 4px; }
+    .material-files-expanded .file-item:hover { border-color: var(--color-primary); }
+    .material-files-expanded .file-icon { font-size: 16px; }
+    .material-files-expanded .file-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .material-files-expanded .file-meta { font-size: 11px; color: var(--text-tertiary); }
+    .material-files-expanded .file-actions { display: flex; gap: 4px; }
+    .material-files-expanded .file-actions button { padding: 3px 8px; border: 1px solid var(--border-light); border-radius: 3px; background: #fff; font-size: 11px; color: var(--text-secondary); cursor: pointer; }
+    .material-files-expanded .file-actions button:hover { color: var(--color-primary); border-color: var(--color-primary); }
+
+    /* 兼容旧类（v1.7.99.298 旧实现），保留但不主动使用 */
     .material-row { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; padding: 14px 0; border-bottom: 1px solid var(--border-light); align-items: start; }
     .material-row:last-child { border-bottom: none; }
     .material-label { font-size: 13px; color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 4px; padding-top: 6px; }
@@ -411,6 +480,24 @@
           </div>
         </div>
         <!-- /v1.7.99.298 -->
+
+        <!-- v1.7.99.308 客户准入问卷调查（v1.7.99.306 apply.html 同步版） -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">客户准入问卷调查</div>
+            <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
+              <span id="detailSurveyStatus">未填写</span>
+              <button type="button" class="btn btn-secondary" id="detailSurveyBtn" onclick="openDetailComplianceSurveyDialog()" style="padding: 4px 12px; font-size: 12px;">填写问卷</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 12px 24px;">
+            <div style="font-size: 12px; color: var(--text-tertiary); line-height: 1.6;">
+              针对上下游每家企业填写 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。
+              <span style="display: block; margin-top: 4px;">已答：<span id="detailSurveyProgress">0</span> / 30（按 3 家企业 × 10 题统计）</span>
+            </div>
+          </div>
+        </div>
+        <!-- /v1.7.99.308 -->
         </div>
 
         <!-- /v1.7.99.274 stepPanel2 企业尽调报告（风控合规提醒） -->
@@ -1345,6 +1432,7 @@
       return '📄';
     }
 
+    // v1.7.99.307 重构 renderMaterials：分组折叠 + 每行紧凑布局（v1.7.99.298 升级版）
     function renderMaterials() {
       var c = COMPANIES[currentCompanyId];
       var companyKey = c.name || c.fullName || c.shortName || currentCompanyId;
@@ -1356,39 +1444,134 @@
       // 把 category 写入 window 以便 preview/download 用
       window._currentMaterialCategory = category;
 
-      var rowsHtml = CUSTOMER_MATERIALS.map(function(m, idx) {
-        var files = getMaterials(category, companyKey, m.key);
-        var reqTag = m.required
-          ? '<span class="req-tag">必填</span>'
-          : '<span class="optional-tag">非必填</span>';
-        var filesHtml;
-        if (files.length === 0) {
-          filesHtml = '<div class="material-empty ' + (m.required ? 'required' : '') + '">'
-            + (m.required ? '⚠ 未上传（必填）' : '○ 未上传') + '</div>';
-        } else {
-          filesHtml = files.map(function(f, fi) {
-            return '<div class="material-file">'
-              + '<div class="material-file-icon">' + getFileIcon(f.type) + '</div>'
-              + '<div class="material-file-info">'
-              + '<div class="material-file-name">' + f.name + '</div>'
-              + '<div class="material-file-meta">' + formatFileSize(f.size) + ' · ' + (f.uploadedAt || '') + '</div>'
-              + '</div>'
-              + '<div class="material-file-actions">'
-              + '<button class="material-file-btn" onclick="previewMaterialFile(\'' + currentCompanyId + '\', \'' + m.key + '\', ' + fi + ')">预览</button>'
-              + '<button class="material-file-btn" onclick="downloadMaterialFile(\'' + currentCompanyId + '\', \'' + m.key + '\', ' + fi + ')">下载</button>'
-              + '</div>'
-              + '</div>';
-          }).join('');
-        }
-        var reqStar = m.required ? '<span class="req-star">*</span>' : '';
-        return '<div class="material-row">'
-          + '<div class="material-label">' + (idx + 1) + '. ' + m.name + ' ' + reqStar + reqTag + '</div>'
-          + '<div class="material-files">' + filesHtml + '</div>'
+      var reqList = CUSTOMER_MATERIALS.filter(function(m){ return m.required; });
+      var optList = CUSTOMER_MATERIALS.filter(function(m){ return !m.required; });
+
+      // 缓存每个材料的文件数（用于顶部摘要）
+      var fileCountMap = {};
+      CUSTOMER_MATERIALS.forEach(function(m){
+        fileCountMap[m.key] = getMaterials(category, companyKey, m.key).length;
+      });
+      var reqDone = reqList.filter(function(m){ return fileCountMap[m.key] > 0; }).length;
+      var optDone = optList.filter(function(m){ return fileCountMap[m.key] > 0; }).length;
+
+      // 渲染单行（紧凑版）
+      function rowHtml(m, idx) {
+        var n = fileCountMap[m.key];
+        var fileCountCls = n > 0 ? '' : (m.required ? 'missing' : 'zero');
+        var fileCountText = n > 0 ? ('📎 ' + n + ' 个文件') : (m.required ? '⚠ 未上传' : '○ 未上传');
+        return '<div class="material-row-c" data-mat-key="' + m.key + '">'
+          + '<div class="row-left">'
+          + '<span class="row-num">' + (idx + 1) + '.</span>'
+          + '<span class="row-name">' + m.name + '</span>'
+          + (m.required ? '<span class="req-star">*</span>' : '')
+          + '<span class="req-tag-mini ' + (m.required ? 'req' : 'opt') + '">' + (m.required ? '必填' : '非必填') + '</span>'
+          + '<span class="file-count ' + fileCountCls + '">' + fileCountText + '</span>'
+          + '</div>'
+          + '<div class="row-right">'
+          + '<button type="button" class="row-toggle" onclick="toggleMatFiles(\'' + m.key + '\')" title="展开/收起文件列表">▼</button>'
+          + '</div>'
+          + '</div>'
+          + '<div class="material-files-expanded" id="mat_files_' + m.key + '_wrap" style="display:none;">'
+          + '<div id="mat_files_' + m.key + '"></div>'
           + '</div>';
-      }).join('');
+      }
+
+      function fileItemHtml(m, fi) {
+        var files = getMaterials(category, companyKey, m.key);
+        var f = files[fi];
+        return '<div class="file-item">'
+          + '<span class="file-icon">' + getFileIcon(f.type) + '</span>'
+          + '<span class="file-name">' + f.name + '</span>'
+          + '<span class="file-meta">' + formatFileSize(f.size) + ' · ' + (f.uploadedAt || '') + '</span>'
+          + '<span class="file-actions">'
+          + '<button onclick="previewMaterialFile(\'' + currentCompanyId + '\', \'' + m.key + '\', ' + fi + ')">预览</button>'
+          + '<button onclick="downloadMaterialFile(\'' + currentCompanyId + '\', \'' + m.key + '\', ' + fi + ')">下载</button>'
+          + '</span>'
+          + '</div>';
+      }
+
+      function emptyHtml(m) {
+        return '<div class="empty-hint ' + (m.required ? '' : 'opt') + '">' + (m.required ? '⚠ 未上传（必填）' : '○ 未上传') + '</div>';
+      }
+
+      // 分组渲染
+      function groupHtml(title, list, defaultOpen) {
+        return '<div class="materials-group">'
+          + '<div class="materials-group-header' + (defaultOpen ? '' : ' collapsed') + '" onclick="toggleMatsGroup(this)">'
+          + '<span class="group-icon">▼</span>'
+          + '<span class="group-title">' + title + '</span>'
+          + '<span class="group-count">（' + list.length + ' 项）</span>'
+          + '<span class="group-progress ' + ((title.indexOf('必填') >= 0 && reqDone >= reqList.length) ? 'done' : '') + '">' + (title.indexOf('必填') >= 0 ? (reqDone + ' / ' + reqList.length + ' 已上传') : (optDone + ' / ' + optList.length + ' 已上传')) + '</span>'
+          + '</div>'
+          + '<div class="materials-group-body" style="' + (defaultOpen ? '' : 'display:none;') + '">'
+          + list.map(function(m, i){ return rowHtml(m, i); }).join('')
+          + '</div>'
+          + '</div>';
+      }
+
+      var html = '<div class="materials-summary">'
+        + '<span class="sum-chip ' + (reqDone >= reqList.length ? 'req-done' : 'req-pending') + '">必填 ' + reqDone + ' / ' + reqList.length + (reqDone >= reqList.length ? ' ✓' : ' ⚠') + '</span>'
+        + '<span class="sum-chip opt">非必填 ' + optDone + ' / ' + optList.length + '</span>'
+        + '<button type="button" class="sum-toggle-all" onclick="toggleMatsAll(this)">全部展开</button>'
+        + '</div>'
+        + groupHtml('必填材料', reqList, true)
+        + groupHtml('非必填材料', optList, false);
 
       var container = document.getElementById('materialsContainer');
-      if (container) container.innerHTML = rowsHtml;
+      if (container) container.innerHTML = html;
+
+      // 渲染每项的文件区（默认收起，用户点 ▼ 才显示）
+      CUSTOMER_MATERIALS.forEach(function(m){
+        var el = document.getElementById('mat_files_' + m.key);
+        if (!el) return;
+        var files = getMaterials(category, companyKey, m.key);
+        if (files.length === 0) {
+          el.innerHTML = emptyHtml(m);
+        } else {
+          el.innerHTML = files.map(function(_, fi){ return fileItemHtml(m, fi); }).join('');
+        }
+      });
+    }
+
+    // v1.7.99.307 折叠/展开单材料的文件列表（详情页只读版）
+    function toggleMatFiles(key) {
+      var wrap = document.getElementById('mat_files_' + key + '_wrap');
+      if (!wrap) return;
+      var open = wrap.style.display !== 'none';
+      wrap.style.display = open ? 'none' : '';
+      var btn = document.querySelector('.material-row-c[data-mat-key="' + key + '"] .row-toggle');
+      if (btn) btn.textContent = open ? '▼' : '▲';
+    }
+
+    // v1.7.99.307 折叠/展开分组
+    function toggleMatsGroup(headerEl) {
+      var body = headerEl.nextElementSibling;
+      if (!body) return;
+      var collapsed = headerEl.classList.toggle('collapsed');
+      body.style.display = collapsed ? 'none' : '';
+    }
+
+    // v1.7.99.307 一键全部展开/收起
+    function toggleMatsAll(btn) {
+      var headers = document.querySelectorAll('.materials-group-header');
+      var anyShown = false;
+      headers.forEach(function(h){
+        var b = h.nextElementSibling;
+        if (b && b.style.display !== 'none') anyShown = true;
+      });
+      headers.forEach(function(h){
+        var b = h.nextElementSibling;
+        if (!b) return;
+        if (anyShown) {
+          h.classList.add('collapsed');
+          b.style.display = 'none';
+        } else {
+          h.classList.remove('collapsed');
+          b.style.display = '';
+        }
+      });
+      if (btn) btn.textContent = anyShown ? '全部展开' : '全部收起';
     }
 
     function previewMaterialFile(companyId, materialKey, fileIdx) {
@@ -1633,58 +1816,53 @@
     if (warnEl) warnEl.textContent = totalWarn;
   }
 
-    // ===== v1.7.99.279 合规问卷：8 个问题 + 根据答案生成风控提醒 =====
+// ===== v1.7.99.308 合规问卷：10 题企业级 + 3 企业 tabs 切换（与 apply.html v1.7.99.306 同步） =====
     var surveyAnswers = {};
     var surveyHasRun = {};
+    var surveyRiskCount = {};
+    var detailSurveyCompanyId = 'A';
 
     // v1.7.99.290 登录者企业（平台公司）+ 项目上下游企业（弹窗顶部展示）
     var DETAIL_LOGIN_COMPANY = { name: '河南豫港通供应链管理有限公司', shortName: '豫港通供应链' };
     var DETAIL_PROJECT_UPSTREAM = ['河南军牧原国际贸易有限公司', '郑州铁龙物流有限公司'];
     var DETAIL_PROJECT_DOWNSTREAM = ['中原粮食集团有限公司'];
 
+    // v1.7.99.308 问卷关联企业（与 apply.html 一致的 3 家：军牧原 / 铁龙 / 中原粮食）
+    var DETAIL_SURVEY_COMPANIES = {
+      A: { name: '河南军牧原国际贸易有限公司', shortName: '河南军牧原', scanTime: '2026-07-17 15:46:04' },
+      B: { name: '郑州铁龙物流有限公司',       shortName: '郑州铁龙',  scanTime: '2026-07-17 16:02:18' },
+      C: { name: '中原粮食集团有限公司',       shortName: '中原粮食',  scanTime: '2026-07-18 09:15:30' }
+    };
+
+    // v1.7.99.308 渲染问卷弹窗（与 apply.html v1.7.99.306 同款结构：modal-header 内嵌企业 tabs）
     function openComplianceSurveyDialog() {
       if (document.getElementById('complianceSurveyOverlay')) return;
-      var answers = surveyAnswers[currentCompanyId] || {};
-      var c = COMPANIES[currentCompanyId];
+      var answers = surveyAnswers[detailSurveyCompanyId] || {};
+      var c = DETAIL_SURVEY_COMPANIES[detailSurveyCompanyId];
       window.__surveyTemp = Object.assign({}, answers);
 
       var questions = [
-        { id: 'q1', num: 1, title: '是否将开展单笔>500万的大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
-        { id: 'q2', num: 2, title: '与' + c.shortName + '无历史业务记录、本次将开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
-        { id: 'q3', num: 3, title: '拟交易商品品类不在' + c.name + '的工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
-        // v1.7.99.288 q4 拆分为前提 + 条件子项：先问「是否涉及品牌类商品」，是→展开 4.1 品牌授权
-        { id: 'q4', num: 4, title: '是否涉及品牌类商品品类交易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q4 || '' },
+        { id: 'q1',  num: 1,    title: '本次与 ' + c.name + ' 是否将开展单笔>500万的大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1  || '' },
+        { id: 'q2',  num: 2,    title: c.name + ' 是否无员工工资、个税记录？',                 options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2  || '' },
+        { id: 'q3',  num: 3,    title: '存在与 ' + c.name + ' 的注册地址相同的企业 ≥5 家？',   options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3  || '' },
+        { id: 'q4',  num: 4,    title: '本次与 ' + c.name + ' 开展业务品类是否属于集团公司禁止开展的业务范围？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q4  || '' },
+        { id: 'q5',  num: 5,    title: c.name + ' 公司是否具有清晰的供应链业务方向和模式？',   options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5  || '' },
+        { id: 'q6',  num: 6,    title: c.name + ' 是否控制与集团主业关联度较低的业务规模？',   options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6  || '' },
+        { id: 'q7',  num: 7,    title: c.name + ' 是否为另一方贸易合同提供连带责任担保？',     options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7  || '' },
+        { id: 'q8',  num: 8,    title: '本次与 ' + c.name + ' 的贸易是否涉及品牌类商品？',     options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8  || '' },
         {
-          id: 'q4a', num: '4.1', title: '品牌类商品是否有正规授权书或授权已过期？', options: [], defaultV: answers.q4a || '',
+          id: 'q8a', num: '8.1', title: '是否有正规授权书或授权已过期？', options: [], defaultV: answers.q8a || '',
           conditional: function(state) {
-            return '<div class="survey-q-extra" id="q4a_extra" style="' + (state.q4 === 'yes' ? '' : 'display:none') + '">'
-              + '<label style="margin-top:0;">基于上方「是否涉及品牌类商品品类交易？」展开</label>'
+            return '<div class="survey-q-extra" id="detail_q8a_extra" style="' + (state.q8 === 'yes' ? '' : 'display:none') + '">'
+              + '<label style="margin-top:0;">基于上方「是否涉及品牌类商品？」展开</label>'
               + '<div class="survey-options">'
-              + '<div class="survey-opt' + (state.q4a === 'authorized' ? ' active' : '') + '" data-q="q4a" data-v="authorized" onclick="selectSurveyOption(this)">已授权</div>'
-              + '<div class="survey-opt' + (state.q4a === 'unauthorized' ? ' active' : '') + '" data-q="q4a" data-v="unauthorized" onclick="selectSurveyOption(this)">未授权</div>'
+              + '<div class="survey-opt' + (state.q8a === 'authorized' ? ' active' : '') + '" data-q="detailq8a" data-v="authorized" onclick="selectSurveyOption(this)">已授权</div>'
+              + '<div class="survey-opt' + (state.q8a === 'unauthorized' ? ' active' : '') + '" data-q="detailq8a" data-v="unauthorized" onclick="selectSurveyOption(this)">未授权</div>'
               + '</div></div>';
           }
         },
-        {
-          id: 'q5', num: 5, title: '本项目是否涉及仓储业务？',
-          options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5 || '',
-          conditional: function(state) {
-            var html = '<div class="survey-q-extra" id="q5_extra" style="' + (state.q5 === 'yes' ? '' : 'display:none') + '">';
-            html += '<label style="margin-top:0;">5.1 是否有对应仓储协议？</label>';
-            html += '<div class="survey-options">';
-            html += '<div class="survey-opt' + (state.q5a === 'yes' ? ' active' : '') + '" data-q="q5a" data-v="yes" onclick="selectSurveyOption(this)">是</div>';
-            html += '<div class="survey-opt' + (state.q5a === 'no' ? ' active' : '') + '" data-q="q5a" data-v="no" onclick="selectSurveyOption(this)">否</div>';
-            html += '</div>';
-            html += '<div class="survey-q-extra" id="q5b_extra" style="' + (state.q5a === 'yes' ? '' : 'display:none') + '; margin-top:8px;">';
-            html += '<label>5.2 请填写对应仓储协议编号</label>';
-            html += '<input type="text" id="q5b_input" placeholder="如：CC-AG-2026-001" value="' + (state.q5b || '') + '">';
-            html += '</div></div>';
-            return html;
-          }
-        },
-        { id: 'q6', num: 6, title: c.name + '是否有固定物流合作方且运输资质齐全？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6 || '' },
-        { id: 'q7', num: 7, title: '检测到上下游企业均为贸易类企业，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7 || '' },
-        { id: 'q8', num: 8, title: '本次合作的' + c.shortName + '在近期贸易活动中频繁变更合作方，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8 || '' }
+        { id: 'q9',  num: 9,    title: c.name + ' 的合作客户中，贸易类企业占比超过 80%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q9  || '' },
+        { id: 'q10', num: 10,   title: c.name + ' 的前五大客户变动频繁，连续三个月变动率＞50%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q10 || '' }
       ];
 
       var questionsHtml = questions.map(function(q) {
@@ -1693,43 +1871,55 @@
           return '<div class="survey-opt' + cls + '" data-q="' + q.id + '" data-v="' + o.v + '" onclick="selectSurveyOption(this)">' + o.l + '</div>';
         }).join('');
         var extraHtml = q.conditional ? q.conditional(answers) : '';
-        // v1.7.99.291 条件子项（q4a / q5a / q5b）前置条件未满足时整张卡片隐藏
         var cardHidden = '';
-        if (q.id === 'q4a' && answers.q4 !== 'yes') cardHidden = ' style="display:none"';
-        if (q.id === 'q5a' && answers.q5 !== 'yes') cardHidden = ' style="display:none"';
-        if (q.id === 'q5b' && !(answers.q5 === 'yes' && answers.q5a === 'yes')) cardHidden = ' style="display:none"';
+        if (q.id === 'q8a' && answers.q8 !== 'yes') cardHidden = ' style="display:none"';
         return '<div class="survey-question" data-qid="' + q.id + '"' + cardHidden + '>'
           + '<div class="survey-q-title"><span class="q-num">' + q.num + '.</span>' + q.title + '</div>'
           + '<div class="survey-options">' + optsHtml + '</div>'
           + extraHtml + '</div>';
       }).join('');
 
+      // 顶部企业切换 tabs
+      var enterpriseTabsHtml = Object.keys(DETAIL_SURVEY_COMPANIES).map(function(cid) {
+        var ec = DETAIL_SURVEY_COMPANIES[cid];
+        var active = cid === detailSurveyCompanyId;
+        return '<button type="button" class="detail-survey-tab' + (active ? ' active' : '') + '" data-cid="' + cid + '" onclick="switchDetailSurveyCompany(\'' + cid + '\')">'
+          + '<span style="font-size:11px;color:var(--text-tertiary);margin-right:4px;">' + (cid === 'A' ? '①' : cid === 'B' ? '②' : '③') + '</span>'
+          + ec.shortName + '</button>';
+      }).join('');
+
       var html = ''
         + '<div class="modal-overlay" id="complianceSurveyOverlay" onclick="if(event.target===this) closeComplianceSurveyDialog()"></div>'
-        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog">'
-        + '  <div class="modal-header">'
-        + '    <div class="modal-title">合规问卷 · ' + c.shortName + '</div>'
-        + '    <span class="modal-close" onclick="closeComplianceSurveyDialog()" title="关闭">×</span>'
+        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog" style="width: 780px; max-height: 92vh;">'
+        + '  <div class="modal-header" style="padding: 12px 20px; flex-direction: column; align-items: stretch; gap: 8px;">'
+        + '    <div style="display: flex; align-items: center; justify-content: space-between;">'
+        + '      <div class="modal-title">合规问卷</div>'
+        + '      <span class="modal-close" onclick="closeComplianceSurveyDialog()" title="关闭">×</span>'
+        + '    </div>'
+        + '    <div style="display: flex; gap: 6px; align-items: center;">'
+        + '      <div style="font-size: 12px; color: #92400E; margin-right: 4px;">答题企业：</div>'
+        + enterpriseTabsHtml
+        + '    </div>'
         + '  </div>'
-        + '  <div class="modal-body">'
-        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.85;">'
-        +      '<div>'
-        +        '<span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500; color: var(--text-primary);">' + DETAIL_LOGIN_COMPANY.name + '</span>　|　'
-        +        '<span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260205002</span>'
-        +      '</div>'
-        +      '<div style="margin-top: 4px;">'
-        +        '<span style="color: var(--text-tertiary);">项目上下游企业：</span>'
-        +        '<span style="color: var(--text-primary);">'
-        +          DETAIL_PROJECT_UPSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(59, 130, 246, 0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px;">↑ ' + n + '</span>'; }).join('')
-        +          DETAIL_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
+        + '  <div class="modal-body" style="padding: 14px 20px;">'
+        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 8px 12px; margin-bottom: 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">'
+        +      '<div style="display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center;">'
+        +        '<span><span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500; color: var(--text-primary);">' + DETAIL_LOGIN_COMPANY.name + '</span></span>'
+        +        '<span style="color: var(--text-tertiary);">|</span>'
+        +        '<span><span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260205002</span></span>'
+        +        '<span style="color: var(--text-tertiary);">|</span>'
+        +        '<span style="display: inline-flex; flex-wrap: wrap; gap: 3px; align-items: center;">'
+        +          '<span style="color: var(--text-tertiary);">上下游：</span>'
+        +          DETAIL_PROJECT_UPSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 7px; background: rgba(59, 130, 246, 0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px;">↑ ' + n + '</span>'; }).join('')
+        +          DETAIL_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 7px; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
         +        '</span>'
         +      '</div>'
-        +      '<div style="margin-top: 6px; color: var(--text-tertiary);">请如实填写以下 8 项合规考察项。系统会根据答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
+        +      '<div style="margin-top: 4px; color: var(--text-tertiary); font-size: 11px;">请如实填写以下 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。</div>'
         +    '</div>'
         +    questionsHtml
         + '  </div>'
         + '  <div class="modal-footer">'
-        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="surveyProgress">0</span> / 8 已答</span>'
+        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="surveyProgress">0</span> / 10 已答（按当前企业统计）</span>'
         +    '<div class="spacer"></div>'
         +    '<button type="button" class="btn btn-secondary" onclick="closeComplianceSurveyDialog()">取消</button>'
         +    '<button type="button" class="btn btn-secondary" onclick="skipComplianceSurvey()">暂不填写</button>'
@@ -1741,72 +1931,37 @@
         document.getElementById('complianceSurveyOverlay').classList.add('open');
         document.getElementById('complianceSurveyModal').classList.add('open');
       });
-      bindSurveyConditional();
       updateSurveyProgress();
     }
 
     function selectSurveyOption(el) {
       var q = el.dataset.q;
       var v = el.dataset.v;
-      var qid = q.split('_')[0];
+      var key = q.replace(/^detail/, '');
+      var qid = (key === 'q8a' || key === 'q8') ? key : key.split('_')[0];
       var siblings = el.parentElement.querySelectorAll('.survey-opt');
       siblings.forEach(function(s) { s.classList.remove('active'); });
       el.classList.add('active');
       if (!window.__surveyTemp) window.__surveyTemp = {};
-      window.__surveyTemp[q] = v;
-      if (qid === 'q4') {
-        // v1.7.99.288 q4=否时隐藏 q4a_extra + 清空 q4a
-        // v1.7.99.291 同步切换 4.1 整张卡片 display
-        var q4aCard = document.querySelector('.survey-question[data-qid="q4a"]');
-        if (q4aCard) q4aCard.style.display = (v === 'yes') ? '' : 'none';
-        var q4aExtra = document.getElementById('q4a_extra');
-        if (q4aExtra) q4aExtra.style.display = (v === 'yes') ? 'block' : 'none';
+      window.__surveyTemp[key] = v;
+      if (qid === 'q8') {
+        var q8aCard = document.querySelector('.survey-question[data-qid="q8a"]');
+        if (q8aCard) q8aCard.style.display = (v === 'yes') ? '' : 'none';
+        var q8aExtra = document.getElementById('detail_q8a_extra');
+        if (q8aExtra) q8aExtra.style.display = (v === 'yes') ? 'block' : 'none';
         if (v === 'no') {
-          if (window.__surveyTemp.q4a) delete window.__surveyTemp.q4a;
-          var q4aOpts = document.querySelectorAll('[data-q="q4a"]');
-          q4aOpts.forEach(function(o) { o.classList.remove('active'); });
-        }
-      }
-      if (qid === 'q5') {
-        var extra = document.getElementById('q5_extra');
-        if (extra) extra.style.display = (v === 'yes') ? 'block' : 'none';
-        if (v === 'no') {
-          if (window.__surveyTemp.q5a) delete window.__surveyTemp.q5a;
-          if (window.__surveyTemp.q5b) delete window.__surveyTemp.q5b;
-          var bExtra = document.getElementById('q5b_extra');
-          if (bExtra) bExtra.style.display = 'none';
-          var bInput = document.getElementById('q5b_input');
-          if (bInput) bInput.value = '';
-          var q5aOpts = document.querySelectorAll('[data-q="q5a"]');
-          q5aOpts.forEach(function(o) { o.classList.remove('active'); });
-        }
-      }
-      if (q === 'q5a') {
-        var bExtra = document.getElementById('q5b_extra');
-        if (bExtra) bExtra.style.display = (v === 'yes') ? 'block' : 'none';
-        if (v === 'no') {
-          if (window.__surveyTemp.q5b) delete window.__surveyTemp.q5b;
-          var bInput = document.getElementById('q5b_input');
-          if (bInput) bInput.value = '';
+          if (window.__surveyTemp.q8a) delete window.__surveyTemp.q8a;
+          var q8aOpts = document.querySelectorAll('[data-q="detailq8a"]');
+          q8aOpts.forEach(function(o) { o.classList.remove('active'); });
         }
       }
       updateSurveyProgress();
     }
 
-    function bindSurveyConditional() {
-      var bInput = document.getElementById('q5b_input');
-      if (bInput) {
-        bInput.addEventListener('input', function() {
-          if (!window.__surveyTemp) window.__surveyTemp = {};
-          window.__surveyTemp.q5b = bInput.value.trim();
-        });
-      }
-    }
-
     function updateSurveyProgress() {
       var temp = window.__surveyTemp || {};
       var count = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) count++; });
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) count++; });
       var el = document.getElementById('surveyProgress');
       if (el) el.textContent = count;
     }
@@ -1817,80 +1972,121 @@
       if (overlay) overlay.remove();
       if (modal) modal.remove();
       window.__surveyTemp = null;
+      refreshDetailSurveyCard();
     }
 
-    // v1.7.99.292 「暂不填写」= 关闭弹窗 + 留在当前详情页面（不跳路由）
     function skipComplianceSurvey() {
       closeComplianceSurveyDialog();
+    }
+
+    function switchDetailSurveyCompany(cid) {
+      if (cid === detailSurveyCompanyId) return;
+      if (window.__surveyTemp) {
+        surveyAnswers[detailSurveyCompanyId] = Object.assign({}, window.__surveyTemp);
+      }
+      detailSurveyCompanyId = cid;
+      var overlay = document.getElementById('complianceSurveyOverlay');
+      var modal = document.getElementById('complianceSurveyModal');
+      if (overlay) overlay.remove();
+      if (modal) modal.remove();
+      window.__surveyTemp = null;
+      openComplianceSurveyDialog();
     }
 
     function submitComplianceSurvey() {
       var temp = window.__surveyTemp || {};
       var answered = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) answered++; });
-      if (answered < 8) {
-        Utils.toast('请完成全部 8 项问卷（已答 ' + answered + ' / 8）', 'error');
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) answered++; });
+      if (answered < 10) {
+        Utils.toast('请完成全部 10 项问卷（已答 ' + answered + ' / 10）', 'error');
         return;
       }
-      // v1.7.99.288 q4=是时必填 q4a（条件子项）
-      if (temp.q4 === 'yes' && !temp.q4a) {
-        Utils.toast('请回答 4.1 品牌授权情况', 'error');
+      if (temp.q8 === 'yes' && !temp.q8a) {
+        Utils.toast('请回答 8.1 品牌授权情况', 'error');
         return;
       }
-      if (temp.q5 === 'yes' && temp.q5a === 'yes' && !temp.q5b) {
-        Utils.toast('请填写仓储协议编号（5.2）', 'error');
-        return;
+      surveyAnswers[detailSurveyCompanyId] = Object.assign({}, temp);
+      surveyHasRun[detailSurveyCompanyId] = true;
+      var newRisks = generateRisksFromSurvey(surveyAnswers[detailSurveyCompanyId]);
+      // A→junmuyuan, B→tielong, C→(detail.html 未挂载，跳过合并)
+      var detailCompanyKey = detailSurveyCompanyId === 'A' ? 'junmuyuan' : (detailSurveyCompanyId === 'B' ? 'tielong' : null);
+      if (detailCompanyKey) {
+        mergeSurveyRisks(detailCompanyKey, newRisks);
+        renderAllRiskPanels();
+        updateRiskTabCounts();
       }
-      surveyAnswers[currentCompanyId] = Object.assign({}, temp);
-      var newRisks = generateRisksFromSurvey(surveyAnswers[currentCompanyId]);
-      mergeSurveyRisks(currentCompanyId, newRisks);
-      surveyHasRun[currentCompanyId] = true;
-      renderAllRiskPanels();
-      updateRiskTabCounts();
-      var btnText = document.getElementById('surveyBtnText');
-      if (btnText) btnText.textContent = '重新填写（已生成 ' + newRisks.length + ' 项风险）';
+      surveyRiskCount[detailSurveyCompanyId] = newRisks.length;
       closeComplianceSurveyDialog();
       Utils.toast('合规问卷已提交，已生成 ' + newRisks.length + ' 项风控提醒', 'success');
     }
 
+    // v1.7.99.308 详情页问卷风险生成（与 apply.html 一致的 10 题逻辑）
     function generateRisksFromSurvey(answers) {
-      var c = COMPANIES[currentCompanyId];
+      var c = DETAIL_SURVEY_COMPANIES[detailSurveyCompanyId];
       var risks = [];
       if (answers.q1 === 'yes') {
-        risks.push({ tab: 'trade', name: '大额贸易风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次交易为单笔金额＞500 万的大额贸易，需关注资金来源、付款方式及交易背景真实性。' });
+        risks.push({ tab: 'trade', name: '大额贸易风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次与 ' + c.shortName + ' 拟开展单笔金额＞500 万的大额贸易，需关注资金来源、付款方式及交易背景真实性。' });
       }
       if (answers.q2 === 'yes') {
-        risks.push({ tab: 'trade', name: '历史业务缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，与 ' + c.shortName + ' 无历史业务记录且本次新增大额贸易品类，需重点关注首次合作风险及新增品类市场风险。' });
+        risks.push({ tab: 'internal', name: '无工资个税记录', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 存在无员工工资、个税申报记录情形，可能为空壳经营或人员合规异常。', category: '主体合规类', rule: '企业是否无员工工资、个税申报记录' });
       }
       if (answers.q3 === 'yes') {
-        risks.push({ tab: 'trade', name: '超范围经营风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次拟交易商品品类不在 ' + c.shortName + ' 工商登记的经营范围内，存在超范围经营风险，需核查实际履约能力。' });
+        risks.push({ tab: 'internal', name: '一址多企 ≥5 家', status: 'warn', desc: '截至 ' + c.scanTime + '，存在 5 家及以上企业与 ' + c.shortName + ' 注册地址相同，存在集群注册或空壳嫌疑。', category: '主体合规类', rule: '一址多企数量是否≥5' });
       }
-      if (answers.q4a === 'unauthorized') {
-        risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
+      if (answers.q4 === 'yes') {
+        risks.push({ tab: 'trade', name: '禁止品类业务风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次与 ' + c.shortName + ' 开展业务品类属于集团公司禁止开展的业务范围，需上级审批后方可推进。', category: '贸易实质类', rule: '业务品类是否属于集团禁止范围' });
       }
-      if (answers.q5 === 'yes') {
-        if (answers.q5a === 'yes' && answers.q5b) {
-          risks.push({ tab: 'business', name: '仓储协议完备', status: 'ok', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 已签订仓储协议（编号：' + answers.q5b + '），仓储业务合规。', category: '经营行为类', rule: '仓储业务是否签订对应协议' });
-        } else if (answers.q5a === 'yes' && !answers.q5b) {
-          risks.push({ tab: 'business', name: '仓储协议编号缺失', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务并签订协议，但未填写协议编号，请补充。' });
-        } else {
-          risks.push({ tab: 'business', name: '仓储协议缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务但未签订对应仓储协议，存在合规风险。' });
-        }
+      if (answers.q5 === 'no') {
+        risks.push({ tab: 'trade', name: '业务方向模糊风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 缺乏清晰的供应链业务方向和模式，可能影响业务连续性与履约能力。', category: '贸易实质类', rule: '是否具有清晰的供应链业务方向' });
       }
-      if (answers.q6 === 'no') {
-        risks.push({ tab: 'business', name: '物流资质缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 无固定物流合作方或运输资质不全，需补充完整物流资质证明。' });
+      if (answers.q6 === 'yes') {
+        risks.push({ tab: 'trade', name: '低关联业务规模风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 控制与集团主业关联度较低的业务规模，存在业务偏离主业风险。', category: '贸易实质类', rule: '业务规模与集团主业关联度' });
       }
       if (answers.q7 === 'yes') {
-        risks.push({ tab: 'relation', name: '上下游贸易类风险', status: 'warn', desc: '截至 ' + c.scanTime + '，检测到 ' + c.shortName + ' 的上下游企业均为贸易类企业，存在贸易背景真实性风险，可能涉及循环贸易。' });
+        risks.push({ tab: 'relation', name: '连带担保风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 为另一方贸易合同提供连带责任担保，存在或有负债风险，需评估担保履约能力。', category: '关联关系类', rule: '是否为另一方贸易合同提供连带责任担保' });
       }
-      if (answers.q8 === 'yes') {
-        risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 在近期贸易活动中频繁变更合作方，存在经营不稳定风险，需重点关注履约能力。' });
+      if (answers.q8 === 'yes' && answers.q8a === 'unauthorized') {
+        risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次与 ' + c.shortName + ' 涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
+      }
+      if (answers.q9 === 'yes') {
+        risks.push({ tab: 'trade', name: '客户集中贸易类风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 合作客户中贸易类企业占比超过 80%，可能涉及循环贸易，需核查交易背景真实性。', category: '贸易实质类', rule: '贸易类客户占比是否超过 80%' });
+      }
+      if (answers.q10 === 'yes') {
+        risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 前五大客户连续三个月变动率＞50%，存在经营不稳定或客户结构异常风险，需重点关注履约能力。' });
       }
       return risks;
     }
 
+    // v1.7.99.308 详情页问卷卡片状态刷新（顶部摘要 + 按钮文案）
+    function refreshDetailSurveyCard() {
+      var total = Object.keys(DETAIL_SURVEY_COMPANIES).reduce(function(sum, cid){
+        var a = surveyAnswers[cid] || {};
+        ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q){ if (a[q]) sum++; });
+        return sum;
+      }, 0);
+      var progEl = document.getElementById('detailSurveyProgress');
+      if (progEl) progEl.textContent = total;
+      var statEl = document.getElementById('detailSurveyStatus');
+      var btnEl = document.getElementById('detailSurveyBtn');
+      var filled = ['A','B','C'].filter(function(cid){ return surveyHasRun[cid]; });
+      if (filled.length === 0) {
+        if (statEl) statEl.textContent = '未填写';
+        if (btnEl) btnEl.textContent = '填写问卷';
+      } else {
+        var n = filled.reduce(function(s, cid){ return s + (surveyRiskCount[cid] || 0); }, 0);
+        if (statEl) statEl.textContent = '已填写 ' + filled.length + ' / 3 家';
+        if (btnEl) btnEl.textContent = '重新填写';
+      }
+    }
+    function openDetailComplianceSurveyDialog() {
+      detailSurveyCompanyId = 'A';
+      openComplianceSurveyDialog();
+    }
+
+    // v1.7.99.308 把问卷风险合并到 COMPANIES[companyId] 对应 tab（保留 v1.7.99.279 实现）
     function mergeSurveyRisks(companyId, newRisks) {
       var c = COMPANIES[companyId];
+      if (!c) return;
       newRisks.forEach(function(risk) {
         var arr = c[risk.tab];
         if (!arr || !arr.items) return;
@@ -1908,7 +2104,7 @@
       });
     }
 
-    // 初始化：渲染 6 个 panel + 工商信息 + 股权关系 + 客户准入材料
+        // 初始化：渲染 6 个 panel + 工商信息 + 股权关系 + 客户准入材料
     function initRiskPanel() {
       renderBasicInfo();
       renderEquityInfo();
