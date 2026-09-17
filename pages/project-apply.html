@@ -155,6 +155,13 @@
     .cm-mat-row .cm-upload-trigger { padding: 3px 10px; font-size: 11px; gap: 3px; }
     .cm-mat-row .row-toggle { background: transparent; border: none; color: var(--text-tertiary); cursor: pointer; font-size: 11px; padding: 2px 4px; }
     .cm-mat-row .row-toggle:hover { color: var(--text-primary); }
+    /* v1.7.99.309 必填项行内删除按钮（新增页） */
+    .cm-mat-row .row-del-btn { padding: 3px 10px; border: 1px solid var(--border-light); border-radius: 3px; background: #fff; font-size: 11px; color: var(--text-secondary); cursor: pointer; transition: all 0.15s; }
+    .cm-mat-row .row-del-btn:hover { color: #DC2626; border-color: #DC2626; background: #FEF2F2; }
+    .cm-mat-row .row-del-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    /* v1.7.99.309 必填项视觉强化：左侧 3px 红色色条 */
+    .cm-mat-row.req-required { box-shadow: inset 3px 0 0 0 #DC2626; }
+    .cm-mat-row.req-required .row-num { color: #DC2626; font-weight: 600; }
 
     .cm-mat-files-expanded { padding: 6px 14px 12px 44px; border-top: 1px dashed var(--border-light); background: #FAFBFC; }
     .cm-mat-files-expanded .empty-hint { padding: 8px 12px; color: #B91C1C; background: #FEF2F2; border: 1px dashed rgba(220,38,38,0.3); border-radius: 4px; font-size: 12px; }
@@ -1824,12 +1831,14 @@
       var reqList = CUSTOMER_MATERIALS.filter(function(m){ return m.required; });
       var optList = CUSTOMER_MATERIALS.filter(function(m){ return !m.required; });
 
-      // 3. 渲染单行
+      // 3. 渲染单行（v1.7.99.309 必填项行内显示上传+删除按钮）
       function rowHtml(m, idx) {
         var files = _cmMaterials[m.key] || [];
         var fileCountCls = files.length > 0 ? '' : (m.required ? 'missing' : 'zero');
         var fileCountText = files.length > 0 ? ('📎 ' + files.length + ' 个文件') : (m.required ? '⚠ 未上传' : '○ 未上传');
-        return '<div class="cm-mat-row" data-mat-key="' + m.key + '">'
+        var hasFiles = files.length > 0;
+        var delDisabled = hasFiles ? '' : ' disabled';
+        return '<div class="cm-mat-row ' + (m.required ? 'req-required' : '') + '" data-mat-key="' + m.key + '">'
           + '<div class="row-left">'
           + '<span class="row-num">' + (idx + 1) + '.</span>'
           + '<span class="row-name">' + m.name + '</span>'
@@ -1838,10 +1847,16 @@
           + '<span class="file-count ' + fileCountCls + '" data-file-count="' + m.key + '">' + fileCountText + '</span>'
           + '</div>'
           + '<div class="row-right">'
-          + '<label class="cm-upload-trigger" style="padding: 3px 10px;">'
-          + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
-          + '<span>📎 上传</span>'
-          + '</label>'
+          + (m.required
+              ? '<label class="cm-upload-trigger" style="padding: 3px 10px;">'
+                + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
+                + '<span>📎 上传</span>'
+                + '</label>'
+                + '<button type="button" class="row-del-btn" onclick="deleteCmMaterialAll(\'' + m.key + '\')"' + delDisabled + ' title="清空该材料所有文件">删除</button>'
+              : '<label class="cm-upload-trigger" style="padding: 3px 10px;">'
+                + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
+                + '<span>📎 上传</span>'
+                + '</label>')
           + '<button type="button" class="row-toggle" onclick="toggleCmMatFiles(\'' + m.key + '\')" title="展开/收起文件列表">▼</button>'
           + '</div>'
           + '</div>'
@@ -2026,6 +2041,17 @@
     function deleteCmFile(key, fi) {
       if (!_cmMaterials[key]) return;
       _cmMaterials[key].splice(fi, 1);
+      renderCmMaterialFiles(key);
+    }
+
+    // v1.7.99.309 必填项行内删除按钮：清空该材料所有文件
+    function deleteCmMaterialAll(key) {
+      var files = _cmMaterials[key] || [];
+      if (files.length === 0) return;
+      var m = CUSTOMER_MATERIALS.find(function(x){ return x.key === key; });
+      var name = m ? m.name : key;
+      if (!confirm('确认清空「' + name + '」的所有 ' + files.length + ' 个文件？')) return;
+      _cmMaterials[key] = [];
       renderCmMaterialFiles(key);
     }
 
