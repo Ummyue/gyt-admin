@@ -95,12 +95,12 @@
     }
     .info-banner strong { color: var(--color-info); }
 
-    /* v1.7.99.306 合规问卷 · 企业切换 tabs */
+    /* v1.7.99.306 合规问卷 · 企业切换 tabs（移到 modal-header 内，避免被信息卡片遮挡） */
     .apply-survey-tab {
-      padding: 6px 14px;
+      padding: 4px 12px;
       border: 1px solid #FDE68A;
       border-radius: 4px;
-      background: #fff;
+      background: rgba(255, 255, 255, 0.7);
       color: #92400E;
       font-size: 13px;
       font-weight: 500;
@@ -2421,30 +2421,31 @@
 
       var html = ''
         + '<div class="modal-overlay" id="complianceSurveyOverlay" onclick="if(event.target===this) closeApplyComplianceSurveyDialog()"></div>'
-        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog" style="width: 760px;">'
-        + '  <div class="modal-header">'
-        + '    <div class="modal-title">合规问卷 · ' + c.shortName + '</div>'
-        + '    <span class="modal-close" onclick="closeApplyComplianceSurveyDialog()" title="关闭">×</span>'
+        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog" style="width: 780px; max-height: 92vh;">'
+        + '  <div class="modal-header" style="padding: 12px 20px; flex-direction: column; align-items: stretch; gap: 8px;">'
+        + '    <div style="display: flex; align-items: center; justify-content: space-between;">'
+        + '      <div class="modal-title">合规问卷</div>'
+        + '      <span class="modal-close" onclick="closeApplyComplianceSurveyDialog()" title="关闭">×</span>'
+        + '    </div>'
+        + '    <div id="applySurveyEnterpriseTabs" style="display: flex; gap: 6px; align-items: center;">'
+        + '      <div style="font-size: 12px; color: #92400E; margin-right: 4px;">答题企业：</div>'
+        + '      ' + enterpriseTabsHtml
+        + '    </div>'
         + '  </div>'
         + '  <div class="modal-body">'
-        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 10px 14px; margin-bottom: 14px; font-size: 12px; color: var(--text-secondary); line-height: 1.85;">'
-        +      '<div>'
-        +        '<span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500; color: var(--text-primary);">' + APPLY_LOGIN_COMPANY.name + '</span>　|　'
-        +        '<span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260122001</span>'
-        +      '</div>'
-        +      '<div style="margin-top: 4px;">'
-        +        '<span style="color: var(--text-tertiary);">项目上下游企业：</span>'
-        +        '<span style="color: var(--text-primary);">'
-        +          APPLY_PROJECT_UPSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(59, 130, 246, 0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px;">↑ ' + n + '</span>'; }).join('')
-        +          APPLY_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
+        +    '<div style="background: #F8FAFC; border: 1px solid var(--border-light); border-radius: 4px; padding: 8px 12px; margin-bottom: 12px; font-size: 12px; color: var(--text-secondary); line-height: 1.6;">'
+        +      '<div style="display: flex; flex-wrap: wrap; gap: 4px 14px; align-items: center;">'
+        +        '<span><span style="color: var(--text-tertiary);">当前企业：</span><span style="font-weight: 500; color: var(--text-primary);">' + APPLY_LOGIN_COMPANY.name + '</span></span>'
+        +        '<span style="color: var(--text-tertiary);">|</span>'
+        +        '<span><span style="color: var(--text-tertiary);">项目编号：</span><span style="font-family: var(--font-mono);">LX20260122001</span></span>'
+        +        '<span style="color: var(--text-tertiary);">|</span>'
+        +        '<span style="display: inline-flex; flex-wrap: wrap; gap: 3px; align-items: center;">'
+        +          '<span style="color: var(--text-tertiary);">上下游：</span>'
+        +          APPLY_PROJECT_UPSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 7px; background: rgba(59, 130, 246, 0.08); color: var(--color-primary); border-radius: 10px; font-size: 11px;">↑ ' + n + '</span>'; }).join('')
+        +          APPLY_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 7px; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
         +        '</span>'
         +      '</div>'
-        +      '<div style="margin-top: 6px; color: var(--text-tertiary);">请如实填写以下 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
-        +    '</div>'
-        +    // v1.7.99.306 顶部企业切换 tabs（替换原单企业视图，3 个企业切换）
-        +    '<div id="applySurveyEnterpriseTabs" style="display: flex; gap: 6px; padding: 6px 8px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1px solid #FDE68A; border-radius: 6px; margin-bottom: 14px; align-items: center;">'
-        +      '<div style="font-size: 12px; color: #92400E; margin-right: 6px;">当前答题企业：</div>'
-        +      enterpriseTabsHtml
+        +      '<div style="margin-top: 4px; color: var(--text-tertiary); font-size: 11px;">请如实填写以下 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
         +    '</div>'
         +    '<div id="applySurveyQuestionsBody">'
         +    questionsHtml
