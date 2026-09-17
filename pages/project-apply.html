@@ -95,6 +95,27 @@
     }
     .info-banner strong { color: var(--color-info); }
 
+    /* v1.7.99.306 合规问卷 · 企业切换 tabs */
+    .apply-survey-tab {
+      padding: 6px 14px;
+      border: 1px solid #FDE68A;
+      border-radius: 4px;
+      background: #fff;
+      color: #92400E;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s;
+      font-family: inherit;
+    }
+    .apply-survey-tab:hover { background: #FEF3C7; border-color: #F59E0B; }
+    .apply-survey-tab.active {
+      background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+      color: #fff;
+      border-color: #D97706;
+      box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
+    }
+
     /* v1.7.99.298 客户准入材料上传（弹窗内） */
     .cm-material-section { margin-top: 20px; padding-top: 20px; border-top: 1px solid var(--border-light); }
     .cm-material-section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; }
@@ -2174,9 +2195,14 @@
       relation: '关联关系类',
       personnel: '人员合规类'
     };
-    // item.name → 检查分类 + 检查规则（6 tab 适配；v1.7.99.303 贸易风险 12 条新检查项）
+    // item.name → 检查分类 + 检查规则（6 tab 适配；v1.7.99.303 贸易风险 12 条新检查项；v1.7.99.306 问卷新增风险归类）
     var APPLY_RISK_TAB_BY_NAME = {
-      // trade（v1.7.99.303：原"综合贸易风险"改名"贸易风险"+ 12 条新检查项）
+      // trade（v1.7.99.303：原"综合贸易风险"改名"贸易风险"+ 12 条新检查项；v1.7.99.306 新增 4 类问卷风险）
+      '禁止品类业务风险': 'trade',
+      '业务方向模糊风险': 'trade',
+      '低关联业务规模风险': 'trade',
+      '客户集中贸易类风险': 'trade',
+      '连带担保风险': 'relation',
       '拟开展单笔＞500 万大额贸易': 'trade',
       '无历史业务记录': 'trade',
       '突然开展大额新增品类贸易': 'trade',
@@ -2331,43 +2357,40 @@
       var c = APPLY_SURVEY_COMPANIES[applyCurrentCompanyId];
       window.__applySurveyTemp = Object.assign({}, answers);
 
+      // v1.7.99.306 问卷改造：3 企业切换 tabs + 10 题企业级问卷（原 8 题替换为此版本）
+      // 所有题目均为企业级（按当前选中企业代号代入 $企业名称$ 占位符）
       var questions = [
-        { id: 'q1', num: 1, title: '是否将开展单笔>500万的大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1 || '' },
-        { id: 'q2', num: 2, title: '与' + c.shortName + '无历史业务记录、本次将开展大额新增品类贸易，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2 || '' },
-        { id: 'q3', num: 3, title: '拟交易商品品类不在' + c.name + '的工商经营范围内，您是否已知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3 || '' },
-        // v1.7.99.288 q4 拆分为前提 + 条件子项
-        { id: 'q4', num: 4, title: '是否涉及品牌类商品品类交易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q4 || '' },
+        // Q1：用户新增"对应上下游企业是否将开展单笔>500万大额贸易"
+        { id: 'q1',  num: 1,  title: '本次与 ' + c.name + ' 是否将开展单笔>500万的大额贸易？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q1  || '' },
+        // Q2：原"无历史业务记录+新增品类"合并 → 改为"无员工工资、个税记录"
+        { id: 'q2',  num: 2,  title: c.name + ' 是否无员工工资、个税记录？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q2  || '' },
+        // Q3：原"超范围经营" → 改为"一址多企 ≥5"
+        { id: 'q3',  num: 3,  title: '存在与 ' + c.name + ' 的注册地址相同的企业 ≥5 家？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q3  || '' },
+        // Q4：原"无历史业务+新增品类" → 改为"集团禁止开展业务范围"
+        { id: 'q4',  num: 4,  title: '本次与 ' + c.name + ' 开展业务品类是否属于集团公司禁止开展的业务范围？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q4  || '' },
+        // Q5：原"仓储业务+协议" → 改为"清晰的供应链业务方向和模式"
+        { id: 'q5',  num: 5,  title: c.name + ' 公司是否具有清晰的供应链业务方向和模式？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5  || '' },
+        // Q6：原"上下游贸易类企业" → 改为"控制与集团主业关联度较低的业务规模"
+        { id: 'q6',  num: 6,  title: c.name + ' 是否控制与集团主业关联度较低的业务规模？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6  || '' },
+        // Q7：原"上下游贸易类企业" → 改为"为另一方贸易合同提供连带责任担保"
+        { id: 'q7',  num: 7,  title: c.name + ' 是否为另一方贸易合同提供连带责任担保？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7  || '' },
+        // Q8：保留"是否涉及品牌类商品" + 8.1 条件子项
+        { id: 'q8',  num: 8,  title: '本次与 ' + c.name + ' 的贸易是否涉及品牌类商品？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8  || '' },
         {
-          id: 'q4a', num: '4.1', title: '品牌类商品是否有正规授权书或授权已过期？', options: [], defaultV: answers.q4a || '',
+          id: 'q8a', num: '8.1', title: '是否有正规授权书或授权已过期？', options: [], defaultV: answers.q8a || '',
           conditional: function(state) {
-            return '<div class="survey-q-extra" id="apply_q4a_extra" style="' + (state.q4 === 'yes' ? '' : 'display:none') + '">'
-              + '<label style="margin-top:0;">基于上方「是否涉及品牌类商品品类交易？」展开</label>'
+            return '<div class="survey-q-extra" id="apply_q8a_extra" style="' + (state.q8 === 'yes' ? '' : 'display:none') + '">'
+              + '<label style="margin-top:0;">基于上方「是否涉及品牌类商品？」展开</label>'
               + '<div class="survey-options">'
-              + '<div class="survey-opt' + (state.q4a === 'authorized' ? ' active' : '') + '" data-q="applyq4a" data-v="authorized" onclick="selectApplySurveyOption(this)">已授权</div>'
-              + '<div class="survey-opt' + (state.q4a === 'unauthorized' ? ' active' : '') + '" data-q="applyq4a" data-v="unauthorized" onclick="selectApplySurveyOption(this)">未授权</div>'
+              + '<div class="survey-opt' + (state.q8a === 'authorized' ? ' active' : '') + '" data-q="applyq8a" data-v="authorized" onclick="selectApplySurveyOption(this)">已授权</div>'
+              + '<div class="survey-opt' + (state.q8a === 'unauthorized' ? ' active' : '') + '" data-q="applyq8a" data-v="unauthorized" onclick="selectApplySurveyOption(this)">未授权</div>'
               + '</div></div>';
           }
         },
-        {
-          id: 'q5', num: 5, title: '本项目是否涉及仓储业务？',
-          options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q5 || '',
-          conditional: function(state) {
-            var html = '<div class="survey-q-extra" id="apply_q5_extra" style="' + (state.q5 === 'yes' ? '' : 'display:none') + '">';
-            html += '<label style="margin-top:0;">5.1 是否有对应仓储协议？</label>';
-            html += '<div class="survey-options">';
-            html += '<div class="survey-opt' + (state.q5a === 'yes' ? ' active' : '') + '" data-q="applyq5a" data-v="yes" onclick="selectApplySurveyOption(this)">是</div>';
-            html += '<div class="survey-opt' + (state.q5a === 'no' ? ' active' : '') + '" data-q="applyq5a" data-v="no" onclick="selectApplySurveyOption(this)">否</div>';
-            html += '</div>';
-            html += '<div class="survey-q-extra" id="apply_q5b_extra" style="' + (state.q5a === 'yes' ? '' : 'display:none') + '; margin-top:8px;">';
-            html += '<label>5.2 请填写对应仓储协议编号</label>';
-            html += '<input type="text" id="apply_q5b_input" placeholder="如：CC-AG-2026-001" value="' + (state.q5b || '') + '">';
-            html += '</div></div>';
-            return html;
-          }
-        },
-        { id: 'q6', num: 6, title: c.name + '是否有固定物流合作方且运输资质齐全？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q6 || '' },
-        { id: 'q7', num: 7, title: '检测到上下游企业均为贸易类企业，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q7 || '' },
-        { id: 'q8', num: 8, title: '本次合作的' + c.shortName + '在近期贸易活动中频繁变更合作方，您是否知晓？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q8 || '' }
+        // Q9：原"上下游贸易类企业" → 改为"贸易类企业占比超过 80%"
+        { id: 'q9',  num: 9,  title: c.name + ' 的合作客户中，贸易类企业占比超过 80%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q9  || '' },
+        // Q10：保留"前五大客户变动频繁"
+        { id: 'q10', num: 10, title: c.name + ' 的前五大客户变动频繁，连续三个月变动率＞50%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q10 || '' }
       ];
 
       var questionsHtml = questions.map(function(q) {
@@ -2376,20 +2399,29 @@
           return '<div class="survey-opt' + cls + '" data-q="' + q.id + '" data-v="' + o.v + '" onclick="selectApplySurveyOption(this)">' + o.l + '</div>';
         }).join('');
         var extraHtml = q.conditional ? q.conditional(answers) : '';
-        // v1.7.99.291 条件子项（q4a / q5a）当前置条件未满足时整张卡片隐藏
+        // v1.7.99.291 条件子项（q4a）当前置条件未满足时整张卡片隐藏
+        // v1.7.99.306 替换为 q8a（q4a 已废止）+ q5a/q5b 仓储相关已删除
         var cardHidden = '';
-        if (q.id === 'q4a' && answers.q4 !== 'yes') cardHidden = ' style="display:none"';
-        if (q.id === 'q5a' && answers.q5 !== 'yes') cardHidden = ' style="display:none"';
-        if (q.id === 'q5b' && !(answers.q5 === 'yes' && answers.q5a === 'yes')) cardHidden = ' style="display:none"';
+        if (q.id === 'q8a' && answers.q8 !== 'yes') cardHidden = ' style="display:none"';
         return '<div class="survey-question" data-qid="' + q.id + '"' + cardHidden + '>'
           + '<div class="survey-q-title"><span class="q-num">' + q.num + '.</span>' + q.title + '</div>'
           + '<div class="survey-options">' + optsHtml + '</div>'
           + extraHtml + '</div>';
       }).join('');
 
+      // v1.7.99.306 顶部企业切换 tabs（3 个企业 × 统一 10 题视图）
+      var enterpriseTabsHtml = Object.keys(APPLY_SURVEY_COMPANIES).map(function(cid) {
+        var ec = APPLY_SURVEY_COMPANIES[cid];
+        var active = cid === applyCurrentCompanyId;
+        return '<button type="button" class="apply-survey-tab' + (active ? ' active' : '') + '" data-cid="' + cid + '" onclick="switchApplySurveyCompany(\'' + cid + '\')">'
+          + '<span style="font-size:11px;color:var(--text-tertiary);margin-right:4px;">' + (cid === 'A' ? '①' : cid === 'B' ? '②' : '③') + '</span>'
+          + ec.shortName
+          + '</button>';
+      }).join('');
+
       var html = ''
         + '<div class="modal-overlay" id="complianceSurveyOverlay" onclick="if(event.target===this) closeApplyComplianceSurveyDialog()"></div>'
-        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog">'
+        + '<div class="modal-panel" id="complianceSurveyModal" role="dialog" style="width: 760px;">'
         + '  <div class="modal-header">'
         + '    <div class="modal-title">合规问卷 · ' + c.shortName + '</div>'
         + '    <span class="modal-close" onclick="closeApplyComplianceSurveyDialog()" title="关闭">×</span>'
@@ -2407,12 +2439,19 @@
         +          APPLY_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 8px; margin: 0 4px 2px 0; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
         +        '</span>'
         +      '</div>'
-        +      '<div style="margin-top: 6px; color: var(--text-tertiary);">请如实填写以下 8 项合规考察项。系统会根据答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
+        +      '<div style="margin-top: 6px; color: var(--text-tertiary);">请如实填写以下 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
         +    '</div>'
+        +    // v1.7.99.306 顶部企业切换 tabs（替换原单企业视图，3 个企业切换）
+        +    '<div id="applySurveyEnterpriseTabs" style="display: flex; gap: 6px; padding: 6px 8px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border: 1px solid #FDE68A; border-radius: 6px; margin-bottom: 14px; align-items: center;">'
+        +      '<div style="font-size: 12px; color: #92400E; margin-right: 6px;">当前答题企业：</div>'
+        +      enterpriseTabsHtml
+        +    '</div>'
+        +    '<div id="applySurveyQuestionsBody">'
         +    questionsHtml
+        +    '</div>'
         + '  </div>'
         + '  <div class="modal-footer">'
-        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="applySurveyProgress">0</span> / 8 已答</span>'
+        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="applySurveyProgress">0</span> / 10 已答（按当前企业统计）</span>'
         +    '<div class="spacer"></div>'
         +    '<button type="button" class="btn btn-secondary" onclick="closeApplyComplianceSurveyDialog()">取消</button>'
         +    '<button type="button" class="btn btn-secondary" onclick="skipApplyComplianceSurvey()">暂不填写</button>'
@@ -2429,71 +2468,59 @@
     }
 
     function selectApplySurveyOption(el) {
-      var q = el.dataset.q;          // 可能是 "q4" / "q4a" / "applyq4a" / "q5" / "applyq5a"
+      var q = el.dataset.q;          // 可能是 "q8" / "q8a" / "applyq8a"
       var v = el.dataset.v;
-      // 标准化 key：applyq4a → q4a
+      // 标准化 key：applyq8a → q8a
       var key = q.replace(/^apply/, '');
-      var qid = (key === 'q4a' || key === 'q4' || key === 'q5' || key === 'q5a') ? key : key.split('_')[0];
+      var qid = (key === 'q8a' || key === 'q8') ? key : key.split('_')[0];
       var siblings = el.parentElement.querySelectorAll('.survey-opt');
       siblings.forEach(function(s) { s.classList.remove('active'); });
       el.classList.add('active');
       if (!window.__applySurveyTemp) window.__applySurveyTemp = {};
       window.__applySurveyTemp[key] = v;
-      // v1.7.99.288 q4=否时隐藏 q4a_extra + 清空 q4a
-      // v1.7.99.291 同步切换 4.1 整张卡片 display（conditional 在卡片内）
-      if (qid === 'q4') {
-        var q4aCard = document.querySelector('.survey-question[data-qid="q4a"]');
-        if (q4aCard) q4aCard.style.display = (v === 'yes') ? '' : 'none';
-        var q4aExtra = document.getElementById('apply_q4a_extra');
-        if (q4aExtra) q4aExtra.style.display = (v === 'yes') ? 'block' : 'none';
+      // v1.7.99.306 替换旧 q4/q5：只保留 q8 → q8a 条件联动（品牌类商品 → 授权情况）
+      if (qid === 'q8') {
+        var q8aCard = document.querySelector('.survey-question[data-qid="q8a"]');
+        if (q8aCard) q8aCard.style.display = (v === 'yes') ? '' : 'none';
+        var q8aExtra = document.getElementById('apply_q8a_extra');
+        if (q8aExtra) q8aExtra.style.display = (v === 'yes') ? 'block' : 'none';
         if (v === 'no') {
-          if (window.__applySurveyTemp.q4a) delete window.__applySurveyTemp.q4a;
-          var q4aOpts = document.querySelectorAll('[data-q="applyq4a"]');
-          q4aOpts.forEach(function(o) { o.classList.remove('active'); });
-        }
-      }
-      if (qid === 'q5') {
-        var extra = document.getElementById('apply_q5_extra');
-        if (extra) extra.style.display = (v === 'yes') ? 'block' : 'none';
-        if (v === 'no') {
-          if (window.__applySurveyTemp.q5a) delete window.__applySurveyTemp.q5a;
-          if (window.__applySurveyTemp.q5b) delete window.__applySurveyTemp.q5b;
-          var bExtra = document.getElementById('apply_q5b_extra');
-          if (bExtra) bExtra.style.display = 'none';
-          var bInput = document.getElementById('apply_q5b_input');
-          if (bInput) bInput.value = '';
-          var q5aOpts = document.querySelectorAll('[data-q="applyq5a"]');
-          q5aOpts.forEach(function(o) { o.classList.remove('active'); });
-        }
-      }
-      if (q === 'applyq5a') {
-        var bExtra2 = document.getElementById('apply_q5b_extra');
-        if (bExtra2) bExtra2.style.display = (v === 'yes') ? 'block' : 'none';
-        if (v === 'no') {
-          if (window.__applySurveyTemp.q5b) delete window.__applySurveyTemp.q5b;
-          var bInput2 = document.getElementById('apply_q5b_input');
-          if (bInput2) bInput2.value = '';
+          if (window.__applySurveyTemp.q8a) delete window.__applySurveyTemp.q8a;
+          var q8aOpts = document.querySelectorAll('[data-q="applyq8a"]');
+          q8aOpts.forEach(function(o) { o.classList.remove('active'); });
         }
       }
       updateApplySurveyProgress();
     }
 
     function bindApplySurveyConditional() {
-      var bInput = document.getElementById('apply_q5b_input');
-      if (bInput) {
-        bInput.addEventListener('input', function() {
-          if (!window.__applySurveyTemp) window.__applySurveyTemp = {};
-          window.__applySurveyTemp.q5b = bInput.value.trim();
-        });
-      }
+      // v1.7.99.306 移除原 q5b 仓储协议编号输入框联动（新问卷无仓储子项）
+      // q8a 条件子项无需额外 input 绑定，纯选项切换
     }
 
     function updateApplySurveyProgress() {
       var temp = window.__applySurveyTemp || {};
       var count = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) count++; });
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) count++; });
       var el = document.getElementById('applySurveyProgress');
       if (el) el.textContent = count;
+    }
+
+    // v1.7.99.306 切换答题企业：保存当前 temp → 切换 cid → 重渲染弹窗
+    function switchApplySurveyCompany(cid) {
+      if (cid === applyCurrentCompanyId) return;
+      // 暂存当前企业的 temp 到 applySurveyAnswers
+      if (window.__applySurveyTemp) {
+        applySurveyAnswers[applyCurrentCompanyId] = Object.assign({}, window.__applySurveyTemp);
+      }
+      applyCurrentCompanyId = cid;
+      // 关闭旧弹窗 + 重开（带新企业的 answers + 企业名代入）
+      var overlay = document.getElementById('complianceSurveyOverlay');
+      var modal = document.getElementById('complianceSurveyModal');
+      if (overlay) overlay.remove();
+      if (modal) modal.remove();
+      window.__applySurveyTemp = null;
+      openApplyComplianceSurveyDialog();
     }
 
     function closeApplyComplianceSurveyDialog() {
@@ -2515,17 +2542,14 @@
     function submitApplyComplianceSurvey() {
       var temp = window.__applySurveyTemp || {};
       var answered = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8'].forEach(function(q) { if (temp[q]) answered++; });
-      if (answered < 8) {
-        alert('请完成全部 8 项问卷（已答 ' + answered + ' / 8）');
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) answered++; });
+      if (answered < 10) {
+        alert('请完成全部 10 项问卷（已答 ' + answered + ' / 10）');
         return;
       }
-      if (temp.q4 === 'yes' && !temp.q4a) {
-        alert('请回答 4.1 品牌授权情况');
-        return;
-      }
-      if (temp.q5 === 'yes' && temp.q5a === 'yes' && !temp.q5b) {
-        alert('请填写仓储协议编号（5.2）');
+      // v1.7.99.306 替换旧 q4/q5 校验：仅保留 q8 → q8a 条件校验
+      if (temp.q8 === 'yes' && !temp.q8a) {
+        alert('请回答 8.1 品牌授权情况');
         return;
       }
       applySurveyAnswers[applyCurrentCompanyId] = Object.assign({}, temp);
@@ -2551,39 +2575,49 @@
       alert('合规问卷已提交，已生成 ' + count + ' 项风控提醒');
     }
 
-    // v1.7.99.282 根据问卷答案生成具体风险项（与 project-detail generateRisksFromSurvey 等价）
+    // v1.7.99.282 根据问卷答案生成具体风险项（v1.7.99.306 改造为 10 题企业级版本）
     function generateApplySurveyRisks(answers, companyKey) {
       var c = APPLY_SURVEY_COMPANIES[companyKey];
       var risks = [];
+      // Q1：本次与 [企业] 是否将开展单笔>500万的大额贸易？
       if (answers.q1 === 'yes') {
-        risks.push({ tab: 'trade', name: '大额贸易风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次交易为单笔金额＞500 万的大额贸易，需关注资金来源、付款方式及交易背景真实性。' });
+        risks.push({ tab: 'trade', name: '大额贸易风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次与 ' + c.shortName + ' 拟开展单笔金额＞500 万的大额贸易，需关注资金来源、付款方式及交易背景真实性。' });
       }
+      // Q2：[企业] 是否无员工工资、个税记录？
       if (answers.q2 === 'yes') {
-        risks.push({ tab: 'trade', name: '历史业务缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，与 ' + c.shortName + ' 无历史业务记录且本次新增大额贸易品类，需重点关注首次合作风险及新增品类市场风险。' });
+        risks.push({ tab: 'internal', name: '无工资个税记录', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 存在无员工工资、个税申报记录情形，可能为空壳经营或人员合规异常。', category: '主体合规类', rule: '企业是否无员工工资、个税申报记录' });
       }
+      // Q3：存在与 [企业] 的注册地址相同的企业 ≥5 家？
       if (answers.q3 === 'yes') {
-        risks.push({ tab: 'trade', name: '超范围经营风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次拟交易商品品类不在 ' + c.shortName + ' 工商登记的经营范围内，存在超范围经营风险，需核查实际履约能力。' });
+        risks.push({ tab: 'internal', name: '一址多企 ≥5 家', status: 'warn', desc: '截至 ' + c.scanTime + '，存在 5 家及以上企业与 ' + c.shortName + ' 注册地址相同，存在集群注册或空壳嫌疑。', category: '主体合规类', rule: '一址多企数量是否≥5' });
       }
-      if (answers.q4a === 'unauthorized') {
-        risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
+      // Q4：本次与 [企业] 开展业务品类是否属于集团公司禁止开展的业务范围？
+      if (answers.q4 === 'yes') {
+        risks.push({ tab: 'trade', name: '禁止品类业务风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次与 ' + c.shortName + ' 开展业务品类属于集团公司禁止开展的业务范围，需上级审批后方可推进。', category: '贸易实质类', rule: '业务品类是否属于集团禁止范围' });
       }
-      if (answers.q5 === 'yes') {
-        if (answers.q5a === 'yes' && answers.q5b) {
-          risks.push({ tab: 'business', name: '仓储协议完备', status: 'ok', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 已签订仓储协议（编号：' + answers.q5b + '），仓储业务合规。', category: '经营行为类', rule: '仓储业务是否签订对应协议' });
-        } else if (answers.q5a === 'yes' && !answers.q5b) {
-          risks.push({ tab: 'business', name: '仓储协议编号缺失', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务并签订协议，但未填写协议编号，请补充。' });
-        } else {
-          risks.push({ tab: 'business', name: '仓储协议缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 涉及仓储业务但未签订对应仓储协议，存在合规风险。' });
-        }
+      // Q5：[企业] 公司是否具有清晰的供应链业务方向和模式？
+      if (answers.q5 === 'no') {
+        risks.push({ tab: 'trade', name: '业务方向模糊风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 缺乏清晰的供应链业务方向和模式，可能影响业务连续性与履约能力。', category: '贸易实质类', rule: '是否具有清晰的供应链业务方向' });
       }
-      if (answers.q6 === 'no') {
-        risks.push({ tab: 'business', name: '物流资质缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 无固定物流合作方或运输资质不全，需补充完整物流资质证明。' });
+      // Q6：[企业] 是否控制与集团主业关联度较低的业务规模？
+      if (answers.q6 === 'yes') {
+        risks.push({ tab: 'trade', name: '低关联业务规模风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 控制与集团主业关联度较低的业务规模，存在业务偏离主业风险。', category: '贸易实质类', rule: '业务规模与集团主业关联度' });
       }
+      // Q7：[企业] 是否为另一方贸易合同提供连带责任担保？
       if (answers.q7 === 'yes') {
-        risks.push({ tab: 'relation', name: '上下游贸易类风险', status: 'warn', desc: '截至 ' + c.scanTime + '，检测到 ' + c.shortName + ' 的上下游企业均为贸易类企业，存在贸易背景真实性风险，可能涉及循环贸易。' });
+        risks.push({ tab: 'relation', name: '连带担保风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 为另一方贸易合同提供连带责任担保，存在或有负债风险，需评估担保履约能力。', category: '关联关系类', rule: '是否为另一方贸易合同提供连带责任担保' });
       }
-      if (answers.q8 === 'yes') {
-        risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 在近期贸易活动中频繁变更合作方，存在经营不稳定风险，需重点关注履约能力。' });
+      // Q8：本次与 [企业] 的贸易是否涉及品牌类商品？ + Q8.1 是否有正规授权书或授权已过期？
+      if (answers.q8 === 'yes' && answers.q8a === 'unauthorized') {
+        risks.push({ tab: 'trade', name: '品牌授权缺失风险', status: 'warn', desc: '截至 ' + c.scanTime + '，本次与 ' + c.shortName + ' 涉及品牌类商品但未取得正规授权书或授权已过期，存在知识产权侵权及合规风险。' });
+      }
+      // Q9：[企业] 的合作客户中，贸易类企业占比超过 80%？
+      if (answers.q9 === 'yes') {
+        risks.push({ tab: 'trade', name: '客户集中贸易类风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 合作客户中贸易类企业占比超过 80%，可能涉及循环贸易，需核查交易背景真实性。', category: '贸易实质类', rule: '贸易类客户占比是否超过 80%' });
+      }
+      // Q10：[企业] 的前五大客户变动频繁，连续三个月变动率＞50%？
+      if (answers.q10 === 'yes') {
+        risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 前五大客户连续三个月变动率＞50%，存在经营不稳定或客户结构异常风险，需重点关注履约能力。' });
       }
       return risks;
     }
@@ -2602,7 +2636,7 @@
         btn.style.background = 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)';
         btn.style.color = '#047857';
       } else {
-        text.textContent = '针对 8 项合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果';
+        text.textContent = '针对 10 项企业级合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果';
         btn.querySelector('.apply-survey-btn-label').textContent = '开始填写';
         btn.style.background = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
         btn.style.color = '#fff';
