@@ -1754,10 +1754,11 @@
     function renderCmMaterials() {
       var html = CUSTOMER_MATERIALS.map(function(m, idx) {
         var reqTag = m.required
-          ? '<span class="req-tag-inline">*必填</span>'
+          ? '<span class="req-tag-inline">必填</span>'
           : '<span class="optional-tag-inline">非必填</span>';
+        var reqStar = m.required ? '<span class="req-star">*</span>' : '';
         return '<div class="cm-material-row" id="cm_mat_' + m.key + '_row">'
-          + '<div class="cm-material-label">' + (idx + 1) + '. ' + m.name + ' <span class="req-star">*</span>' + reqTag + '</div>'
+          + '<div class="cm-material-label">' + (idx + 1) + '. ' + m.name + ' ' + reqStar + reqTag + '</div>'
           + '<div class="cm-material-upload">'
           + '<label class="cm-upload-trigger">'
           + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'

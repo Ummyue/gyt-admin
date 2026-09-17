@@ -1380,8 +1380,9 @@
               + '</div>';
           }).join('');
         }
+        var reqStar = m.required ? '<span class="req-star">*</span>' : '';
         return '<div class="material-row">'
-          + '<div class="material-label">' + (idx + 1) + '. ' + m.name + ' <span class="req-star">*</span>' + reqTag + '</div>'
+          + '<div class="material-label">' + (idx + 1) + '. ' + m.name + ' ' + reqStar + reqTag + '</div>'
           + '<div class="material-files">' + filesHtml + '</div>'
           + '</div>';
       }).join('');
