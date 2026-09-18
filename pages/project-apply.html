@@ -755,7 +755,7 @@
             <div class="apply-survey-banner-icon">📋</div>
             <div class="apply-survey-banner-body">
               <div class="apply-survey-banner-title">合规问卷 · 生成风控提醒</div>
-              <div class="apply-survey-banner-desc" id="applySurveyBannerText">针对 8 项合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果</div>
+              <div class="apply-survey-banner-desc" id="applySurveyBannerText">针对 11 项合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果</div>
             </div>
             <button type="button" class="apply-survey-banner-btn" id="applySurveyBannerBtn" onclick="openApplyComplianceSurveyDialog()">
               <span class="apply-survey-btn-label">开始填写</span>
@@ -1330,7 +1330,7 @@
           { name: '资质已过期或 30 天内即将到期', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业所有经营资质均有效，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '品牌类商品无正规授权书', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易商品不涉及品牌类，无需授权书。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           // v1.7.99.303 贸易风险（原"综合贸易风险"）12 条新检查项（图 1 表格 TAP=贸易风险 列）
-          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次交易为单笔 1,000 万元，符合单笔＞500 万大额贸易阈值，已在业务部门备案，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '用户已确认本次贸易将不开展单笔>500万的大额贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '无历史业务记录', status: 'ok', desc: '截至 2026-07-17 15:46:04，存在 2024-2025 年度累计 3,200 万元的历史业务合作记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
           { name: '突然开展大额新增品类贸易', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易品类为玉米类（与历史品类一致），未识别为新增品类贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '经营范围中无贸易、供应链管理', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业经营范围包含「粮食收购、销售；农副产品、饲料销售；货物进出口、技术进出口」，覆盖贸易与供应链管理业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
@@ -1340,11 +1340,29 @@
           { name: '拟交易商品不在工商经营范围内', status: 'warn', desc: '截至 2026-07-17 15:46:04，企业经营范围含「消防器材销售 / 消防技术服务」，但未在「国家企业信用信息公示系统」查到有效的「消防技术服务机构资质证书」及「消防产品合格证」，存在资质缺失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '危化/粮油/医药/能源无有效专项资质', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次品类为消防器材销售类，需具备「消防技术服务机构资质证书」，但未查到有效资质，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '无仓库、无仓储协议', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业已与第三方仓储「诸暨致美暖通仓储中心」签订仓储协议（编号 WH20260102），仓储合规，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
-          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业已与「诸暨致美物流」签订长期运输合同，运输资质齐全、稳定运力充足，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业近 12 个月合作客户中，贸易类企业占比 72%，未超过 80% 预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业前五大客户近 3 个月变动率 35%，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '关联交易风险', status: 'ok' },
+          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '用户已确认当前贸易企业具备固定物流合作、运输资质与稳定运力，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '用户已确认该企业近期与合作客户中，贸易类企业占比未超过80%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '用户已确认该企业贸易的前五大客户近3个月变动率<50%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '关联交易风险', status: 'ok', desc: '用户已确认当前贸易企业不存在上下游关联交易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '资质缺失风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业经营范围内含「消防器材销售 / 消防技术服务」，但未在「国家企业信用信息公示系统」查到有效的「消防技术服务机构资质证书」及「消防产品合格证」，存在资质缺失风险。' }
+          { name: '物流合作稳定性', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业近 6 个月与核心客户合作运单量下降 32%（行业平均 -8%），需关注客户流失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '历史运单异常', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业近 3 个月有 2 笔运单存在轨迹偏离（实际路线与约定路线偏差 > 50km），存在运单异常风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '行政或工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2024-08-15</mark> 因「销售水分超标玉米」存在 <strong>行政处罚 8 万元</strong>，并已足额缴纳罚款。' },
+          { name: '经营异常', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业未列入「经营异常名录」。' },
+          { name: '行政处罚', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业近 3 年无重大行政处罚记录。' },
+          { name: '严重违法', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业未列入「严重违法失信企业名单」。' },
+          { name: '车辆规模', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业名下登记运输车辆 124 台（重型货车 86 台 + 集装箱牵引车 38 台），规模匹配业务范围。' },
+          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，未识别出该企业与其他已知风险企业存在隐性关联关系。' },
+          { name: '疑似实际控制人相同', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业实际控制人「张志明」与「郑州牧原粮油有限公司」实际控制人为同一人，存在疑似实际控制人相同情形，需重点关注关联交易公允性。' },
+          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业与我司现有合作企业网络中的最短关联路径为 2 层（通过实际控制人），未发现 1 层直接关联。' },
+          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人和主要管理人员不存在限制出境记录。' },
+          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在历史限制消费令记录。' },
+          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在当前限制消费令。' },
+          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」未来 30 天内无开庭公告。' },
+          { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史开庭公告已结案。' },
+          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在被执行人记录。' },
+          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在司法协助记录。' },
+          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在失信被执行人记录。' },
         ],
         shareholders: [
           { name: '何永兴', percent: '84%', tags: ['大股东', '实际控制人', '最终受益人'], date: '2001-05-18' },
@@ -1412,6 +1430,24 @@
           { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业前五大客户近 3 个月变动率 12%，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '关联交易风险', status: 'ok' },
           { name: '资质缺失风险', status: 'ok' }
+          { name: '物流合作稳定性', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业近 6 个月与核心客户合作运单量下降 32%（行业平均 -8%），需关注客户流失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '历史运单异常', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业近 3 个月有 2 笔运单存在轨迹偏离（实际路线与约定路线偏差 > 50km），存在运单异常风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '行政或工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2024-08-15</mark> 因「销售水分超标玉米」存在 <strong>行政处罚 8 万元</strong>，并已足额缴纳罚款。' },
+          { name: '经营异常', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未列入「经营异常名录」。' },
+          { name: '行政处罚', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业近 3 年无重大行政处罚记录。' },
+          { name: '严重违法', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未列入「严重违法失信企业名单」。' },
+          { name: '车辆规模', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业名下登记运输车辆 124 台（重型货车 86 台 + 集装箱牵引车 38 台），规模匹配业务范围。' },
+          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 16:02:18，未识别出该企业与其他已知风险企业存在隐性关联关系。' },
+          { name: '疑似实际控制人相同', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业实际控制人「张志明」与「郑州牧原粮油有限公司」实际控制人为同一人，存在疑似实际控制人相同情形，需重点关注关联交易公允性。' },
+          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业与我司现有合作企业网络中的最短关联路径为 2 层（通过实际控制人），未发现 1 层直接关联。' },
+          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人和主要管理人员不存在限制出境记录。' },
+          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」不存在历史限制消费令记录。' },
+          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」不存在当前限制消费令。' },
+          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」未来 30 天内无开庭公告。' },
+          { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」历史开庭公告已结案。' },
+          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」不存在被执行人记录。' },
+          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」不存在司法协助记录。' },
+          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「张志明」不存在失信被执行人记录。' },
         ],
         shareholders: [
           { name: '郑州铁龙实业集团有限公司', percent: '60%', tags: ['大股东', '实际控制人'], date: '2008-09-01' },
@@ -1477,6 +1513,24 @@
           { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业前五大客户近 3 个月变动率 18%，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '关联交易风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业股东「郑州跨境电商产业园有限公司」与关联方「河南自贸区铁龙供应链管理有限公司」存在交叉持股，且后者在 2024-12-10 存在 1 笔 12 万元的合同违约诉讼，疑似存在关联交易风险。' },
           { name: '资质缺失风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业经营范围内含「国际货物运输代理 / 报关报检服务」，但未在「商务部」查到有效的「国际货运代理企业备案表」及「海关报关企业注册登记证书」，存在资质缺失风险。' }
+          { name: '物流合作稳定性', status: 'warn', desc: '截至 2026-07-18 09:15:30，该企业近 6 个月与核心客户合作运单量下降 32%（行业平均 -8%），需关注客户流失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '历史运单异常', status: 'warn', desc: '截至 2026-07-18 09:15:30，该企业近 3 个月有 2 笔运单存在轨迹偏离（实际路线与约定路线偏差 > 50km），存在运单异常风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '行政或工商违法处罚信息', status: 'warn', desc: '截至 2026-07-18 09:15:30，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2024-08-15</mark> 因「销售水分超标玉米」存在 <strong>行政处罚 8 万元</strong>，并已足额缴纳罚款。' },
+          { name: '经营异常', status: 'ok', desc: '截至 2026-07-18 09:15:30，该企业未列入「经营异常名录」。' },
+          { name: '行政处罚', status: 'ok', desc: '截至 2026-07-18 09:15:30，该企业近 3 年无重大行政处罚记录。' },
+          { name: '严重违法', status: 'ok', desc: '截至 2026-07-18 09:15:30，该企业未列入「严重违法失信企业名单」。' },
+          { name: '车辆规模', status: 'ok', desc: '截至 2026-07-18 09:15:30，该企业名下登记运输车辆 124 台（重型货车 86 台 + 集装箱牵引车 38 台），规模匹配业务范围。' },
+          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-18 09:15:30，未识别出该企业与其他已知风险企业存在隐性关联关系。' },
+          { name: '疑似实际控制人相同', status: 'warn', desc: '截至 2026-07-18 09:15:30，该企业实际控制人「张志明」与「郑州牧原粮油有限公司」实际控制人为同一人，存在疑似实际控制人相同情形，需重点关注关联交易公允性。' },
+          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-18 09:15:30，该企业与我司现有合作企业网络中的最短关联路径为 2 层（通过实际控制人），未发现 1 层直接关联。' },
+          { name: '限制出境', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人和主要管理人员不存在限制出境记录。' },
+          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」不存在历史限制消费令记录。' },
+          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」不存在当前限制消费令。' },
+          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」未来 30 天内无开庭公告。' },
+          { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」历史开庭公告已结案。' },
+          { name: '被执行人', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」不存在被执行人记录。' },
+          { name: '司法协助', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」不存在司法协助记录。' },
+          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-18 09:15:30，法定代表人「张志明」不存在失信被执行人记录。' },
         ],
         shareholders: [
           { name: '王志强', percent: '70%', tags: ['大股东', '实际控制人', '最终受益人'], date: '2018-05-16' },
@@ -2457,17 +2511,21 @@
       '终本案件': 'judicial',
       '法律诉讼': 'judicial',
       '历史法律诉讼': 'judicial',
-      '开庭公告': 'judicial',
-      '历史开庭公告': 'judicial',
-      '被执行人': 'judicial',
-      '司法协助': 'judicial',
+      '开庭公告': 'personnel',
+      '历史开庭公告': 'personnel',
+      '被执行人': 'personnel',
+      '司法协助': 'personnel',
       '历史被执行人': 'judicial',
-      '失信被执行人': 'judicial',
+      '失信被执行人': 'personnel',
       '历史失信被执行人': 'judicial',
       // personnel
       '限制出境': 'personnel',
       '历史限制消费令': 'personnel',
-      '限制消费令': 'personnel'
+      '限制消费令': 'personnel',
+      // relation（v1.7.99.307 补全：与企业风险扫描全集同步）
+      '疑似关系发现': 'relation',
+      '疑似实际控制人相同': 'relation',
+      '最短路径发现': 'relation'
     };
     var APPLY_RISK_RULE_MAP = {
       // trade（v1.7.99.303：12 条新检查项 + 检查规则改为"是否"句式）
@@ -2485,7 +2543,6 @@
       '合作客户中贸易类企业占比超过 80%': { category: '贸易实质类', rule: '贸易类合作客户占比是否超过 80%' },
       '前五大客户变动频繁（连续三个月变动率＞50%）': { category: '贸易实质类', rule: '前五大客户变动率是否连续三个月＞50%' },
       '关联交易风险':           { category: '关联关系类', rule: '是否存在上下游关联交易' },
-      '资质缺失风险':           { category: '主体准入类', rule: '上下游客户是否准入（负面清单核验）' },
       '物流合作稳定性':         { category: '经营行为类', rule: '核心客户运单量是否稳定' },
       '大额贸易风险':           { category: '贸易实质类', rule: '单笔交易金额是否超过限额' },
       '历史业务缺失风险':       { category: '贸易实质类', rule: '首次合作是否需重点关注' },
@@ -2522,17 +2579,21 @@
       '终本案件':               { category: '合规记录类', rule: '是否存在终本案件' },
       '法律诉讼':               { category: '合规记录类', rule: '是否涉及法律诉讼' },
       '历史法律诉讼':           { category: '合规记录类', rule: '历史诉讼是否结案' },
-      '开庭公告':               { category: '合规记录类', rule: '未来 30 天内是否有开庭公告' },
-      '历史开庭公告':           { category: '合规记录类', rule: '历史开庭公告是否结案' },
-      '被执行人':               { category: '合规记录类', rule: '是否列入被执行人' },
-      '司法协助':               { category: '合规记录类', rule: '是否存在司法协助记录' },
+      '开庭公告':               { category: '人员合规类', rule: '未来 30 天内是否有开庭公告' },
+      '历史开庭公告':           { category: '人员合规类', rule: '历史开庭公告是否结案' },
+      '被执行人':               { category: '人员合规类', rule: '是否列入被执行人' },
+      '司法协助':               { category: '人员合规类', rule: '是否存在司法协助记录' },
       '历史被执行人':           { category: '合规记录类', rule: '历史是否曾被列为被执行人' },
-      '失信被执行人':           { category: '合规记录类', rule: '是否列入失信被执行人' },
+      '失信被执行人':           { category: '人员合规类', rule: '是否列入失信被执行人' },
       '历史失信被执行人':       { category: '合规记录类', rule: '历史是否曾被列为失信被执行人' },
       // personnel
       '限制出境':               { category: '人员合规类', rule: '法定代表人/主要管理人员是否被限制出境' },
       '历史限制消费令':         { category: '人员合规类', rule: '法定代表人历史是否被限制消费' },
-      '限制消费令':             { category: '人员合规类', rule: '法定代表人是否被限制消费' }
+      '限制消费令':             { category: '人员合规类', rule: '法定代表人是否被限制消费' },
+      // relation（v1.7.99.307 补全：与企业风险扫描全集同步）
+      '疑似关系发现':           { category: '关联关系类', rule: '是否与其他风险企业存在隐性关联' },
+      '疑似实际控制人相同':     { category: '关联关系类', rule: '实控人是否与其他企业相同' },
+      '最短路径发现':           { category: '关联关系类', rule: '关联路径层数是否在阈值内' }
     };
 
     // 把 c.risks 扁平数组按 6 tab 分组
@@ -2591,7 +2652,9 @@
         // Q9：原"上下游贸易类企业" → 改为"贸易类企业占比超过 80%"
         { id: 'q9',  num: 9,  title: c.name + ' 的合作客户中，贸易类企业占比超过 80%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q9  || '' },
         // Q10：保留"前五大客户变动频繁"
-        { id: 'q10', num: 10, title: c.name + ' 的前五大客户变动频繁，连续三个月变动率＞50%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q10 || '' }
+        { id: 'q10', num: 10, title: c.name + ' 的前五大客户变动频繁，连续三个月变动率＞50%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q10 || '' },
+        // Q11：新增"是否具备固定物流合作、运输资质与稳定运力"（经营行为类，补充之前问卷缺失项）
+        { id: 'q11', num: 11, title: '本次与 ' + c.name + ' 是否具备固定物流合作、运输资质与稳定运力？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q11 || '' }
       ];
 
       var questionsHtml = questions.map(function(q) {
@@ -2646,14 +2709,14 @@
         +          APPLY_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 7px; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
         +        '</span>'
         +      '</div>'
-        +      '<div style="margin-top: 4px; color: var(--text-tertiary); font-size: 11px;">请如实填写以下 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
+        +      '<div style="margin-top: 4px; color: var(--text-tertiary); font-size: 11px;">请如实填写以下 11 项企业级合规考察项。系统会根据每家企业的答案自动在「企业尽调报告」企业风险扫描结果中生成对应风险条目。</div>'
         +    '</div>'
         +    '<div id="applySurveyQuestionsBody">'
         +    questionsHtml
         +    '</div>'
         + '  </div>'
         + '  <div class="modal-footer">'
-        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="applySurveyProgress">0</span> / 10 已答（按当前企业统计）</span>'
+        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="applySurveyProgress">0</span> / 11 已答（按当前企业统计）</span>'
         +    '<div class="spacer"></div>'
         +    '<button type="button" class="btn btn-secondary" onclick="closeApplyComplianceSurveyDialog()">取消</button>'
         +    '<button type="button" class="btn btn-secondary" onclick="skipApplyComplianceSurvey()">暂不填写</button>'
@@ -2703,7 +2766,7 @@
     function updateApplySurveyProgress() {
       var temp = window.__applySurveyTemp || {};
       var count = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) count++; });
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11'].forEach(function(q) { if (temp[q]) count++; });
       var el = document.getElementById('applySurveyProgress');
       if (el) el.textContent = count;
     }
@@ -2744,9 +2807,9 @@
     function submitApplyComplianceSurvey() {
       var temp = window.__applySurveyTemp || {};
       var answered = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) answered++; });
-      if (answered < 10) {
-        alert('请完成全部 10 项问卷（已答 ' + answered + ' / 10）');
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11'].forEach(function(q) { if (temp[q]) answered++; });
+      if (answered < 11) {
+        alert('请完成全部 11 项问卷（已答 ' + answered + ' / 11）');
         return;
       }
       // v1.7.99.306 替换旧 q4/q5 校验：仅保留 q8 → q8a 条件校验
@@ -2821,6 +2884,10 @@
       if (answers.q10 === 'yes') {
         risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 前五大客户连续三个月变动率＞50%，存在经营不稳定或客户结构异常风险，需重点关注履约能力。' });
       }
+      // Q11：本次与 [企业] 是否具备固定物流合作、运输资质与稳定运力？（答"否"=无固定物流合作、无运输资质、无稳定运力）
+      if (answers.q11 === 'no') {
+        risks.push({ tab: 'trade', name: '无固定物流合作、无运输资质、无稳定运力', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 无固定物流合作、无运输资质、无稳定运力，存在履约能力与运输稳定性风险。' });
+      }
       return risks;
     }
 
@@ -2838,7 +2905,7 @@
         btn.style.background = 'linear-gradient(135deg, #D1FAE5 0%, #A7F3D0 100%)';
         btn.style.color = '#047857';
       } else {
-        text.textContent = '针对 10 项企业级合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果';
+        text.textContent = '针对 11 项企业级合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果';
         btn.querySelector('.apply-survey-btn-label').textContent = '开始填写';
         btn.style.background = 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)';
         btn.style.color = '#fff';

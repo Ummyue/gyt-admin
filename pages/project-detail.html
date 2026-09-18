@@ -433,7 +433,7 @@
             </div>
             <div style="flex: 1;">
               <div style="font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px;">合规问卷 · 生成风控提醒</div>
-              <div style="font-size: 12px; color: #A16207; line-height: 1.5;">针对 8 项合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果</div>
+              <div style="font-size: 12px; color: #A16207; line-height: 1.5;">针对 11 项合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果</div>
             </div>
             <button type="button" class="btn" onclick="openComplianceSurveyDialog()" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; border: 0; padding: 8px 20px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -499,8 +499,8 @@
           </div>
           <div class="card-body" style="padding: 12px 24px;">
             <div style="font-size: 12px; color: var(--text-tertiary); line-height: 1.6;">
-              针对上下游每家企业填写 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。
-              <span style="display: block; margin-top: 4px;">已答：<span id="detailSurveyProgress">0</span> / 30（按 3 家企业 × 10 题统计）</span>
+              针对上下游每家企业填写 11 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。
+              <span style="display: block; margin-top: 4px;">已答：<span id="detailSurveyProgress">0</span> / 33（按 3 家企业 × 11 题统计）</span>
             </div>
           </div>
         </div>
@@ -1042,7 +1042,7 @@
       trade: {  // 贸易风险（v1.7.99.303：原"综合贸易风险"改名 + 按图 1 表格 TAP=贸易风险 列补 12 条检查项）
         label: '贸易风险',
         items: [
-          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次交易为单笔 1,000 万元，符合单笔＞500 万大额贸易阈值，已在业务部门备案，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '用户已确认本次贸易将不开展单笔>500万的大额贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '无历史业务记录', status: 'ok', desc: '截至 2026-07-17 15:46:04，存在 2024-2025 年度累计 3,200 万元的历史业务合作记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
           { name: '突然开展大额新增品类贸易', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易品类为玉米类（与历史品类一致），未识别为新增品类贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '经营范围中无贸易、供应链管理', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业经营范围包含「粮食收购、销售；农副产品、饲料销售；货物进出口、技术进出口」，覆盖贸易与供应链管理业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
@@ -1052,9 +1052,9 @@
           { name: '拟交易商品不在工商经营范围内', status: 'warn', desc: '截至 2026-07-17 15:46:04，企业经营范围含「粮食收购 / 货物进出口」，但未在「国家粮食和物资储备局」查到有效的「粮食收购许可证」，存在资质缺失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '危化/粮油/医药/能源无有效专项资质', status: 'warn', desc: '截至 2026-07-17 15:46:04，本次拟交易品类为粮食类，需具备「粮食收购许可证」，但未查到有效资质，存在资质缺失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '无仓库、无仓储协议', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业已与第三方仓储「河南国际物流枢纽」签订仓储协议（编号 WH20260101），仓储合规，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
-          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业已与「郑州铁龙物流」签订长期运输合同，运输资质齐全、稳定运力充足，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业近 12 个月合作客户中，贸易类企业占比 65%，未超过 80% 预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业前五大客户近 3 个月变动率 28%，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '用户已确认当前贸易企业具备固定物流合作、运输资质与稳定运力，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '用户已确认该企业近期与合作客户中，贸易类企业占比未超过80%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '用户已确认该企业贸易的前五大客户近3个月变动率<50%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
           { name: '关联交易风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业股东「张志明」同时担任「郑州牧原粮油有限公司」股东（持股 35%），并与该企业存在 2024-2025 年度玉米采购关联交易累计 1,200 万元，存在关联交易风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
@@ -1849,7 +1849,7 @@
     if (warnEl) warnEl.textContent = totalWarn;
   }
 
-// ===== v1.7.99.308 合规问卷：10 题企业级 + 3 企业 tabs 切换（与 apply.html v1.7.99.306 同步） =====
+// ===== v1.7.99.308 合规问卷：11 题企业级 + 3 企业 tabs 切换（与 apply.html v1.7.99.307 同步，新增 Q11「是否具备固定物流合作、运输资质与稳定运力」） =====
     var surveyAnswers = {};
     var surveyHasRun = {};
     var surveyRiskCount = {};
@@ -1895,7 +1895,9 @@
           }
         },
         { id: 'q9',  num: 9,    title: c.name + ' 的合作客户中，贸易类企业占比超过 80%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q9  || '' },
-        { id: 'q10', num: 10,   title: c.name + ' 的前五大客户变动频繁，连续三个月变动率＞50%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q10 || '' }
+        { id: 'q10', num: 10,   title: c.name + ' 的前五大客户变动频繁，连续三个月变动率＞50%？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q10 || '' },
+        // Q11：新增"是否具备固定物流合作、运输资质与稳定运力"（经营行为类，与 apply.html v1.7.99.307 同步）
+        { id: 'q11', num: 11, title: '本次与 ' + c.name + ' 是否具备固定物流合作、运输资质与稳定运力？', options: [{v: 'yes', l: '是'}, {v: 'no', l: '否'}], defaultV: answers.q11 || '' }
       ];
 
       var questionsHtml = questions.map(function(q) {
@@ -1947,12 +1949,12 @@
         +          DETAIL_PROJECT_DOWNSTREAM.map(function(n) { return '<span style="display: inline-block; padding: 1px 7px; background: rgba(16, 185, 129, 0.1); color: #047857; border-radius: 10px; font-size: 11px;">↓ ' + n + '</span>'; }).join('')
         +        '</span>'
         +      '</div>'
-        +      '<div style="margin-top: 4px; color: var(--text-tertiary); font-size: 11px;">请如实填写以下 10 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。</div>'
+        +      '<div style="margin-top: 4px; color: var(--text-tertiary); font-size: 11px;">请如实填写以下 11 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。</div>'
         +    '</div>'
         +    questionsHtml
         + '  </div>'
         + '  <div class="modal-footer">'
-        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="surveyProgress">0</span> / 10 已答（按当前企业统计）</span>'
+        +    '<span style="font-size: 12px; color: var(--text-tertiary);"><span id="surveyProgress">0</span> / 11 已答（按当前企业统计）</span>'
         +    '<div class="spacer"></div>'
         +    '<button type="button" class="btn btn-secondary" onclick="closeComplianceSurveyDialog()">取消</button>'
         +    '<button type="button" class="btn btn-secondary" onclick="skipComplianceSurvey()">暂不填写</button>'
@@ -1994,7 +1996,7 @@
     function updateSurveyProgress() {
       var temp = window.__surveyTemp || {};
       var count = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) count++; });
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11'].forEach(function(q) { if (temp[q]) count++; });
       var el = document.getElementById('surveyProgress');
       if (el) el.textContent = count;
     }
@@ -2029,9 +2031,9 @@
     function submitComplianceSurvey() {
       var temp = window.__surveyTemp || {};
       var answered = 0;
-      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q) { if (temp[q]) answered++; });
-      if (answered < 10) {
-        Utils.toast('请完成全部 10 项问卷（已答 ' + answered + ' / 10）', 'error');
+      ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11'].forEach(function(q) { if (temp[q]) answered++; });
+      if (answered < 11) {
+        Utils.toast('请完成全部 11 项问卷（已答 ' + answered + ' / 11）', 'error');
         return;
       }
       if (temp.q8 === 'yes' && !temp.q8a) {
@@ -2053,7 +2055,7 @@
       Utils.toast('合规问卷已提交，已生成 ' + newRisks.length + ' 项风控提醒', 'success');
     }
 
-    // v1.7.99.308 详情页问卷风险生成（与 apply.html 一致的 10 题逻辑）
+    // v1.7.99.308 详情页问卷风险生成（与 apply.html 一致的 11 题逻辑）
     function generateRisksFromSurvey(answers) {
       var c = DETAIL_SURVEY_COMPANIES[detailSurveyCompanyId];
       var risks = [];
@@ -2087,6 +2089,10 @@
       if (answers.q10 === 'yes') {
         risks.push({ tab: 'relation', name: '合作方频繁变更风险', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 前五大客户连续三个月变动率＞50%，存在经营不稳定或客户结构异常风险，需重点关注履约能力。' });
       }
+      // Q11：本次与 [企业] 是否具备固定物流合作、运输资质与稳定运力？（答"否"=无固定物流合作、无运输资质、无稳定运力）
+      if (answers.q11 === 'no') {
+        risks.push({ tab: 'trade', name: '无固定物流合作、无运输资质、无稳定运力', status: 'warn', desc: '截至 ' + c.scanTime + '，' + c.shortName + ' 无固定物流合作、无运输资质、无稳定运力，存在履约能力与运输稳定性风险。' });
+      }
       return risks;
     }
 
@@ -2094,7 +2100,7 @@
     function refreshDetailSurveyCard() {
       var total = Object.keys(DETAIL_SURVEY_COMPANIES).reduce(function(sum, cid){
         var a = surveyAnswers[cid] || {};
-        ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10'].forEach(function(q){ if (a[q]) sum++; });
+        ['q1','q2','q3','q4','q5','q6','q7','q8','q9','q10','q11'].forEach(function(q){ if (a[q]) sum++; });
         return sum;
       }, 0);
       var progEl = document.getElementById('detailSurveyProgress');
