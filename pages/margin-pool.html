@@ -275,7 +275,7 @@
         <span>当前搜索：</span>
         <span class="filter-empty-hint" style="color: var(--text-tertiary);">（无筛选条件）</span>
       </div>
-      <!-- 过滤表单：3 字段 + 1 字段 + 重置/查询 -->
+      <!-- 过滤表单：3 字段 + 业务类型 select + 重置/查询 -->
       <div class="cp-drawer-filter">
         <div class="cp-drawer-filter-item">
           <label>合同编号</label>
@@ -290,8 +290,14 @@
           <input type="text" class="input" placeholder="请输入品名" id="drawerFilterProduct">
         </div>
         <div class="cp-drawer-filter-item">
-          <label>签订日期</label>
-          <input type="text" class="input" placeholder="请选择合同日期范围" id="drawerFilterDate">
+          <label>业务类型</label>
+          <select class="input" id="drawerFilterBizType">
+            <option value="">全部</option>
+            <option value="购销业务">购销业务</option>
+            <option value="预付业务">预付业务</option>
+            <option value="账期业务">账期业务</option>
+            <option value="存货业务">存货业务</option>
+          </select>
         </div>
         <div class="cp-drawer-filter-buttons">
           <button class="btn btn-default btn-sm" onclick="resetDrawerFilters()">重置</button>
@@ -402,7 +408,7 @@
       if (drawer) drawer.classList.add('open');
       if (confirm) confirm.disabled = true;
       // 清空过滤表单
-      ['drawerFilterContractNo','drawerFilterCompany','drawerFilterProduct','drawerFilterDate'].forEach(function(id){
+      ['drawerFilterContractNo','drawerFilterCompany','drawerFilterProduct','drawerFilterBizType'].forEach(function(id){
         var el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -415,7 +421,7 @@
       if (drawer) drawer.classList.remove('open');
     }
     function resetDrawerFilters() {
-      ['drawerFilterContractNo','drawerFilterCompany','drawerFilterProduct','drawerFilterDate'].forEach(function(id){
+      ['drawerFilterContractNo','drawerFilterCompany','drawerFilterProduct','drawerFilterBizType'].forEach(function(id){
         var el = document.getElementById(id);
         if (el) el.value = '';
       });
@@ -424,11 +430,12 @@
     function buildRegisterChips() {
       var chipsRow = document.getElementById('registerDrawerChips');
       if (!chipsRow) return;
+      var bizValue = (document.getElementById('drawerFilterBizType') || {}).value || '';
       var filters = [
         { label: '合同编号', value: (document.getElementById('drawerFilterContractNo') || {}).value },
         { label: '企业名称', value: (document.getElementById('drawerFilterCompany') || {}).value },
         { label: '品名',     value: (document.getElementById('drawerFilterProduct') || {}).value },
-        { label: '签订日期', value: (document.getElementById('drawerFilterDate') || {}).value }
+        { label: '业务类型', value: bizValue }
       ];
       var active = filters.filter(function(f){ return f.value && String(f.value).trim(); });
       if (active.length === 0) {
@@ -448,10 +455,12 @@
       var fContract = ((document.getElementById('drawerFilterContractNo') || {}).value || '').trim().toLowerCase();
       var fCompany = ((document.getElementById('drawerFilterCompany') || {}).value || '').trim().toLowerCase();
       var fProduct = ((document.getElementById('drawerFilterProduct') || {}).value || '').trim().toLowerCase();
+      var fBizType = ((document.getElementById('drawerFilterBizType') || {}).value || '').trim();
       var rows = MARGIN_MOCK.filter(function(m) {
         if (fContract && (m.contractNo || '').toLowerCase().indexOf(fContract) < 0) return false;
         if (fCompany && (m.seller || '').toLowerCase().indexOf(fCompany) < 0) return false;
         if (fProduct && (m.product || '').toLowerCase().indexOf(fProduct) < 0) return false;
+        if (fBizType && (m.bizType || '') !== fBizType) return false;
         return true;
       });
       buildRegisterChips();
