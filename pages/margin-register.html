@@ -35,9 +35,14 @@
     .contract-item .label { font-size: 12px; color: var(--text-tertiary); }
     .contract-item .value { font-size: 13px; color: var(--text-primary); font-weight: 500; font-family: var(--font-mono); }
 
-    /* v1.7.99.337 登记信息 5 字段 3 列 + 等比例冲抵设置 + 计算回显 */
-    .register-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; }
+    /* v1.7.99.338 登记信息：第 1 行 2 列（应付保证金金额 + 已付保证金金额），第 2 行本次登记保证金金额单独占整行，底部等比例冲抵 + 计算回显全宽 */
+    .register-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 20px; }
     .register-grid .full { grid-column: 1 / -1; }
+    /* 第 2 行：本行仅一个字段，左对齐 + 灰色说明 */
+    .register-row2 .form-input { max-width: 360px; }
+    .register-row2 .row2-hint {
+      margin-top: 6px; font-size: 12px; color: var(--text-tertiary); line-height: 1.6;
+    }
     /* 字段内联：应付金额 input + 比例 input（小尺寸） */
     .inline-pair { display: flex; gap: 8px; align-items: center; }
     .inline-pair .form-input { flex: 1; }
@@ -247,28 +252,29 @@
           <div class="info-section-head">登记信息</div>
           <div class="info-section-body">
             <div class="tip-box">
-              <span class="label">计算规则：</span>用户输入的「本次登记金额」= 应付保证金的 <strong id="ruleCashRatio">90%</strong>（现金实付部分），系统自动按比例用保证金冲抵补足 <strong id="ruleDepositRatio">10%</strong>。所有比例均在下方「应付保证金金额」可调整。
+              <span class="label">计算规则：</span>用户输入的「本次登记保证金金额」= 应付保证金的 <strong id="ruleCashRatio">90%</strong>（现金实付部分），系统自动按比例用保证金冲抵补足 <strong id="ruleDepositRatio">10%</strong>。所有比例均在下方「应付保证金金额」可调整。
             </div>
             <div class="register-grid">
-              <!-- 字段 1：应付保证金金额（元 + 比例） -->
+              <!-- 第 1 行：应付保证金金额（元 + 合同设定比例） -->
               <div>
                 <label class="form-label"><span class="required">*</span>应付保证金金额(元)</label>
                 <div class="inline-pair">
                   <input type="text" class="form-input" id="rg-payTotal" placeholder="应付金额自动按合同登记时比例计算">
-                  <span class="sep">比例</span>
+                  <span class="sep">合同设定比例</span>
                   <input type="number" class="form-input ratio-input" id="rg-ratioReq" min="0" max="100" step="0.01" placeholder="15">
                   <span class="sep">%</span>
                 </div>
               </div>
-              <!-- 字段 2：本次登记金额（用户输入） -->
-              <div>
-                <label class="form-label"><span class="required">*</span>本次登记金额(元)</label>
-                <input type="text" class="form-input" id="rg-thisPaid" placeholder="请输入本次登记金额">
-              </div>
-              <!-- 字段 3：已付保证金金额（只读） -->
+              <!-- 第 1 行：已付保证金金额（只读） -->
               <div>
                 <label class="form-label">已付保证金金额(元)</label>
                 <input type="text" class="form-input" id="rg-paidHistory" disabled>
+              </div>
+              <!-- 第 2 行：本行仅"本次登记保证金金额"1 个字段，单独占整行并加灰色说明 -->
+              <div class="full register-row2">
+                <label class="form-label"><span class="required">*</span>本次登记保证金金额(元)</label>
+                <input type="text" class="form-input" id="rg-thisPaid" placeholder="请输入本次登记保证金金额" style="max-width: 360px;">
+                <div class="row2-hint">本次登记保证金金额 = 应付保证金金额 × (1 - 冲抵比例)；系统按下方冲抵比例自动计算补足部分。</div>
               </div>
 
               <!-- 字段 4：等比例冲抵货款（开关 + 比例） -->
@@ -292,7 +298,7 @@
                     <span style="color: var(--text-tertiary);">（开启后启用，留空按合同登记比例自动计算）</span>
                   </div>
                   <div class="summary" id="rg-summary">
-                    关闭状态：本次登记金额 = 应付保证金金额，无保证金冲抵。
+                    关闭状态：本次登记保证金金额 = 应付保证金金额，无保证金冲抵。
                   </div>
                 </div>
               </div>
@@ -301,7 +307,7 @@
               <div class="full">
                 <label class="form-label">计算回显</label>
                 <div class="calc-echo muted" id="rg-echo">
-                  <span style="color: var(--text-tertiary);">请输入「本次登记金额」实时查看应付总额 / 保证金冲抵。</span>
+                  <span style="color: var(--text-tertiary);">请输入「本次登记保证金金额」实时查看应付总额 / 保证金冲抵。</span>
                 </div>
               </div>
             </div>
@@ -451,10 +457,10 @@
     }
 
     /* ========== v1.7.99.337 等比例冲抵计算（沿用 v1.7.99.336 calcOffset 公式） ==========
-       用户输入「本次登记金额」pay = 应付保证金的 (1 - ratio)；
+       用户输入「本次登记保证金金额」pay = 应付保证金的 (1 - ratio)；
        应付总额 totalPayable = pay / (1 - ratio/100)；
        保证金冲抵 depositOffset = totalPayable * ratio/100
-       若等比例开关关闭：不参与比例分摊，本次登记金额 = 应付保证金金额（无冲抵） */
+       若等比例开关关闭：不参与比例分摊，本次登记保证金金额 = 应付保证金金额（无冲抵） */
     function calcRegisterOffset(pay, ratio) {
       if (!ratio || ratio <= 0 || ratio >= 100) {
         return { totalPayable: pay, depositOffset: 0, cashRatio: 100, depositRatio: ratio || 0 };
@@ -480,13 +486,13 @@
       if (!enabled) {
         ruleCashEl.textContent = '100';
         ruleDepositEl.textContent = '0';
-        summaryEl.innerHTML = '关闭状态：本次登记金额 = 应付保证金金额，无保证金冲抵。';
+        summaryEl.innerHTML = '关闭状态：本次登记保证金金额 = 应付保证金金额，无保证金冲抵。';
         if (pay <= 0) {
           echoEl.className = 'calc-echo muted';
-          echoEl.innerHTML = '<span style="color: var(--text-tertiary);">请输入「本次登记金额」实时查看应付总额 / 保证金冲抵。</span>';
+          echoEl.innerHTML = '<span style="color: var(--text-tertiary);">请输入「本次登记保证金金额」实时查看应付总额 / 保证金冲抵。</span>';
         } else {
           echoEl.className = 'calc-echo';
-          echoEl.innerHTML = '关闭态：本次登记金额 = <strong>' + pay.toFixed(2) + '</strong> 元（应付保证金全额，无冲抵）';
+          echoEl.innerHTML = '关闭态：本次登记保证金金额 = <strong>' + pay.toFixed(2) + '</strong> 元（应付保证金全额，无冲抵）';
         }
         return;
       }
@@ -505,7 +511,7 @@
 
       if (pay <= 0) {
         echoEl.className = 'calc-echo muted';
-        echoEl.innerHTML = '<span style="color: var(--text-tertiary);">请输入「本次登记金额」实时查看应付总额 / 保证金冲抵。</span>';
+        echoEl.innerHTML = '<span style="color: var(--text-tertiary);">请输入「本次登记保证金金额」实时查看应付总额 / 保证金冲抵。</span>';
         return;
       }
       var r = calcRegisterOffset(pay, ratio);
@@ -567,7 +573,7 @@
     function confirmSubmit() {
       var pay = parseMoney(document.getElementById('rg-thisPaid').value);
       if (pay <= 0) {
-        Utils.toast('请先填写「本次登记金额」', 'warning');
+        Utils.toast('请先填写「本次登记保证金金额」', 'warning');
         return;
       }
       document.getElementById('submitModal').classList.add('show');
