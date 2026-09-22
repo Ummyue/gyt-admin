@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>保证金管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* v1.7.99.337 6 个统计卡片（v1.7.99.67 改：在「应付保证金金额」后增加「已付保证金金额」） */
+    .stat-row {
+      display: grid; grid-template-columns: repeat(6, 1fr); gap: 12px; margin-bottom: 16px;
+    }
+    .stat-card {
+      padding: 14px 18px; background: #fff; border: 1px solid var(--border-light); border-radius: 6px;
+    }
+    .stat-card .label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 6px; }
+    .stat-card .value { font-size: 18px; font-weight: 600; font-family: var(--font-mono); color: var(--text-primary); }
+    .stat-card.amount .value { color: #1E40AF; }
+    .stat-card.claimed .value { color: #15803D; }
+    .stat-card.deposit .value { color: #EA580C; }
+    .stat-card.current .value { color: #7C3AED; }
+    .stat-card.ratio .value { color: #D97706; }
+    /* 当前比例/合同应缴比例 列：绿色+红色 ↑ */
+    .ratio-cell { font-family: var(--font-mono); }
+    .ratio-current { color: #15803D; font-weight: 600; }
+    .ratio-required { color: #DC2626; font-weight: 600; }
+    /* 12 列表格列宽（v1.7.99.337 在 11 列基础上加「已付保证金金额」列） */
+    table.cp-table th, table.cp-table td { white-space: nowrap; }
+
+    /* v1.7.99.337 登记保证金侧边抽屉 */
+    .register-drawer-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
+      z-index: 900; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .register-drawer-mask.open { opacity: 1; pointer-events: auto; }
+    .register-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 640px; max-width: 92vw; background: #fff;
+      box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
+      transform: translateX(100%); transition: transform .28s cubic-bezier(.4, .0, .2, 1);
+      z-index: 901; display: flex; flex-direction: column;
+    }
+    .register-drawer.open { transform: translateX(0); }
+    .register-drawer-head {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .register-drawer-head .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .register-drawer-head .close {
+      width: 28px; height: 28px; border-radius: 4px; border: none; background: transparent;
+      color: var(--text-tertiary); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    }
+    .register-drawer-head .close:hover { background: var(--bg-page); color: var(--text-primary); }
+    .register-drawer-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
+    .register-drawer-foot {
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .register-drawer-search {
+      display: flex; gap: 8px; margin-bottom: 14px;
+    }
+    .register-drawer-search .input { flex: 1; }
+    .register-drawer-tip {
+      font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px;
+    }
+    .contract-list { display: flex; flex-direction: column; gap: 10px; }
+    .contract-card {
+      padding: 14px; border: 1px solid var(--border-light); border-radius: 8px;
+      background: #fff; cursor: pointer; transition: all .15s ease;
+    }
+    .contract-card:hover { border-color: #93C5FD; background: #F0F7FF; }
+    .contract-card.selected { border-color: #1E40AF; background: #EFF6FF; box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1); }
+    .contract-card .row1 {
+      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
+    }
+    .contract-card .contract-no { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+    .contract-card .badge-buy { font-size: 11px; color: var(--text-tertiary); }
+    .contract-card .row2 {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+      padding-top: 8px; border-top: 1px dashed var(--border-light);
+    }
+    .contract-card .metric-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
+    .contract-card .metric-value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
+    .contract-card .metric-value.pay { color: #EA580C; }
+    .contract-card .metric-value.paid { color: #15803D; }
+    .contract-card .metric-value.available { color: #1E40AF; }
+    .contract-card.empty-state { cursor: default; text-align: center; color: var(--text-tertiary); padding: 36px 14px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="#">资金管理</a>
+          <span class="sep">/</span>
+          <span class="current">保证金管理</span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="page-h1" style="margin: 0 0 14px 0;">保证金管理</h1>
+
+        <!-- v1.7.99.337 6 个统计卡片：「付款总金额」→「应付保证金金额」改名 + 在「应付保证金金额」后增加「已付保证金金额」 -->
+        <div class="stat-row">
+          <div class="stat-card amount">
+            <div class="label">应付保证金金额(元)</div>
+            <div class="value">6,378,213.37</div>
+          </div>
+          <div class="stat-card claimed">
+            <div class="label">已付保证金金额(元)</div>
+            <div class="value">2,500,000.00</div>
+          </div>
+          <div class="stat-card deposit">
+            <div class="label">已回款总金额(元)</div>
+            <div class="value">6,378,213.37</div>
+          </div>
+          <div class="stat-card current">
+            <div class="label">敞口金额(元)</div>
+            <div class="value">7,207,381.19</div>
+          </div>
+          <div class="stat-card current">
+            <div class="label">当前保证金金额(元)</div>
+            <div class="value">7,207,381.19</div>
+          </div>
+          <div class="stat-card ratio">
+            <div class="label">当前保证金比例</div>
+            <div class="value">17.22%</div>
+          </div>
+        </div>
+
+        <!-- v1.7.99.199：去掉"保证金明细"tab，整个页面没有 tab；按 v1.7.99.184 全站筛选标准删查询/重置按钮 -->
+        <div class="cp-panel" style="margin-top: 0;">
+          <div class="cp-block" style="display: flex; justify-content: space-between; align-items: center;">
+            <div class="cp-filter-summary" style="flex: 1;">
+              <div class="cp-filter-summary-left" style="font-size: 13px; color: var(--text-tertiary);">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+              </div>
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <!-- v1.7.99.337 登记保证金按钮（点击侧边弹窗） -->
+              <button class="btn btn-primary btn-sm" onclick="openRegisterMarginDrawer()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+                登记保证金
+              </button>
+              <button class="btn btn-text btn-sm" onclick="exportData()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y1="3"/></svg>
+                数据导出
+              </button>
+            </div>
+          </div>
+
+          <div id="tab-detail">
+            <!-- 区块 1：筛选区（v1.7.99.67 6 字段） -->
+            <div class="cp-block">
+              <div class="cp-filter">
+                <div class="cp-filter-item" style="min-width: 200px;">
+                  <span class="cp-filter-label">合同编号</span>
+                  <input type="text" class="input" placeholder="请输入合同编号">
+                </div>
+                <div class="cp-filter-item" style="min-width: 200px;">
+                  <span class="cp-filter-label">企业名称</span>
+                  <input type="text" class="input" placeholder="请输入企业名称">
+                </div>
+                <div class="cp-filter-item" style="min-width: 200px;">
+                  <span class="cp-filter-label">品名</span>
+                  <input type="text" class="input" placeholder="请输入品名">
+                </div>
+                <div class="cp-filter-item" style="min-width: 200px;">
+                  <span class="cp-filter-label">业务类型</span>
+                  <select class="select"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+                </div>
+                <div class="cp-filter-item" style="min-width: 220px;">
+                  <span class="cp-filter-label">签订日期</span>
+                  <input type="text" class="input" placeholder="请选择日期范围">
+                </div>
+              </div>
+            </div>
+
+            <!-- 区块 2：表格（v1.7.99.67 11 列） -->
+            <div class="cp-block" style="padding: 0;">
+              <div class="cp-table-wrap" style="overflow-x: auto;">
+                <table class="cp-table">
+                  <thead>
+                    <tr>
+                      <th style="width: 9%;">销售订单/单批次合同编号</th>
+                      <th style="width: 11%;">买方企业</th>
+                      <th style="width: 7%;">品名</th>
+                      <th style="width: 7%;text-align: right;">合同数量(吨)</th>
+                      <th style="width: 9%;text-align: right;">当前比例/合同应缴比例(%)</th>
+                      <th style="width: 9%;text-align: right;">应付保证金金额(元)</th>
+                      <th style="width: 9%;text-align: right;">已付保证金金额(元)</th>
+                      <th style="width: 8%;text-align: right;">已回款总金额(元)</th>
+                      <th style="width: 8%;text-align: right;">敞口金额(元)</th>
+                      <th style="width: 7%;text-align: right;">保证金金额(元)</th>
+                      <th style="width: 8%;">合同签订日期</th>
+                      <th class="col-action" style="width: 8%;text-align: right;">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody id="marginTbody"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <!-- 区块 3：分页 -->
+            <div class="cp-block">
+              <div class="cp-pagination">
+                <div id="paginationInfo">共 400 条记录 · 第 1 / 40 页</div>
+                <div style="display: flex; align-items: center; gap: 14px;">
+                  <div class="cp-pagination-pages" id="paginationPages">
+                    <div class="cp-pagination-page">‹</div>
+                    <div class="cp-pagination-page active">1</div>
+                    <div class="cp-pagination-page">2</div>
+                    <div class="cp-pagination-page">3</div>
+                    <div class="cp-pagination-page">4</div>
+                    <div class="cp-pagination-page">5</div>
+                    <div class="cp-pagination-page">6</div>
+                    <div class="cp-pagination-page">7</div>
+                    <div class="cp-pagination-page">8</div>
+                    <div class="cp-pagination-page">9</div>
+                    <div class="cp-pagination-page">›</div>
+                  </div>
+                  <select class="cp-pagination-size">
+                    <option>10 条/页</option>
+                    <option>20 条/页</option>
+                    <option>50 条/页</option>
+                  </select>
+                  <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- v1.7.99.196：删除原"调整记录" tab 内容（已迁移到详情页"操作记录" tab） -->
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.337 登记保证金侧边抽屉（销售合同列表 → 跳转 margin-register.html） -->
+  <div class="register-drawer-mask" id="registerDrawerMask" onclick="closeRegisterMarginDrawer()"></div>
+  <div class="register-drawer" id="registerDrawer" role="dialog" aria-modal="true" aria-label="登记保证金">
+    <div class="register-drawer-head">
+      <div class="title">登记保证金</div>
+      <button class="close" onclick="closeRegisterMarginDrawer()" aria-label="关闭">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="register-drawer-body">
+      <div class="register-drawer-tip">请选择一笔销售合同进入登记流程。每张卡片显示该合同的应付/已付/剩余可用保证金金额。</div>
+      <div class="register-drawer-search">
+        <input type="text" class="input" placeholder="搜索合同编号 / 买方企业 / 品名" id="registerDrawerSearch" oninput="renderRegisterDrawerList()">
+      </div>
+      <div class="contract-list" id="registerDrawerContractList"></div>
+    </div>
+    <div class="register-drawer-foot">
+      <button class="btn btn-default btn-sm" onclick="closeRegisterMarginDrawer()">取消</button>
+      <button class="btn btn-primary btn-sm" id="registerDrawerNext" onclick="goToRegisterPage()" disabled>选择合同进入登记</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ========== v1.7.99.67 保证金管理 mock 数据（10 行 + 5 行额外 70,000 吨） ========== v1.7.99.337 加 paid 已付保证金金额字段 */
+    var MARGIN_MOCK = [
+      { id: 1, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 250000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 2, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 3, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 500000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 4, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 5, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 350000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 6, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 70000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 7, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 200000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 8, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 9, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 800000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
+      { id: 10, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 300000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' }
+    ];
+    function fmt(n) { return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function renderMarginTable() {
+      var tbody = document.getElementById('marginTbody');
+      if (!tbody) return;
+      tbody.innerHTML = MARGIN_MOCK.map(function(m) {
+        return '<tr>'
+          + '<td class="col-num">' + m.contractNo + '</td>'
+          + '<td>' + m.buyer + '</td>'
+          + '<td>' + m.product + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + fmt(m.qty) + '</td>'
+          + '<td style="text-align: right;" class="ratio-cell">'
+          +   '<span class="ratio-current">' + m.ratioCur + '%</span> / <span class="ratio-required">' + m.ratioReq + '% ↑</span>'
+          + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + fmt(m.payTotal) + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + fmt(m.paid) + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + fmt(m.recTotal) + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + fmt(m.deposit) + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + fmt(m.margin) + '</td>'
+          + '<td>' + m.signDate + '</td>'
+          + '<td class="col-action" style="text-align: right;">'
+          +   '<a href="./margin-adjust-detail.html?adjustNo=DLXLC-DSRMT-' + m.id.toString().padStart(3, '0') + '">查看</a>'
+          + ' <a href="./margin-adjust.html?contractNo=' + m.contractNo + '">保证金调整</a>'
+          + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+    function switchTab(el, key) {
+      document.querySelectorAll('.cp-tab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      document.getElementById('tab-detail').style.display = (key === 'detail') ? '' : 'none';
+    }
+    function exportData() { Utils.toast('已发起数据导出（mock）', 'success'); }
+
+    /* ========== v1.7.99.337 登记保证金侧边抽屉 ========== */
+    var REGISTER_SELECTED = null;
+    function openRegisterMarginDrawer() {
+      REGISTER_SELECTED = null;
+      var next = document.getElementById('registerDrawerNext');
+      if (next) next.disabled = true;
+      var mask = document.getElementById('registerDrawerMask');
+      var drawer = document.getElementById('registerDrawer');
+      if (mask) mask.classList.add('open');
+      if (drawer) drawer.classList.add('open');
+      var search = document.getElementById('registerDrawerSearch');
+      if (search) { search.value = ''; }
+      renderRegisterDrawerList();
+    }
+    function closeRegisterMarginDrawer() {
+      var mask = document.getElementById('registerDrawerMask');
+      var drawer = document.getElementById('registerDrawer');
+      if (mask) mask.classList.remove('open');
+      if (drawer) drawer.classList.remove('open');
+    }
+    function renderRegisterDrawerList() {
+      var list = document.getElementById('registerDrawerContractList');
+      if (!list) return;
+      var search = (document.getElementById('registerDrawerSearch').value || '').trim().toLowerCase();
+      var rows = MARGIN_MOCK.filter(function(m) {
+        if (!search) return true;
+        return (m.contractNo && m.contractNo.toLowerCase().indexOf(search) >= 0)
+          || (m.buyer && m.buyer.toLowerCase().indexOf(search) >= 0)
+          || (m.product && m.product.toLowerCase().indexOf(search) >= 0);
+      });
+      if (rows.length === 0) {
+        list.innerHTML = '<div class="contract-card empty-state">暂无匹配的销售合同</div>';
+        return;
+      }
+      list.innerHTML = rows.map(function(m) {
+        var available = (m.payTotal || 0) - (m.paid || 0);
+        var selectedCls = (REGISTER_SELECTED && REGISTER_SELECTED.id === m.id) ? ' selected' : '';
+        return ''
+          + '<div class="contract-card' + selectedCls + '" data-id="' + m.id + '" onclick="selectContractForRegister(' + m.id + ')">'
+          +   '<div class="row1">'
+          +     '<div class="contract-no">' + m.contractNo + ' · ' + m.product + '</div>'
+          +     '<div class="badge-buy">' + m.buyer + '</div>'
+          +   '</div>'
+          +   '<div class="row2">'
+          +     '<div>'
+          +       '<div class="metric-label">应付保证金(元)</div>'
+          +       '<div class="metric-value pay">' + fmt(m.payTotal) + '</div>'
+          +     '</div>'
+          +     '<div>'
+          +       '<div class="metric-label">已付保证金(元)</div>'
+          +       '<div class="metric-value paid">' + fmt(m.paid) + '</div>'
+          +     '</div>'
+          +     '<div>'
+          +       '<div class="metric-label">剩余可用(元)</div>'
+          +       '<div class="metric-value available">' + fmt(available) + '</div>'
+          +     '</div>'
+          +   '</div>'
+          + '</div>';
+      }).join('');
+    }
+    function selectContractForRegister(id) {
+      REGISTER_SELECTED = MARGIN_MOCK.find(function(m) { return m.id === id; }) || null;
+      renderRegisterDrawerList();
+      var next = document.getElementById('registerDrawerNext');
+      if (next) next.disabled = !REGISTER_SELECTED;
+    }
+    function goToRegisterPage() {
+      if (!REGISTER_SELECTED) {
+        Utils.toast('请先选择一笔销售合同', 'warning');
+        return;
+      }
+      var c = REGISTER_SELECTED;
+      // 携带合同关键字段，跳到 margin-register.html，URL 参数保留（mock 模式下由新页面回读）
+      var params = new URLSearchParams();
+      params.set('contractNo', c.contractNo || '');
+      params.set('buyer', c.buyer || '');
+      params.set('product', c.product || '');
+      params.set('qty', String(c.qty || 0));
+      params.set('ratioReq', String(c.ratioReq || 0));
+      params.set('payTotal', String(c.payTotal || 0));
+      params.set('paid', String(c.paid || 0));
+      window.location.href = './margin-register.html?' + params.toString();
+    }
+
+    renderMarginTable();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>

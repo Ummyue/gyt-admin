@@ -1201,20 +1201,24 @@
     });
     document.getElementById('btnSave').addEventListener('click', () => alert('草稿已保存'));
 
-    // ===== v1.7.99.26 项目小组成员多选 + 模糊搜索（复用 project-apply 逻辑） =====
+    // ===== v1.7.99.26 项目小组成员多选 + 模糊搜索（v1.7.99.325 加 pinyin 字段：首字母 + 全拼均支持模糊匹配，复用 project-apply 逻辑） =====
     const mockMembers = [
-      { id: 'U0001', name: '张磊' },
-      { id: 'U0002', name: '李雪' },
-      { id: 'U0003', name: '王芳' },
-      { id: 'U0004', name: '赵刚' },
-      { id: 'U0005', name: '刘洋' },
-      { id: 'U0006', name: '陈明' },
-      { id: 'U0007', name: '周建' },
-      { id: 'U0008', name: '吴敏' },
-      { id: 'U0009', name: '郑华' },
-      { id: 'U0010', name: '孙峰' },
-      { id: 'U0011', name: '钱伟' },
-      { id: 'U0012', name: '马丽' },
+      { id: 'U0001', name: '张爽',   pinyin: 'zhangshuang',  abbr: 'zs',  dept: '业务部',     role: '业务经理' },
+      { id: 'U0002', name: '李建国', pinyin: 'lijianguo',    abbr: 'ljg', dept: '物流部',     role: '物流主管' },
+      { id: 'U0003', name: '王伟',   pinyin: 'wangwei',      abbr: 'ww',  dept: '风控部',     role: '风控经理' },
+      { id: 'U0004', name: '赵敏',   pinyin: 'zhaomin',      abbr: 'zm',  dept: '财务部',     role: '财务总监' },
+      { id: 'U0005', name: '刘洋',   pinyin: 'liuyang',      abbr: 'ly',  dept: '仓储部',     role: '仓储主管' },
+      { id: 'U0006', name: '陈静',   pinyin: 'chenjing',     abbr: 'cj',  dept: '业务部',     role: '业务员' },
+      { id: 'U0007', name: '周建',   pinyin: 'zhoujian',     abbr: 'zj',  dept: '法务部',     role: '法务专员' },
+      { id: 'U0008', name: '吴敏',   pinyin: 'wumin',        abbr: 'wm',  dept: '运营部',     role: '运营经理' },
+      { id: 'U0009', name: '郑伟',   pinyin: 'zhengwei',     abbr: 'zw',  dept: '业务部',     role: '业务总监' },
+      { id: 'U0010', name: '孙峰',   pinyin: 'sunfeng',      abbr: 'sf',  dept: '物流部',     role: '物流经理' },
+      { id: 'U0011', name: '钱伟',   pinyin: 'qianwei',      abbr: 'qw',  dept: '风控部',     role: '风控专员' },
+      { id: 'U0012', name: '马丽',   pinyin: 'mali',         abbr: 'ml',  dept: '财务部',     role: '会计' },
+      { id: 'U0013', name: '余进',   pinyin: 'yujin',        abbr: 'yj',  dept: '业务部',     role: '业务经理' },
+      { id: 'U0014', name: '岳金',   pinyin: 'yuejin',       abbr: 'yj2', dept: '业务部',     role: '业务员' },
+      { id: 'U0015', name: '黄强',   pinyin: 'huangqiang',   abbr: 'hq',  dept: '仓储部',     role: '仓储经理' },
+      { id: 'U0016', name: '徐丽',   pinyin: 'xuli',         abbr: 'xl',  dept: '财务部',     role: '出纳' },
     ];
     const selectedMembers = [];
 
@@ -1238,14 +1242,26 @@
     }
     document.getElementById('memberSearch').addEventListener('input', function() {
       const kw = this.value.trim().toLowerCase();
+      // v1.7.99.325 同时匹配：name（中文）/ pinyin（全拼）/ abbr（首字母）/ dept（部门）/ role（岗位）/ id（工号）
       const list = kw
-        ? mockMembers.filter(function(m) { return m.name.includes(kw) || m.id.toLowerCase().includes(kw); })
+        ? mockMembers.filter(function(m) {
+            return m.name.includes(kw)
+              || (m.pinyin && m.pinyin.indexOf(kw) > -1)
+              || (m.abbr && m.abbr.indexOf(kw.replace(/\s/g, '')) > -1)
+              || (m.dept && m.dept.includes(kw))
+              || (m.role && m.role.includes(kw))
+              || m.id.toLowerCase().includes(kw);
+          })
         : mockMembers;
       const html = list.map(function(m) {
         const picked = selectedMembers.find(function(x) { return x.id === m.id; });
+        // v1.7.99.325 推荐项主显示 name + 部门/岗位，辅显示 拼音首字母 + 工号
         return '<div class="member-suggest-item' + (picked ? ' disabled' : '') + '" data-id="' + m.id + '">'
-          + '<span>' + m.name + '</span>'
-          + '<span class="member-id">' + m.id + (picked ? '（已选）' : '') + '</span>'
+          + '<div style="display: flex; align-items: center; gap: 8px; flex: 1; min-width: 0;">'
+          +   '<span style="font-size: 13px; color: var(--text-primary); font-weight: 500;">' + m.name + '</span>'
+          +   '<span style="font-size: 11px; color: var(--text-tertiary);">' + m.dept + ' · ' + m.role + '</span>'
+          + '</div>'
+          + '<span class="member-id">' + (m.abbr || '').toUpperCase() + ' · ' + m.id + (picked ? '（已选）' : '') + '</span>'
           + '</div>';
       }).join('');
       const suggest = document.getElementById('memberSuggest');

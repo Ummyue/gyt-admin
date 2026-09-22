@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登记保证金 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    .form-label { display: block; font-size: 13px; color: var(--text-primary); margin-bottom: 6px; }
+    .form-label .required { color: #DC2626; margin-right: 2px; }
+    .form-input, .form-select, .form-textarea {
+      width: 100%; padding: 6px 10px; border: 1px solid var(--border-default);
+      border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff; box-sizing: border-box;
+    }
+    .form-input { height: 32px; }
+    .form-input:disabled, .form-select:disabled { background: #F9FAFB; color: var(--text-tertiary); cursor: not-allowed; }
+    .form-textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+    /* 区块 */
+    .info-section { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .info-section-head {
+      padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .info-section-head::before {
+      content: ''; display: inline-block; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px;
+    }
+    .info-section-body { padding: 20px; }
+    /* 合同信息网格 3 列 4 行（12 字段） */
+    .contract-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 20px; }
+    .contract-item { display: flex; flex-direction: column; gap: 4px; }
+    .contract-item .label { font-size: 12px; color: var(--text-tertiary); }
+    .contract-item .value { font-size: 13px; color: var(--text-primary); font-weight: 500; font-family: var(--font-mono); }
+
+    /* v1.7.99.337 登记信息 5 字段 3 列 + 等比例冲抵设置 + 计算回显 */
+    .register-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; }
+    .register-grid .full { grid-column: 1 / -1; }
+    /* 字段内联：应付金额 input + 比例 input（小尺寸） */
+    .inline-pair { display: flex; gap: 8px; align-items: center; }
+    .inline-pair .form-input { flex: 1; }
+    .inline-pair .ratio-input { width: 100px; flex-shrink: 0; }
+    .inline-pair .sep { color: var(--text-tertiary); font-size: 12px; white-space: nowrap; }
+    /* 蓝底提示条 */
+    .tip-box {
+      padding: 10px 16px; background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 4px; font-size: 13px; color: #1E40AF; margin-bottom: 16px;
+    }
+    .tip-box .label { font-weight: 600; margin-right: 8px; }
+
+    /* 等比例冲抵货款 设置卡（紫色 v1.7.99.335） */
+    .deposit-offset-config {
+      padding: 14px 16px; background: #FAF5FF; border: 1px solid #DDD6FE;
+      border-radius: 6px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .deposit-offset-config .switch-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .deposit-offset-config .switch-label {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6B21A8;
+    }
+    .deposit-offset-config .switch-label .icon {
+      display: inline-block; width: 12px; height: 12px;
+      border: 1.5px solid #7C3AED; border-radius: 2px; position: relative;
+    }
+    .deposit-offset-config .switch-label .icon::after {
+      content: ''; position: absolute; width: 6px; height: 3px;
+      border-left: 1.5px solid #7C3AED; border-bottom: 1.5px solid #7C3AED;
+      transform: rotate(-45deg); top: 2px; left: 2px;
+    }
+    .deposit-offset-config .ratio-row {
+      display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary);
+    }
+    .deposit-offset-config .ratio-row .form-input { width: 100px; padding: 4px 8px; height: 28px; }
+    .deposit-offset-config .ratio-row.disabled { opacity: 0.4; pointer-events: none; }
+    .deposit-offset-config .summary {
+      padding: 8px 10px; background: #fff; border: 1px solid #DDD6FE; border-radius: 4px;
+      font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+    }
+    .deposit-offset-config .summary strong { color: #6B21A8; }
+
+    /* iOS 风格开关 */
+    .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #D1D5DB; transition: .2s; border-radius: 22px;
+    }
+    .switch .slider::before {
+      content: ''; position: absolute; height: 18px; width: 18px; left: 2px; bottom: 2px;
+      background: white; transition: .2s; border-radius: 50%;
+    }
+    .switch input:checked + .slider { background: #7C3AED; }
+    .switch input:checked + .slider::before { transform: translateX(16px); }
+
+    /* 实时联动回显（应付总额 / 保证金冲抵） */
+    .calc-echo {
+      padding: 10px 12px; background: #F0F9FF; border: 1px dashed #93C5FD;
+      border-radius: 4px; font-size: 12px; color: #1E40AF; line-height: 1.6;
+    }
+    .calc-echo strong { font-family: var(--font-mono); }
+    .calc-echo.muted { color: var(--text-tertiary); background: var(--bg-page); border-color: var(--border-light); }
+    .calc-echo small { display: block; color: var(--text-tertiary); font-size: 11px; margin-top: 4px; }
+
+    /* 附件表 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td {
+      border: 1px solid var(--border-light); padding: 10px 14px;
+      font-size: 13px; text-align: left; vertical-align: middle;
+    }
+    .attach-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .attach-table .upload-btn {
+      padding: 4px 14px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 12px; color: var(--text-primary);
+    }
+    .attach-table .upload-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .attach-table .file-item { display: flex; align-items: center; gap: 8px; }
+    .attach-table .file-item .file-time { font-size: 11px; color: var(--text-tertiary); }
+    .attach-table .file-item .file-remove { color: #DC2626; cursor: pointer; }
+
+    /* 底部按钮 */
+    .form-footer {
+      display: flex; justify-content: center; gap: 12px; padding: 20px 0 40px 0;
+    }
+    .form-footer .btn-cancel {
+      padding: 8px 24px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 14px;
+    }
+    .form-footer .btn-submit {
+      padding: 8px 24px; border: 0; border-radius: 4px;
+      background: #1E40AF; color: #fff; cursor: pointer; font-size: 14px;
+    }
+
+    /* 二次确认弹窗 */
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 999;
+      display: none; align-items: center; justify-content: center;
+    }
+    .modal-mask.show { display: flex; }
+    .modal {
+      background: #fff; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      width: 480px; max-width: 90vw; overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-header .title { font-size: 14px; font-weight: 600; }
+    .modal-header .close { color: var(--text-tertiary); cursor: pointer; font-size: 18px; line-height: 1; }
+    .modal-body { padding: 24px 20px; }
+    .modal-body .warning {
+      display: flex; align-items: flex-start; gap: 10px; margin-bottom: 14px;
+    }
+    .modal-body .warning .icon {
+      width: 20px; height: 20px; background: #F59E0B; color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 700; flex-shrink: 0;
+    }
+    .modal-body .warning .text { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    .modal-body .desc { font-size: 13px; color: var(--text-tertiary); line-height: 1.6; }
+    .modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .modal-footer .btn-default {
+      padding: 6px 16px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 13px;
+    }
+    .modal-footer .btn-primary {
+      padding: 6px 16px; border: 0; border-radius: 4px;
+      background: #1E40AF; color: #fff; cursor: pointer; font-size: 13px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./margin-pool.html">资金管理</a>
+          <span class="sep">/</span>
+          <a href="./margin-pool.html">保证金管理</a>
+          <span class="sep">/</span>
+          <span class="current">登记保证金</span>
+        </div>
+
+        <!-- 区块 1：销售订单/单批次合同信息（v1.7.99.337 只读 12 字段，从 URL 参数填充） -->
+        <div class="info-section">
+          <div class="info-section-head">销售订单/单批次合同信息</div>
+          <div class="info-section-body">
+            <div class="contract-grid">
+              <div class="contract-item"><span class="label">合同编号</span><span class="value" id="ci-contractNo">—</span></div>
+              <div class="contract-item"><span class="label">买方企业</span><span class="value" id="ci-buyer">—</span></div>
+              <div class="contract-item"><span class="label">卖方企业</span><span class="value">河南中豫港通供应链管理有限公司</span></div>
+              <div class="contract-item"><span class="label">品名</span><span class="value" id="ci-product">—</span></div>
+              <div class="contract-item"><span class="label">计量单位</span><span class="value">吨</span></div>
+              <div class="contract-item"><span class="label">合同数量(吨)</span><span class="value" id="ci-qty">—</span></div>
+              <div class="contract-item"><span class="label">合同单价(元/吨)</span><span class="value">3,400</span></div>
+              <div class="contract-item"><span class="label">税率(%)</span><span class="value">13</span></div>
+              <div class="contract-item"><span class="label">签订日期</span><span class="value" id="ci-signDate">—</span></div>
+              <div class="contract-item"><span class="label">合同交货期限</span><span class="value">2026-01-22 ~ 2026-12-31</span></div>
+              <div class="contract-item"><span class="label">运输方式</span><span class="value">火运</span></div>
+              <div class="contract-item"><span class="label">业务实际负责人</span><span class="value">张三-13328888888</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：登记信息（v1.7.99.337 移除「保证金调整信息」改为 4 字段 + 等比例冲抵设置 + 计算回显） -->
+        <div class="info-section">
+          <div class="info-section-head">登记信息</div>
+          <div class="info-section-body">
+            <div class="tip-box">
+              <span class="label">计算规则：</span>用户输入的「本次登记金额」= 应付保证金的 <strong id="ruleCashRatio">90%</strong>（现金实付部分），系统自动按比例用保证金冲抵补足 <strong id="ruleDepositRatio">10%</strong>。所有比例均在下方「应付保证金金额」可调整。
+            </div>
+            <div class="register-grid">
+              <!-- 字段 1：应付保证金金额（元 + 比例） -->
+              <div>
+                <label class="form-label"><span class="required">*</span>应付保证金金额(元)</label>
+                <div class="inline-pair">
+                  <input type="text" class="form-input" id="rg-payTotal" placeholder="应付金额自动按合同登记时比例计算">
+                  <span class="sep">比例</span>
+                  <input type="number" class="form-input ratio-input" id="rg-ratioReq" min="0" max="100" step="0.01" placeholder="15">
+                  <span class="sep">%</span>
+                </div>
+              </div>
+              <!-- 字段 2：本次登记金额（用户输入） -->
+              <div>
+                <label class="form-label"><span class="required">*</span>本次登记金额(元)</label>
+                <input type="text" class="form-input" id="rg-thisPaid" placeholder="请输入本次登记金额">
+              </div>
+              <!-- 字段 3：已付保证金金额（只读） -->
+              <div>
+                <label class="form-label">已付保证金金额(元)</label>
+                <input type="text" class="form-input" id="rg-paidHistory" disabled>
+              </div>
+
+              <!-- 字段 4：等比例冲抵货款（开关 + 比例） -->
+              <div class="full">
+                <label class="form-label">是否等比例冲抵货款</label>
+                <div class="deposit-offset-config">
+                  <div class="switch-row">
+                    <div class="switch-label">
+                      <span class="icon"></span>
+                      <span>等比例冲抵每笔货款</span>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" id="rg-depositEnabled">
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="ratio-row disabled" id="rg-ratioRow">
+                    <span>冲抵货款比例</span>
+                    <input type="number" class="form-input" id="rg-depositRatio" min="0" max="100" step="0.01" placeholder="10">
+                    <span>%</span>
+                    <span style="color: var(--text-tertiary);">（开启后启用，留空按合同登记比例自动计算）</span>
+                  </div>
+                  <div class="summary" id="rg-summary">
+                    关闭状态：本次登记金额 = 应付保证金金额，无保证金冲抵。
+                  </div>
+                </div>
+              </div>
+
+              <!-- 计算回显（实时联动） -->
+              <div class="full">
+                <label class="form-label">计算回显</label>
+                <div class="calc-echo muted" id="rg-echo">
+                  <span style="color: var(--text-tertiary);">请输入「本次登记金额」实时查看应付总额 / 保证金冲抵。</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 3：附件 -->
+        <div class="info-section">
+          <div class="info-section-head">附件</div>
+          <div class="info-section-body">
+            <div class="tip-box">
+              <span class="label">附件上传要求：</span>可支持格式为 png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100MB 的文件。
+            </div>
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 20%;">单据类型</th>
+                  <th>文件名称</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>相关凭证附件</td>
+                  <td>
+                    <div class="file-item">
+                      <button class="upload-btn" type="button" onclick="uploadAttach()">+ 上传</button>
+                      <span id="attachFileName" style="display: none; color: #1E40AF;"></span>
+                      <span class="file-remove" id="attachRemove" style="display: none;" onclick="removeFile()">×</span>
+                      <span class="file-time" id="attachFileTime" style="display: none;"></span>
+                    </div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="form-footer">
+          <button class="btn-cancel" onclick="confirmCancel()">取消</button>
+          <button class="btn-submit" onclick="confirmSubmit()">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 取消确认弹窗 -->
+  <div class="modal-mask" id="cancelModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="title">取消确认</span>
+        <span class="close" onclick="closeModal('cancelModal')">×</span>
+      </div>
+      <div class="modal-body">
+        <div class="warning">
+          <span class="icon">!</span>
+          <span class="text">确定要进行取消操作吗？</span>
+        </div>
+        <div class="desc">取消后，数据不会被保存。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('cancelModal')">取消</button>
+        <button class="btn-primary" onclick="doCancel()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提交确认弹窗 -->
+  <div class="modal-mask" id="submitModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span class="title">提交确认</span>
+        <span class="close" onclick="closeModal('submitModal')">×</span>
+      </div>
+      <div class="modal-body">
+        <div class="warning">
+          <span class="icon">!</span>
+          <span class="text">请确认信息填写完成并提交？</span>
+        </div>
+        <div class="desc" id="submitDesc">提交后，登记信息将直接保存到系统中。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('submitModal')">取消</button>
+        <button class="btn-primary" onclick="doSubmit()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    /* ========== v1.7.99.337 登记保证金：从 URL 读取合同信息 + 联动计算 ========== */
+    // 解析 URL 参数并回显合同信息
+    (function fillContractFromUrl() {
+      var p = new URLSearchParams(window.location.search);
+      var fields = {
+        contractNo: 'ci-contractNo',
+        buyer: 'ci-buyer',
+        product: 'ci-product'
+      };
+      var qty = p.get('qty');
+      if (qty) {
+        var el = document.getElementById('ci-qty');
+        if (el) el.textContent = Number(qty).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
+      }
+      var signDate = new Date();
+      var year = signDate.getFullYear() - 3;
+      var ciSignDate = document.getElementById('ci-signDate');
+      if (ciSignDate) ciSignDate.textContent = year + '-12-11';
+
+      Object.keys(fields).forEach(function(k) {
+        var v = p.get(k);
+        var el = document.getElementById(fields[k]);
+        if (el) el.textContent = v ? v : '—';
+      });
+
+      var payTotal = parseFloat(p.get('payTotal'));
+      var paid = parseFloat(p.get('paid'));
+      var ratioReq = parseFloat(p.get('ratioReq'));
+      if (!isNaN(payTotal)) {
+        document.getElementById('rg-payTotal').value = payTotal.toFixed(2);
+      }
+      if (!isNaN(paid)) {
+        document.getElementById('rg-paidHistory').value = paid.toFixed(2);
+      }
+      if (!isNaN(ratioReq)) {
+        document.getElementById('rg-ratioReq').value = ratioReq;
+      }
+    })();
+
+    // 数字输入格式化（千分位 + 2 位小数）
+    function formatMoneyInput(el) {
+      var raw = (el.value || '').replace(/[^\d.]/g, '');
+      var num = parseFloat(raw);
+      if (isNaN(num)) { el.value = ''; return; }
+      var parts = raw.split('.');
+      var intPart = parts[0];
+      var decPart = parts[1] !== undefined ? '.' + parts[1].slice(0, 2) : '';
+      var formattedInt = Number(intPart || 0).toLocaleString('zh-CN');
+      el.value = formattedInt + decPart;
+    }
+    function parseMoney(s) {
+      if (!s) return 0;
+      return parseFloat(String(s).replace(/[^\d.]/g, '')) || 0;
+    }
+
+    /* ========== v1.7.99.337 等比例冲抵计算（沿用 v1.7.99.336 calcOffset 公式） ==========
+       用户输入「本次登记金额」pay = 应付保证金的 (1 - ratio)；
+       应付总额 totalPayable = pay / (1 - ratio/100)；
+       保证金冲抵 depositOffset = totalPayable * ratio/100
+       若等比例开关关闭：不参与比例分摊，本次登记金额 = 应付保证金金额（无冲抵） */
+    function calcRegisterOffset(pay, ratio) {
+      if (!ratio || ratio <= 0 || ratio >= 100) {
+        return { totalPayable: pay, depositOffset: 0, cashRatio: 100, depositRatio: ratio || 0 };
+      }
+      var cashRatio = 100 - ratio;
+      var totalPayable = pay / (cashRatio / 100);
+      var depositOffset = totalPayable * ratio / 100;
+      return { totalPayable: totalPayable, depositOffset: depositOffset, cashRatio: cashRatio, depositRatio: ratio };
+    }
+
+    function refreshCalcEcho() {
+      var echoEl = document.getElementById('rg-echo');
+      var summaryEl = document.getElementById('rg-summary');
+      var ruleCashEl = document.getElementById('ruleCashRatio');
+      var ruleDepositEl = document.getElementById('ruleDepositRatio');
+      if (!echoEl || !summaryEl) return;
+
+      var pay = parseMoney(document.getElementById('rg-thisPaid').value);
+      var enabled = document.getElementById('rg-depositEnabled').checked;
+      var ratio = parseFloat(document.getElementById('rg-depositRatio').value);
+
+      // 没启用 → 关闭态文案
+      if (!enabled) {
+        ruleCashEl.textContent = '100';
+        ruleDepositEl.textContent = '0';
+        summaryEl.innerHTML = '关闭状态：本次登记金额 = 应付保证金金额，无保证金冲抵。';
+        if (pay <= 0) {
+          echoEl.className = 'calc-echo muted';
+          echoEl.innerHTML = '<span style="color: var(--text-tertiary);">请输入「本次登记金额」实时查看应付总额 / 保证金冲抵。</span>';
+        } else {
+          echoEl.className = 'calc-echo';
+          echoEl.innerHTML = '关闭态：本次登记金额 = <strong>' + pay.toFixed(2) + '</strong> 元（应付保证金全额，无冲抵）';
+        }
+        return;
+      }
+
+      // 启用 → 比例校验
+      if (isNaN(ratio) || ratio <= 0) {
+        ratio = 0; // 未填比例时按 0 处理（回显关闭态逻辑）
+      }
+      ruleCashEl.textContent = (100 - ratio).toFixed(2);
+      ruleDepositEl.textContent = ratio.toFixed(2);
+      if (ratio > 0 && ratio < 100) {
+        summaryEl.innerHTML = '开启：每次登记货款时，用户仅输入应付的 <strong>' + (100 - ratio).toFixed(2) + '%</strong>（现金实付），保证金按 <strong>' + ratio.toFixed(2) + '%</strong> 自动冲抵补足。';
+      } else {
+        summaryEl.innerHTML = '请输入正确的冲抵比例（0-100 之间）。';
+      }
+
+      if (pay <= 0) {
+        echoEl.className = 'calc-echo muted';
+        echoEl.innerHTML = '<span style="color: var(--text-tertiary);">请输入「本次登记金额」实时查看应付总额 / 保证金冲抵。</span>';
+        return;
+      }
+      var r = calcRegisterOffset(pay, ratio);
+      echoEl.className = 'calc-echo';
+      echoEl.innerHTML = ''
+        + '应付总额 <strong>' + r.totalPayable.toFixed(2) + '</strong> 元 = 用户输入 <strong>' + pay.toFixed(2) + '</strong> 元（应付的 <strong>' + r.cashRatio.toFixed(2) + '%</strong>）+ 保证金冲抵 <strong>' + r.depositOffset.toFixed(2) + '</strong> 元（<strong>' + r.depositRatio.toFixed(2) + '%</strong>）'
+        + '<small>（用户仅登记应付的 ' + r.cashRatio.toFixed(2) + '%，保证金按 ' + r.depositRatio.toFixed(2) + '% 自动补足冲抵）</small>';
+    }
+
+    // 联动事件
+    function bindEvents() {
+      // 千分位格式化（本次登记金额 / 应付保证金金额）
+      ['rg-payTotal', 'rg-thisPaid'].forEach(function(id) {
+        var el = document.getElementById(id);
+        if (!el) return;
+        el.addEventListener('input', function() { formatMoneyInput(el); refreshCalcEcho(); });
+        el.addEventListener('blur', function() { formatMoneyInput(el); });
+      });
+      // 比例 input
+      var ratioReqEl = document.getElementById('rg-ratioReq');
+      if (ratioReqEl) ratioReqEl.addEventListener('input', refreshCalcEcho);
+      var depositRatioEl = document.getElementById('rg-depositRatio');
+      if (depositRatioEl) depositRatioEl.addEventListener('input', refreshCalcEcho);
+      // 等比例开关
+      var depositEnabled = document.getElementById('rg-depositEnabled');
+      if (depositEnabled) {
+        depositEnabled.addEventListener('change', function() {
+          var row = document.getElementById('rg-ratioRow');
+          if (row) row.classList.toggle('disabled', !this.checked);
+          refreshCalcEcho();
+        });
+      }
+      // 默认未启用 → 比例 row 已加 disabled 类
+      refreshCalcEcho();
+    }
+    bindEvents();
+
+    /* ========== 附件 mock ========== */
+    function uploadAttach() {
+      document.getElementById('attachFileName').textContent = 'margin-reg-' + Date.now() + '.pdf';
+      document.getElementById('attachFileName').style.display = 'inline';
+      document.getElementById('attachRemove').style.display = 'inline';
+      var now = new Date();
+      var pad = function(n) { return n < 10 ? '0' + n : n; };
+      document.getElementById('attachFileTime').textContent = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+      document.getElementById('attachFileTime').style.display = 'inline';
+      Utils.toast('已上传凭证附件（mock）', 'success');
+    }
+    function removeFile() {
+      document.getElementById('attachFileName').style.display = 'none';
+      document.getElementById('attachRemove').style.display = 'none';
+      document.getElementById('attachFileTime').style.display = 'none';
+      document.getElementById('attachFileName').textContent = '';
+    }
+
+    /* ========== 提交/取消 ========== */
+    function closeModal(id) { document.getElementById(id).classList.remove('show'); }
+    function confirmCancel() { document.getElementById('cancelModal').classList.add('show'); }
+    function confirmSubmit() {
+      var pay = parseMoney(document.getElementById('rg-thisPaid').value);
+      if (pay <= 0) {
+        Utils.toast('请先填写「本次登记金额」', 'warning');
+        return;
+      }
+      document.getElementById('submitModal').classList.add('show');
+    }
+    function doCancel() { window.location.href = './margin-pool.html'; }
+    function doSubmit() {
+      Utils.toast('登记保证金已提交（mock）', 'success');
+      setTimeout(function() { window.location.href = './margin-pool.html'; }, 800);
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>

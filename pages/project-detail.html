@@ -124,6 +124,57 @@
       box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);
     }
 
+    /* v1.7.99.323 合规问卷 · 页尾只读详情 */
+    .survey-readonly-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; }
+    .survey-readonly-table thead th {
+      background: #F8FAFC; color: var(--text-secondary); font-weight: 500; font-size: 12px;
+      padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light);
+    }
+    .survey-readonly-table thead th:nth-child(1) { width: 64px; text-align: center; }
+    .survey-readonly-table thead th:nth-child(3) { width: 110px; text-align: center; }
+    .survey-readonly-table tbody td {
+      padding: 10px 12px; border-bottom: 1px solid #F1F5F9;
+      color: var(--text-primary); vertical-align: top; line-height: 1.6;
+    }
+    .survey-readonly-table tbody td:nth-child(1) {
+      text-align: center; font-family: var(--font-mono); color: var(--text-tertiary); font-weight: 500;
+    }
+    .survey-readonly-table tbody td:nth-child(3) { text-align: center; }
+    .survey-readonly-table tbody tr:last-child td { border-bottom: none; }
+    .survey-readonly-answer {
+      display: inline-block; padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 500;
+      min-width: 56px;
+    }
+    .survey-readonly-answer-yes { background: #F0FDF4; color: #047857; }
+    .survey-readonly-answer-no { background: #FEF2F2; color: #B91C1C; }
+    .survey-readonly-answer-authorized { background: #DBEAFE; color: #1D4ED8; }
+    .survey-readonly-answer-unauthorized { background: #FEF2F2; color: #B91C1C; }
+    .survey-readonly-sub {
+      background: #F8FAFC; border-left: 3px solid #94A3B8;
+    }
+    .survey-readonly-sub td:first-child::before {
+      content: '↳'; color: #94A3B8; margin-right: 4px;
+    }
+    .survey-readonly-empty {
+      padding: 40px 16px; text-align: center; color: var(--text-tertiary); font-size: 13px;
+    }
+    .survey-readonly-tabbar {
+      display: flex; gap: 8px; align-items: center;
+      padding: 12px 16px; border-bottom: 1px solid var(--border-light); background: #FFFBEB;
+    }
+    .survey-readonly-tabbar-label { font-size: 12px; color: #92400E; margin-right: 4px; }
+    .survey-readonly-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 2px 10px; background: #F3F4F6; color: #4B5563;
+      border-radius: 999px; font-size: 11px; font-weight: 500;
+      border: 1px solid #E5E7EB;
+    }
+    .survey-readonly-badge::before {
+      content: ''; display: inline-block; width: 6px; height: 6px;
+      border-radius: 50%; background: #9CA3AF;
+    }
+    }
+
     /* v1.7.99.307 客户准入材料 · 紧凑分组折叠布局（替换原 grid 1:2 长列表） */
     .materials-summary { display: flex; align-items: center; gap: 8px; padding: 0 0 12px; border-bottom: 1px solid var(--border-light); margin-bottom: 12px; flex-wrap: wrap; }
     .materials-summary .sum-chip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 12px; font-size: 12px; font-weight: 500; }
@@ -326,7 +377,7 @@
               <div class="step-circle completed" id="entryStep1Circle">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <div class="step-label">项目基本信息</div>
+            <div class="step-label" data-step="1">项目基本信息</div>
             <div class="step-time">2026-07-12 12:22</div>
           </div>
           <div class="step-line completed"></div>
@@ -334,7 +385,7 @@
             <div class="step-circle completed" id="entryStep2Circle">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <div class="step-label">企业尽调报告</div>
+            <div class="step-label" data-step="2">企业尽调报告</div>
             <div class="step-time">2026-07-15 09:10</div>
           </div>
           <div class="step-line completed"></div>
@@ -343,22 +394,28 @@
             <div class="step-circle completed" id="entryStep3Circle">
               <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
             </div>
-            <div class="step-label">贸易风控合规报告</div>
+            <div class="step-label" data-step="3">贸易风控合规报告</div>
             <div class="step-time">2026-07-15 10:25</div>
           </div>
           <div class="step-line completed"></div>
           <div class="step" onclick="switchEntryStep(4)" style="cursor: pointer;" title="点击查看审批详情">
             <div class="step-circle current" id="entryStep4Circle">4</div>
-            <div class="step-label">审批详情</div>
+            <div class="step-label" data-step="4">审批详情</div>
             <div class="step-time" style="color: var(--color-primary);">进行中</div>
           </div>
           <div class="step-line" id="step5Line"></div>
           <div class="step" id="step5Wrap" onclick="switchEntryStep(5)" style="cursor: pointer;" title="点击查看准入完成">
             <div class="step-circle" id="step5Circle">5</div>
-            <div class="step-label">准入完成</div>
+            <div class="step-label" data-step="5">准入完成</div>
             <div class="step-time" id="step5Time" style="visibility: hidden;">-</div>
           </div>
         </div>
+      </div>
+
+      <!-- v1.7.99.333 步骤条首次引导气泡（sessionStorage 记忆） -->
+      <div class="stepbar-hint" id="stepbarHint" style="display: none;">
+        <span class="stepbar-hint-icon">i</span>
+        <span>提示：步骤条可<strong>点击切换</strong>查看对应内容（已完成的步骤也可回看）</span>
       </div>
 
       <!-- v1.7.99.274 步骤 1：项目基本信息（项目描述 + 总投资信息） -->
@@ -425,22 +482,7 @@
 
       <!-- v1.7.99.274 步骤 2：企业尽调报告（风控合规提醒） -->
       <div id="stepPanel2" hidden>
-        <!-- v1.7.99.279 合规问卷触发卡 -->
-        <div class="card" style="margin-bottom: 16px; background: linear-gradient(135deg, #FFFBEB 0%, #FEF3C7 100%); border-color: #FDE68A;">
-          <div class="card-body" style="display: flex; align-items: center; gap: 16px;">
-            <div style="width: 44px; height: 44px; border-radius: 50%; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.25);">
-              <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#FFFFFF" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11H1l3-3m0 6l-3-3"/><path d="M11 13h8"/><path d="M11 17h8"/><circle cx="12" cy="12" r="10"/></svg>
-            </div>
-            <div style="flex: 1;">
-              <div style="font-size: 14px; font-weight: 600; color: #92400E; margin-bottom: 4px;">合规问卷 · 生成风控提醒</div>
-              <div style="font-size: 12px; color: #A16207; line-height: 1.5;">针对 11 项合规考察项填写问卷，系统将根据答案动态生成企业风险扫描结果</div>
-            </div>
-            <button type="button" class="btn" onclick="openComplianceSurveyDialog()" style="background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; border: 0; padding: 8px 20px; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.25);">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-              <span id="surveyBtnText">开始填写</span>
-            </button>
-          </div>
-        </div>
+        <!-- v1.7.99.323 合规问卷触发卡已移至页尾只读展示（详情页已审批后不可修改） -->
         <!-- v1.7.99.274.6 工商信息（按 select 切换企业） -->
         <div id="basicInfoContainer"></div>
       <!-- v1.7.99.274.6 股权关系（按 select 切换企业） -->
@@ -487,24 +529,7 @@
           </div>
         </div>
         <!-- /v1.7.99.298 -->
-
-        <!-- v1.7.99.308 客户准入问卷调查（v1.7.99.306 apply.html 同步版） -->
-        <div class="card" style="margin-bottom: 16px;">
-          <div class="card-header">
-            <div class="card-title">客户准入问卷调查</div>
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 12px; color: var(--text-tertiary);">
-              <span id="detailSurveyStatus">未填写</span>
-              <button type="button" class="btn btn-secondary" id="detailSurveyBtn" onclick="openDetailComplianceSurveyDialog()" style="padding: 4px 12px; font-size: 12px;">填写问卷</button>
-            </div>
-          </div>
-          <div class="card-body" style="padding: 12px 24px;">
-            <div style="font-size: 12px; color: var(--text-tertiary); line-height: 1.6;">
-              针对上下游每家企业填写 11 项企业级合规考察项。系统会根据每家企业的答案自动在「企业风险扫描结果」中生成对应风险条目。
-              <span style="display: block; margin-top: 4px;">已答：<span id="detailSurveyProgress">0</span> / 33（按 3 家企业 × 11 题统计）</span>
-            </div>
-          </div>
-        </div>
-        <!-- /v1.7.99.308 -->
+        <!-- v1.7.99.323 合规问卷调查状态卡已移至页尾只读展示（详情页已审批后不可修改） -->
         </div>
 
         <!-- /v1.7.99.274 stepPanel2 企业尽调报告（风控合规提醒） -->
@@ -537,28 +562,28 @@
                     <td class="risk-td-category">关联关系类</td>
                     <td class="risk-td-name">关联交易风险</td>
                     <td class="risk-td-rule"><ul class="risk-rule-list"><li>上下游为同一企业或同一实际控制人</li></ul></td>
-                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，关联关系图谱显示「河南军牧原国际贸易有限公司」与其上游供应商「郑州牧原粮油有限公司」穿透至同一实际控制人（张志明），存在关联企业间循环贸易风险。</div></td>
+                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，关联关系图谱显示「河南军牧原国际贸易有限公司」与其上游供应商「郑州牧原粮油有限公司」穿透至同一实际控制人（张志明），存在关联企业间循环贸易风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span></div></td>
                     <td class="risk-td-result"><span class="risk-result-tag risk-result-warn">风险</span></td>
                   </tr>
                   <tr class="risk-row risk-row-warn">
                     <td class="risk-td-category">关联关系类</td>
                     <td class="risk-td-name">关联交易风险</td>
                     <td class="risk-td-rule"><ul class="risk-rule-list"><li>上下游交叉持股≥25%</li></ul></td>
-                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，「河南军牧原国际贸易有限公司」上游供应商「郑州牧原粮油有限公司」股东与本企业股东存在交叉持股情况（持股比例 35%），需关注利益输送风险。</div></td>
+                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，「河南军牧原国际贸易有限公司」上游供应商「郑州牧原粮油有限公司」股东与本企业股东存在交叉持股情况（持股比例 35%），需关注利益输送风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span></div></td>
                     <td class="risk-td-result"><span class="risk-result-tag risk-result-warn">风险</span></td>
                   </tr>
                   <tr class="risk-row">
                     <td class="risk-td-category">关联关系类</td>
                     <td class="risk-td-name">关联交易风险</td>
                     <td class="risk-td-rule"><ul class="risk-rule-list"><li>上下游董监高人员完全重合或交叉任职≥3 人</li></ul></td>
-                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，本企业上下游董监高人员中重合 1 人（张志明同时担任双方董事），未达到预警阈值（≥3 人）。</div></td>
+                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，本企业上下游董监高人员中重合 1 人（张志明同时担任双方董事），未达到预警阈值（≥3 人）。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span></div></td>
                     <td class="risk-td-result"><span class="risk-result-tag risk-result-ok">通过</span></td>
                   </tr>
                   <tr class="risk-row">
                     <td class="risk-td-category">关联关系类</td>
                     <td class="risk-td-name">关联交易风险</td>
                     <td class="risk-td-rule"><ul class="risk-rule-list"><li>上下游注册/经营地址、电话、邮箱完全相同</li></ul></td>
-                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，本企业注册地址「河南省郑州市金水区花园路 159 号」与上游「郑州牧原粮油有限公司」经营地址「河南省郑州市金水区花园路 88 号」不一致，未触发预警。</div></td>
+                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，本企业注册地址「河南省郑州市金水区花园路 159 号」与上游「郑州牧原粮油有限公司」经营地址「河南省郑州市金水区花园路 88 号」不一致，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span></div></td>
                     <td class="risk-td-result"><span class="risk-result-tag risk-result-ok">通过</span></td>
                   </tr>
                   <tr class="risk-row">
@@ -572,7 +597,7 @@
                     <td class="risk-td-category">关联关系类</td>
                     <td class="risk-td-name">关联交易风险</td>
                     <td class="risk-td-rule"><ul class="risk-rule-list"><li>上下游存在长期固定合作且价差不变≥6 个月</li></ul></td>
-                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，本企业与上游「郑州牧原粮油有限公司」近 6 个月合作合同价格存在合理波动（±5%），未触发预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span></div></td>
+                    <td class="risk-td-desc"><div class="risk-desc">截至 2026-07-17 15:46:04，本企业与上游「郑州牧原粮油有限公司」近 6 个月合作合同价格存在合理波动（±5%），未触发预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span></div></td>
                     <td class="risk-td-result"><span class="risk-result-tag risk-result-ok">通过</span></td>
                   </tr>
                 </tbody>
@@ -899,6 +924,30 @@
         </div>
         <!-- /v1.7.99.274 stepPanel5 准入完成（v1.7.99.299 改名） -->
 
+        <!-- v1.7.99.323 合规问卷 · 填写详情 · 只读（仅企业尽调报告 stepPanel2 底部展示，v1.7.99.326 加 id 供 JS 联动） -->
+        <div class="card" id="surveyReadonlyCard" style="margin-top: 16px;">
+          <div class="card-header">
+            <div class="card-title">合规问卷 · 填写详情</div>
+            <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: var(--text-tertiary);">
+              <span class="survey-readonly-badge">只读</span>
+              <span>提交时间：<span id="surveyReadonlySubmitTime" style="font-family: var(--font-mono); color: var(--text-secondary);">2026-07-30 14:42:18</span></span>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <!-- v1.7.99.328 查看企业改为只读展示当前企业（与顶部 select 联动，不再支持卡内切换） -->
+            <div class="survey-readonly-tabbar">
+              <span class="survey-readonly-tabbar-label">查看企业：</span>
+              <span id="surveyReadonlyCompanyName" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 12px; border-radius: 4px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); color: #fff; font-size: 13px; font-weight: 500; box-shadow: 0 1px 3px rgba(217, 119, 6, 0.3);">
+                <span style="font-size:11px;opacity:0.85;">①</span>
+                <span id="surveyReadonlyCompanyShortName">河南军牧原</span>
+              </span>
+            </div>
+            <!-- 当前企业的问卷答案表格 -->
+            <div id="surveyReadonlyContainer" style="padding: 4px 0 8px;"></div>
+          </div>
+        </div>
+        <!-- /v1.7.99.323 -->
+
       </div>
 
       <!-- 底部固定操作栏（v1.7.99.108 修复：按 user 3 张参考图实际，仅保留必要的底部按钮） -->
@@ -944,6 +993,13 @@
         var panel = document.getElementById('stepPanel' + i);
         if (panel) panel.hidden = (i !== n);
       });
+      // v1.7.99.332 步骤名同步加 current 类（加粗 + 永久下划线）
+      document.querySelectorAll('#entrySteps .step-label').forEach(function(lbl) {
+        lbl.classList.toggle('current', parseInt(lbl.dataset.step, 10) === n);
+      });
+      // v1.7.99.326 合规问卷·填写详情卡 仅在 stepPanel2（企业尽调报告）显示，其他步骤隐藏
+      var surveyCard = document.getElementById('surveyReadonlyCard');
+      if (surveyCard) surveyCard.hidden = (n !== 2);
       // 步骤条样式联动（v1.7.99.299：5 个步骤）
       [1, 2, 3, 4, 5].forEach(function(i) {
         var circle = document.getElementById('entryStep' + i + 'Circle');
@@ -1042,19 +1098,19 @@
       trade: {  // 贸易风险（v1.7.99.303：原"综合贸易风险"改名 + 按图 1 表格 TAP=贸易风险 列补 12 条检查项）
         label: '贸易风险',
         items: [
-          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '用户已确认本次贸易将不开展单笔>500万的大额贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '无历史业务记录', status: 'ok', desc: '截至 2026-07-17 15:46:04，存在 2024-2025 年度累计 3,200 万元的历史业务合作记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
-          { name: '突然开展大额新增品类贸易', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易品类为玉米类（与历史品类一致），未识别为新增品类贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '用户已确认本次贸易将不开展单笔>500万的大额贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '无历史业务记录', status: 'ok', desc: '截至 2026-07-17 15:46:04，存在 2024-2025 年度累计 3,200 万元的历史业务合作记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '突然开展大额新增品类贸易', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易品类为玉米类（与历史品类一致），未识别为新增品类贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '经营范围中无贸易、供应链管理', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业经营范围包含「粮食收购、销售；农副产品、饲料销售；货物进出口、技术进出口」，覆盖贸易与供应链管理业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '业务品类属于集团公司禁止开展的', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次业务品类为粮食批发类，不在集团公司禁止开展业务品类清单内，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '公司具有清晰的供应链业务方向和模式', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业主营业务为「粮食收购-销售」供应链上下游一体化，业务方向清晰、模式成熟，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '控制与集团主业关联度较低的业务规模', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易品类「玉米」与集团主业（大宗农产品贸易）高度关联，未识别为低关联业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '业务品类属于集团公司禁止开展的', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次业务品类为粮食批发类，不在集团公司禁止开展业务品类清单内，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '公司具有清晰的供应链业务方向和模式', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业主营业务为「粮食收购-销售」供应链上下游一体化，业务方向清晰、模式成熟，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '控制与集团主业关联度较低的业务规模', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易品类「玉米」与集团主业（大宗农产品贸易）高度关联，未识别为低关联业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '拟交易商品不在工商经营范围内', status: 'warn', desc: '截至 2026-07-17 15:46:04，企业经营范围含「粮食收购 / 货物进出口」，但未在「国家粮食和物资储备局」查到有效的「粮食收购许可证」，存在资质缺失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '危化/粮油/医药/能源无有效专项资质', status: 'warn', desc: '截至 2026-07-17 15:46:04，本次拟交易品类为粮食类，需具备「粮食收购许可证」，但未查到有效资质，存在资质缺失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '无仓库、无仓储协议', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业已与第三方仓储「河南国际物流枢纽」签订仓储协议（编号 WH20260101），仓储合规，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
-          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '用户已确认当前贸易企业具备固定物流合作、运输资质与稳定运力，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '用户已确认该企业近期与合作客户中，贸易类企业占比未超过80%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '用户已确认该企业贸易的前五大客户近3个月变动率<50%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '无仓库、无仓储协议', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业已与第三方仓储「河南国际物流枢纽」签订仓储协议（编号 WH20260101），仓储合规，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '用户已确认当前贸易企业具备固定物流合作、运输资质与稳定运力，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '用户已确认该企业近期与合作客户中，贸易类企业占比未超过80%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '用户已确认该企业贸易的前五大客户近3个月变动率<50%阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '关联交易风险', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业股东「张志明」同时担任「郑州牧原粮油有限公司」股东（持股 35%），并与该企业存在 2024-2025 年度玉米采购关联交易累计 1,200 万元，存在关联交易风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
@@ -1063,51 +1119,51 @@
         items: [
           { name: '成立时间＜6 个月', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业成立时间 2009-01-01，已超过 6 个月，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '社保人数≤1 人', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业社保参保人数 18 人，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '无工资个税记录', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业近 6 个月存在工资薪金个税申报记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '无工资个税记录', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业近 6 个月存在工资薪金个税申报记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '注册地址为虚拟/集群/托管地址', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业注册地址「河南省郑州市金水区花园路 159 号」为真实商用写字楼，未识别为虚拟/集群/托管地址。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '一址多企 ≥5 家', status: 'ok', desc: '截至 2026-07-17 15:46:04，核查注册地址同址企业共 2 家，未达到 5 家预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '一址多企 ≥5 家', status: 'ok', desc: '截至 2026-07-17 15:46:04，核查注册地址同址企业共 2 家，未达到 5 家预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '无实缴资本', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业实缴资本 5,000 万元，与注册资本一致，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '资质已过期或 30 天内即将到期', status: 'ok', desc: '截至 2026-07-17 15:46:04，企业所有经营资质均有效，最近一项资质到期时间为 2027-06-15，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '品牌类商品无正规授权书', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易商品为大宗玉米类，未涉及品牌类商品，无需授权书。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '合作黑名单', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业未在我司合作黑名单中。不排除因信息更新延迟导致的不一致情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '假国央企', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业性质为「有限责任公司（自然人投资或控股）」，未发现冒用国央企资质或虚假宣传情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
+          { name: '品牌类商品无正规授权书', status: 'ok', desc: '截至 2026-07-17 15:46:04，本次拟交易商品为大宗玉米类，未涉及品牌类商品，无需授权书。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '合作黑名单', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业未在我司合作黑名单中。不排除因信息更新延迟导致的不一致情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
+          { name: '假国央企', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业性质为「有限责任公司（自然人投资或控股）」，未发现冒用国央企资质或虚假宣传情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' }
         ]
       },
       business: {  // 经营风险
         label: '经营风险',
         items: [
-          { name: '税收违法信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在税收违法信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。' },
-          { name: '行政或工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2024-08-15</mark> 因「销售水分超标玉米」存在 <strong>行政处罚 8 万元</strong>，并已足额缴纳罚款。' }
+          { name: '税收违法信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在税收违法信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '行政或工商违法处罚信息', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业在 <mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">2024-08-15</mark> 因「销售水分超标玉米」存在 <strong>行政处罚 8 万元</strong>，并已足额缴纳罚款。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       judicial: {  // 司法风险
         label: '司法风险',
         items: [
-          { name: '失信被执行人信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在失信被执行人信息。' },
-          { name: '被执行人信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在被执行人信息。' },
-          { name: '限制消费令信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在限制消费令信息。' },
-          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在终本案件。' }
+          { name: '失信被执行人信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在失信被执行人信息。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '被执行人信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在被执行人信息。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '限制消费令信息', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在限制消费令信息。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业不存在终本案件。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       relation: {  // 关系发现
         label: '关系发现',
         items: [
-          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，未识别出该企业与其他已知风险企业存在隐性关联关系。' },
-          { name: '疑似实际控制人相同', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业实际控制人「张志明」与「郑州牧原粮油有限公司」实际控制人为同一人，存在疑似实际控制人相同情形，需重点关注关联交易公允性。' },
-          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业与我司现有合作企业网络中的最短关联路径为 2 层（通过实际控制人），未发现 1 层直接关联。' }
+          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，未识别出该企业与其他已知风险企业存在隐性关联关系。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '疑似实际控制人相同', status: 'warn', desc: '截至 2026-07-17 15:46:04，该企业实际控制人「张志明」与「郑州牧原粮油有限公司」实际控制人为同一人，存在疑似实际控制人相同情形，需重点关注关联交易公允性。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 15:46:04，该企业与我司现有合作企业网络中的最短关联路径为 2 层（通过实际控制人），未发现 1 层直接关联。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       personnel: {  // 关键人风险（v1.7.99.301 由"人员风险"改名）
         label: '关键人风险',
         items: [
-          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人和主要管理人员不存在限制出境记录。' },
-          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在终本案件。' },
-          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在历史限制消费令记录。' },
-          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在当前限制消费令。' },
+          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人和主要管理人员不存在限制出境记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在终本案件。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在历史限制消费令记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在当前限制消费令。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           // 法律诉讼（v1.7.99.266：3 条明细，展开/收起）
           {
             name: '法律诉讼', status: 'warn',
-            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」存在 3 笔法律诉讼，其中 1 笔审理中，2 笔已结案。',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」存在 3 笔法律诉讼，其中 1 笔审理中，2 笔已结案。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>',
             cases: [
               { date: '2025-03-22', caseNo: '（2025）豫0102民初3521号', type: '买卖合同纠纷', amount: '35 万元', status: '审理中', statusType: 'warn' },
               { date: '2024-06-10', caseNo: '（2024）豫0102民初1856号', type: '货款纠纷', amount: '12 万元', status: '已结案', statusType: 'ok' },
@@ -1117,30 +1173,30 @@
           // 历史法律诉讼（2 条明细）
           {
             name: '历史法律诉讼', status: 'ok',
-            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史法律诉讼已结案，未发现尚未解决的法律风险。',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史法律诉讼已结案，未发现尚未解决的法律风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>',
             cases: [
               { date: '2022-11-15', caseNo: '（2022）豫0102民初2210号', type: '民间借贷纠纷', amount: '20 万元', status: '已结案', statusType: 'ok' },
               { date: '2021-05-20', caseNo: '（2021）豫0102民初0512号', type: '侵权责任纠纷', amount: '5 万元', status: '已结案', statusType: 'ok' }
             ]
           },
-          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」未来 30 天内无开庭公告。' },
-          { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史开庭公告已结案。' },
-          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在被执行人记录。' },
-          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在司法协助记录。' },
+          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」未来 30 天内无开庭公告。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '历史开庭公告', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史开庭公告已结案。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在被执行人记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在司法协助记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           // 历史被执行人（2 条明细）
           {
             name: '历史被执行人', status: 'ok',
-            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史被执行人记录已结案。',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史被执行人记录已结案。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>',
             cases: [
               { date: '2020-08-12', caseNo: '（2020）豫0102执1234号', type: '货款纠纷执行', amount: '15 万元', status: '已结案', statusType: 'ok' },
               { date: '2019-04-25', caseNo: '（2019）豫0102执0876号', type: '民间借贷执行', amount: '8 万元', status: '已结案', statusType: 'ok' }
             ]
           },
-          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在失信被执行人记录。' },
+          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」不存在失信被执行人记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           // 历史失信被执行人（2 条明细）
           {
             name: '历史失信被执行人', status: 'ok',
-            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史失信被执行人记录已结案。',
+            desc: '截至 2026-07-17 15:46:04，法定代表人「张志明」历史失信被执行人记录已结案。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>',
             cases: [
               { date: '2018-12-08', caseNo: '（2018）豫0102执0543号', type: '买卖合同执行', amount: '6 万元', status: '已结案', statusType: 'ok' },
               { date: '2017-07-15', caseNo: '（2017）豫0102执0321号', type: '货款纠纷执行', amount: '4 万元', status: '已结案', statusType: 'ok' }
@@ -1215,20 +1271,20 @@
       trade: {
         label: '贸易风险',
         items: [
-          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次运输合同金额 80 万元，未达单笔＞500 万大额贸易阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '无历史业务记录', status: 'ok', desc: '截至 2026-07-17 16:02:18，存在 2020-2025 年度累计 12 次长期业务合作记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
-          { name: '突然开展大额新增品类贸易', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次运输品类为普通货物（与历史品类一致），未识别为新增品类贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '拟开展单笔＞500 万大额贸易', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次运输合同金额 80 万元，未达单笔＞500 万大额贸易阈值，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '无历史业务记录', status: 'ok', desc: '截至 2026-07-17 16:02:18，存在 2020-2025 年度累计 12 次长期业务合作记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '突然开展大额新增品类贸易', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次运输品类为普通货物（与历史品类一致），未识别为新增品类贸易，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '经营范围中无贸易、供应链管理', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业经营范围包含「道路货物运输；货物运输代理；仓储服务」，覆盖贸易与供应链管理业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '业务品类属于集团公司禁止开展的', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次业务品类为普通道路货物运输，不在集团公司禁止开展业务品类清单内，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '公司具有清晰的供应链业务方向和模式', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业主营业务为「道路货物运输 + 仓储 + 装卸搬运」一体化物流服务，业务方向清晰、模式成熟，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '控制与集团主业关联度较低的业务规模', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次业务为道路货物运输，与集团主业（贸易 + 物流）高度关联，未识别为低关联业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '业务品类属于集团公司禁止开展的', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次业务品类为普通道路货物运输，不在集团公司禁止开展业务品类清单内，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '公司具有清晰的供应链业务方向和模式', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业主营业务为「道路货物运输 + 仓储 + 装卸搬运」一体化物流服务，业务方向清晰、模式成熟，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '控制与集团主业关联度较低的业务规模', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次业务为道路货物运输，与集团主业（贸易 + 物流）高度关联，未识别为低关联业务，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '拟交易商品不在工商经营范围内', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业经营范围含「道路货物运输」，已核实持有有效的「道路运输经营许可证」（豫交运管许字 410100012345 号），资质齐全，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '危化/粮油/医药/能源无有效专项资质', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次品类为普通道路货物运输（非危化/粮油/医药/能源），无需专项资质，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '无仓库、无仓储协议', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业自有仓库 3,200 ㎡，仓储协议齐全，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
-          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业自有运输车辆 124 台，已与核心客户签订长期运输合同，运输资质齐全、稳定运力充足，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业近 12 个月合作客户中，贸易类企业占比 35%，未超过 80% 预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业前五大客户近 3 个月变动率 12%，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '物流合作稳定性', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业近 6 个月与核心客户合作运单量下降 32%（行业平均 -8%），需关注客户流失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' }
+          { name: '无仓库、无仓储协议', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业自有仓库 3,200 ㎡，仓储协议齐全，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '无固定物流合作、无运输资质、无稳定运力', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业自有运输车辆 124 台，已与核心客户签订长期运输合同，运输资质齐全、稳定运力充足，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '合作客户中贸易类企业占比超过 80%', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业近 12 个月合作客户中，贸易类企业占比 35%，未超过 80% 预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '前五大客户变动频繁（连续三个月变动率＞50%）', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业前五大客户近 3 个月变动率 12%，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '物流合作稳定性', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业近 6 个月与核心客户合作运单量下降 32%（行业平均 -8%），需关注客户流失风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       internal: {
@@ -1236,54 +1292,54 @@
         items: [
           { name: '成立时间＜6 个月', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业成立时间 2008-09-01，已超过 6 个月，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '社保人数≤1 人', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业社保参保人数 42 人，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '无工资个税记录', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业近 6 个月存在工资薪金个税申报记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '无工资个税记录', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业近 6 个月存在工资薪金个税申报记录，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '注册地址为虚拟/集群/托管地址', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业注册地址「河南省郑州市二七区解放路 100 号」为真实商用地址，未识别为虚拟/集群/托管。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '一址多企 ≥5 家', status: 'ok', desc: '截至 2026-07-17 16:02:18，核查注册地址同址企业共 1 家，未达到 5 家预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
+          { name: '一址多企 ≥5 家', status: 'ok', desc: '截至 2026-07-17 16:02:18，核查注册地址同址企业共 1 家，未达到 5 家预警阈值。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '无实缴资本', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业实缴资本 5,000 万元，与注册资本一致，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
           { name: '资质已过期或 30 天内即将到期', status: 'ok', desc: '截至 2026-07-17 16:02:18，企业资质到期时间为 2028-08-31，未触发预警。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '品牌类商品无正规授权书', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次拟交易商品为运输服务，未涉及品牌类商品，无需授权书。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '合作黑名单', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未在我司合作黑名单中。不排除因信息更新延迟导致的不一致情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' },
-          { name: '假国央企', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业性质为「有限责任公司」，未发现冒用国央企资质情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
-          { name: '历史运单异常', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业近 3 个月有 2 笔运单存在轨迹偏离（实际路线与约定路线偏差 > 50km），存在运单异常风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：用户手动维护</span>' }
+          { name: '品牌类商品无正规授权书', status: 'ok', desc: '截至 2026-07-17 16:02:18，本次拟交易商品为运输服务，未涉及品牌类商品，无需授权书。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '合作黑名单', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未在我司合作黑名单中。不排除因信息更新延迟导致的不一致情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
+          { name: '假国央企', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业性质为「有限责任公司」，未发现冒用国央企资质情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：平台数据</span>' },
+          { name: '历史运单异常', status: 'warn', desc: '截至 2026-07-17 16:02:18，该企业近 3 个月有 2 笔运单存在轨迹偏离（实际路线与约定路线偏差 > 50km），存在运单异常风险。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       business: {
         label: '经营风险',
         items: [
-          { name: '经营异常', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未列入「经营异常名录」。' },
-          { name: '行政处罚', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业近 3 年无重大行政处罚记录。' },
-          { name: '严重违法', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未列入「严重违法失信企业名单」。' },
-          { name: '车辆规模', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业名下登记运输车辆 124 台（重型货车 86 台 + 集装箱牵引车 38 台），规模匹配业务范围。' }
+          { name: '经营异常', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未列入「经营异常名录」。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '行政处罚', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业近 3 年无重大行政处罚记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '严重违法', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业未列入「严重违法失信企业名单」。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '车辆规模', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业名下登记运输车辆 124 台（重型货车 86 台 + 集装箱牵引车 38 台），规模匹配业务范围。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       judicial: {
         label: '司法风险',
         items: [
-          { name: '失信被执行人信息', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在失信被执行人信息。' },
-          { name: '被执行人信息', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在被执行人信息。' },
-          { name: '限制消费令信息', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在限制消费令信息。' },
-          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在终本案件。' }
+          { name: '失信被执行人信息', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在失信被执行人信息。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '被执行人信息', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在被执行人信息。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '限制消费令信息', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在限制消费令信息。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业不存在终本案件。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       relation: {
         label: '关系发现',
         items: [
-          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 16:02:18，未识别出该企业与其他已知风险企业存在隐性关联关系。' },
-          { name: '疑似实际控制人相同', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业实际控制人「郑州铁龙集团」与其他合作企业实际控制人未识别出同一情形。' },
-          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业与我司现有合作企业网络中的最短关联路径为 3 层，未发现 2 层以内直接关联。' }
+          { name: '疑似关系发现', status: 'ok', desc: '截至 2026-07-17 16:02:18，未识别出该企业与其他已知风险企业存在隐性关联关系。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '疑似实际控制人相同', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业实际控制人「郑州铁龙集团」与其他合作企业实际控制人未识别出同一情形。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '最短路径发现', status: 'ok', desc: '截至 2026-07-17 16:02:18，该企业与我司现有合作企业网络中的最短关联路径为 3 层，未发现 2 层以内直接关联。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       },
       personnel: {
         label: '关键人风险',
         items: [
-          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人和主要管理人员不存在限制出境记录。' },
-          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在终本案件。' },
-          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在历史限制消费令记录。' },
-          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在当前限制消费令。' },
-          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」未来 30 天内无开庭公告。' },
-          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在被执行人记录。' },
-          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在司法协助记录。' },
-          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在失信被执行人记录。' }
+          { name: '限制出境', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人和主要管理人员不存在限制出境记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '终本案件', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在终本案件。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '历史限制消费令', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在历史限制消费令记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '限制消费令', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在当前限制消费令。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '开庭公告', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」未来 30 天内无开庭公告。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '被执行人', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在被执行人记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '司法协助', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在司法协助记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' },
+          { name: '失信被执行人', status: 'ok', desc: '截至 2026-07-17 16:02:18，法定代表人「李建国」不存在失信被执行人记录。<br><span style="color: var(--text-tertiary); font-size: 11px;">数据源：天眼查</span>' }
         ]
       }
     }
@@ -1307,6 +1363,10 @@
     if (scanNameEl) scanNameEl.textContent = COMPANIES[companyId].shortName || COMPANIES[companyId].name || companyId;
     renderAllRiskPanels();
     updateRiskTabCounts();
+    // v1.7.99.328 联动页尾问卷·填写详情卡的当前企业（junmuyuan→A、tielong→B）
+    var surveyToCompanyId = { junmuyuan: 'A', tielong: 'B' };
+    var targetSurveyCid = surveyToCompanyId[companyId];
+    if (targetSurveyCid) switchSurveyReadonlyCompany(targetSurveyCid);
     Utils.toast('已切换至 ' + COMPANIES[companyId].shortName, 'info');
   }
 
@@ -1867,6 +1927,95 @@
       C: { name: '中原粮食集团有限公司',       shortName: '中原粮食',  scanTime: '2026-07-18 09:15:30' }
     };
 
+    // v1.7.99.323 合规问卷 · 页尾只读详情（11 题 + q8a 子项）
+    var SURVEY_READONLY_QUESTIONS = [
+      { id: 'q1',  num: 1,    title: '本次与 [企业] 是否将开展单笔>500万的大额贸易？',                                                  type: 'yn' },
+      { id: 'q2',  num: 2,    title: '[企业] 是否无员工工资、个税记录？',                                                                  type: 'yn' },
+      { id: 'q3',  num: 3,    title: '存在与 [企业] 的注册地址相同的企业 ≥5 家？',                                                        type: 'yn' },
+      { id: 'q4',  num: 4,    title: '本次与 [企业] 开展业务品类是否属于集团公司禁止开展的业务范围？',                                   type: 'yn' },
+      { id: 'q5',  num: 5,    title: '[企业] 公司是否具有清晰的供应链业务方向和模式？',                                                   type: 'yn' },
+      { id: 'q6',  num: 6,    title: '[企业] 是否控制与集团主业关联度较低的业务规模？',                                                   type: 'yn' },
+      { id: 'q7',  num: 7,    title: '[企业] 是否为另一方贸易合同提供连带责任担保？',                                                     type: 'yn' },
+      { id: 'q8',  num: 8,    title: '本次与 [企业] 的贸易是否涉及品牌类商品？',                                                           type: 'yn' },
+      { id: 'q8a', num: '8.1', title: '上述品牌类商品是否有正规授权书或授权已过期？',                                                     type: 'auth', parent: 'q8' },
+      { id: 'q9',  num: 9,    title: '[企业] 的合作客户中，贸易类企业占比超过 80%？',                                                     type: 'yn' },
+      { id: 'q10', num: 10,   title: '[企业] 的前五大客户变动频繁，连续三个月变动率＞50%？',                                             type: 'yn' },
+      { id: 'q11', num: 11,   title: '本次与 [企业] 是否具备固定物流合作、运输资质与稳定运力？',                                          type: 'yn' }
+    ];
+
+    // v1.7.99.323 mock 用户已填答案（3 家企业 × 11 题 + q8a）
+    var SURVEY_READONLY_ANSWERS = {
+      A: { q1: 'no', q2: 'no', q3: 'no', q4: 'no', q5: 'yes', q6: 'yes', q7: 'no', q8: 'no', q9: 'no', q10: 'no', q11: 'yes' },
+      B: { q1: 'no', q2: 'no', q3: 'no', q4: 'no', q5: 'yes', q6: 'yes', q7: 'no', q8: 'yes', q8a: 'authorized', q9: 'no', q10: 'no', q11: 'yes' },
+      C: { q1: 'no', q2: 'no', q3: 'no', q4: 'no', q5: 'yes', q6: 'yes', q7: 'no', q8: 'no', q9: 'no', q10: 'no', q11: 'yes' }
+    };
+
+    var surveyReadonlyCompanyId = 'A';
+
+    function answerToLabel(v, type) {
+      if (!v) return { text: '—', cls: '' };
+      if (type === 'yn') {
+        return v === 'yes'
+          ? { text: '是', cls: 'survey-readonly-answer-yes' }
+          : { text: '否', cls: 'survey-readonly-answer-no' };
+      }
+      if (type === 'auth') {
+        return v === 'authorized'
+          ? { text: '已授权', cls: 'survey-readonly-answer-authorized' }
+          : { text: '未授权', cls: 'survey-readonly-answer-unauthorized' };
+      }
+      return { text: v, cls: '' };
+    }
+
+    function renderSurveyReadonly(cid) {
+      var c = DETAIL_SURVEY_COMPANIES[cid];
+      if (!c) return;
+      var answers = SURVEY_READONLY_ANSWERS[cid] || {};
+      var rowsHtml = '';
+      var lastMainIdx = -1;
+      SURVEY_READONLY_QUESTIONS.forEach(function(q) {
+        var v = answers[q.id];
+        var label = answerToLabel(v, q.type);
+        var title = q.title.replace(/\[企业\]/g, c.shortName);
+        var isSub = q.parent === 'q8';
+        // 8.1 仅在 q8 = yes 时显示
+        if (isSub && answers.q8 !== 'yes') return;
+        var trCls = isSub ? 'survey-readonly-sub' : '';
+        var numCell = isSub ? '8.1' : String(q.num);
+        rowsHtml += '<tr' + (trCls ? ' class="' + trCls + '"' : '') + '>'
+          + '<td>' + numCell + '</td>'
+          + '<td>' + title + '</td>'
+          + '<td><span class="survey-readonly-answer ' + label.cls + '">' + label.text + '</span></td>'
+          + '</tr>';
+      });
+
+      if (!rowsHtml) {
+        document.getElementById('surveyReadonlyContainer').innerHTML =
+          '<div class="survey-readonly-empty">该企业暂无问卷填写数据</div>';
+        return;
+      }
+
+      var html = ''
+        + '<table class="survey-readonly-table">'
+        + '  <thead><tr><th>题号</th><th>考察项</th><th>答案</th></tr></thead>'
+        + '  <tbody>' + rowsHtml + '</tbody>'
+        + '</table>';
+      document.getElementById('surveyReadonlyContainer').innerHTML = html;
+    }
+
+    function switchSurveyReadonlyCompany(cid) {
+      // v1.7.99.328 改为只读展示当前企业（与顶部 select 联动），不再切换 tab active
+      if (!DETAIL_SURVEY_COMPANIES[cid]) return;
+      surveyReadonlyCompanyId = cid;
+      var c = DETAIL_SURVEY_COMPANIES[cid];
+      var shortNameEl = document.getElementById('surveyReadonlyCompanyShortName');
+      var numPrefix = cid === 'A' ? '①' : cid === 'B' ? '②' : '③';
+      var spanEl = document.querySelector('#surveyReadonlyCompanyName span:first-child');
+      if (spanEl) spanEl.textContent = numPrefix;
+      if (shortNameEl) shortNameEl.textContent = c.shortName;
+      renderSurveyReadonly(cid);
+    }
+
     // v1.7.99.308 渲染问卷弹窗（与 apply.html v1.7.99.306 同款结构：modal-header 内嵌企业 tabs）
     function openComplianceSurveyDialog() {
       if (document.getElementById('complianceSurveyOverlay')) return;
@@ -2306,6 +2455,29 @@
   })();
     // v1.7.99.274 初始化：默认进入第 1 步（项目基本信息）
   switchEntryStep(1);
+    // v1.7.99.323 初始化：默认渲染「合规问卷·填写详情·只读」第 1 家企业（军牧原）
+    switchSurveyReadonlyCompany('A');
+    // v1.7.99.333 步骤条首次引导气泡（sessionStorage 记忆，3 秒后自动淡出 + 标记已引导，点击步骤立即隐藏）
+    (function initStepbarHint() {
+      var hint = document.getElementById('stepbarHint');
+      if (!hint) return;
+      var KEY = 'ygt_stepbar_hint_detail_v1';
+      if (sessionStorage.getItem(KEY) === '1') return;
+      // 首次进入：显示 + 3 秒后淡出 + 标记已引导
+      hint.style.display = '';
+      setTimeout(function() { hint.classList.add('is-hiding'); }, 3000);
+      setTimeout(function() { hint.style.display = 'none'; hint.classList.remove('is-hiding'); sessionStorage.setItem(KEY, '1'); }, 3600);
+      // 用户点击任何步骤后立即隐藏并标记
+      function dismiss() {
+        if (hint.style.display === 'none') return;
+        hint.classList.add('is-hiding');
+        setTimeout(function() { hint.style.display = 'none'; }, 500);
+        sessionStorage.setItem(KEY, '1');
+      }
+      document.querySelectorAll('#entrySteps .step').forEach(function(el) {
+        el.addEventListener('click', dismiss, { once: true });
+      });
+    })();
     // v1.7.99.274 初始化时隐藏 footer（原页面 footer 默认显示，现在按 step 联动）
   (function() {
     var footer = document.getElementById('footerActions');
