@@ -47,6 +47,50 @@
     /* v1.7.99.345 未足额时 disabled 视觉 */
     .mini-switch.disabled { cursor: not-allowed; }
     .mini-switch.disabled .ms-slider { cursor: not-allowed; opacity: 0.65; }
+    /* v1.7.99.346 变更记录链接 + 弹窗 */
+    .cell-switch .history-link {
+      margin-top: 4px; font-size: 11px; color: var(--color-primary); cursor: pointer;
+      text-decoration: none;
+    }
+    .cell-switch .history-link:hover { text-decoration: underline; }
+    .history-popup-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 1100;
+      display: none; align-items: center; justify-content: center;
+    }
+    .history-popup-mask.open { display: flex; }
+    .history-popup {
+      background: #fff; border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,0.18);
+      width: 560px; max-width: 92vw; max-height: 80vh; overflow: hidden;
+      display: flex; flex-direction: column;
+    }
+    .history-popup-head {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .history-popup-head .title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .history-popup-head .close {
+      cursor: pointer; color: var(--text-tertiary); font-size: 18px; line-height: 1; padding: 4px 8px;
+    }
+    .history-popup-body { padding: 16px 20px; overflow-y: auto; flex: 1; }
+    .history-popup-foot {
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .history-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .history-table th {
+      padding: 10px 8px; background: var(--bg-page); color: var(--text-tertiary);
+      font-weight: 500; text-align: left; border-bottom: 1px solid var(--border-light);
+    }
+    .history-table td {
+      padding: 10px 8px; border-bottom: 1px solid var(--border-light);
+      vertical-align: top; color: var(--text-primary);
+    }
+    .history-table .ratio-cell { font-family: var(--font-mono); font-weight: 600; }
+    .history-table .ratio-old { color: var(--text-tertiary); }
+    .history-table .ratio-new { color: #7C3AED; }
+    .history-table .empty-state {
+      text-align: center; padding: 36px 8px; color: var(--text-tertiary); font-size: 13px;
+    }
 
     /* v1.7.99.341 配置弹窗（list-page 等比例冲抵货款配置） */
     .offset-popup-mask {
@@ -437,6 +481,32 @@
     </div>
   </div>
 
+  <!-- v1.7.99.346 等比例冲抵货款比例 变更记录弹窗 -->
+  <div class="history-popup-mask" id="historyPopupMask" onclick="closeHistoryPopup()">
+    <div class="history-popup" onclick="event.stopPropagation()">
+      <div class="history-popup-head">
+        <span class="title">等比例冲抵货款比例 变更记录 - <span id="historyPopupContractNo">—</span></span>
+        <span class="close" onclick="closeHistoryPopup()">×</span>
+      </div>
+      <div class="history-popup-body">
+        <table class="history-table">
+          <thead>
+            <tr>
+              <th style="width: 16%;">变更时间</th>
+              <th style="width: 22%;text-align: right;">冲抵比例</th>
+              <th style="width: 12%;">操作人</th>
+              <th>变更说明</th>
+            </tr>
+          </thead>
+          <tbody id="historyPopupTbody"></tbody>
+        </table>
+      </div>
+      <div class="history-popup-foot">
+        <button class="btn btn-default btn-sm" onclick="closeHistoryPopup()">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <!-- v1.7.99.341 等比例冲抵货款配置弹窗（列表页每行开关 off→on 触发） -->
   <div class="offset-popup-mask" id="offsetPopupMask" onclick="closeOffsetPopup()">
     <div class="offset-popup" onclick="event.stopPropagation()">
@@ -476,20 +546,22 @@
   <script src="../shared/js/left-sidemenu.js"></script>
   <script src="../assets/js/app.js"></script>
   <script>
-    /* ========== v1.7.99.341 保证金管理 mock 数据 ==========
-       v1.7.99.67 初始 + v1.7.99.337 加 paid 已付保证金金额字段 + v1.7.99.339 增加 bizType 业务类型 + 多样化合同编号（GTGYL-DFHT / YL-MSXS）
-       + v1.7.99.341 增加每行 depositEnabled / depositRatio（列表页「等比例冲抵货款」开关配置） */
+    /* ========== v1.7.99.346 保证金管理 mock 数据 ==========
+       v1.7.99.67 初始 + v1.7.99.337 加 paid + v1.7.99.339 增加 bizType + 多样化合同编号
+       + v1.7.99.341 depositEnabled/depositRatio
+       + v1.7.99.345 足额校验（已付 >= 应付）
+       + v1.7.99.346 depositRatioHistory 变更记录（每行最多 5 条 mock） */
     var MARGIN_MOCK = [
-      { id: 1, contractNo: 'GTGYL-DFHT-20260122-001', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 250000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-01-22', depositEnabled: false, depositRatio: 10 },
-      { id: 2, contractNo: 'YL-MSXS-20260315-002',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '预付业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-03-15', depositEnabled: false, depositRatio: 10 },
-      { id: 3, contractNo: 'GTGYL-DFHT-20260508-003', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '账期业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 500000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-05-08', depositEnabled: false, depositRatio: 10 },
-      { id: 4, contractNo: 'YL-MSXS-20260710-004',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-07-10', depositEnabled: false, depositRatio: 10 },
-      { id: 5, contractNo: 'GTGYL-DFHT-20260825-005', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 1100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-25', depositEnabled: true, depositRatio: 10 },
-      { id: 6, contractNo: 'YL-MSXS-20260228-006',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '预付业务', qty: 70000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-02-28', depositEnabled: false, depositRatio: 10 },
-      { id: 7, contractNo: 'GTGYL-DFHT-20260412-007', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '账期业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 200000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-04-12', depositEnabled: false, depositRatio: 10 },
-      { id: 8, contractNo: 'YL-MSXS-20260630-008',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-06-30', depositEnabled: false, depositRatio: 10 },
-      { id: 9, contractNo: 'GTGYL-DFHT-20260905-009', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 1050000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-09-05', depositEnabled: true, depositRatio: 10 },
-      { id: 10, contractNo: 'YL-MSXS-20260818-010',  seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 300000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-18', depositEnabled: false, depositRatio: 10 }
+      { id: 1, contractNo: 'GTGYL-DFHT-20260122-001', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 250000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-01-22', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 2, contractNo: 'YL-MSXS-20260315-002',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '预付业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-03-15', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 3, contractNo: 'GTGYL-DFHT-20260508-003', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '账期业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 500000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-05-08', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 4, contractNo: 'YL-MSXS-20260710-004',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-07-10', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 5, contractNo: 'GTGYL-DFHT-20260825-005', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 1100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-25', depositEnabled: true, depositRatio: 10, depositRatioHistory: [{ ratio: 10, changedAt: '2026-08-26 10:32', operator: '张爽', note: '合同签订后默认启用' }] },
+      { id: 6, contractNo: 'YL-MSXS-20260228-006',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '预付业务', qty: 70000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-02-28', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 7, contractNo: 'GTGYL-DFHT-20260412-007', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '账期业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 200000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-04-12', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 8, contractNo: 'YL-MSXS-20260630-008',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-06-30', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] },
+      { id: 9, contractNo: 'GTGYL-DFHT-20260905-009', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 1050000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-09-05', depositEnabled: true, depositRatio: 10, depositRatioHistory: [{ ratio: 10, changedAt: '2026-09-05 14:20', operator: '李四', note: '合同签订后默认启用' }, { ratio: 15, changedAt: '2026-09-12 09:48', operator: '李四', note: '客户申请调整冲抵比例' }, { ratio: 10, changedAt: '2026-09-15 16:11', operator: '王五', note: '回款恢复正常比例' }] },
+      { id: 10, contractNo: 'YL-MSXS-20260818-010',  seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 300000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-18', depositEnabled: false, depositRatio: 10, depositRatioHistory: [] }
     ];
     function fmt(n) { return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function renderMarginTable() {
@@ -524,12 +596,14 @@
           + '<td>' + m.signDate + '</td>'
           // v1.7.99.341 等比例冲抵货款开关（off→on 触发弹窗）
           // v1.7.99.345 未足额时 disabled + title tooltip 引导用户去补足
+          // v1.7.99.346 下方追加「变更记录(N)」链接
           + '<td class="cell-switch">'
           +   '<label class="mini-switch' + (isFull ? '' : ' disabled') + '" title="' + depositTitle + '">'
           +     '<input type="checkbox"' + depositChecked + depositDisabledAttr + ' onchange="onDepositSwitchChange(' + m.id + ', this.checked)">'
           +     '<span class="ms-slider"></span>'
           +   '</label>'
           +   '<div style="margin-top:2px;">' + depositStatus + '</div>'
+          +   '<a class="history-link" onclick="openHistoryPopup(' + m.id + ')">变更记录（' + (m.depositRatioHistory ? m.depositRatioHistory.length : 0) + '）</a>'
           + '</td>'
           + '<td class="col-action" style="text-align: right;">'
           +   '<a href="./margin-adjust-detail.html?adjustNo=DLXLC-DSRMT-' + m.id.toString().padStart(3, '0') + '">查看</a>'
@@ -611,9 +685,33 @@
         Utils.toast('请输入正确的冲抵比例（0-100 之间）', 'warning');
         return;
       }
+      var oldRatio = row.depositRatio || 0;
+      var isFirstTimeEnable = !row.depositEnabled;
+      var isRatioChange = row.depositEnabled && Math.abs(oldRatio - ratio) > 0.001;
       row.depositEnabled = true;
       row.depositRatio = ratio;
-      Utils.toast('已保存等比例冲抵配置（mock）', 'success');
+      // v1.7.99.346 写入变更记录
+      if (!row.depositRatioHistory) row.depositRatioHistory = [];
+      var now = new Date();
+      var pad = function(n) { return n < 10 ? '0' + n : n; };
+      var ts = now.getFullYear() + '-' + pad(now.getMonth() + 1) + '-' + pad(now.getDate()) + ' ' + pad(now.getHours()) + ':' + pad(now.getMinutes());
+      var note = isFirstTimeEnable
+        ? '首次启用等比例冲抵货款'
+        : (isRatioChange ? ('比例从 ' + oldRatio + '% 调整为 ' + ratio + '%（仅影响未来回款，已登记不回溯）') : '保持当前比例');
+      row.depositRatioHistory.unshift({
+        ratio: ratio,
+        oldRatio: oldRatio,
+        changedAt: ts,
+        operator: '张爽',
+        note: note
+      });
+      // 最多保留 10 条
+      if (row.depositRatioHistory.length > 10) row.depositRatioHistory = row.depositRatioHistory.slice(0, 10);
+      // v1.7.99.346 提示用户：仅影响未来笔
+      var msg = isRatioChange
+        ? '已保存。等比例冲抵货款比例从 ' + oldRatio + '% 调整为 ' + ratio + '%，仅影响未来未登记的回款，已完成的回款不会重算。'
+        : '已保存等比例冲抵配置';
+      Utils.toast(msg, 'success');
       var mask = document.getElementById('offsetPopupMask');
       if (mask) mask.classList.remove('open');
       OFFSET_POPUP_TARGET_ID = null;
@@ -624,6 +722,38 @@
       var ratioEl = document.getElementById('offsetPopupRatio');
       if (ratioEl) ratioEl.addEventListener('input', refreshOffsetSummary);
     })();
+
+    /* ========== v1.7.99.346 等比例冲抵货款比例 变更记录 弹窗 ========== */
+    function openHistoryPopup(rowId) {
+      var row = MARGIN_MOCK.find(function(m) { return m.id === rowId; });
+      if (!row) return;
+      var mask = document.getElementById('historyPopupMask');
+      var contractNoEl = document.getElementById('historyPopupContractNo');
+      var tbody = document.getElementById('historyPopupTbody');
+      if (contractNoEl) contractNoEl.textContent = row.contractNo;
+      var hist = row.depositRatioHistory || [];
+      if (!tbody) return;
+      if (hist.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" class="empty-state">— 该合同暂无冲抵比例变更记录 —</td></tr>';
+      } else {
+        tbody.innerHTML = hist.map(function(h) {
+          var ratioCell = (h.oldRatio && h.oldRatio !== h.ratio)
+            ? '<span class="ratio-old">' + h.oldRatio + '%</span> → <span class="ratio-new">' + h.ratio + '%</span>'
+            : '<span class="ratio-new">' + h.ratio + '%</span>';
+          return '<tr>'
+            + '<td>' + h.changedAt + '</td>'
+            + '<td style="text-align: right;" class="ratio-cell">' + ratioCell + '</td>'
+            + '<td>' + (h.operator || '—') + '</td>'
+            + '<td>' + (h.note || '—') + '</td>'
+            + '</tr>';
+        }).join('');
+      }
+      if (mask) mask.classList.add('open');
+    }
+    function closeHistoryPopup() {
+      var mask = document.getElementById('historyPopupMask');
+      if (mask) mask.classList.remove('open');
+    }
 
     /* ========== v1.7.99.339 登记保证金侧边抽屉（仿 shipment-out.html 选择销售订单样式 + 表格 + 单选） ========== */
     var REGISTER_SELECTED_ID = null;
