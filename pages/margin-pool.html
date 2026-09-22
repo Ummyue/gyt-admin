@@ -44,6 +44,9 @@
     }
     .mini-switch input:checked + .ms-slider { background: #7C3AED; }
     .mini-switch input:checked + .ms-slider::before { transform: translateX(14px); }
+    /* v1.7.99.345 未足额时 disabled 视觉 */
+    .mini-switch.disabled { cursor: not-allowed; }
+    .mini-switch.disabled .ms-slider { cursor: not-allowed; opacity: 0.65; }
 
     /* v1.7.99.341 配置弹窗（list-page 等比例冲抵货款配置） */
     .offset-popup-mask {
@@ -481,11 +484,11 @@
       { id: 2, contractNo: 'YL-MSXS-20260315-002',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '预付业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-03-15', depositEnabled: false, depositRatio: 10 },
       { id: 3, contractNo: 'GTGYL-DFHT-20260508-003', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '账期业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 500000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-05-08', depositEnabled: false, depositRatio: 10 },
       { id: 4, contractNo: 'YL-MSXS-20260710-004',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-07-10', depositEnabled: false, depositRatio: 10 },
-      { id: 5, contractNo: 'GTGYL-DFHT-20260825-005', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 350000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-25', depositEnabled: false, depositRatio: 10 },
+      { id: 5, contractNo: 'GTGYL-DFHT-20260825-005', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 1100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-25', depositEnabled: true, depositRatio: 10 },
       { id: 6, contractNo: 'YL-MSXS-20260228-006',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '预付业务', qty: 70000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-02-28', depositEnabled: false, depositRatio: 10 },
       { id: 7, contractNo: 'GTGYL-DFHT-20260412-007', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '账期业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 200000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-04-12', depositEnabled: false, depositRatio: 10 },
       { id: 8, contractNo: 'YL-MSXS-20260630-008',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-06-30', depositEnabled: false, depositRatio: 10 },
-      { id: 9, contractNo: 'GTGYL-DFHT-20260905-009', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 800000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-09-05', depositEnabled: false, depositRatio: 10 },
+      { id: 9, contractNo: 'GTGYL-DFHT-20260905-009', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 1050000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-09-05', depositEnabled: true, depositRatio: 10 },
       { id: 10, contractNo: 'YL-MSXS-20260818-010',  seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 300000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-18', depositEnabled: false, depositRatio: 10 }
     ];
     function fmt(n) { return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
@@ -493,8 +496,18 @@
       var tbody = document.getElementById('marginTbody');
       if (!tbody) return;
       tbody.innerHTML = MARGIN_MOCK.map(function(m) {
+        // v1.7.99.345 等比例冲抵开关：足额校验（已付 >= 应付 才允许开启）
+        var isFull = (m.paid || 0) >= (m.payTotal || 0);
         var depositChecked = m.depositEnabled ? ' checked' : '';
-        var depositStatus = m.depositEnabled ? '<span style="color:#7C3AED;font-size:11px;">已开</span>' : '<span style="color:var(--text-tertiary);font-size:11px;">关闭</span>';
+        var depositDisabledAttr = isFull ? '' : ' disabled';
+        var depositTitle = isFull
+          ? (m.depositEnabled ? '已开启' : '关闭')
+          : '当前合同保证金未足额（已付 ' + (m.paid || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元 / 应付 ' + (m.payTotal || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元），需补足后方可启用';
+        var depositStatus = !isFull
+          ? '<span style="color:#DC2626;font-size:11px;">未足额</span>'
+          : (m.depositEnabled
+              ? '<span style="color:#7C3AED;font-size:11px;">已开</span>'
+              : '<span style="color:var(--text-tertiary);font-size:11px;">关闭</span>');
         return '<tr>'
           + '<td class="col-num">' + m.contractNo + '</td>'
           + '<td>' + m.buyer + '</td>'
@@ -510,9 +523,10 @@
           + '<td style="text-align: right;" class="col-num">' + fmt(m.margin) + '</td>'
           + '<td>' + m.signDate + '</td>'
           // v1.7.99.341 等比例冲抵货款开关（off→on 触发弹窗）
+          // v1.7.99.345 未足额时 disabled + title tooltip 引导用户去补足
           + '<td class="cell-switch">'
-          +   '<label class="mini-switch">'
-          +     '<input type="checkbox"' + depositChecked + ' onchange="onDepositSwitchChange(' + m.id + ', this.checked)">'
+          +   '<label class="mini-switch' + (isFull ? '' : ' disabled') + '" title="' + depositTitle + '">'
+          +     '<input type="checkbox"' + depositChecked + depositDisabledAttr + ' onchange="onDepositSwitchChange(' + m.id + ', this.checked)">'
           +     '<span class="ms-slider"></span>'
           +   '</label>'
           +   '<div style="margin-top:2px;">' + depositStatus + '</div>'
@@ -537,6 +551,12 @@
     function onDepositSwitchChange(rowId, checked) {
       var row = MARGIN_MOCK.find(function(m) { return m.id === rowId; });
       if (!row) return;
+      // v1.7.99.345 足额硬卡：未足额禁止开启等比例冲抵
+      if (checked && (row.paid || 0) < (row.payTotal || 0)) {
+        Utils.toast('当前合同保证金未足额，需补足后方可启用等比例冲抵货款', 'warning');
+        renderMarginTable();
+        return;
+      }
       if (checked) {
         // off→on：弹出配置弹窗
         OFFSET_POPUP_TARGET_ID = rowId;
