@@ -78,6 +78,72 @@
     .adjust-type-dropdown .item:last-child { border-bottom: 0; }
     .adjust-type-dropdown .item:hover { background: #F5F3FF; }
     .adjust-type-dropdown .item.active { background: #F5F3FF; color: #7C3AED; font-weight: 500; }
+    /* v1.7.99.341 保证金登记信息 section（来自 margin-register 复用样式） */
+    .register-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 16px 20px; }
+    .register-grid .full { grid-column: 1 / -1; }
+    .register-row2 .form-input { max-width: 360px; }
+    .register-row2 .row2-hint {
+      margin-top: 6px; font-size: 12px; color: var(--text-tertiary); line-height: 1.6;
+    }
+    /* 字段内联：应付金额 input + 比例 input（小尺寸） */
+    .inline-pair { display: flex; gap: 8px; align-items: center; }
+    .inline-pair .form-input { flex: 1; }
+    .inline-pair .ratio-input { width: 100px; flex-shrink: 0; }
+    .inline-pair .sep { color: var(--text-tertiary); font-size: 12px; white-space: nowrap; }
+    /* 等比例冲抵货款 设置卡（紫色 v1.7.99.335） */
+    .deposit-offset-config {
+      padding: 14px 16px; background: #FAF5FF; border: 1px solid #DDD6FE;
+      border-radius: 6px; display: flex; flex-direction: column; gap: 10px;
+    }
+    .deposit-offset-config .switch-row {
+      display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    }
+    .deposit-offset-config .switch-label {
+      display: flex; align-items: center; gap: 8px; font-size: 13px; color: #6B21A8;
+    }
+    .deposit-offset-config .switch-label .icon {
+      display: inline-block; width: 12px; height: 12px;
+      border: 1.5px solid #7C3AED; border-radius: 2px; position: relative;
+    }
+    .deposit-offset-config .switch-label .icon::after {
+      content: ''; position: absolute; width: 6px; height: 3px;
+      border-left: 1.5px solid #7C3AED; border-bottom: 1.5px solid #7C3AED;
+      transform: rotate(-45deg); top: 2px; left: 2px;
+    }
+    .deposit-offset-config .ratio-row {
+      display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--text-secondary);
+    }
+    .deposit-offset-config .ratio-row .form-input { width: 100px; padding: 4px 8px; height: 28px; }
+    .deposit-offset-config .ratio-row.disabled { opacity: 0.4; pointer-events: none; }
+    .deposit-offset-config .summary {
+      padding: 8px 10px; background: #fff; border: 1px solid #DDD6FE; border-radius: 4px;
+      font-size: 12px; color: var(--text-secondary); line-height: 1.6;
+    }
+    .deposit-offset-config .summary strong { color: #6B21A8; }
+    /* iOS 风格开关 */
+    .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
+    .switch input { opacity: 0; width: 0; height: 0; }
+    .switch .slider {
+      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
+      background: #D1D5DB; transition: .2s; border-radius: 22px;
+    }
+    .switch .slider::before {
+      content: ''; position: absolute; height: 18px; width: 18px; left: 2px; bottom: 2px;
+      background: white; transition: .2s; border-radius: 50%;
+    }
+    .switch input:checked + .slider { background: #7C3AED; }
+    .switch input:checked + .slider::before { transform: translateX(16px); }
+    /* 禁用状态：cursor not-allowed */
+    .switch input:disabled + .slider { cursor: not-allowed; opacity: 0.85; }
+    /* 计算回显（蓝底虚线） */
+    .calc-echo {
+      padding: 10px 12px; background: #F0F9FF; border: 1px dashed #93C5FD;
+      border-radius: 4px; font-size: 12px; color: #1E40AF; line-height: 1.6;
+    }
+    .calc-echo strong { font-family: var(--font-mono); }
+    .calc-echo.muted { color: var(--text-tertiary); background: var(--bg-page); border-color: var(--border-light); }
+    .calc-echo small { display: block; color: var(--text-tertiary); font-size: 11px; margin-top: 4px; }
+
     /* 调整信息 5 字段 3 列 2 行 */
     .adjust-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; }
     .adjust-grid .full { grid-column: 1 / -1; }
@@ -312,6 +378,65 @@
               <div class="contract-item"><span class="label">运输方式</span><span class="value">火运</span></div>
               <div class="contract-item"><span class="label">业务实际负责人</span><span class="value">张三-13328888888</span></div>
               <div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 1.5：保证金登记信息（v1.7.99.341 兼容 margin-register：其他项可编辑，仅「是否等比例冲抵货款」disabled 只展示） -->
+        <div class="info-section">
+          <div class="info-section-head">保证金登记信息</div>
+          <div class="info-section-body">
+            <div class="tip-box">
+              <span class="label">说明：</span>本栏目展示该合同的「保证金登记」基础信息。「是否等比例冲抵货款」开关统一在「保证金管理」列表页设置，本页仅展示。
+            </div>
+            <div class="register-grid">
+              <!-- 第 1 行：应付保证金金额（元 + 合同设定比例） — 可编辑 -->
+              <div>
+                <label class="form-label">应付保证金金额(元)</label>
+                <div class="inline-pair">
+                  <input type="text" class="form-input" value="1,000,000.22">
+                  <span class="sep">合同设定比例</span>
+                  <input type="number" class="form-input ratio-input" value="15" min="0" max="100" step="0.01">
+                  <span class="sep">%</span>
+                </div>
+              </div>
+              <!-- 第 1 行：已付保证金金额 — 可编辑 -->
+              <div>
+                <label class="form-label">已付保证金金额(元)</label>
+                <input type="text" class="form-input" value="250,000.00">
+              </div>
+              <!-- 第 2 行：等比例冲抵货款（disabled 只展示，配置在列表页设置） -->
+              <div class="full">
+                <label class="form-label">是否等比例冲抵货款</label>
+                <div class="deposit-offset-config">
+                  <div class="switch-row">
+                    <div class="switch-label">
+                      <span class="icon"></span>
+                      <span>等比例冲抵每笔货款</span>
+                    </div>
+                    <label class="switch">
+                      <input type="checkbox" disabled>
+                      <span class="slider"></span>
+                    </label>
+                  </div>
+                  <div class="ratio-row disabled">
+                    <span>冲抵货款比例</span>
+                    <input type="number" class="form-input" value="10" min="0" max="100" step="0.01" disabled>
+                    <span>%</span>
+                    <span style="color: var(--text-tertiary);">（在「保证金管理」列表页统一设置，本页仅展示）</span>
+                  </div>
+                  <div class="summary">
+                    关闭状态：当前合同未启用等比例冲抵货款；保证金调整不影响此配置。
+                  </div>
+                </div>
+              </div>
+              <!-- 计算回显（disabled 展示） -->
+              <div class="full">
+                <label class="form-label">计算回显</label>
+                <div class="calc-echo muted">
+                  <span style="color: var(--text-tertiary);">详情页不展示实时计算，请参考「登记保证金」页面。</span>
+                </div>
+              </div>
             </div>
           </div>
         </div>

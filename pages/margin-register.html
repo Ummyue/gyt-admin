@@ -247,9 +247,9 @@
           </div>
         </div>
 
-        <!-- 区块 2：登记信息（v1.7.99.337 移除「保证金调整信息」改为 4 字段 + 等比例冲抵设置 + 计算回显） -->
+        <!-- 区块 2：保证金登记信息（v1.7.99.341 标题改造；保留 4 字段 + 等比例冲抵设置 disabled 只展示 + 计算回显） -->
         <div class="info-section">
-          <div class="info-section-head">登记信息</div>
+          <div class="info-section-head">保证金登记信息</div>
           <div class="info-section-body">
             <div class="tip-box">
               <span class="label">计算规则：</span>用户输入的「本次登记保证金金额」= 应付保证金的 <strong id="ruleCashRatio">90%</strong>（现金实付部分），系统自动按比例用保证金冲抵补足 <strong id="ruleDepositRatio">10%</strong>。所有比例均在下方「应付保证金金额」可调整。
@@ -277,7 +277,7 @@
                 <div class="row2-hint">本次登记保证金金额 = 应付保证金金额 × (1 - 冲抵比例)；系统按下方冲抵比例自动计算补足部分。</div>
               </div>
 
-              <!-- 字段 4：等比例冲抵货款（开关 + 比例） -->
+              <!-- 字段 4：等比例冲抵货款（v1.7.99.341 在新建页仅作展示，开关 + 比例均 disabled，配置在列表页统一设置） -->
               <div class="full">
                 <label class="form-label">是否等比例冲抵货款</label>
                 <div class="deposit-offset-config">
@@ -287,15 +287,15 @@
                       <span>等比例冲抵每笔货款</span>
                     </div>
                     <label class="switch">
-                      <input type="checkbox" id="rg-depositEnabled">
+                      <input type="checkbox" id="rg-depositEnabled" disabled>
                       <span class="slider"></span>
                     </label>
                   </div>
                   <div class="ratio-row disabled" id="rg-ratioRow">
                     <span>冲抵货款比例</span>
-                    <input type="number" class="form-input" id="rg-depositRatio" min="0" max="100" step="0.01" placeholder="10">
+                    <input type="number" class="form-input" id="rg-depositRatio" min="0" max="100" step="0.01" placeholder="10" disabled>
                     <span>%</span>
-                    <span style="color: var(--text-tertiary);">（开启后启用，留空按合同登记比例自动计算）</span>
+                    <span style="color: var(--text-tertiary);">（在「保证金管理」列表页统一设置，本页仅展示）</span>
                   </div>
                   <div class="summary" id="rg-summary">
                     关闭状态：本次登记保证金金额 = 应付保证金金额，无保证金冲抵。
