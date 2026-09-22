@@ -247,10 +247,7 @@
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                 登记保证金
               </button>
-              <button class="btn btn-text btn-sm" onclick="exportData()">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y1="3"/></svg>
-                数据导出
-              </button>
+              <!-- v1.7.99.343 数据导出按钮下移到表格上方 -->
             </div>
           </div>
 
@@ -279,6 +276,14 @@
                   <input type="text" class="input" placeholder="请选择日期范围">
                 </div>
               </div>
+            </div>
+
+            <!-- v1.7.99.343 区块 1.5：数据导出按钮（移到表格上方，右侧对齐） -->
+            <div class="cp-block" style="padding: 0 0 10px 0; display: flex; justify-content: flex-end;">
+              <button class="btn btn-text btn-sm" onclick="exportData()">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 2 0 0 1-2 2H5a2 2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
             </div>
 
             <!-- 区块 2：表格（v1.7.99.67 11 列） -->
