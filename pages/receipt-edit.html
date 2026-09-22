@@ -157,6 +157,33 @@
       content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
       background: currentColor;
     }
+    /* v1.7.99.347 字段拆分：应付总额 / 现金实付 / 保证金冲抵 三行 + 实时摘要 + 快捷按钮 */
+    .payable-cell { text-align: right; vertical-align: top; }
+    .payable-line { display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-bottom: 4px; }
+    .payable-line .payable-label { font-size: 11px; color: var(--text-tertiary); min-width: 56px; text-align: right; }
+    .payable-line .form-input { width: 130px; padding: 4px 8px; height: 26px; font-family: var(--font-mono); text-align: right; }
+    .payable-summary {
+      margin-top: 6px; padding: 6px 8px; background: #F0F9FF; border: 1px dashed #93C5FD;
+      border-radius: 4px; font-size: 11px; color: #1E40AF; line-height: 1.5; text-align: left;
+      font-family: var(--font-mono);
+    }
+    .payable-summary.muted { background: var(--bg-page); border-color: var(--border-light); color: var(--text-tertiary); }
+    .payable-actions { margin-top: 6px; display: flex; gap: 4px; justify-content: flex-end; flex-wrap: wrap; }
+    .payable-shortcut {
+      padding: 2px 8px; border: 1px solid var(--color-primary); border-radius: 3px;
+      color: var(--color-primary); background: #EFF6FF; cursor: pointer; font-size: 11px;
+    }
+    .payable-shortcut:hover { background: #DBEAFE; }
+    .payable-shortcut.disabled-shortcut { opacity: 0.4; pointer-events: none; }
+    /* 顶部「剩余未付」提示条 */
+    .remain-payable-bar {
+      display: flex; align-items: center; gap: 12px;
+      padding: 10px 16px; background: #FFFBEB; border: 1px solid #FDE68A;
+      border-radius: 6px; margin-bottom: 12px; font-size: 13px; color: #92400E;
+    }
+    .remain-payable-bar .remain-label { font-weight: 600; }
+    .remain-payable-bar .remain-value { font-family: var(--font-mono); font-weight: 700; color: #B45309; font-size: 14px; }
+    .remain-payable-bar .remain-hint { color: var(--text-tertiary); font-size: 12px; }
     /* 新增行 */
     .add-row { text-align: center; padding: 12px; color: var(--color-primary); cursor: pointer; }
     .add-row:hover { background: #F9FAFB; }
@@ -332,6 +359,12 @@
               </div>
             </div>
 
+            <!-- v1.7.99.347 多笔支付提示：剩余未付 = 下游结算合计 - 已认领总额 -->
+            <div class="remain-payable-bar" id="remainPayableBar">
+              <span class="remain-label">剩余未付：</span>
+              <span class="remain-value" id="remainPayableValue">—</span>
+              <span class="remain-hint">（下游结算合计 - 当前所有认领行已认领总额；可继续登记下一笔或多笔）</span>
+            </div>
             <table class="claim-table">
               <thead>
                 <tr>
@@ -340,7 +373,7 @@
                   <th>认领信息</th>
                   <th style="width: 12%;text-align: right;">下游结算金额(元)</th>
                   <th style="width: 12%;text-align: right;">已认领金额(元)</th>
-                  <th style="width: 12%;text-align: right;"><span class="required">*</span>本次认领金额(元)</th>
+                  <th style="width: 14%;text-align: right;"><span class="required">*</span>应付/实付/冲抵分项</th>
                   <th style="width: 6%;">操作</th>
                 </tr>
               </thead>
@@ -385,12 +418,30 @@
                   </td>
                   <td style="text-align: right; font-family: var(--font-mono);">61,873,413.91</td>
                   <td style="text-align: right; font-family: var(--font-mono);">229,467.09</td>
-                  <td style="text-align: right;">
-                    <input type="text" class="form-input" value="229467.09" style="text-align: right;">
-                    <!-- v1.7.99.344 选择「货款」时回显：含本次保证金冲抵货款金额（去重：只保留标题行，比例小字由 JS 注入到下方 div，避免重复） -->
-                    <div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">
-                      含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元
-                      <div class="deposit-offset-sub" style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;"></div>
+                  <td class="payable-cell" style="text-align: right;">
+                    <!-- v1.7.99.347 字段拆分：应付总额 / 现金实付 / 保证金冲抵 -->
+                    <div class="payable-line">
+                      <span class="payable-label">应付总额</span>
+                      <input type="text" class="form-input payable-total" value="254963.43" disabled style="text-align: right; background: #F9FAFB;">
+                    </div>
+                    <div class="payable-line">
+                      <span class="payable-label">现金实付</span>
+                      <input type="text" class="form-input payable-cash" value="229467.09" style="text-align: right;">
+                    </div>
+                    <div class="payable-line">
+                      <span class="payable-label">保证金冲抵</span>
+                      <input type="text" class="form-input payable-offset" value="25496.34" disabled style="text-align: right; background: #F9FAFB;">
+                    </div>
+                    <!-- 实时摘要 -->
+                    <div class="payable-summary"></div>
+                    <!-- 快捷按钮 -->
+                    <div class="payable-actions">
+                      <button type="button" class="payable-shortcut" onclick="applyAutoSplit(this)">按比例分摊</button>
+                      <button type="button" class="payable-shortcut" onclick="applyAllCash(this)">全部现金</button>
+                    </div>
+                    <!-- 兼容 v1.7.99.344 老占位（保留 .deposit-offset-row 结构，避免其他 JS 选择器报错） -->
+                    <div class="deposit-offset-row" style="display: none;">
+                      <div class="deposit-offset-sub"></div>
                     </div>
                   </td>
                   <td><a href="javascript:void(0)" style="color: #DC2626;" onclick="delClaimRow(this)">删除</a></td>
@@ -475,8 +526,14 @@
         + '<td><div style="color: var(--text-tertiary);">请选择业务线</div></td>'
         + '<td style="text-align: right; color: var(--text-tertiary);">—</td>'
         + '<td style="text-align: right; color: var(--text-tertiary);">—</td>'
-        + '<td style="text-align: right;"><input type="text" class="form-input" placeholder="0.00" style="text-align: right;">'
-        + '<div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元<div class="deposit-offset-sub" style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;"></div></div></td>'
+        + '<td class="payable-cell" style="text-align: right;">'
+        +   '<div class="payable-line"><span class="payable-label">应付总额</span><input type="text" class="form-input payable-total" value="0.00" disabled style="text-align: right; background: #F9FAFB;"></div>'
+        +   '<div class="payable-line"><span class="payable-label">现金实付</span><input type="text" class="form-input payable-cash" placeholder="0.00" style="text-align: right;"></div>'
+        +   '<div class="payable-line"><span class="payable-label">保证金冲抵</span><input type="text" class="form-input payable-offset" value="0.00" disabled style="text-align: right; background: #F9FAFB;"></div>'
+        +   '<div class="payable-summary"></div>'
+        +   '<div class="payable-actions"><button type="button" class="payable-shortcut" onclick="applyAutoSplit(this)">按比例分摊</button><button type="button" class="payable-shortcut" onclick="applyAllCash(this)">全部现金</button></div>'
+        +   '<div class="deposit-offset-row" style="display: none;"><div class="deposit-offset-sub"></div></div>'
+        + '</td>'
         + '<td><a href="javascript:void(0)" style="color: #DC2626;" onclick="delClaimRow(this)">删除</a></td>';
       tbody.appendChild(newRow);
       // v1.7.99.278 新增行默认「货款」checked，立即显示回显
@@ -509,41 +566,136 @@
       if (!tr) return;
       var checked = tr.querySelector('input[type=radio]:checked');
       if (!checked) return;
-      var offsetRow = tr.querySelector('.deposit-offset-row');
       var offsetConfig = tr.querySelector('[data-deposit-config]');
       if (checked.value === '保证金') {
-        if (offsetRow) offsetRow.style.display = 'none';
         if (offsetConfig) offsetConfig.style.display = '';
-        // 同步 summary 文案：说明「用户输入 = 仅登记应付的 (1-比例)，保证金自动补足比例部分」
         var summary = tr.querySelector('[data-deposit-summary]');
-        var enabled = tr.querySelector('[data-deposit-enabled]');
         var ratio = parseFloat(tr.querySelector('[data-deposit-ratio]').value) || 0;
         if (summary) {
-          if (enabled && enabled.checked && ratio > 0 && ratio < 100) {
-            var cashRatio = 100 - ratio;
-            summary.innerHTML = '每次登记货款时，用户仅输入应付金额的 <strong>' + cashRatio + '%</strong>（保证金按 <strong>' + ratio + '%</strong> 自动冲抵补足）。当前保证金余额 <strong>' + DEPOSIT_BALANCE.toFixed(2) + ' 元</strong>。';
+          if (ratio > 0 && ratio < 100) {
+            summary.innerHTML = '每次登记货款时，用户仅输入应付金额的 <strong>' + (100 - ratio).toFixed(2) + '%</strong>（保证金按 <strong>' + ratio.toFixed(2) + '%</strong> 自动冲抵补足）。当前保证金余额 <strong>' + DEPOSIT_BALANCE.toFixed(2) + ' 元</strong>。';
           } else {
             summary.innerHTML = '该合同保证金余额 <strong>' + DEPOSIT_BALANCE.toFixed(2) + '</strong> 元';
           }
         }
       } else {
-        if (offsetRow) offsetRow.style.display = '';
         if (offsetConfig) offsetConfig.style.display = 'none';
-        // 货款时也根据当前保证金设置更新回显中的比例（用 calcOffset 公式）
-        var ratioEl = tr.querySelector('[data-deposit-ratio]');
-        var enabledEl = tr.querySelector('[data-deposit-enabled]');
-        var ratio = (enabledEl && enabledEl.checked) ? (parseFloat(ratioEl.value) || 0) : 0;
-        // v1.7.99.344 去重：只更新 sub 行，不重复主标题「含本次保证金冲抵货款金额为：68,750.00 元」
-        var sub = tr.querySelector('.deposit-offset-sub');
-        if (sub && ratio > 0 && ratio < 100) {
-          var payInput = tr.querySelector('input.form-input');
-          var pay = payInput ? (parseFloat(payInput.value) || 0) : 0;
-          var r = calcOffset(pay, ratio);
-          sub.innerHTML = '（应付总额 <span style="font-family: var(--font-mono); font-weight: 600;">' + r.totalPayable.toFixed(2) + '</span> 元 = 用户输入 ' + pay.toFixed(2) + ' 元（' + r.cashRatio + '%）+ 保证金冲抵 <span style="font-family: var(--font-mono); font-weight: 600;">' + r.depositOffset.toFixed(2) + '</span> 元（' + r.depositRatio + '%），用户仅登记应付的 ' + r.cashRatio + '%，保证金按 ' + r.depositRatio + '% 自动补足冲抵）';
-        } else if (sub) {
-          // 没有启用等比例冲抵，恢复 sub 默认文案（主标题保留原静态「68,750.00 元」）
-          sub.innerHTML = '（按合同冲抵比例 78.57% 计算）';
+      }
+      // v1.7.99.347 重算本行 + 顶部「剩余未付」bar
+      recalcPayableRow(tr);
+      refreshRemainPayable();
+    }
+
+    /* ========== v1.7.99.347 字段拆分核心：应付总额 / 现金实付 / 保证金冲抵 实时联动 ==========
+       公式（v1.7.99.336 沿用）：用户输入现金 (cash)，合同 depositRatio 配置比例
+       totalPayable  = cash / (1 - ratio/100)
+       depositOffset = totalPayable * ratio / 100
+       当 depositRatio=0 或没启用时：depositOffset = 0，totalPayable = cash */
+    function recalcPayableRow(tr) {
+      if (!tr) return;
+      var cashEl = tr.querySelector('.payable-cash');
+      var totalEl = tr.querySelector('.payable-total');
+      var offsetEl = tr.querySelector('.payable-offset');
+      var summaryEl = tr.querySelector('.payable-summary');
+      if (!cashEl || !totalEl || !offsetEl) return;
+      var cash = parseFloat((cashEl.value || '').replace(/[^\d.-]/g, '')) || 0;
+      var checked = tr.querySelector('input[type=radio]:checked');
+      var isGoods = checked && checked.value === '货款';
+      // 货款 + 启用等比例冲抵：按合同 depositRatio 计算
+      var ratioEl = tr.querySelector('[data-deposit-ratio]');
+      var ratio = (isGoods && ratioEl && !ratioEl.disabled) ? (parseFloat(ratioEl.value) || 0) : 0;
+      var total, offset;
+      if (isGoods && ratio > 0 && ratio < 100) {
+        var r = calcOffset(cash, ratio);
+        total = r.totalPayable;
+        offset = r.depositOffset;
+      } else {
+        total = cash;
+        offset = 0;
+      }
+      totalEl.value = total.toFixed(2);
+      offsetEl.value = offset.toFixed(2);
+      // 实时摘要
+      if (summaryEl) {
+        if (cash <= 0) {
+          summaryEl.className = 'payable-summary muted';
+          summaryEl.innerHTML = '请输入「现金实付」实时查看应付总额 / 保证金冲抵';
+        } else if (isGoods && ratio > 0 && ratio < 100) {
+          summaryEl.className = 'payable-summary';
+          var cashR = 100 - ratio;
+          summaryEl.innerHTML = '应付 <strong>' + total.toFixed(2) + '</strong> = 现金 <strong>' + cash.toFixed(2) + '</strong>（' + cashR.toFixed(2) + '%）+ 保证金冲抵 <strong>' + offset.toFixed(2) + '</strong>（' + ratio.toFixed(2) + '%）';
+        } else {
+          summaryEl.className = 'payable-summary muted';
+          summaryEl.innerHTML = '全部现金支付：应付 <strong>' + total.toFixed(2) + '</strong> = 现金 <strong>' + cash.toFixed(2) + '</strong>，保证金冲抵 <strong>0.00</strong>';
         }
+      }
+    }
+
+    /* 快捷按钮：「按比例分摊」基于当前 cash 输入 → 按比例反推 */
+    function applyAutoSplit(btn) {
+      var tr = btn.closest('tr');
+      if (!tr) return;
+      var checked = tr.querySelector('input[type=radio]:checked');
+      if (!checked || checked.value !== '货款') {
+        Utils && Utils.toast && Utils.toast('请先切换到「货款」收款类型', 'warning');
+        return;
+      }
+      var ratioEl = tr.querySelector('[data-deposit-ratio]');
+      var ratio = (ratioEl && !ratioEl.disabled) ? (parseFloat(ratioEl.value) || 0) : 0;
+      if (ratio <= 0 || ratio >= 100) {
+        Utils && Utils.toast && Utils.toast('当前合同未启用等比例冲抵货款，无法按比例分摊', 'warning');
+        return;
+      }
+      var cashEl = tr.querySelector('.payable-cash');
+      var totalEl = tr.querySelector('.payable-total');
+      // 按比例分摊：保持用户原 totalPayable，按新比例拆分 cash/offset
+      // 用户当前现金 = 用户预期的实付（如 90% of total）；我们重算为「按比例」的 cash
+      var currentCash = parseFloat((cashEl.value || '').replace(/[^\d.-]/g, '')) || 0;
+      var currentTotal = parseFloat((totalEl.value || '').replace(/[^\d.-]/g, '')) || currentCash;
+      // 用户操作语义：把 currentTotal 按比例 (1-ratio) 拆出现金部分，offset 自动按比例填充
+      var newCash = currentTotal * (100 - ratio) / 100;
+      cashEl.value = newCash.toFixed(2);
+      recalcPayableRow(tr);
+      refreshRemainPayable();
+    }
+
+    /* 快捷按钮：「全部现金」→ offset = 0，cash = total */
+    function applyAllCash(btn) {
+      var tr = btn.closest('tr');
+      if (!tr) return;
+      var cashEl = tr.querySelector('.payable-cash');
+      var totalEl = tr.querySelector('.payable-total');
+      var total = parseFloat((totalEl.value || '').replace(/[^\d.-]/g, '')) || 0;
+      cashEl.value = total.toFixed(2);
+      recalcPayableRow(tr);
+      refreshRemainPayable();
+    }
+
+    /* 顶部「剩余未付」：汇总所有认领行的应付总额 - 下游结算合计 */
+    function refreshRemainPayable() {
+      var tbody = document.getElementById('claimTbody');
+      var bar = document.getElementById('remainPayableValue');
+      if (!tbody || !bar) return;
+      var rows = tbody.querySelectorAll('tr');
+      var totalDownstream = 0;
+      var totalClaimed = 0;
+      rows.forEach(function(tr){
+        var tds = tr.querySelectorAll('td');
+        if (tds.length < 7) return;
+        // 下游结算金额（第 4 列 td[3]） + 本次应付总额（最后一个 tds[5]）
+        var downstream = parseFloat((tds[3].textContent || '').replace(/[^\d.-]/g, '')) || 0;
+        var totalEl = tr.querySelector('.payable-total');
+        var claimed = totalEl ? (parseFloat((totalEl.value || '').replace(/[^\d.-]/g, '')) || 0) : 0;
+        totalDownstream += downstream;
+        totalClaimed += claimed;
+      });
+      var remain = totalDownstream - totalClaimed;
+      bar.textContent = (remain >= 0 ? remain : -remain).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元';
+      if (remain <= 0) {
+        bar.style.color = '#15803D';
+        bar.textContent = '已足额登记 ✓';
+      } else {
+        bar.style.color = '#B45309';
       }
     }
 
@@ -559,10 +711,12 @@
       toggleDepositOffset(el);
     }
 
-    // v1.7.99.336 用户输入货款金额时实时更新回显（应付总额 / 保证金冲抵）
+    // v1.7.99.347 用户输入现金实付时实时更新应付总额 + 保证金冲抵 + 顶部「剩余未付」
     document.addEventListener('input', function(e) {
       if (e.target.matches('input.form-input') && e.target.closest('tr')) {
-        toggleDepositOffset(e.target);
+        var tr = e.target.closest('tr');
+        recalcPayableRow(tr);
+        refreshRemainPayable();
       }
     });
     // 初始化：默认「货款」checked，需要显示回显
@@ -570,6 +724,7 @@
       document.querySelectorAll('.claim-table input[type=radio]:checked').forEach(function(r) {
         toggleDepositOffset(r);
       });
+      refreshRemainPayable();
     });
   </script>
 <script src="../assets/js/pin-annotation.js"></script>
