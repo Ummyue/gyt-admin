@@ -226,16 +226,16 @@
           <span class="current">登记保证金</span>
         </div>
 
-        <!-- 区块 1：销售订单/单批次合同信息（v1.7.99.337 只读 12 字段，从 URL 参数填充） -->
+        <!-- 区块 1：销售订单/单批次合同信息（v1.7.99.339 只读 12 字段，从 URL 参数填充） -->
         <div class="info-section">
           <div class="info-section-head">销售订单/单批次合同信息</div>
           <div class="info-section-body">
             <div class="contract-grid">
               <div class="contract-item"><span class="label">合同编号</span><span class="value" id="ci-contractNo">—</span></div>
               <div class="contract-item"><span class="label">买方企业</span><span class="value" id="ci-buyer">—</span></div>
-              <div class="contract-item"><span class="label">卖方企业</span><span class="value">河南中豫港通供应链管理有限公司</span></div>
-              <div class="contract-item"><span class="label">品名</span><span class="value" id="ci-product">—</span></div>
-              <div class="contract-item"><span class="label">计量单位</span><span class="value">吨</span></div>
+              <div class="contract-item"><span class="label">卖方企业</span><span class="value" id="ci-seller">—</span></div>
+              <div class="contract-item"><span class="label">业务类型</span><span class="value" id="ci-bizType">—</span></div>
+              <div class="contract-item"><span class="label">品类</span><span class="value" id="ci-category">—</span></div>
               <div class="contract-item"><span class="label">合同数量(吨)</span><span class="value" id="ci-qty">—</span></div>
               <div class="contract-item"><span class="label">合同单价(元/吨)</span><span class="value">3,400</span></div>
               <div class="contract-item"><span class="label">税率(%)</span><span class="value">13</span></div>
@@ -402,29 +402,36 @@
   <script src="../assets/js/app.js"></script>
   <script>
     /* ========== v1.7.99.337 登记保证金：从 URL 读取合同信息 + 联动计算 ========== */
-    // 解析 URL 参数并回显合同信息
+    // 解析 URL 参数并回显合同信息（v1.7.99.339 支持 seller / bizType / category / signDate 等更多字段）
     (function fillContractFromUrl() {
       var p = new URLSearchParams(window.location.search);
       var fields = {
         contractNo: 'ci-contractNo',
         buyer: 'ci-buyer',
-        product: 'ci-product'
+        seller: 'ci-seller',
+        bizType: 'ci-bizType',
+        category: 'ci-category',
+        product: 'ci-category'  // 兼容旧版 product 参数
       };
       var qty = p.get('qty');
       if (qty) {
         var el = document.getElementById('ci-qty');
         if (el) el.textContent = Number(qty).toLocaleString('zh-CN', { minimumFractionDigits: 0, maximumFractionDigits: 0 });
       }
-      var signDate = new Date();
-      var year = signDate.getFullYear() - 3;
-      var ciSignDate = document.getElementById('ci-signDate');
-      if (ciSignDate) ciSignDate.textContent = year + '-12-11';
 
       Object.keys(fields).forEach(function(k) {
         var v = p.get(k);
         var el = document.getElementById(fields[k]);
-        if (el) el.textContent = v ? v : '—';
+        if (el && v) el.textContent = v;
       });
+
+      // 签订日期（URL 优先，无则占位）
+      var ciSignDate = document.getElementById('ci-signDate');
+      var urlSignDate = p.get('signDate');
+      if (ciSignDate) {
+        if (urlSignDate) ciSignDate.textContent = urlSignDate;
+        else if (!ciSignDate.textContent || ciSignDate.textContent === '—') ciSignDate.textContent = '—';
+      }
 
       var payTotal = parseFloat(p.get('payTotal'));
       var paid = parseFloat(p.get('paid'));

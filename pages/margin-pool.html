@@ -30,64 +30,49 @@
     /* 12 列表格列宽（v1.7.99.337 在 11 列基础上加「已付保证金金额」列） */
     table.cp-table th, table.cp-table td { white-space: nowrap; }
 
-    /* v1.7.99.337 登记保证金侧边抽屉 */
-    .register-drawer-mask {
-      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
-      z-index: 900; opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    /* v1.7.99.339 登记保证金侧边抽屉（仿 shipment-out.html 选择销售订单样式） */
+    .cp-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 999; display: none;
     }
-    .register-drawer-mask.open { opacity: 1; pointer-events: auto; }
-    .register-drawer {
-      position: fixed; top: 0; right: 0; bottom: 0;
-      width: 640px; max-width: 92vw; background: #fff;
-      box-shadow: -8px 0 24px rgba(15, 23, 42, 0.12);
-      transform: translateX(100%); transition: transform .28s cubic-bezier(.4, .0, .2, 1);
-      z-index: 901; display: flex; flex-direction: column;
+    .cp-drawer-overlay.open { display: block; }
+    .cp-drawer {
+      position: fixed; top: 0; right: 0; height: 100vh; width: 1440px; max-width: 95vw;
+      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.15);
+      z-index: 1000; display: none; flex-direction: column;
     }
-    .register-drawer.open { transform: translateX(0); }
-    .register-drawer-head {
-      padding: 16px 20px; border-bottom: 1px solid var(--border-light);
-      display: flex; align-items: center; justify-content: space-between;
+    .cp-drawer.open { display: flex; }
+    .cp-drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
-    .register-drawer-head .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-    .register-drawer-head .close {
-      width: 28px; height: 28px; border-radius: 4px; border: none; background: transparent;
-      color: var(--text-tertiary); cursor: pointer; display: flex; align-items: center; justify-content: center;
+    .cp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .cp-drawer-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .cp-drawer-close:hover { color: var(--text-primary); }
+    .cp-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
+    .cp-drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
     }
-    .register-drawer-head .close:hover { background: var(--bg-page); color: var(--text-primary); }
-    .register-drawer-body { flex: 1; overflow-y: auto; padding: 18px 20px; }
-    .register-drawer-foot {
-      padding: 12px 20px; border-top: 1px solid var(--border-light);
-      display: flex; justify-content: flex-end; gap: 8px;
+    .cp-drawer-filter {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin-bottom: 16px;
     }
-    .register-drawer-search {
-      display: flex; gap: 8px; margin-bottom: 14px;
-    }
-    .register-drawer-search .input { flex: 1; }
-    .register-drawer-tip {
+    .cp-drawer-filter-item { display: flex; align-items: center; gap: 8px; }
+    .cp-drawer-filter-item label { color: var(--text-tertiary); font-size: 12px; min-width: 64px; }
+    .cp-drawer-filter-buttons { display: flex; gap: 8px; align-items: flex-end; }
+    .cp-drawer-filter-buttons button { height: 30px; }
+    /* chips 检索摘要 */
+    .register-chips-row {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 8px;
       font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px;
     }
-    .contract-list { display: flex; flex-direction: column; gap: 10px; }
-    .contract-card {
-      padding: 14px; border: 1px solid var(--border-light); border-radius: 8px;
-      background: #fff; cursor: pointer; transition: all .15s ease;
+    .register-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; background: #DBEAFE; color: #1E40AF;
+      border-radius: 3px; font-size: 12px;
     }
-    .contract-card:hover { border-color: #93C5FD; background: #F0F7FF; }
-    .contract-card.selected { border-color: #1E40AF; background: #EFF6FF; box-shadow: 0 0 0 2px rgba(30, 64, 175, 0.1); }
-    .contract-card .row1 {
-      display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;
-    }
-    .contract-card .contract-no { font-size: 13px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
-    .contract-card .badge-buy { font-size: 11px; color: var(--text-tertiary); }
-    .contract-card .row2 {
-      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
-      padding-top: 8px; border-top: 1px dashed var(--border-light);
-    }
-    .contract-card .metric-label { font-size: 11px; color: var(--text-tertiary); margin-bottom: 4px; }
-    .contract-card .metric-value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono); }
-    .contract-card .metric-value.pay { color: #EA580C; }
-    .contract-card .metric-value.paid { color: #15803D; }
-    .contract-card .metric-value.available { color: #1E40AF; }
-    .contract-card.empty-state { cursor: default; text-align: center; color: var(--text-tertiary); padding: 36px 14px; }
+    .register-chip .chip-remove { cursor: pointer; font-size: 12px; line-height: 1; }
+    .register-chip-clear { color: var(--color-primary); cursor: pointer; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -176,8 +161,8 @@
               </div>
             </div>
             <div style="display: flex; gap: 8px; align-items: center;">
-              <!-- v1.7.99.337 登记保证金按钮（点击侧边弹窗） -->
-              <button class="btn btn-primary btn-sm" onclick="openRegisterMarginDrawer()">
+              <!-- v1.7.99.339 登记保证金按钮（点击侧边抽屉） -->
+              <button class="btn btn-primary btn-sm" onclick="openRegisterDrawer()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
                 登记保证金
               </button>
@@ -277,25 +262,81 @@
     </div>
   </div>
 
-  <!-- v1.7.99.337 登记保证金侧边抽屉（销售合同列表 → 跳转 margin-register.html） -->
-  <div class="register-drawer-mask" id="registerDrawerMask" onclick="closeRegisterMarginDrawer()"></div>
-  <div class="register-drawer" id="registerDrawer" role="dialog" aria-modal="true" aria-label="登记保证金">
-    <div class="register-drawer-head">
-      <div class="title">登记保证金</div>
-      <button class="close" onclick="closeRegisterMarginDrawer()" aria-label="关闭">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6L6 18M6 6l12 12"/></svg>
-      </button>
+  <!-- v1.7.99.339 登记保证金侧边抽屉（销售合同列表 → 表格 + 单选 + chips + 取消/确定 → 跳转 margin-register.html） -->
+  <div class="cp-drawer-overlay" id="registerDrawerOverlay" onclick="closeRegisterDrawer()"></div>
+  <div class="cp-drawer" id="registerDrawer" role="dialog" aria-modal="true" aria-label="登记保证金">
+    <div class="cp-drawer-header">
+      <div class="cp-drawer-title">选择销售订单</div>
+      <span class="cp-drawer-close" onclick="closeRegisterDrawer()" title="关闭">×</span>
     </div>
-    <div class="register-drawer-body">
-      <div class="register-drawer-tip">请选择一笔销售合同进入登记流程。每张卡片显示该合同的应付/已付/剩余可用保证金金额。</div>
-      <div class="register-drawer-search">
-        <input type="text" class="input" placeholder="搜索合同编号 / 买方企业 / 品名" id="registerDrawerSearch" oninput="renderRegisterDrawerList()">
+    <div class="cp-drawer-body">
+      <!-- chips：当前搜索条件（动态回显） -->
+      <div class="register-chips-row" id="registerDrawerChips">
+        <span>当前搜索：</span>
+        <span class="filter-empty-hint" style="color: var(--text-tertiary);">（无筛选条件）</span>
       </div>
-      <div class="contract-list" id="registerDrawerContractList"></div>
+      <!-- 过滤表单：3 字段 + 1 字段 + 重置/查询 -->
+      <div class="cp-drawer-filter">
+        <div class="cp-drawer-filter-item">
+          <label>合同编号</label>
+          <input type="text" class="input" placeholder="请输入合同编号" id="drawerFilterContractNo">
+        </div>
+        <div class="cp-drawer-filter-item">
+          <label>企业名称</label>
+          <input type="text" class="input" placeholder="请输入企业名称" id="drawerFilterCompany">
+        </div>
+        <div class="cp-drawer-filter-item">
+          <label>品名</label>
+          <input type="text" class="input" placeholder="请输入品名" id="drawerFilterProduct">
+        </div>
+        <div class="cp-drawer-filter-item">
+          <label>签订日期</label>
+          <input type="text" class="input" placeholder="请选择合同日期范围" id="drawerFilterDate">
+        </div>
+        <div class="cp-drawer-filter-buttons">
+          <button class="btn btn-default btn-sm" onclick="resetDrawerFilters()">重置</button>
+          <button class="btn btn-primary btn-sm" onclick="renderRegisterDrawerList()">查询</button>
+        </div>
+      </div>
+      <!-- 表格：单选 + 7 列 -->
+      <div class="cp-table-wrap">
+        <table class="cp-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;"></th>
+              <th>订单/单批次合同编号</th>
+              <th>卖方企业</th>
+              <th>业务类型</th>
+              <th>品类</th>
+              <th style="text-align: right;">应付保证金金额(元)</th>
+              <th style="text-align: right;">已付保证金金额(元)</th>
+              <th style="text-align: right;">剩余可用保证金金额(元)</th>
+            </tr>
+          </thead>
+          <tbody id="registerDrawerTbody"></tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="cp-pagination" style="margin-top: 12px;">
+        <div id="registerDrawerPaginationInfo">共 10 条记录 · 第 1 / 1 页</div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="cp-pagination-pages" id="registerDrawerPaginationPages">
+            <div class="cp-pagination-page">‹</div>
+            <div class="cp-pagination-page active">1</div>
+            <div class="cp-pagination-page">›</div>
+          </div>
+          <select class="cp-pagination-size">
+            <option>10 条/页</option>
+            <option>20 条/页</option>
+            <option>50 条/页</option>
+          </select>
+          <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+        </div>
+      </div>
     </div>
-    <div class="register-drawer-foot">
-      <button class="btn btn-default btn-sm" onclick="closeRegisterMarginDrawer()">取消</button>
-      <button class="btn btn-primary btn-sm" id="registerDrawerNext" onclick="goToRegisterPage()" disabled>选择合同进入登记</button>
+    <div class="cp-drawer-footer">
+      <button class="btn btn-default" onclick="closeRegisterDrawer()">取消</button>
+      <button class="btn btn-primary" id="registerDrawerConfirm" onclick="goToRegisterPage()" disabled>确定</button>
     </div>
   </div>
 
@@ -303,18 +344,19 @@
   <script src="../shared/js/left-sidemenu.js"></script>
   <script src="../assets/js/app.js"></script>
   <script>
-    /* ========== v1.7.99.67 保证金管理 mock 数据（10 行 + 5 行额外 70,000 吨） ========== v1.7.99.337 加 paid 已付保证金金额字段 */
+    /* ========== v1.7.99.339 保证金管理 mock 数据 ==========
+       v1.7.99.67 初始 + v1.7.99.337 加 paid 已付保证金金额字段 + v1.7.99.339 增加 bizType 业务类型 + 多样化合同编号（GTGYL-DFHT / YL-MSXS） */
     var MARGIN_MOCK = [
-      { id: 1, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 250000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 2, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 3, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 500000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 4, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 5, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 350000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 6, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 70000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 7, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 200000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 8, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 9, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 800000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' },
-      { id: 10, contractNo: 'SDFGHJKDFGHJ', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 300000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2022-12-11' }
+      { id: 1, contractNo: 'GTGYL-DFHT-20260122-001', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 250000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-01-22' },
+      { id: 2, contractNo: 'YL-MSXS-20260315-002',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '预付业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-03-15' },
+      { id: 3, contractNo: 'GTGYL-DFHT-20260508-003', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '账期业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 500000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-05-08' },
+      { id: 4, contractNo: 'YL-MSXS-20260710-004',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 100000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-07-10' },
+      { id: 5, contractNo: 'GTGYL-DFHT-20260825-005', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 16.22, ratioReq: 15, payTotal: 1000000.22, paid: 350000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-25' },
+      { id: 6, contractNo: 'YL-MSXS-20260228-006',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '预付业务', qty: 70000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-02-28' },
+      { id: 7, contractNo: 'GTGYL-DFHT-20260412-007', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '糖粉',     category: '糖粉',     bizType: '账期业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 200000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-04-12' },
+      { id: 8, contractNo: 'YL-MSXS-20260630-008',    seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '谷物',     category: '谷物',     bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 0,         recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-06-30' },
+      { id: 9, contractNo: 'GTGYL-DFHT-20260905-009', seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '存货业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 800000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-09-05' },
+      { id: 10, contractNo: 'YL-MSXS-20260818-010',  seller: '郑州信必达供应链管理有限公司', buyer: '郑州信必达供应链管理有限公司', product: '淀粉制品', category: '淀粉制品', bizType: '购销业务', qty: 20000, ratioCur: 14.22, ratioReq: 15, payTotal: 1000000.22, paid: 300000.00, recTotal: 1000000.22, deposit: 1000000.22, margin: 1000000.22, signDate: '2026-08-18' }
     ];
     function fmt(n) { return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
     function renderMarginTable() {
@@ -349,87 +391,118 @@
     }
     function exportData() { Utils.toast('已发起数据导出（mock）', 'success'); }
 
-    /* ========== v1.7.99.337 登记保证金侧边抽屉 ========== */
-    var REGISTER_SELECTED = null;
-    function openRegisterMarginDrawer() {
-      REGISTER_SELECTED = null;
-      var next = document.getElementById('registerDrawerNext');
-      if (next) next.disabled = true;
-      var mask = document.getElementById('registerDrawerMask');
+    /* ========== v1.7.99.339 登记保证金侧边抽屉（仿 shipment-out.html 选择销售订单样式 + 表格 + 单选） ========== */
+    var REGISTER_SELECTED_ID = null;
+    function openRegisterDrawer() {
+      REGISTER_SELECTED_ID = null;
+      var overlay = document.getElementById('registerDrawerOverlay');
       var drawer = document.getElementById('registerDrawer');
-      if (mask) mask.classList.add('open');
+      var confirm = document.getElementById('registerDrawerConfirm');
+      if (overlay) overlay.classList.add('open');
       if (drawer) drawer.classList.add('open');
-      var search = document.getElementById('registerDrawerSearch');
-      if (search) { search.value = ''; }
+      if (confirm) confirm.disabled = true;
+      // 清空过滤表单
+      ['drawerFilterContractNo','drawerFilterCompany','drawerFilterProduct','drawerFilterDate'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.value = '';
+      });
       renderRegisterDrawerList();
     }
-    function closeRegisterMarginDrawer() {
-      var mask = document.getElementById('registerDrawerMask');
+    function closeRegisterDrawer() {
+      var overlay = document.getElementById('registerDrawerOverlay');
       var drawer = document.getElementById('registerDrawer');
-      if (mask) mask.classList.remove('open');
+      if (overlay) overlay.classList.remove('open');
       if (drawer) drawer.classList.remove('open');
     }
-    function renderRegisterDrawerList() {
-      var list = document.getElementById('registerDrawerContractList');
-      if (!list) return;
-      var search = (document.getElementById('registerDrawerSearch').value || '').trim().toLowerCase();
-      var rows = MARGIN_MOCK.filter(function(m) {
-        if (!search) return true;
-        return (m.contractNo && m.contractNo.toLowerCase().indexOf(search) >= 0)
-          || (m.buyer && m.buyer.toLowerCase().indexOf(search) >= 0)
-          || (m.product && m.product.toLowerCase().indexOf(search) >= 0);
+    function resetDrawerFilters() {
+      ['drawerFilterContractNo','drawerFilterCompany','drawerFilterProduct','drawerFilterDate'].forEach(function(id){
+        var el = document.getElementById(id);
+        if (el) el.value = '';
       });
-      if (rows.length === 0) {
-        list.innerHTML = '<div class="contract-card empty-state">暂无匹配的销售合同</div>';
+      renderRegisterDrawerList();
+    }
+    function buildRegisterChips() {
+      var chipsRow = document.getElementById('registerDrawerChips');
+      if (!chipsRow) return;
+      var filters = [
+        { label: '合同编号', value: (document.getElementById('drawerFilterContractNo') || {}).value },
+        { label: '企业名称', value: (document.getElementById('drawerFilterCompany') || {}).value },
+        { label: '品名',     value: (document.getElementById('drawerFilterProduct') || {}).value },
+        { label: '签订日期', value: (document.getElementById('drawerFilterDate') || {}).value }
+      ];
+      var active = filters.filter(function(f){ return f.value && String(f.value).trim(); });
+      if (active.length === 0) {
+        chipsRow.innerHTML = '<span>当前搜索：</span><span class="filter-empty-hint" style="color: var(--text-tertiary);">（无筛选条件）</span>';
         return;
       }
-      list.innerHTML = rows.map(function(m) {
-        var available = (m.payTotal || 0) - (m.paid || 0);
-        var selectedCls = (REGISTER_SELECTED && REGISTER_SELECTED.id === m.id) ? ' selected' : '';
-        return ''
-          + '<div class="contract-card' + selectedCls + '" data-id="' + m.id + '" onclick="selectContractForRegister(' + m.id + ')">'
-          +   '<div class="row1">'
-          +     '<div class="contract-no">' + m.contractNo + ' · ' + m.product + '</div>'
-          +     '<div class="badge-buy">' + m.buyer + '</div>'
-          +   '</div>'
-          +   '<div class="row2">'
-          +     '<div>'
-          +       '<div class="metric-label">应付保证金(元)</div>'
-          +       '<div class="metric-value pay">' + fmt(m.payTotal) + '</div>'
-          +     '</div>'
-          +     '<div>'
-          +       '<div class="metric-label">已付保证金(元)</div>'
-          +       '<div class="metric-value paid">' + fmt(m.paid) + '</div>'
-          +     '</div>'
-          +     '<div>'
-          +       '<div class="metric-label">剩余可用(元)</div>'
-          +       '<div class="metric-value available">' + fmt(available) + '</div>'
-          +     '</div>'
-          +   '</div>'
-          + '</div>';
-      }).join('');
+      var html = '<span>当前搜索：</span>';
+      active.forEach(function(f){
+        html += '<span class="register-chip">' + f.label + '：' + f.value + '<span class="chip-remove" onclick="resetDrawerFilters()">×</span></span>';
+      });
+      html += '<span class="register-chip-clear" onclick="resetDrawerFilters()">清除全部</span>';
+      chipsRow.innerHTML = html;
     }
-    function selectContractForRegister(id) {
-      REGISTER_SELECTED = MARGIN_MOCK.find(function(m) { return m.id === id; }) || null;
-      renderRegisterDrawerList();
-      var next = document.getElementById('registerDrawerNext');
-      if (next) next.disabled = !REGISTER_SELECTED;
+    function renderRegisterDrawerList() {
+      var tbody = document.getElementById('registerDrawerTbody');
+      if (!tbody) return;
+      var fContract = ((document.getElementById('drawerFilterContractNo') || {}).value || '').trim().toLowerCase();
+      var fCompany = ((document.getElementById('drawerFilterCompany') || {}).value || '').trim().toLowerCase();
+      var fProduct = ((document.getElementById('drawerFilterProduct') || {}).value || '').trim().toLowerCase();
+      var rows = MARGIN_MOCK.filter(function(m) {
+        if (fContract && (m.contractNo || '').toLowerCase().indexOf(fContract) < 0) return false;
+        if (fCompany && (m.seller || '').toLowerCase().indexOf(fCompany) < 0) return false;
+        if (fProduct && (m.product || '').toLowerCase().indexOf(fProduct) < 0) return false;
+        return true;
+      });
+      buildRegisterChips();
+      // 更新 chips 后调用一次，避免重复
+      if (rows.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 40px; color: var(--text-tertiary);">— 暂无匹配的销售合同 —</td></tr>';
+      } else {
+        tbody.innerHTML = rows.map(function(m) {
+          var available = (m.payTotal || 0) - (m.paid || 0);
+          var checked = (REGISTER_SELECTED_ID === m.id) ? ' checked' : '';
+          return ''
+            + '<tr>'
+            +   '<td><input type="radio" name="drawerSalesSelect"' + checked + ' onclick="selectDrawerRadio(' + m.id + ')"></td>'
+            +   '<td class="col-num">' + m.contractNo + '</td>'
+            +   '<td>' + m.seller + '</td>'
+            +   '<td>' + m.bizType + '</td>'
+            +   '<td>' + m.category + '</td>'
+            +   '<td style="text-align: right;">' + fmt(m.payTotal) + '</td>'
+            +   '<td style="text-align: right;">' + fmt(m.paid) + '</td>'
+            +   '<td style="text-align: right;">' + fmt(available) + '</td>'
+            + '</tr>';
+        }).join('');
+      }
+      // 分页信息
+      var pageInfo = document.getElementById('registerDrawerPaginationInfo');
+      if (pageInfo) pageInfo.textContent = '共 ' + rows.length + ' 条记录 · 第 1 / 1 页';
+    }
+    function selectDrawerRadio(id) {
+      REGISTER_SELECTED_ID = id;
+      var confirm = document.getElementById('registerDrawerConfirm');
+      if (confirm) confirm.disabled = false;
     }
     function goToRegisterPage() {
-      if (!REGISTER_SELECTED) {
+      if (!REGISTER_SELECTED_ID) {
         Utils.toast('请先选择一笔销售合同', 'warning');
         return;
       }
-      var c = REGISTER_SELECTED;
-      // 携带合同关键字段，跳到 margin-register.html，URL 参数保留（mock 模式下由新页面回读）
+      var c = MARGIN_MOCK.find(function(m) { return m.id === REGISTER_SELECTED_ID; });
+      if (!c) return;
       var params = new URLSearchParams();
       params.set('contractNo', c.contractNo || '');
+      params.set('seller', c.seller || '');
       params.set('buyer', c.buyer || '');
+      params.set('bizType', c.bizType || '');
       params.set('product', c.product || '');
+      params.set('category', c.category || '');
       params.set('qty', String(c.qty || 0));
       params.set('ratioReq', String(c.ratioReq || 0));
       params.set('payTotal', String(c.payTotal || 0));
       params.set('paid', String(c.paid || 0));
+      params.set('signDate', c.signDate || '');
       window.location.href = './margin-register.html?' + params.toString();
     }
 
