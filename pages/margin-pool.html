@@ -715,6 +715,9 @@
       params.set('payTotal', String(c.payTotal || 0));
       params.set('paid', String(c.paid || 0));
       params.set('signDate', c.signDate || '');
+      // v1.7.99.342 等比例冲抵货款配置（详情/新建页仅回显，配置在列表页统一维护）
+      params.set('depositEnabled', c.depositEnabled ? '1' : '0');
+      params.set('depositRatio', String(c.depositRatio || 10));
       window.location.href = './margin-register.html?' + params.toString();
     }
 

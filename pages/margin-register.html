@@ -85,6 +85,22 @@
       font-size: 12px; color: var(--text-secondary); line-height: 1.6;
     }
     .deposit-offset-config .summary strong { color: #6B21A8; }
+    /* v1.7.99.342 deposit-offset-config 状态徽标（取代开关按钮） */
+    .deposit-status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 12px;
+      font-size: 12px; font-weight: 500; line-height: 1.4;
+    }
+    .deposit-status-badge.on {
+      background: #EDE9FE; color: #6B21A8; border: 1px solid #DDD6FE;
+    }
+    .deposit-status-badge.off {
+      background: #F3F4F6; color: var(--text-tertiary); border: 1px solid var(--border-light);
+    }
+    .deposit-status-badge::before {
+      content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+    }
 
     /* iOS 风格开关 */
     .switch { position: relative; display: inline-block; width: 38px; height: 22px; }
@@ -277,7 +293,7 @@
                 <div class="row2-hint">本次登记保证金金额 = 应付保证金金额 × (1 - 冲抵比例)；系统按下方冲抵比例自动计算补足部分。</div>
               </div>
 
-              <!-- 字段 4：等比例冲抵货款（v1.7.99.341 在新建页仅作展示，开关 + 比例均 disabled，配置在列表页统一设置） -->
+              <!-- 字段 4：等比例冲抵货款（v1.7.99.342 去掉开关按钮，纯状态 + 比例 disabled 回显，统一在列表页设置） -->
               <div class="full">
                 <label class="form-label">是否等比例冲抵货款</label>
                 <div class="deposit-offset-config">
@@ -286,16 +302,13 @@
                       <span class="icon"></span>
                       <span>等比例冲抵每笔货款</span>
                     </div>
-                    <label class="switch">
-                      <input type="checkbox" id="rg-depositEnabled" disabled>
-                      <span class="slider"></span>
-                    </label>
+                    <!-- v1.7.99.342 去掉开关，纯状态徽标（已开启/已关闭） -->
+                    <span id="rg-depositStatus" class="deposit-status-badge">—</span>
                   </div>
                   <div class="ratio-row disabled" id="rg-ratioRow">
                     <span>冲抵货款比例</span>
                     <input type="number" class="form-input" id="rg-depositRatio" min="0" max="100" step="0.01" placeholder="10" disabled>
                     <span>%</span>
-                    <span style="color: var(--text-tertiary);">（在「保证金管理」列表页统一设置，本页仅展示）</span>
                   </div>
                   <div class="summary" id="rg-summary">
                     关闭状态：本次登记保证金金额 = 应付保证金金额，无保证金冲抵。
@@ -402,6 +415,20 @@
   <script src="../assets/js/app.js"></script>
   <script>
     /* ========== v1.7.99.337 登记保证金：从 URL 读取合同信息 + 联动计算 ========== */
+    // v1.7.99.342 等比例冲抵货款状态（统一在列表页设置，新建页仅回显）
+    var RG_DEPOSIT_ENABLED = false;
+    function renderDepositStatusBadge(enabled) {
+      var badge = document.getElementById('rg-depositStatus');
+      if (!badge) return;
+      if (enabled) {
+        badge.className = 'deposit-status-badge on';
+        badge.textContent = '已开启';
+      } else {
+        badge.className = 'deposit-status-badge off';
+        badge.textContent = '已关闭';
+      }
+    }
+
     // 解析 URL 参数并回显合同信息（v1.7.99.339 支持 seller / bizType / category / signDate 等更多字段）
     (function fillContractFromUrl() {
       var p = new URLSearchParams(window.location.search);
@@ -445,6 +472,14 @@
       if (!isNaN(ratioReq)) {
         document.getElementById('rg-ratioReq').value = ratioReq;
       }
+      // v1.7.99.342 等比例冲抵货款：开关 + 比例配置从 URL 读取（默认 false/10）
+      var depEnabledParam = p.get('depositEnabled');
+      var depRatioParam = parseFloat(p.get('depositRatio'));
+      RG_DEPOSIT_ENABLED = depEnabledParam === '1' || depEnabledParam === 'true';
+      var depRatioVal = !isNaN(depRatioParam) ? depRatioParam : 10;
+      var ratioEl = document.getElementById('rg-depositRatio');
+      if (ratioEl) ratioEl.value = depRatioVal;
+      renderDepositStatusBadge(RG_DEPOSIT_ENABLED);
     })();
 
     // 数字输入格式化（千分位 + 2 位小数）
@@ -486,7 +521,7 @@
       if (!echoEl || !summaryEl) return;
 
       var pay = parseMoney(document.getElementById('rg-thisPaid').value);
-      var enabled = document.getElementById('rg-depositEnabled').checked;
+      var enabled = RG_DEPOSIT_ENABLED;
       var ratio = parseFloat(document.getElementById('rg-depositRatio').value);
 
       // 没启用 → 关闭态文案
@@ -542,15 +577,7 @@
       if (ratioReqEl) ratioReqEl.addEventListener('input', refreshCalcEcho);
       var depositRatioEl = document.getElementById('rg-depositRatio');
       if (depositRatioEl) depositRatioEl.addEventListener('input', refreshCalcEcho);
-      // 等比例开关
-      var depositEnabled = document.getElementById('rg-depositEnabled');
-      if (depositEnabled) {
-        depositEnabled.addEventListener('change', function() {
-          var row = document.getElementById('rg-ratioRow');
-          if (row) row.classList.toggle('disabled', !this.checked);
-          refreshCalcEcho();
-        });
-      }
+      // v1.7.99.342 等比例开关移除，仅 ratio input 联动计算回显（disabled 不变）
       // 默认未启用 → 比例 row 已加 disabled 类
       refreshCalcEcho();
     }
