@@ -140,6 +140,23 @@
       background: #FFFFFF;
     }
     .deposit-offset-config .ratio-unit { color: var(--text-tertiary); font-size: 11px; }
+    /* v1.7.99.344 状态徽标 + status-row 布局 */
+    .deposit-status-row { display: inline-flex; align-items: center; gap: 8px; }
+    .deposit-status-badge {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 3px 10px; border-radius: 12px;
+      font-size: 12px; font-weight: 500; line-height: 1.4;
+    }
+    .deposit-status-badge.on {
+      background: #EDE9FE; color: #6B21A8; border: 1px solid #DDD6FE;
+    }
+    .deposit-status-badge.off {
+      background: #F3F4F6; color: var(--text-tertiary); border: 1px solid var(--border-light);
+    }
+    .deposit-status-badge::before {
+      content: ''; display: inline-block; width: 6px; height: 6px; border-radius: 50%;
+      background: currentColor;
+    }
     /* 新增行 */
     .add-row { text-align: center; padding: 12px; color: var(--color-primary); cursor: pointer; }
     .add-row:hover { background: #F9FAFB; }
@@ -346,15 +363,15 @@
                       <label class="radio-item"><input type="radio" name="recv_type_1" value="保证金" onchange="toggleDepositOffset(this)"> 保证金</label>
                       <label class="radio-item"><input type="radio" name="recv_type_1" value="货款" checked onchange="toggleDepositOffset(this)"> 货款</label>
                     </div>
-                    <!-- v1.7.99.335 保证金等比例冲抵货款设置（保证金时显示） -->
+                    <!-- v1.7.99.344 保证金等比例冲抵货款设置（保证金时显示）：去掉 checkbox，纯状态徽标回显（统一在列表页设置） -->
                     <div class="deposit-offset-config" style="display: none;" data-deposit-config>
                       <div class="deposit-offset-config-row">
-                        <label class="switch">
-                          <input type="checkbox" data-deposit-enabled onchange="onDepositConfigChange(this)">
-                          <span>等比例冲抵每笔货款</span>
-                        </label>
+                        <div class="deposit-status-row">
+                          <span style="font-size: 13px; color: #6B21A8;">等比例冲抵每笔货款</span>
+                          <span data-deposit-status class="deposit-status-badge off">已关闭</span>
+                        </div>
                         <span data-deposit-ratio-wrap style="display: none;">
-                          比例 <input type="number" class="ratio-input" data-deposit-ratio min="0" max="100" step="0.01" value="100" oninput="onDepositConfigChange(this)"> <span class="ratio-unit">%</span>
+                          比例 <input type="number" class="ratio-input" data-deposit-ratio min="0" max="100" step="0.01" value="100" disabled oninput="onDepositConfigChange(this)"> <span class="ratio-unit">%</span>
                         </span>
                       </div>
                       <div style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px;" data-deposit-summary>该合同保证金余额 87,500.00 元</div>
@@ -370,10 +387,10 @@
                   <td style="text-align: right; font-family: var(--font-mono);">229,467.09</td>
                   <td style="text-align: right;">
                     <input type="text" class="form-input" value="229467.09" style="text-align: right;">
-                    <!-- v1.7.99.278 选择「货款」时回显：含本次保证金冲抵货款金额 -->
+                    <!-- v1.7.99.344 选择「货款」时回显：含本次保证金冲抵货款金额（去重：只保留标题行，比例小字由 JS 注入到下方 div，避免重复） -->
                     <div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">
                       含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元
-                      <div style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;">（按合同冲抵比例 78.57% 计算）</div>
+                      <div class="deposit-offset-sub" style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;"></div>
                     </div>
                   </td>
                   <td><a href="javascript:void(0)" style="color: #DC2626;" onclick="delClaimRow(this)">删除</a></td>
@@ -444,11 +461,14 @@
         + '</div></div></td>'
         + '<td><div class="radio-group"><label class="radio-item"><input type="radio" name="recv_type_' + idx + '" value="保证金" onchange="toggleDepositOffset(this)"> 保证金</label>'
         + '<label class="radio-item"><input type="radio" name="recv_type_' + idx + '" value="货款" checked onchange="toggleDepositOffset(this)"> 货款</label></div>'
-        + '<!-- v1.7.99.335 保证金等比例冲抵设置 -->'
+        + '<!-- v1.7.99.344 保证金等比例冲抵设置（去 checkbox，纯状态徽标） -->'
         + '<div class="deposit-offset-config" style="display: none;" data-deposit-config>'
         +   '<div class="deposit-offset-config-row">'
-        +     '<label class="switch"><input type="checkbox" data-deposit-enabled onchange="onDepositConfigChange(this)"><span>等比例冲抵每笔货款</span></label>'
-        +     '<span data-deposit-ratio-wrap style="display: none;">比例 <input type="number" class="ratio-input" data-deposit-ratio min="0" max="100" step="0.01" value="100" oninput="onDepositConfigChange(this)"> <span class="ratio-unit">%</span></span>'
+        +     '<div class="deposit-status-row">'
+        +       '<span style="font-size: 13px; color: #6B21A8;">等比例冲抵每笔货款</span>'
+        +       '<span data-deposit-status class="deposit-status-badge off">已关闭</span>'
+        +     '</div>'
+        +     '<span data-deposit-ratio-wrap style="display: none;">比例 <input type="number" class="ratio-input" data-deposit-ratio min="0" max="100" step="0.01" value="100" disabled oninput="onDepositConfigChange(this)"> <span class="ratio-unit">%</span></span>'
         +   '</div>'
         +   '<div style="color: var(--text-tertiary); font-size: 11px; margin-top: 4px;" data-deposit-summary>该合同保证金余额 87,500.00 元</div>'
         + '</div></td>'
@@ -456,7 +476,7 @@
         + '<td style="text-align: right; color: var(--text-tertiary);">—</td>'
         + '<td style="text-align: right; color: var(--text-tertiary);">—</td>'
         + '<td style="text-align: right;"><input type="text" class="form-input" placeholder="0.00" style="text-align: right;">'
-        + '<div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元<div style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;">（按合同冲抵比例 78.57% 计算）</div></div></td>'
+        + '<div class="deposit-offset-row" style="display: none; margin-top: 4px; font-size: 11px; color: #6B21A8; text-align: right; line-height: 1.4;">含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元<div class="deposit-offset-sub" style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;"></div></div></td>'
         + '<td><a href="javascript:void(0)" style="color: #DC2626;" onclick="delClaimRow(this)">删除</a></td>';
       tbody.appendChild(newRow);
       // v1.7.99.278 新增行默认「货款」checked，立即显示回显
@@ -513,16 +533,16 @@
         var ratioEl = tr.querySelector('[data-deposit-ratio]');
         var enabledEl = tr.querySelector('[data-deposit-enabled]');
         var ratio = (enabledEl && enabledEl.checked) ? (parseFloat(ratioEl.value) || 0) : 0;
-        var desc = tr.querySelector('.deposit-offset-row div');
-        if (desc && ratio > 0 && ratio < 100) {
+        // v1.7.99.344 去重：只更新 sub 行，不重复主标题「含本次保证金冲抵货款金额为：68,750.00 元」
+        var sub = tr.querySelector('.deposit-offset-sub');
+        if (sub && ratio > 0 && ratio < 100) {
           var payInput = tr.querySelector('input.form-input');
           var pay = payInput ? (parseFloat(payInput.value) || 0) : 0;
           var r = calcOffset(pay, ratio);
-          desc.innerHTML = '应付总额 <span style="font-family: var(--font-mono); font-weight: 600;">' + r.totalPayable.toFixed(2) + '</span> 元 = 用户输入 <span style="font-family: var(--font-mono); font-weight: 600;">' + pay.toFixed(2) + '</span> 元（应付的 ' + r.cashRatio + '%）+ 保证金冲抵 <span style="font-family: var(--font-mono); font-weight: 600;">' + r.depositOffset.toFixed(2) + '</span> 元（' + r.depositRatio + '%）'
-            + '<div style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;">（用户仅登记应付的 ' + r.cashRatio + '%，保证金按 ' + r.depositRatio + '% 自动补足冲抵）</div>';
-        } else if (desc) {
-          // 没有启用等比例冲抵，恢复默认显示（保持原 v1.7.99.278 旧数据）
-          desc.innerHTML = '含本次保证金冲抵货款金额为：<span style="font-family: var(--font-mono); font-weight: 600;">68,750.00</span> 元<div style="color: var(--text-tertiary); font-size: 10px; margin-top: 1px;">（按合同冲抵比例 78.57% 计算）</div>';
+          sub.innerHTML = '（应付总额 <span style="font-family: var(--font-mono); font-weight: 600;">' + r.totalPayable.toFixed(2) + '</span> 元 = 用户输入 ' + pay.toFixed(2) + ' 元（' + r.cashRatio + '%）+ 保证金冲抵 <span style="font-family: var(--font-mono); font-weight: 600;">' + r.depositOffset.toFixed(2) + '</span> 元（' + r.depositRatio + '%），用户仅登记应付的 ' + r.cashRatio + '%，保证金按 ' + r.depositRatio + '% 自动补足冲抵）';
+        } else if (sub) {
+          // 没有启用等比例冲抵，恢复 sub 默认文案（主标题保留原静态「68,750.00 元」）
+          sub.innerHTML = '（按合同冲抵比例 78.57% 计算）';
         }
       }
     }
