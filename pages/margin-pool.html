@@ -32,21 +32,39 @@
 
     /* v1.7.99.341 列表页每行内嵌开关（等比例冲抵货款） */
     .cell-switch { padding: 8px 12px; text-align: center; }
-    .mini-switch { position: relative; display: inline-block; width: 34px; height: 20px; vertical-align: middle; }
-    .mini-switch input { opacity: 0; width: 0; height: 0; }
-    .mini-switch .ms-slider {
-      position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0;
-      background: #D1D5DB; transition: .2s; border-radius: 20px;
+    /* v1.7.99.349 重构为 pill-style button：圆形 + 开/关/调整比例 文字，统一点击触发比例修改弹窗 */
+    .switch-pill {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px 3px 4px;
+      border: 1px solid var(--border-light);
+      border-radius: 14px;
+      background: #fff;
+      cursor: pointer;
+      transition: all .15s ease;
+      font-size: 12px;
+      line-height: 1;
     }
-    .mini-switch .ms-slider::before {
-      content: ''; position: absolute; height: 16px; width: 16px; left: 2px; bottom: 2px;
-      background: white; transition: .2s; border-radius: 50%;
+    .switch-pill .circle {
+      width: 18px; height: 18px;
+      border-radius: 50%;
+      background: #D1D5DB;
+      transition: .2s;
+      flex-shrink: 0;
     }
-    .mini-switch input:checked + .ms-slider { background: #7C3AED; }
-    .mini-switch input:checked + .ms-slider::before { transform: translateX(14px); }
-    /* v1.7.99.345 未足额时 disabled 视觉 */
-    .mini-switch.disabled { cursor: not-allowed; }
-    .mini-switch.disabled .ms-slider { cursor: not-allowed; opacity: 0.65; }
+    .switch-pill .text { color: var(--text-tertiary); font-weight: 500; }
+    /* on 状态 */
+    .switch-pill.on { background: #F5F3FF; border-color: #DDD6FE; }
+    .switch-pill.on .circle { background: #7C3AED; }
+    .switch-pill.on .text { color: #6B21A8; }
+    /* off 状态（足额但未开） */
+    .switch-pill.off .text { color: var(--text-tertiary); }
+    /* neutral 状态（未足额 → 调整比例入口） */
+    .switch-pill.neutral { background: #FEF3C7; border-color: #FDE68A; cursor: pointer; }
+    .switch-pill.neutral .circle { background: #D97706; }
+    .switch-pill.neutral .text { color: #B45309; }
+    /* hover 提示 */
+    .switch-pill:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
+    .switch-pill.neutral:hover { background: #FDE68A; }
     /* v1.7.99.346 变更记录链接 + 弹窗 */
     .cell-switch .history-link {
       margin-top: 4px; font-size: 11px; color: var(--color-primary); cursor: pointer;
@@ -568,18 +586,22 @@
       var tbody = document.getElementById('marginTbody');
       if (!tbody) return;
       tbody.innerHTML = MARGIN_MOCK.map(function(m) {
-        // v1.7.99.345 等比例冲抵开关：足额校验（已付 >= 应付 才允许开启）
+        // v1.7.99.349 pill-style switch：3 状态（on / off / neutral）+ 文字 + 圆形 + 点击弹窗
         var isFull = (m.paid || 0) >= (m.payTotal || 0);
-        var depositChecked = m.depositEnabled ? ' checked' : '';
-        var depositDisabledAttr = isFull ? '' : ' disabled';
+        var pillCls, pillText;
+        if (!isFull) {
+          pillCls = 'neutral';
+          pillText = '调整比例';
+        } else if (m.depositEnabled) {
+          pillCls = 'on';
+          pillText = '开';
+        } else {
+          pillCls = 'off';
+          pillText = '关';
+        }
         var depositTitle = isFull
-          ? (m.depositEnabled ? '已开启' : '关闭')
-          : '当前合同保证金未足额（已付 ' + (m.paid || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元 / 应付 ' + (m.payTotal || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元），需补足后方可启用';
-        var depositStatus = !isFull
-          ? '<span style="color:#DC2626;font-size:11px;">未足额</span>'
-          : (m.depositEnabled
-              ? '<span style="color:#7C3AED;font-size:11px;">已开</span>'
-              : '<span style="color:var(--text-tertiary);font-size:11px;">关闭</span>');
+          ? (m.depositEnabled ? '当前已开启等比例冲抵货款（点击调整比例）' : '当前关闭等比例冲抵货款（点击调整比例）')
+          : '当前合同保证金未足额（已付 ' + (m.paid || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元 / 应付 ' + (m.payTotal || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元），需补足后方可启用。点击查看比例配置';
         return '<tr>'
           + '<td class="col-num">' + m.contractNo + '</td>'
           + '<td>' + m.buyer + '</td>'
@@ -594,15 +616,14 @@
           + '<td style="text-align: right;" class="col-num">' + fmt(m.deposit) + '</td>'
           + '<td style="text-align: right;" class="col-num">' + fmt(m.margin) + '</td>'
           + '<td>' + m.signDate + '</td>'
-          // v1.7.99.341 等比例冲抵货款开关（off→on 触发弹窗）
-          // v1.7.99.345 未足额时 disabled + title tooltip 引导用户去补足
-          // v1.7.99.346 下方追加「变更记录(N)」链接
+          // v1.7.99.349 重构：pill-style 按钮（圆形 + 开/关/调整比例 文字），无独立状态文字
+          // v1.7.99.345 未足额时 title tooltip 引导用户去补足
+          // v1.7.99.346 下方追加「变更记录(N)」链接（保留）
           + '<td class="cell-switch">'
-          +   '<label class="mini-switch' + (isFull ? '' : ' disabled') + '" title="' + depositTitle + '">'
-          +     '<input type="checkbox"' + depositChecked + depositDisabledAttr + ' onchange="onDepositSwitchChange(' + m.id + ', this.checked)">'
-          +     '<span class="ms-slider"></span>'
-          +   '</label>'
-          +   '<div style="margin-top:2px;">' + depositStatus + '</div>'
+          +   '<button type="button" class="switch-pill ' + pillCls + '" title="' + depositTitle + '" onclick="openOffsetConfigPopup(' + m.id + ')">'
+          +     '<span class="circle"></span>'
+          +     '<span class="text">' + pillText + '</span>'
+          +   '</button>'
           +   '<a class="history-link" onclick="openHistoryPopup(' + m.id + ')">变更记录（' + (m.depositRatioHistory ? m.depositRatioHistory.length : 0) + '）</a>'
           + '</td>'
           + '<td class="col-action" style="text-align: right;">'
@@ -619,28 +640,18 @@
     }
     function exportData() { Utils.toast('已发起数据导出（mock）', 'success'); }
 
-    /* ========== v1.7.99.341 列表页等比例冲抵货款开关 + 配置弹窗 ========== */
+    /* ========== v1.7.99.349 列表页等比例冲抵货款 pill 按钮 + 配置弹窗 ========== */
     var OFFSET_POPUP_TARGET_ID = null;
-    var OFFSET_POPUP_FROM_ON = false;  // 是否从 on 状态切换来的（用于取消时回滚）
-    function onDepositSwitchChange(rowId, checked) {
+    /**
+     * 统一弹窗入口（v1.7.99.349）：pill 按钮点击始终触发配置弹窗
+     *  - 足额未开 / 足额已开：弹窗内开关可编辑 → 用户保存后切换状态
+     *  - 未足额：弹窗内开关 disabled + 红色文案「需补足」+ 比例 input 只展示
+     */
+    function openOffsetConfigPopup(rowId) {
       var row = MARGIN_MOCK.find(function(m) { return m.id === rowId; });
       if (!row) return;
-      // v1.7.99.345 足额硬卡：未足额禁止开启等比例冲抵
-      if (checked && (row.paid || 0) < (row.payTotal || 0)) {
-        Utils.toast('当前合同保证金未足额，需补足后方可启用等比例冲抵货款', 'warning');
-        renderMarginTable();
-        return;
-      }
-      if (checked) {
-        // off→on：弹出配置弹窗
-        OFFSET_POPUP_TARGET_ID = rowId;
-        OFFSET_POPUP_FROM_ON = false;
-        openOffsetPopup(row);
-      } else {
-        // on→off：直接关闭
-        row.depositEnabled = false;
-        renderMarginTable();
-      }
+      OFFSET_POPUP_TARGET_ID = rowId;
+      openOffsetPopup(row);
     }
     function openOffsetPopup(row) {
       var mask = document.getElementById('offsetPopupMask');
@@ -648,10 +659,23 @@
       var enabledEl = document.getElementById('offsetPopupEnabled');
       var ratioEl = document.getElementById('offsetPopupRatio');
       var summaryEl = document.getElementById('offsetPopupSummary');
+      var isFull = (row.paid || 0) >= (row.payTotal || 0);
       if (contractNoEl) contractNoEl.textContent = row.contractNo;
-      if (enabledEl) enabledEl.checked = true;
-      if (ratioEl) ratioEl.value = row.depositRatio || 10;
-      refreshOffsetSummary();
+      // v1.7.99.349 未足额时开关 disabled + 比例只展示
+      if (enabledEl) {
+        enabledEl.checked = !!row.depositEnabled;
+        enabledEl.disabled = !isFull;
+      }
+      if (ratioEl) {
+        ratioEl.value = row.depositRatio || 10;
+        ratioEl.disabled = !isFull;
+      }
+      // v1.7.99.349 未足额时加红色提示
+      if (!isFull) {
+        summaryEl.innerHTML = '<span style="color:#DC2626;font-weight:600;">⚠ 当前合同保证金未足额，无法启用等比例冲抵货款</span><br>已付 <strong>' + (row.paid || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + '</strong> 元 / 应付 <strong>' + (row.payTotal || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + '</strong> 元，需补足后方可启用。';
+      } else {
+        refreshOffsetSummary();
+      }
       if (mask) mask.classList.add('open');
     }
     function refreshOffsetSummary() {
@@ -667,19 +691,18 @@
     function closeOffsetPopup() {
       var mask = document.getElementById('offsetPopupMask');
       if (mask) mask.classList.remove('open');
-      // 取消时回滚开关（如果是从 off→on 触发的弹窗）
-      if (OFFSET_POPUP_TARGET_ID && !OFFSET_POPUP_FROM_ON) {
-        var row = MARGIN_MOCK.find(function(m) { return m.id === OFFSET_POPUP_TARGET_ID; });
-        if (row) row.depositEnabled = false;
-      }
       OFFSET_POPUP_TARGET_ID = null;
-      OFFSET_POPUP_FROM_ON = false;
       renderMarginTable();
     }
     function confirmOffsetPopup() {
       if (!OFFSET_POPUP_TARGET_ID) return;
       var row = MARGIN_MOCK.find(function(m) { return m.id === OFFSET_POPUP_TARGET_ID; });
       if (!row) return;
+      // v1.7.99.349 足额校验（弹窗内开关 disabled 时也拦住）
+      if ((row.paid || 0) < (row.payTotal || 0)) {
+        Utils.toast('当前合同保证金未足额，需补足后方可启用等比例冲抵货款', 'warning');
+        return;
+      }
       var ratio = parseFloat((document.getElementById('offsetPopupRatio') || {}).value);
       if (isNaN(ratio) || ratio <= 0 || ratio >= 100) {
         Utils.toast('请输入正确的冲抵比例（0-100 之间）', 'warning');
