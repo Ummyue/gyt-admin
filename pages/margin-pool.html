@@ -30,44 +30,45 @@
     /* 12 列表格列宽（v1.7.99.337 在 11 列基础上加「已付保证金金额」列） */
     table.cp-table th, table.cp-table td { white-space: nowrap; }
 
-    /* v1.7.99.341 列表页每行内嵌开关（等比例冲抵货款） */
-    .cell-switch { padding: 8px 12px; text-align: center; }
-    /* v1.7.99.349 重构为 pill-style button：圆形 + 开/关/调整比例 文字，统一点击触发比例修改弹窗 */
-    .switch-pill {
-      display: inline-flex; align-items: center; gap: 6px;
-      padding: 3px 10px 3px 4px;
-      border: 1px solid var(--border-light);
-      border-radius: 14px;
-      background: #fff;
-      cursor: pointer;
-      transition: all .15s ease;
-      font-size: 12px;
-      line-height: 1;
+    /* v1.7.99.350 列表页每行内嵌开关（等比例冲抵货款）—— 真正的 toggle switch：track + thumb + 文字 */
+    .cell-switch {
+      padding: 8px 12px; text-align: center;
+      display: flex; flex-direction: column; align-items: center; gap: 4px;
     }
-    .switch-pill .circle {
-      width: 18px; height: 18px;
-      border-radius: 50%;
+    .switch-toggle {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 8px;
+      background: transparent; border: none; cursor: pointer;
+      font-size: 12px; line-height: 1;
+      transition: opacity 0.15s;
+    }
+    .switch-toggle:hover { opacity: 0.85; }
+    .switch-toggle.disabled { cursor: not-allowed; opacity: 0.55; }
+    .switch-toggle.disabled:hover { opacity: 0.55; }
+    .switch-toggle .track {
+      position: relative;
+      width: 28px; height: 16px;
+      border-radius: 16px;
       background: #D1D5DB;
-      transition: .2s;
+      transition: background 0.2s;
       flex-shrink: 0;
     }
-    .switch-pill .text { color: var(--text-tertiary); font-weight: 500; }
-    /* on 状态 */
-    .switch-pill.on { background: #F5F3FF; border-color: #DDD6FE; }
-    .switch-pill.on .circle { background: #7C3AED; }
-    .switch-pill.on .text { color: #6B21A8; }
-    /* off 状态（足额但未开） */
-    .switch-pill.off .text { color: var(--text-tertiary); }
-    /* neutral 状态（未足额 → 调整比例入口） */
-    .switch-pill.neutral { background: #FEF3C7; border-color: #FDE68A; cursor: pointer; }
-    .switch-pill.neutral .circle { background: #D97706; }
-    .switch-pill.neutral .text { color: #B45309; }
-    /* hover 提示 */
-    .switch-pill:hover { transform: translateY(-1px); box-shadow: 0 2px 6px rgba(0,0,0,0.06); }
-    .switch-pill.neutral:hover { background: #FDE68A; }
-    /* v1.7.99.346 变更记录链接 + 弹窗 */
+    .switch-toggle .track.on { background: var(--color-primary, #1E40AF); }
+    .switch-toggle .thumb {
+      position: absolute; top: 2px; left: 2px;
+      width: 12px; height: 12px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.15);
+      transition: transform 0.2s;
+    }
+    .switch-toggle .track.on .thumb { transform: translateX(12px); }
+    .switch-toggle .label { color: var(--text-secondary); font-weight: 500; }
+    .switch-toggle.on .label { color: var(--color-primary, #1E40AF); font-weight: 600; }
+    .switch-toggle.disabled .label { color: var(--text-tertiary); font-weight: 500; }
+    /* v1.7.99.346 变更记录链接 + 弹窗（v1.7.99.350 改为上下分布，不是左右并排） */
     .cell-switch .history-link {
-      margin-top: 4px; font-size: 11px; color: var(--color-primary); cursor: pointer;
+      font-size: 11px; color: var(--color-primary); cursor: pointer;
       text-decoration: none;
     }
     .cell-switch .history-link:hover { text-decoration: underline; }
@@ -586,21 +587,27 @@
       var tbody = document.getElementById('marginTbody');
       if (!tbody) return;
       tbody.innerHTML = MARGIN_MOCK.map(function(m) {
-        // v1.7.99.349 pill-style switch：3 状态（on / off / neutral）+ 文字 + 圆形 + 点击弹窗
+        // v1.7.99.350 重构：真正的 toggle switch（track + thumb），文字跟随状态变化
+        //   - 未足额 → disabled 灰色「未足额」
+        //   - 足额 + 未开启 → 灰色「调整比例」（圆点左）
+        //   - 足额 + 已开启 → 蓝色「调整比例 X%」（圆点右）
         var isFull = (m.paid || 0) >= (m.payTotal || 0);
-        var pillCls, pillText;
+        var toggleCls, toggleText, trackOn;
         if (!isFull) {
-          pillCls = 'neutral';
-          pillText = '调整比例';
+          toggleCls = 'disabled';
+          toggleText = '未足额';
+          trackOn = false;
         } else if (m.depositEnabled) {
-          pillCls = 'on';
-          pillText = '开';
+          toggleCls = 'on';
+          toggleText = '调整比例 ' + (m.depositRatio || 0) + '%';
+          trackOn = true;
         } else {
-          pillCls = 'off';
-          pillText = '关';
+          toggleCls = '';
+          toggleText = '调整比例';
+          trackOn = false;
         }
         var depositTitle = isFull
-          ? (m.depositEnabled ? '当前已开启等比例冲抵货款（点击调整比例）' : '当前关闭等比例冲抵货款（点击调整比例）')
+          ? (m.depositEnabled ? '当前已开启等比例冲抵货款 ' + (m.depositRatio || 0) + '%（点击调整比例）' : '当前关闭等比例冲抵货款（点击调整比例）')
           : '当前合同保证金未足额（已付 ' + (m.paid || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元 / 应付 ' + (m.payTotal || 0).toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + ' 元），需补足后方可启用。点击查看比例配置';
         return '<tr>'
           + '<td class="col-num">' + m.contractNo + '</td>'
@@ -616,13 +623,12 @@
           + '<td style="text-align: right;" class="col-num">' + fmt(m.deposit) + '</td>'
           + '<td style="text-align: right;" class="col-num">' + fmt(m.margin) + '</td>'
           + '<td>' + m.signDate + '</td>'
-          // v1.7.99.349 重构：pill-style 按钮（圆形 + 开/关/调整比例 文字），无独立状态文字
-          // v1.7.99.345 未足额时 title tooltip 引导用户去补足
-          // v1.7.99.346 下方追加「变更记录(N)」链接（保留）
+          // v1.7.99.350 toggle switch（track + thumb）+ 文字跟随状态
+          // v1.7.99.346 下方追加「变更记录(N)」链接（v1.7.99.350 改上下分布）
           + '<td class="cell-switch">'
-          +   '<button type="button" class="switch-pill ' + pillCls + '" title="' + depositTitle + '" onclick="openOffsetConfigPopup(' + m.id + ')">'
-          +     '<span class="circle"></span>'
-          +     '<span class="text">' + pillText + '</span>'
+          +   '<button type="button" class="switch-toggle ' + toggleCls + '" title="' + depositTitle + '" onclick="openOffsetConfigPopup(' + m.id + ')">'
+          +     '<span class="track' + (trackOn ? ' on' : '') + '"><span class="thumb"></span></span>'
+          +     '<span class="label">' + toggleText + '</span>'
           +   '</button>'
           +   '<a class="history-link" onclick="openHistoryPopup(' + m.id + ')">变更记录（' + (m.depositRatioHistory ? m.depositRatioHistory.length : 0) + '）</a>'
           + '</td>'

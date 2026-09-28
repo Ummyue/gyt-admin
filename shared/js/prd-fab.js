@@ -47,28 +47,28 @@
     'align-items: center',
     'justify-content: center',
     'gap: 6px',
-    'padding: 10px 16px',
-    'background: linear-gradient(135deg, #7C3AED 0%, #A855F7 100%)',
+    'padding: 8px 14px',
+    'background: var(--color-primary, #1E40AF)',
     'color: #fff',
-    'border: none',
-    'border-radius: 24px',
-    'font-size: 13px',
+    'border: 1px solid var(--color-primary, #1E40AF)',
+    'border-radius: 4px',
+    'font-size: 12px',
     'font-weight: 500',
-    'box-shadow: 0 4px 12px rgba(124, 58, 237, 0.35)',
+    'box-shadow: 0 2px 4px rgba(30, 64, 175, 0.15)',
     'text-decoration: none',
     'cursor: pointer',
-    'transition: all 0.2s ease',
+    'transition: all 0.15s ease',
     'font-family: var(--font-family, -apple-system, BlinkMacSystemFont, sans-serif)'
   ].join(';');
 
-  // 鼠标悬停效果
+  // 鼠标悬停效果（B 端克制）
   btn.onmouseenter = function () {
-    btn.style.transform = 'translateY(-2px)';
-    btn.style.boxShadow = '0 6px 16px rgba(124, 58, 237, 0.5)';
+    btn.style.background = 'var(--color-primary-hover, #1D4ED8)';
+    btn.style.borderColor = 'var(--color-primary-hover, #1D4ED8)';
   };
   btn.onmouseleave = function () {
-    btn.style.transform = 'translateY(0)';
-    btn.style.boxShadow = '0 4px 12px rgba(124, 58, 237, 0.35)';
+    btn.style.background = 'var(--color-primary, #1E40AF)';
+    btn.style.borderColor = 'var(--color-primary, #1E40AF)';
   };
 
   // SVG 图标 + 文字
