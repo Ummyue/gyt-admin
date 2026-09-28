@@ -482,111 +482,111 @@
     const pageTree = [
       { group: '工作台', icon: '🏠', pages: [
         { sub: '工作台', pages: [
-          { name: '工作台', file: 'workbench', doc: 'p-workbench' }
+          { name: '工作台', file: 'workbench', doc: 'p-workbench', section: '业务定位' }
         ]}
       ]},
       { group: '准入管理', icon: '📋', pages: [
         { sub: '项目准入', pages: [
-          { name: '项目列表', file: 'project-list', doc: 'p-project-list' },
-          { name: '新增立项申请', file: 'project-apply', doc: 'p-project-apply' },
-          { name: '项目准入详情', file: 'project-detail', doc: 'p-project-detail' }
+          { name: '项目列表', file: 'project-list', doc: 'p-project-list', section: '业务定位' },
+          { name: '新增立项申请', file: 'project-apply', doc: 'p-project-apply', section: '业务定位' },
+          { name: '项目准入详情', file: 'project-detail', doc: 'p-project-detail', section: '字段规则' }
         ]},
         { sub: '客户准入', pages: [
-          { name: '客户列表', file: 'customer-list', doc: 'p-customer-list' },
-          { name: '新增客户申请', file: 'customer-apply', doc: 'p-customer-apply' },
-          { name: '客户额度管理', file: 'customer-quota', doc: 'p-customer-quota' }
+          { name: '客户列表', file: 'customer-list', doc: 'p-customer-list', section: '业务定位' },
+          { name: '新增客户申请', file: 'customer-apply', doc: 'p-customer-apply', section: '业务定位' },
+          { name: '客户额度管理', file: 'customer-quota', doc: 'p-customer-quota', section: '业务定位' }
         ]},
         { sub: '黑名单管理', pages: [
-          { name: '黑名单管理', file: 'blacklist', doc: 'p-blacklist' }
+          { name: '黑名单管理', file: 'blacklist', doc: 'p-blacklist', section: '业务定位' }
         ]}
       ]},
       { group: '数字供应链', icon: '📦', pages: [
         { sub: '合同管理', pages: [
-          { name: '采购合同（列表）', file: 'contract-purchase', doc: 'p-contract-purchase' },
-          { name: '采购合同 · 新增/编辑', file: 'contract-purchase-new', doc: 'p-contract-purchase-new' },
-          { name: '采购合同 · 详情', file: 'contract-purchase-framework-detail', doc: 'p-contract-purchase-framework-detail' },
-          { name: '采购订单合同 · 新增/编辑', file: 'contract-purchase-order-new', doc: 'p-contract-purchase-order-new' },
-          { name: '采购订单合同 · 详情', file: 'contract-purchase-order-detail', doc: 'p-contract-purchase-order-detail' },
-          { name: '销售合同（列表）', file: 'contract-sales', doc: 'p-contract-sales' },
-          { name: '销售合同 · 新增/编辑', file: 'contract-sales-new', doc: 'p-contract-sales-new' },
-          { name: '销售合同 · 详情', file: 'contract-sales-framework-detail', doc: 'p-contract-sales-framework-detail' },
-          { name: '销售订单合同 · 新增', file: 'contract-sales-order-new', doc: 'p-contract-sales-order-new' },
-          { name: '销售订单合同 · 详情', file: 'contract-sales-order-detail', doc: 'p-contract-sales-order-detail' },
-          { name: '补充协议（列表）', file: 'contract-supplement', doc: 'p-contract-supplement' },
-          { name: '补充协议 · 框架合同', file: 'contract-supplement-new', doc: 'p-contract-supplement-new' },
-          { name: '补协详情页 · 框架合同', file: 'contract-supplement-framework-detail', doc: 'p-contract-supplement-framework-detail' },
-          { name: '补协 · 订单合同', file: 'contract-supplement-order-new', doc: 'p-contract-supplement-order-new' },
-          { name: '补协详情页 · 订单合同', file: 'contract-supplement-order-detail', doc: 'p-contract-supplement-order-detail' },
-          { name: '运输合同', file: 'contract-shipping', doc: 'p-contract-shipping' }
+          { name: '采购合同（列表）', file: 'contract-purchase', doc: 'p-contract-purchase', section: '业务定位' },
+          { name: '采购合同 · 新增/编辑', file: 'contract-purchase-new', doc: 'p-contract-purchase-new', section: '字段规则' },
+          { name: '采购合同 · 详情', file: 'contract-purchase-framework-detail', doc: 'p-contract-purchase-framework-detail', section: '字段规则' },
+          { name: '采购订单合同 · 新增/编辑', file: 'contract-purchase-order-new', doc: 'p-contract-purchase-order-new', section: '字段规则' },
+          { name: '采购订单合同 · 详情', file: 'contract-purchase-order-detail', doc: 'p-contract-purchase-order-detail', section: '字段规则' },
+          { name: '销售合同（列表）', file: 'contract-sales', doc: 'p-contract-sales', section: '业务定位' },
+          { name: '销售合同 · 新增/编辑', file: 'contract-sales-new', doc: 'p-contract-sales-new', section: '字段规则' },
+          { name: '销售合同 · 详情', file: 'contract-sales-framework-detail', doc: 'p-contract-sales-framework-detail', section: '字段规则' },
+          { name: '销售订单合同 · 新增', file: 'contract-sales-order-new', doc: 'p-contract-sales-order-new', section: '字段规则' },
+          { name: '销售订单合同 · 详情', file: 'contract-sales-order-detail', doc: 'p-contract-sales-order-detail', section: '字段规则' },
+          { name: '补充协议（列表）', file: 'contract-supplement', doc: 'p-contract-supplement', section: '业务定位' },
+          { name: '补充协议 · 框架合同', file: 'contract-supplement-new', doc: 'p-contract-supplement-new', section: '字段规则' },
+          { name: '补协详情页 · 框架合同', file: 'contract-supplement-framework-detail', doc: 'p-contract-supplement-framework-detail', section: '字段规则' },
+          { name: '补协 · 订单合同', file: 'contract-supplement-order-new', doc: 'p-contract-supplement-order-new', section: '字段规则' },
+          { name: '补协详情页 · 订单合同', file: 'contract-supplement-order-detail', doc: 'p-contract-supplement-order-detail', section: '字段规则' },
+          { name: '运输合同', file: 'contract-shipping', doc: 'p-contract-shipping', section: '业务定位' }
         ]},
         { sub: '业务线管理', pages: [
-          { name: '业务线管理', file: 'business-line', doc: 'p-business-line' },
-          { name: '业务线关联', file: 'business-line-relate', doc: 'p-business-line-relate' },
-          { name: '业务线详情', file: 'business-line-detail', doc: 'p-business-line-detail' },
+          { name: '业务线管理', file: 'business-line', doc: 'p-business-line', section: '业务定位' },
+          { name: '业务线关联', file: 'business-line-relate', doc: 'p-business-line-relate', section: '业务定位' },
+          { name: '业务线详情', file: 'business-line-detail', doc: 'p-business-line-detail', section: '字段规则' },
         ]},
         { sub: '收发货管理', pages: [
-          { name: '发货管理', file: 'shipment-out', doc: 'p-shipment-out' },
-          { name: '新增发货申请', file: 'shipment-out-new', doc: 'p-shipment-out-new' },
-          { name: '发货申请详情', file: 'shipment-out-detail', doc: 'p-shipment-out-detail' },
-          { name: '收货管理', file: 'shipment-in', doc: 'p-shipment-in' },
-          { name: '新增收货数据', file: 'shipment-in-new', doc: 'p-shipment-in-new' },
-          { name: '收货信息详情', file: 'shipment-in-detail', doc: 'p-shipment-in-detail' }
+          { name: '发货管理', file: 'shipment-out', doc: 'p-shipment-out', section: '业务定位' },
+          { name: '新增发货申请', file: 'shipment-out-new', doc: 'p-shipment-out-new', section: '字段规则' },
+          { name: '发货申请详情', file: 'shipment-out-detail', doc: 'p-shipment-out-detail', section: '字段规则' },
+          { name: '收货管理', file: 'shipment-in', doc: 'p-shipment-in', section: '业务定位' },
+          { name: '新增收货数据', file: 'shipment-in-new', doc: 'p-shipment-in-new', section: '字段规则' },
+          { name: '收货信息详情', file: 'shipment-in-detail', doc: 'p-shipment-in-detail', section: '字段规则' }
         ]},
         { sub: '货转管理', pages: [
-          { name: '货转管理', file: 'goods-transfer', doc: 'p-goods-transfer' },
-          { name: '已上传上游货转', file: 'goods-transfer-up', doc: 'p-goods-transfer-up' },
-          { name: '已上传上游货转详情', file: 'goods-transfer-up-detail', doc: 'p-goods-transfer-up-detail' },
-          { name: '新增下游货转', file: 'goods-transfer-down-new', doc: 'p-goods-transfer-down-new' },
-          { name: '下游货转详情', file: 'goods-transfer-down-detail', doc: 'p-goods-transfer-down-detail' }
+          { name: '货转管理', file: 'goods-transfer', doc: 'p-goods-transfer', section: '业务定位' },
+          { name: '已上传上游货转', file: 'goods-transfer-up', doc: 'p-goods-transfer-up', section: '业务定位' },
+          { name: '已上传上游货转详情', file: 'goods-transfer-up-detail', doc: 'p-goods-transfer-up-detail', section: '字段规则' },
+          { name: '新增下游货转', file: 'goods-transfer-down-new', doc: 'p-goods-transfer-down-new', section: '字段规则' },
+          { name: '下游货转详情', file: 'goods-transfer-down-detail', doc: 'p-goods-transfer-down-detail', section: '字段规则' }
         ]},
         { sub: '资金管理', pages: [
-          { name: '付款列表', file: 'payment-list', doc: 'p-payment-list' },
-          { name: '新增付款', file: 'payment-new', doc: 'p-payment-new' },
-          { name: '付款详情', file: 'payment-detail', doc: 'p-payment-detail' },
-          { name: '退款列表', file: 'refund-list', doc: 'p-refund-list' },
-          { name: '退款申请', file: 'refund-apply', doc: 'p-refund-apply' },
-          { name: '退款详情', file: 'refund-detail', doc: 'p-refund-detail' },
-          { name: '回款列表', file: 'receipt-list', doc: 'p-receipt-list' },
-          { name: '保证金管理', file: 'margin-pool', doc: 'p-margin-pool' },
-          { name: '保证金调整', file: 'margin-adjust', doc: 'p-margin-adjust' },
-          { name: '保证金调整记录', file: 'margin-adjust-detail', doc: 'p-margin-adjust-detail' }
+          { name: '付款列表', file: 'payment-list', doc: 'p-payment-list', section: '业务定位' },
+          { name: '新增付款', file: 'payment-new', doc: 'p-payment-new', section: '字段规则' },
+          { name: '付款详情', file: 'payment-detail', doc: 'p-payment-detail', section: '字段规则' },
+          { name: '退款列表', file: 'refund-list', doc: 'p-refund-list', section: '业务定位' },
+          { name: '退款申请', file: 'refund-apply', doc: 'p-refund-apply', section: '业务定位' },
+          { name: '退款详情', file: 'refund-detail', doc: 'p-refund-detail', section: '字段规则' },
+          { name: '回款列表', file: 'receipt-list', doc: 'p-receipt-list', section: '业务定位' },
+          { name: '保证金管理', file: 'margin-pool', doc: 'p-margin-pool', section: '业务定位' },
+          { name: '保证金调整', file: 'margin-adjust', doc: 'p-margin-adjust', section: '业务定位' },
+          { name: '保证金调整记录', file: 'margin-adjust-detail', doc: 'p-margin-adjust-detail', section: '字段规则' }
         ]},
         { sub: '结算单管理', pages: [
-          { name: '采购结算（列表）', file: 'settlement-purchase', doc: 'p-settlement-purchase' },
-          { name: '采购结算 · 新增/编辑', file: 'settlement-purchase-new', doc: 'p-settlement-purchase-new' },
-          { name: '采购结算单详情', file: 'settlement-purchase-detail', doc: 'p-settlement-purchase-detail' },
-          { name: '销售结算（列表）', file: 'settlement-sales', doc: 'p-settlement-sales' },
-          { name: '销售结算 · 新增/编辑', file: 'settlement-sales-new', doc: 'p-settlement-sales-new' },
-          { name: '销售结算单详情', file: 'settlement-sales-detail', doc: 'p-settlement-sales-detail' }
+          { name: '采购结算（列表）', file: 'settlement-purchase', doc: 'p-settlement-purchase', section: '业务定位' },
+          { name: '采购结算 · 新增/编辑', file: 'settlement-purchase-new', doc: 'p-settlement-purchase-new', section: '字段规则' },
+          { name: '采购结算单详情', file: 'settlement-purchase-detail', doc: 'p-settlement-purchase-detail', section: '字段规则' },
+          { name: '销售结算（列表）', file: 'settlement-sales', doc: 'p-settlement-sales', section: '业务定位' },
+          { name: '销售结算 · 新增/编辑', file: 'settlement-sales-new', doc: 'p-settlement-sales-new', section: '字段规则' },
+          { name: '销售结算单详情', file: 'settlement-sales-detail', doc: 'p-settlement-sales-detail', section: '字段规则' }
         ]},
         { sub: '发票管理', pages: [
-          { name: '进项发票', file: 'invoice', doc: 'p-invoice' }
+          { name: '进项发票', file: 'invoice', doc: 'p-invoice', section: '业务定位' }
         ]},
         { sub: '盯市管理', pages: [
-          { name: '盯市价格管理', file: 'market-price', doc: 'p-market-price' },
-          { name: '指标详情', file: 'market-price-detail', doc: 'p-market-price-detail' }
+          { name: '盯市价格管理', file: 'market-price', doc: 'p-market-price', section: '业务定位' },
+          { name: '指标详情', file: 'market-price-detail', doc: 'p-market-price-detail', section: '字段规则' }
         ]},
         { sub: '追保函管理', pages: [
-          { name: '追保函管理', file: 'bond-letter', doc: 'p-bond-letter' },
-          { name: '新增/编辑追保函', file: 'bond-letter-new', doc: 'p-bond-letter-new' },
-          { name: '追保函详情', file: 'bond-letter-detail', doc: 'p-bond-letter-detail' }
+          { name: '追保函管理', file: 'bond-letter', doc: 'p-bond-letter', section: '业务定位' },
+          { name: '新增/编辑追保函', file: 'bond-letter-new', doc: 'p-bond-letter-new', section: '字段规则' },
+          { name: '追保函详情', file: 'bond-letter-detail', doc: 'p-bond-letter-detail', section: '字段规则' }
         ]}
       ]},
       { group: '仓储管理', icon: '🏭', pages: [
         { sub: '入库管理', pages: [
-          { name: '入库记录', file: 'warehouse-inbound', doc: 'p-warehouse-inbound' },
-          { name: '新增入库', file: 'warehouse-inbound-new', doc: 'p-warehouse-inbound-new' },
-          { name: '入库详情', file: 'warehouse-inbound-detail', doc: 'p-warehouse-inbound-detail' }
+          { name: '入库记录', file: 'warehouse-inbound', doc: 'p-warehouse-inbound', section: '业务定位' },
+          { name: '新增入库', file: 'warehouse-inbound-new', doc: 'p-warehouse-inbound-new', section: '字段规则' },
+          { name: '入库详情', file: 'warehouse-inbound-detail', doc: 'p-warehouse-inbound-detail', section: '字段规则' }
         ]},
         { sub: '出库管理', pages: [
-          { name: '出库记录', file: 'warehouse-outbound', doc: 'p-warehouse-outbound' },
-          { name: '新增出库', file: 'warehouse-outbound-new', doc: 'p-warehouse-outbound-new' },
-          { name: '出库详情', file: 'warehouse-outbound-detail', doc: 'p-warehouse-outbound-detail' }
+          { name: '出库记录', file: 'warehouse-outbound', doc: 'p-warehouse-outbound', section: '业务定位' },
+          { name: '新增出库', file: 'warehouse-outbound-new', doc: 'p-warehouse-outbound-new', section: '字段规则' },
+          { name: '出库详情', file: 'warehouse-outbound-detail', doc: 'p-warehouse-outbound-detail', section: '字段规则' }
         ]},
         { sub: '提货管理', pages: [
-          { name: '放货管理', file: 'warehouse-release', doc: 'p-warehouse-release' },
-          { name: '新增放货指令', file: 'warehouse-release-new', doc: 'p-warehouse-release-new' },
-          { name: '放货指令详情', file: 'warehouse-release-detail', doc: 'p-warehouse-release-detail' }
+          { name: '放货管理', file: 'warehouse-release', doc: 'p-warehouse-release', section: '业务定位' },
+          { name: '新增放货指令', file: 'warehouse-release-new', doc: 'p-warehouse-release-new', section: '字段规则' },
+          { name: '放货指令详情', file: 'warehouse-release-detail', doc: 'p-warehouse-release-detail', section: '字段规则' }
         ]},
         { sub: '库存管理', pages: [] },
         { sub: '视频监控', pages: [] },
@@ -599,28 +599,28 @@
       ]},
       { group: '数据中心', icon: '📊', pages: [
         { sub: '驾驶舱', pages: [
-          { name: '驾驶舱', file: 'dashboard', doc: 'p-dashboard' }
+          { name: '驾驶舱', file: 'dashboard', doc: 'p-dashboard', section: '业务定位' }
         ]},
         { sub: '业务报表', pages: [
-          { name: '项目台账表', file: 'report-project', doc: 'p-report-project' },
-          { name: '业务线台账表', file: 'report-bizline', doc: 'p-report-bizline' },
-          { name: '资金占压表', file: 'report-fund', doc: 'p-report-fund' },
-          { name: '库存明细表', file: 'report-inventory', doc: 'p-report-inventory' },
-          { name: '应收应付表', file: 'report-ar-ap', doc: 'p-report-ar-ap' },
-          { name: '风控统计报表', file: 'report-risk', doc: 'p-report-risk' }
+          { name: '项目台账表', file: 'report-project', doc: 'p-report-project', section: '业务定位' },
+          { name: '业务线台账表', file: 'report-bizline', doc: 'p-report-bizline', section: '业务定位' },
+          { name: '资金占压表', file: 'report-fund', doc: 'p-report-fund', section: '业务定位' },
+          { name: '库存明细表', file: 'report-inventory', doc: 'p-report-inventory', section: '业务定位' },
+          { name: '应收应付表', file: 'report-ar-ap', doc: 'p-report-ar-ap', section: '业务定位' },
+          { name: '风控统计报表', file: 'report-risk', doc: 'p-report-risk', section: '业务定位' }
         ]},
         { sub: '合规验证报告', pages: [
-          { name: '合规验证报告列表', file: 'report-compliance', doc: 'p-report-compliance' },
-          { name: '合规报告详情', file: 'report-compliance-detail', doc: 'p-report-compliance-detail' }
+          { name: '合规验证报告列表', file: 'report-compliance', doc: 'p-report-compliance', section: '业务定位' },
+          { name: '合规报告详情', file: 'report-compliance-detail', doc: 'p-report-compliance-detail', section: '字段规则' }
         ]}
       ]},
       { group: '预警中心', icon: '🔔', pages: [
         { sub: '预警列表页', pages: [
-          { name: '预警列表', file: 'warning-list', doc: 'p-warning-list' },
-          { name: '预警详情', file: 'warning-detail', doc: 'p-warning-detail' }
+          { name: '预警列表', file: 'warning-list', doc: 'p-warning-list', section: '业务定位' },
+          { name: '预警详情', file: 'warning-detail', doc: 'p-warning-detail', section: '字段规则' }
         ]},
         { sub: '预警规则配置', pages: [
-          { name: '预警规则配置', file: 'warning-config', doc: 'p-warning-config' }
+          { name: '预警规则配置', file: 'warning-config', doc: 'p-warning-config', section: '业务定位' }
         ]}
       ]},
       { group: '账户中心', icon: '👤', pages: [
@@ -693,8 +693,8 @@
       document.querySelectorAll('.tree-item').forEach(el => el.classList.remove('active'));
       const activeEl = document.querySelector(`.tree-item[data-idx="${idx}"]`);
       if (activeEl) activeEl.classList.add('active');
-      // 加载文档
-      loadDoc(p);
+      // 加载文档 + 自动滚动到锚点（v1.7.99.351）
+      loadDoc(p, { section: p.section });
     }
 
     // ===== 加载文档 =====
@@ -963,6 +963,25 @@
         if (first) first.click();
       }, 2500);
     }
+
+    // ===== 监听 prototype iframe 内部的导航点击（v1.7.99.351 跨 iframe 通信）=====
+    // 触发：topnav-drawer.js / left-sidemenu.js 在 iframe 内点击链接时 postMessage
+    // 行为：根据 file 找对应 page → 联动右侧 doc + 锚点定位 + 左侧 menu 高亮
+    window.addEventListener('message', e => {
+      const msg = e.data || {};
+      if (msg.type !== 'PROTOTYPE_NAV') return;
+        const file = msg.file;
+        if (!file) return;
+        const base = file.replace(/\.html$/, '');
+        const idx = allPages.findIndex(p => p.file === base);
+        if (idx >= 0) {
+          goToPage(idx);  // 复用现有切页逻辑（含 loadDoc + section 锚点定位）
+        } else {
+          // pageTree 没找到（旧版本 / 未挂载的 page）→ 只切右侧 doc（用 file 推 doc code）
+          const fallbackDoc = 'p-' + base;
+          loadDoc({ name: base, doc: fallbackDoc }, { section: '业务定位' });
+        }
+      });
   </script>
 </body>
 </html>
