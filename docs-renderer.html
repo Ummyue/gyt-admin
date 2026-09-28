@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>文档渲染器</title>
+  <link rel="stylesheet" href="./assets/css/design-system.css">
+  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+  <style>
+    body {
+      background: var(--bg-card);
+      margin: 0;
+      padding: 0;
+      font-family: var(--font-family);
+      color: var(--text-primary);
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    /* 顶部 TOC 导航栏（v1.7.99.350 加） */
+    .doc-toc-bar {
+      position: sticky; top: 0; z-index: 10;
+      background: var(--bg-card);
+      border-bottom: 1px solid var(--border-default);
+      padding: 8px 16px;
+      display: flex; align-items: center; gap: 12px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    }
+    .doc-toc-title {
+      font-size: 13px; font-weight: 600; color: var(--text-primary);
+      flex-shrink: 0;
+    }
+    .doc-toc-jump {
+      font-size: 12px; padding: 4px 10px;
+      border: 1px solid var(--border-light); border-radius: 4px;
+      color: var(--text-secondary); background: #fff;
+      text-decoration: none; cursor: pointer;
+      transition: all 0.15s;
+    }
+    .doc-toc-jump:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .doc-toc-jump.active {
+      background: var(--color-primary-lighter);
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    /* 内容容器 */
+    .doc-body {
+      flex: 1; overflow-y: auto;
+      padding: 24px 32px;
+    }
+    /* h2 锚点滚动目标区 */
+    h2[id], h3[id] {
+      scroll-margin-top: 60px;
+    }
+    /* 锚点高亮（进入视口时短暂黄底闪烁） */
+    .anchor-flash {
+      animation: anchor-flash-anim 1.2s ease-out;
+    }
+    @keyframes anchor-flash-anim {
+      0% { background-color: rgba(245, 158, 11, 0.25); }
+      100% { background-color: transparent; }
+    }
+    /* 锚点跳转链接（hover 显示 #） */
+    .anchor-link {
+      opacity: 0; margin-left: 8px; color: var(--text-tertiary);
+      text-decoration: none; font-size: 12px;
+      transition: opacity 0.15s;
+    }
+    h2:hover .anchor-link, h3:hover .anchor-link { opacity: 1; }
+    .doc-placeholder {
+      text-align: center; padding: 60px 20px; color: var(--text-tertiary);
+    }
+    .doc-placeholder-icon { font-size: 48px; margin-bottom: 16px; }
+    .doc-placeholder-title { font-size: 16px; color: var(--text-secondary); margin-bottom: 8px; }
+    .doc-placeholder-desc { font-size: 13px; color: var(--text-tertiary); }
+    h1, h2, h3 { color: var(--text-primary); }
+    h1 { font-size: 22px; font-weight: 600; margin: 16px 0 12px; }
+    h2 { font-size: 18px; font-weight: 600; margin: 24px 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--border-default); }
+    h3 { font-size: 15px; font-weight: 600; margin: 16px 0 8px; }
+    p { margin: 8px 0; color: var(--text-secondary); line-height: 1.7; }
+    ul, ol { margin: 8px 0; padding-left: 20px; color: var(--text-secondary); }
+    li { margin: 4px 0; }
+    code {
+      background: var(--bg-page); padding: 2px 6px; border-radius: 4px;
+      font-family: var(--font-mono); font-size: 12px; color: var(--text-primary);
+    }
+    pre {
+      background: var(--bg-page); padding: 12px; border-radius: 8px;
+      font-size: 12px; overflow-x: auto; margin: 8px 0;
+    }
+    pre code { background: transparent; padding: 0; }
+    blockquote {
+      border-left: 3px solid var(--color-primary);
+      padding: 8px 16px; background: var(--color-primary-lighter);
+      color: var(--text-secondary); margin: 12px 0; border-radius: 0 4px 4px 0;
+    }
+    table {
+      width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 12px;
+    }
+    th {
+      background: var(--bg-page); padding: 8px 12px; text-align: left;
+      font-weight: 500; color: var(--text-secondary);
+      border: 1px solid var(--border-default);
+    }
+    td { padding: 8px 12px; border: 1px solid var(--border-light); color: var(--text-primary); }
+    a { color: var(--color-primary); }
+    hr { border: none; border-top: 1px solid var(--border-default); margin: 24px 0; }
+    .doc-loading { text-align: center; padding: 60px 20px; color: var(--text-tertiary); }
+    /* 顶部面包屑 + 返回链接 */
+    .doc-breadcrumb {
+      padding: 12px 16px; background: var(--bg-page);
+      border-bottom: 1px solid var(--border-light);
+      font-size: 12px; color: var(--text-secondary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .doc-breadcrumb a {
+      color: var(--color-primary); text-decoration: none;
+    }
+    .doc-breadcrumb a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <!-- 顶部 TOC 导航 -->
+  <div class="doc-toc-bar" id="tocBar">
+    <span class="doc-toc-title">📋 章节大纲</span>
+    <span id="tocLinks" style="display: flex; gap: 8px; flex-wrap: wrap;"></span>
+    <span style="margin-left: auto; font-size: 12px; color: var(--text-tertiary);" id="docIndicator"></span>
+  </div>
+
+  <!-- 面包屑 -->
+  <div class="doc-breadcrumb" id="breadcrumb"></div>
+
+  <!-- 正文 -->
+  <div class="doc-body" id="content">
+    <div class="doc-loading">
+      <div style="font-size: 14px;">正在加载文档...</div>
+    </div>
+  </div>
+
+  <script>
+  // ===== 页面 → PRD 文件映射（v1.7.99.350 完整覆盖 112 业务页面） =====
+  const fileToDoc = {
+    // 02.01 项目准入
+    'project-list': 'p-project-list.md',
+    'project-apply': 'p-project-apply.md',
+    'project-detail': 'p-project-detail.md',
+    // 02.02 客户管理
+    'customer-list': 'p-customer-list.md',
+    'customer-apply': 'p-customer-apply.md',
+    'customer-quota': 'p-customer-quota.md',
+    'customer-detail': 'p-customer-detail.md',
+    'blacklist': 'p-blacklist.md',
+    // 02.03 合同管理
+    'contract-purchase': 'p-contract-purchase.md',
+    'contract-purchase-new': 'p-contract-purchase-new.md',
+    'contract-purchase-framework-detail': 'p-contract-purchase-framework-detail.md',
+    'contract-purchase-order-new': 'p-contract-purchase-order-new.md',
+    'contract-purchase-order-detail': 'p-contract-purchase-order-detail.md',
+    'contract-purchase-relate-sales': 'p-contract-purchase-relate-sales.md',
+    'contract-sales': 'p-contract-sales.md',
+    'contract-sales-new': 'p-contract-sales-new.md',
+    'contract-sales-framework-detail': 'p-contract-sales-framework-detail.md',
+    'contract-sales-order-new': 'p-contract-sales-order-new.md',
+    'contract-sales-order-detail': 'p-contract-sales-order-detail.md',
+    'contract-sales-relate-purchase': 'p-contract-sales-relate-purchase.md',
+    'contract-supplement': 'p-contract-supplement.md',
+    'contract-supplement-new': 'p-contract-supplement-new.md',
+    'contract-supplement-framework-detail': 'p-contract-supplement-framework-detail.md',
+    'contract-supplement-order-new': 'p-contract-supplement-order-new.md',
+    'contract-supplement-order-detail': 'p-contract-supplement-order-detail.md',
+    'contract-shipping': 'p-contract-shipping.md',
+    // 02.05 收发货管理
+    'shipment-out': 'p-shipment-out.md',
+    'shipment-out-new': 'p-shipment-out-new.md',
+    'shipment-out-detail': 'p-shipment-out-detail.md',
+    'shipment-in': 'p-shipment-in.md',
+    'shipment-in-new': 'p-shipment-in-new.md',
+    'shipment-in-detail': 'p-shipment-in-detail.md',
+    'receipt-confirm': 'p-receipt-confirm.md',
+    // 02.06 业务线
+    'business-line': 'p-business-line.md',
+    'business-line-detail': 'p-business-line-detail.md',
+    'business-line-relate': 'p-business-line-relate.md',
+    // 02.07 货转管理
+    'goods-transfer': 'p-goods-transfer.md',
+    'goods-transfer-up': 'p-goods-transfer-up.md',
+    'goods-transfer-up-new': 'p-goods-transfer-up-new.md',
+    'goods-transfer-up-detail': 'p-goods-transfer-up-detail.md',
+    'goods-transfer-down': 'p-goods-transfer-down.md',
+    'goods-transfer-down-new': 'p-goods-transfer-down-new.md',
+    'goods-transfer-down-detail': 'p-goods-transfer-down-detail.md',
+    // 02.08 盯市价格
+    'market-price': 'p-market-price.md',
+    'market-price-detail': 'p-market-price-detail.md',
+    // 02.09 追保函
+    'bond-letter': 'p-bond-letter.md',
+    'bond-letter-new': 'p-bond-letter-new.md',
+    'bond-letter-new-offline': 'p-bond-letter-new-offline.md',
+    'bond-letter-detail': 'p-bond-letter-detail.md',
+    // 02.10 保证金
+    'margin-pool': 'p-margin-pool.md',
+    'margin-register': 'p-margin-register.md',
+    'margin-record': 'p-margin-record.md',
+    'margin-adjust': 'p-margin-adjust.md',
+    'margin-adjust-detail': 'p-margin-adjust-detail.md',
+    // 02.11 预警中心
+    'warning-list': 'p-warning-list.md',
+    'warning-detail': 'p-warning-detail.md',
+    'warning-config': 'p-warning-config.md',
+    'warning-price-contract-config': 'p-warning-price-contract-config.md',
+    // 02.12 仓储管理
+    'warehouse-inbound': 'p-warehouse-inbound.md',
+    'warehouse-inbound-new': 'p-warehouse-inbound-new.md',
+    'warehouse-inbound-overflow-new': 'p-warehouse-inbound-overflow-new.md',
+    'warehouse-inbound-detail': 'p-warehouse-inbound-detail.md',
+    'warehouse-outbound': 'p-warehouse-outbound.md',
+    'warehouse-outbound-new': 'p-warehouse-outbound-new.md',
+    'warehouse-outbound-detail': 'p-warehouse-outbound-detail.md',
+    'warehouse-release': 'p-warehouse-release.md',
+    'warehouse-release-new': 'p-warehouse-release-new.md',
+    'warehouse-release-detail': 'p-warehouse-release-detail.md',
+    'warehouse-pickup': 'p-warehouse-pickup.md',
+    'warehouse-inventory': 'p-warehouse-inventory.md',
+    'warehouse-patrol': 'p-warehouse-patrol.md',
+    'warehouse-warehouse': 'p-warehouse-warehouse.md',
+    'warehouse-point': 'p-warehouse-point.md',
+    'warehouse-category': 'p-warehouse-category.md',
+    'warehouse-market': 'p-warehouse-market.md',
+    'warehouse-system': 'p-warehouse-system.md',
+    'warehouse-video': 'p-warehouse-video.md',
+    // 02.13 结算单
+    'settlement-purchase': 'p-settlement-purchase.md',
+    'settlement-purchase-new': 'p-settlement-purchase-new.md',
+    'settlement-purchase-detail': 'p-settlement-purchase-detail.md',
+    'settlement-sales': 'p-settlement-sales.md',
+    'settlement-sales-new': 'p-settlement-sales-new.md',
+    'settlement-sales-detail': 'p-settlement-sales-detail.md',
+    // 02.14 资金管理
+    'payment-list': 'p-payment-list.md',
+    'payment-new': 'p-payment-new.md',
+    'payment-detail': 'p-payment-detail.md',
+    'refund-list': 'p-refund-list.md',
+    'refund-apply': 'p-refund-apply.md',
+    'refund-detail': 'p-refund-detail.md',
+    'receipt-list': 'p-receipt-list.md',
+    'receipt-edit': 'p-receipt-edit.md',
+    'receipt-detail': 'p-receipt-detail.md',
+    'collection-list': 'p-collection-list.md',
+    // 02.15 发票
+    'invoice': 'p-invoice.md',
+    'invoice-detail': 'p-invoice-detail.md',
+    'invoice-out': 'p-invoice-out.md',
+    'invoice-out-detail': 'p-invoice-out-detail.md',
+    // 02.16 数据中心
+    'cockpit': 'p-cockpit.md',
+    'dashboard': 'p-dashboard.md',
+    'report-project': 'p-report-project.md',
+    'report-bizline': 'p-report-bizline.md',
+    'report-fund': 'p-report-fund.md',
+    'report-inventory': 'p-report-inventory.md',
+    'report-ar-ap': 'p-report-ar-ap.md',
+    'report-risk': 'p-report-risk.md',
+    'risk-report': 'p-risk-report.md',
+    'risk-operations': 'p-risk-operations.md',
+    'report-compliance': 'p-report-compliance.md',
+    'report-compliance-detail': 'p-report-compliance-detail.md',
+    // 账户中心
+    'workbench': 'p-workbench.md',
+    'account-company': 'p-account-company.md',
+    'account-personal': 'p-account-personal.md'
+  };
+
+  // 配置 marked：自动给标题加 id（v1.7.99.350 关键）
+  marked.use({
+    renderer: {
+      heading(text, level, raw) {
+        // 把标题转成 slug 形式作为 id
+        const id = String(raw).trim().toLowerCase()
+          .replace(/[\s\u3000]+/g, '-')
+          .replace(/[^\u4e00-\u9fa5a-z0-9\-·]/gi, '')
+          .replace(/^-+|-+$/g, '')
+          .substring(0, 80);
+        // 章节编号识别（"## 1. 业务定位" / "## 11.2 字段规则" 等）
+        return `<h${level} id="${id}">${text}<a class="anchor-link" href="#${id}">#</a></h${level}>\n`;
+      }
+    }
+  });
+
+  // ===== 主入口 =====
+  const urlParams = new URLSearchParams(window.location.search);
+  const hash = window.location.hash;
+  const page = urlParams.get('page') || 'project-list';
+  const docPath = fileToDoc[page] ? './docs/' + fileToDoc[page] : null;
+
+  // 显示面包屑
+  document.getElementById('breadcrumb').innerHTML = `
+    <a href="./index.html">🏠 首页</a>
+    <span>›</span>
+    <a href="./app.html">📱 原型</a>
+    <span>›</span>
+    <span>${page}.html</span>
+    <span>›</span>
+    <strong>${fileToDoc[page] || '(无 PRD)'}</strong>
+  `;
+  document.getElementById('docIndicator').textContent = page + '.html';
+
+  if (!docPath) {
+    document.getElementById('content').innerHTML = `
+      <div class="doc-placeholder">
+        <div class="doc-placeholder-icon">📄</div>
+        <div class="doc-placeholder-title">该页面文档待补充</div>
+        <div class="doc-placeholder-desc">本页面（${page}.html）暂无对应的 p-*.md PRD</div>
+      </div>
+    `;
+  } else {
+    fetch(docPath)
+      .then(r => {
+        if (!r.ok) throw new Error('HTTP ' + r.status + ' ' + r.statusText);
+        return r.text();
+      })
+      .then(md => {
+        const html = marked.parse(md);
+        document.getElementById('content').innerHTML = html;
+
+        // 提取所有 h2/h3，构建顶部 TOC 导航（v1.7.99.350 加）
+        const headings = document.querySelectorAll('#content h2[id], #content h3[id]');
+        const tocLinks = document.getElementById('tocLinks');
+        headings.forEach(h => {
+          const a = document.createElement('a');
+          a.className = 'doc-toc-jump';
+          a.href = '#' + h.id;
+          a.textContent = h.textContent.replace(/#, '').trim();
+          a.dataset.target = h.id;
+          a.onclick = e => {
+            e.preventDefault();
+            scrollToAnchor(h.id);
+          };
+          tocLinks.appendChild(a);
+        });
+
+        // 处理 URL hash 锚点定位（v1.7.99.350 关键）
+        if (hash) {
+          const targetId = decodeURIComponent(hash.slice(1));
+          // 延迟到渲染后
+          setTimeout(() => scrollToAnchor(targetId), 100);
+        }
+
+        // 滚动同步：高亮当前章节（v1.7.99.350 加）
+        setupScrollSpy();
+      })
+      .catch(err => {
+        document.getElementById('content').innerHTML = `
+          <div class="doc-placeholder">
+            <div class="doc-placeholder-icon">⚠️</div>
+            <div class="doc-placeholder-title">文档加载失败</div>
+            <div class="doc-placeholder-desc">${docPath}<br/>${err.message}</div>
+          </div>
+        `;
+      });
+  }
+
+  // ===== 滚动到锚点 + 闪烁高亮 =====
+  function scrollToAnchor(targetId) {
+    const target = document.getElementById(targetId);
+    if (!target) {
+      console.warn('[docs-renderer] anchor not found:', targetId);
+      return;
+    }
+    target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    target.classList.remove('anchor-flash');
+    void target.offsetWidth; // 重置动画
+    target.classList.add('anchor-flash');
+    // 同步更新 URL hash（不影响跳转）
+    history.replaceState(null, '', '#' + targetId);
+    // 同步 TOC 高亮
+    document.querySelectorAll('.doc-toc-jump').forEach(a => {
+      a.classList.toggle('active', a.dataset.target === targetId);
+    });
+  }
+
+  // ===== ScrollSpy：滚动时高亮当前章节（v1.7.99.350 加） =====
+  function setupScrollSpy() {
+    const headings = Array.from(document.querySelectorAll('#content h2[id], #content h3[id]'));
+    if (!headings.length) return;
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          const id = entry.target.id;
+          document.querySelectorAll('.doc-toc-jump').forEach(a => {
+            a.classList.toggle('active', a.dataset.target === id);
+          });
+        }
+      });
+    }, { rootMargin: '-60px 0px -70% 0px', threshold: 0.1 });
+    headings.forEach(h => observer.observe(h));
+  }
+
+  // ===== 暴露给全局：供 iframe 父页面调用 =====
+  window.docsRenderer = {
+    scrollToAnchor,
+    fileToDoc
+  };
+  </script>
+</body>
+</html>
