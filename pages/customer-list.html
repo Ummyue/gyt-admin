@@ -492,18 +492,18 @@
 
     // ========== v1.7.99.65 真实脱敏 mock 数据（脱敏规则严格遵守） ==========
     var CUSTOMER_MOCK = [
-      { id: 1, type: '上游企业', name: '菏泽德坤煤炭有限公司', project: '木薯淀粉存货类供应链项目', code: '91371700MA0M1W7W2G', shortName: '菏泽德坤', legal: '陈行', capital: 10000, region: '中国/山东/菏泽/牡丹区', owner: '吴敬达', ownerPhone: '138 0000 XXXX', contact: '胡孟杰', contactPhone: '138 0001 XXXX', status: '待提交' },
-      { id: 2, type: '下游企业', name: '河南双汇集团有限责任公司', project: '木薯淀粉存货类供应链项目', code: '91411100MA0M1W7W2G', shortName: '双汇', legal: '万隆', capital: 80000, region: '中国/河南/漯河/召陵区', owner: '马相杰', ownerPhone: '138 0002 XXXX', contact: '张莉', contactPhone: '138 0003 XXXX', status: '审核中' },
-      { id: 3, type: '第三方物流', name: '中远海运物流有限公司', project: '木薯淀粉存货类供应链项目', code: '91310000MA0M1W7W2G', shortName: '中远海运', legal: '李建红', capital: 50000, region: '中国/上海/浦东新区', owner: '王海民', ownerPhone: '138 0004 XXXX', contact: '陈刚', contactPhone: '138 0005 XXXX', status: '执行中' },
-      { id: 4, type: '第三方仓储', name: '中外运国际仓储中心', project: '玉米预付业务供应链项目', code: '91110000MA0M1W7W2G', shortName: '中外运仓储', legal: '李关鹏', capital: 30000, region: '中国/北京/朝阳区', owner: '韩雪', ownerPhone: '138 0006 XXXX', contact: '刘伟', contactPhone: '138 0007 XXXX', status: '执行中' },
-      { id: 5, type: '下游企业', name: '郑州粮食批发市场', project: '玉米预付业务项目', code: '91410100MA0M1W7W2G', shortName: '郑粮', legal: '李伟', capital: 5000, region: '中国/河南/郑州/中原区', owner: '陈刚', ownerPhone: '138 0008 XXXX', contact: '张丽', contactPhone: '138 0009 XXXX', status: '驳回', rejectReason: '下游主体工商经营状态异常' },
-      { id: 6, type: '上游企业', name: '山东金粮农业有限公司', project: '糖粉账期业务项目', code: '91370100MA0M1W7W2G', shortName: '金粮', legal: '李绍远', capital: 15000, region: '中国/山东/济南/历城区', owner: '张志强', ownerPhone: '138 0010 XXXX', contact: '王芳', contactPhone: '138 0011 XXXX', status: '已完结' },
-      { id: 7, type: '上游企业', name: '河北粮食产业集团有限公司', project: '谷物购销业务项目', code: '91130100MA0K1J5P0G', shortName: '河北粮产', legal: '赵建国', capital: 20000, region: '中国/河北/石家庄/裕华区', owner: '李梅', ownerPhone: '138 0012 XXXX', contact: '王磊', contactPhone: '138 0013 XXXX', status: '已作废', voidReason: '上游主体主动放弃' },
-      { id: 8, type: '下游企业', name: '重庆基创建设开发有限公司', project: '糖粉账期业务项目', code: '91500100MA0M1W7W2G', shortName: '基创建设', legal: '黄建明', capital: 28000, region: '中国/重庆/渝北区', owner: '陈波', ownerPhone: '138 0014 XXXX', contact: '王琳', contactPhone: '138 0015 XXXX', status: '执行中' },
-      { id: 9, type: '第三方物流', name: '郑州铁龙物流有限公司', project: '木薯淀粉存货类项目', code: '91410100MA0M1W7W2G', shortName: '铁龙物流', legal: '张建伟', capital: 8000, region: '中国/河南/郑州/管城区', owner: '李强', ownerPhone: '138 0016 XXXX', contact: '张敏', contactPhone: '138 0017 XXXX', status: '待提交' },
-      { id: 10, type: '上游企业', name: '山西省金能物资贸易有限公司', project: '玉米预付业务供应链项目', code: '91140100MA0M1W7W2G', shortName: '山西金能', legal: '韩志国', capital: 18000, region: '中国/山西/太原/迎泽区', owner: '王鹏', ownerPhone: '138 0018 XXXX', contact: '刘佳', contactPhone: '138 0019 XXXX', status: '审核中' },
-      { id: 11, type: '下游企业', name: '国能濮阳热电有限公司', project: '谷物购销业务项目', code: '91410900MA0M1W7W2G', shortName: '国能濮阳', legal: '马建国', capital: 35000, region: '中国/河南/濮阳/华龙区', owner: '陈志国', ownerPhone: '138 0020 XXXX', contact: '李娜', contactPhone: '138 0021 XXXX', status: '执行中' },
-      { id: 12, type: '下游企业', name: '国电投河南电力燃料有限公司', project: '木薯淀粉存货类供应链项目', code: '91410100MA0M1W7W2G', shortName: '国电投', legal: '韩振华', capital: 60000, region: '中国/河南/郑州/金水区', owner: '马志远', ownerPhone: '138 0022 XXXX', contact: '王静', contactPhone: '138 0023 XXXX', status: '已完结' }
+      { id: 1, type: '上游企业', name: '菏泽德坤煤炭有限公司', project: '木薯淀粉存货类供应链项目', code: '91XXXXXXMAXXXXXXXX', shortName: '菏泽德坤', legal: '陈行', capital: 10000, region: '中国/山东/菏泽/牡丹区', owner: '吴敬达', ownerPhone: '138 0000 XXXX', contact: '胡孟杰', contactPhone: '138 0001 XXXX', status: '待提交' },
+      { id: 2, type: '下游企业', name: '河南双汇集团有限责任公司', project: '木薯淀粉存货类供应链项目', code: '91XXXXXXMAXXXXXXXX', shortName: '双汇', legal: '万隆', capital: 80000, region: '中国/河南/漯河/召陵区', owner: '马相杰', ownerPhone: '138 0002 XXXX', contact: '张莉', contactPhone: '138 0003 XXXX', status: '审核中' },
+      { id: 3, type: '第三方物流', name: '中远海运物流有限公司', project: '木薯淀粉存货类供应链项目', code: '91XXXXXXMAXXXXXXXX', shortName: '中远海运', legal: '李建红', capital: 50000, region: '中国/上海/浦东新区', owner: '王海民', ownerPhone: '138 0004 XXXX', contact: '陈刚', contactPhone: '138 0005 XXXX', status: '执行中' },
+      { id: 4, type: '第三方仓储', name: '中外运国际仓储中心', project: '玉米预付业务供应链项目', code: '91XXXXXXMAXXXXXXXX', shortName: '中外运仓储', legal: '李关鹏', capital: 30000, region: '中国/北京/朝阳区', owner: '韩雪', ownerPhone: '138 0006 XXXX', contact: '刘伟', contactPhone: '138 0007 XXXX', status: '执行中' },
+      { id: 5, type: '下游企业', name: '郑州粮食批发市场', project: '玉米预付业务项目', code: '91XXXXXXMAXXXXXXXX', shortName: '郑粮', legal: '李伟', capital: 5000, region: '中国/河南/郑州/中原区', owner: '陈刚', ownerPhone: '138 0008 XXXX', contact: '张丽', contactPhone: '138 0009 XXXX', status: '驳回', rejectReason: '下游主体工商经营状态异常' },
+      { id: 6, type: '上游企业', name: '山东金粮农业有限公司', project: '糖粉账期业务项目', code: '91XXXXXXMAXXXXXXXX', shortName: '金粮', legal: '李绍远', capital: 15000, region: '中国/山东/济南/历城区', owner: '张志强', ownerPhone: '138 0010 XXXX', contact: '王芳', contactPhone: '138 0011 XXXX', status: '已完结' },
+      { id: 7, type: '上游企业', name: '河北粮食产业集团有限公司', project: '谷物购销业务项目', code: '91XXXXXXMAXXXXXXXX', shortName: '河北粮产', legal: '赵建国', capital: 20000, region: '中国/河北/石家庄/裕华区', owner: '李梅', ownerPhone: '138 0012 XXXX', contact: '王磊', contactPhone: '138 0013 XXXX', status: '已作废', voidReason: '上游主体主动放弃' },
+      { id: 8, type: '下游企业', name: '重庆基创建设开发有限公司', project: '糖粉账期业务项目', code: '91XXXXXXMAXXXXXXXX', shortName: '基创建设', legal: '黄建明', capital: 28000, region: '中国/重庆/渝北区', owner: '陈波', ownerPhone: '138 0014 XXXX', contact: '王琳', contactPhone: '138 0015 XXXX', status: '执行中' },
+      { id: 9, type: '第三方物流', name: '郑州铁龙物流有限公司', project: '木薯淀粉存货类项目', code: '91XXXXXXMAXXXXXXXX', shortName: '铁龙物流', legal: '张建伟', capital: 8000, region: '中国/河南/郑州/管城区', owner: '李强', ownerPhone: '138 0016 XXXX', contact: '张敏', contactPhone: '138 0017 XXXX', status: '待提交' },
+      { id: 10, type: '上游企业', name: '山西省金能物资贸易有限公司', project: '玉米预付业务供应链项目', code: '91XXXXXXMAXXXXXXXX', shortName: '山西金能', legal: '韩志国', capital: 18000, region: '中国/山西/太原/迎泽区', owner: '王鹏', ownerPhone: '138 0018 XXXX', contact: '刘佳', contactPhone: '138 0019 XXXX', status: '审核中' },
+      { id: 11, type: '下游企业', name: '国能濮阳热电有限公司', project: '谷物购销业务项目', code: '91XXXXXXMAXXXXXXXX', shortName: '国能濮阳', legal: '马建国', capital: 35000, region: '中国/河南/濮阳/华龙区', owner: '陈志国', ownerPhone: '138 0020 XXXX', contact: '李娜', contactPhone: '138 0021 XXXX', status: '执行中' },
+      { id: 12, type: '下游企业', name: '国电投河南电力燃料有限公司', project: '木薯淀粉存货类供应链项目', code: '91XXXXXXMAXXXXXXXX', shortName: '国电投', legal: '韩振华', capital: 60000, region: '中国/河南/郑州/金水区', owner: '马志远', ownerPhone: '138 0022 XXXX', contact: '王静', contactPhone: '138 0023 XXXX', status: '已完结' }
     ];
 
     // ========== v1.7.99.124 状态机映射（v1.7.99.65 锁 → v1.7.99.124 删「已通过」对齐项目准入 + 执行中加「发起完结」） ==========
@@ -950,6 +950,5 @@
     }
   </script>
 <script src="../assets/js/pin-annotation.js"></script>
-  <script src="../shared/js/prd-fab.js"></script>
 </body>
 </html>
