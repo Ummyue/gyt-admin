@@ -210,6 +210,13 @@
     .doc-body h1 { font-size: 18px; font-weight: 600; color: var(--text-primary); margin: 0 0 4px; }
     .doc-body h2 { font-size: 15px; font-weight: 600; color: var(--text-primary); margin: 20px 0 8px; padding-bottom: 6px; border-bottom: 1px solid var(--border-default); }
     .doc-body h3 { font-size: 13px; font-weight: 600; color: var(--text-primary); margin: 16px 0 6px; }
+    /* v1.7.99.350 锚点滚动目标区 + 闪烁高亮 + 锚点链接 */
+    .doc-body h2[id], .doc-body h3[id] { scroll-margin-top: 8px; }
+    .doc-body .anchor-flash { animation: doc-anchor-flash 1.2s ease-out; }
+    @keyframes doc-anchor-flash { 0% { background-color: rgba(245, 158, 11, 0.25); } 100% { background-color: transparent; } }
+    .doc-body .doc-anchor-link { opacity: 0; margin-left: 8px; color: var(--text-tertiary); text-decoration: none; font-size: 12px; font-weight: 400; }
+    .doc-body h2:hover .doc-anchor-link, .doc-body h3:hover .doc-anchor-link { opacity: 1; }
+    .doc-body .doc-anchor-link:hover { color: var(--color-primary); }
     .doc-body p { margin: 6px 0; }
     .doc-body ul, .doc-body ol { margin: 6px 0; padding-left: 20px; }
     .doc-body li { margin: 3px 0; }
@@ -691,12 +698,29 @@
     }
 
     // ===== 加载文档 =====
+    // v1.7.99.350 升级：marked heading 加 id + 锚点定位 + 闪烁高亮
+    marked.use({
+      renderer: {
+        heading(text, level, raw) {
+          const id = String(raw).trim().toLowerCase()
+            .replace(/[\s\u3000]+/g, '-')
+            .replace(/[^\u4e00-\u9fa5a-z0-9\-·]/gi, '')
+            .replace(/^-+|-+$/g, '')
+            .substring(0, 80);
+          return `<h${level} id="${id}">${text}<a class="doc-anchor-link" href="#${id}">#</a></h${level}>\n`;
+        }
+      }
+    });
+
     let _currentDoc = { md: '', code: '', name: '' };
-    function loadDoc(page) {
+    function loadDoc(page, opts) {
       const body = document.getElementById('docBody');
       const dlBtn = document.getElementById('btnDownloadMd');
       body.innerHTML = '<div class="doc-loading">正在加载文档...</div>';
       dlBtn.disabled = true;
+      // 优先用 opts.section（来自 ?section= 参数），其次 URL hash
+      const hashSection = window.location.hash ? window.location.hash.slice(1) : null;
+      const targetSection = (opts && opts.section) || hashSection;
       const url = `./docs/${page.doc}.md`;
       fetch(url)
         .then(r => r.ok ? r.text() : Promise.reject('404'))
@@ -724,12 +748,32 @@
           }
           // 给 mermaid 容器加点击放大
           setTimeout(() => attachLightbox(), 300);
-          body.scrollTop = 0;
+          // v1.7.99.350：锚点定位 + 闪烁高亮
+          if (targetSection) {
+            setTimeout(() => scrollToAnchor(targetSection), 100);
+          } else {
+            body.scrollTop = 0;
+          }
         })
         .catch(err => {
           _currentDoc = { md: '', code: page.doc, name: page.name };
           body.innerHTML = `<div class="doc-loading">📄 文档待补充（${page.doc}）</div>`;
         });
+    }
+
+    // ===== 滚动到锚点 + 闪烁高亮（v1.7.99.350） =====
+    function scrollToAnchor(targetId) {
+      const body = document.getElementById('docBody');
+      const target = body.querySelector('#' + CSS.escape(targetId));
+      if (!target) {
+        console.warn('[app.html] anchor not found:', targetId);
+        return;
+      }
+      const offsetTop = target.offsetTop - 8;
+      body.scrollTo({ top: offsetTop, behavior: 'smooth' });
+      target.classList.remove('anchor-flash');
+      void target.offsetWidth;
+      target.classList.add('anchor-flash');
     }
 
     // ===== 下载 MD =====

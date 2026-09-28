@@ -63,9 +63,10 @@
       transition: transform 0.2s;
     }
     .switch-toggle .track.on .thumb { transform: translateX(12px); }
-    .switch-toggle .label { color: var(--text-secondary); font-weight: 500; }
-    .switch-toggle.on .label { color: var(--color-primary, #1E40AF); font-weight: 600; }
-    .switch-toggle.disabled .label { color: var(--text-tertiary); font-weight: 500; }
+    .switch-toggle .label { color: var(--text-secondary); font-weight: 500; font-size: 11px; white-space: nowrap; }
+    .switch-toggle.on .label { color: var(--color-primary, #1E40AF); font-weight: 600; font-size: 11px; white-space: nowrap; }
+    .switch-toggle.disabled .label { color: var(--text-tertiary); font-weight: 500; font-size: 11px; white-space: nowrap; }
+    .switch-toggle .track { margin-right: 2px; }
     /* v1.7.99.346 变更记录链接 + 弹窗（v1.7.99.350 改为上下分布，不是左右并排） */
     .cell-switch .history-link {
       font-size: 11px; color: var(--color-primary); cursor: pointer;
@@ -595,7 +596,7 @@
         var toggleCls, toggleText, trackOn;
         if (!isFull) {
           toggleCls = 'disabled';
-          toggleText = '未足额';
+          toggleText = '调整比例';  // v1.7.99.350 去除「未足额」信息说明， 与其他状态统一显示「调整比例」
           trackOn = false;
         } else if (m.depositEnabled) {
           toggleCls = 'on';
@@ -620,8 +621,7 @@
           + '<td style="text-align: right;" class="col-num">' + fmt(m.payTotal) + '</td>'
           + '<td style="text-align: right;" class="col-num">' + fmt(m.paid) + '</td>'
           + '<td style="text-align: right;" class="col-num">' + fmt(m.recTotal) + '</td>'
-          + '<td style="text-align: right;" class="col-num">' + fmt(m.deposit) + '</td>'
-          + '<td style="text-align: right;" class="col-num">' + fmt(m.margin) + '</td>'
+                    + '<td style="text-align: right;" class="col-num">' + fmt(m.margin) + '</td>'
           + '<td>' + m.signDate + '</td>'
           // v1.7.99.350 toggle switch（track + thumb）+ 文字跟随状态
           // v1.7.99.346 下方追加「变更记录(N)」链接（v1.7.99.350 改上下分布）
