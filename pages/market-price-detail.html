@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>指标详情 - 豫港通 v1.7.99.136</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* v1.7.99.136：指标详情页 2 tap（指数趋势 / 指数数据）按 user 2026-08-05 反馈图2 + 图3 1:1 重制 */
+    .page-body { padding: 16px 24px; }
+    /* tap 切换（顶部固定 1 个） */
+    .detail-tap-bar { display: flex; gap: 0; border-bottom: 1px solid var(--border-light); margin-bottom: 16px; }
+    .detail-tap {
+      padding: 10px 18px; font-size: 14px; color: var(--text-secondary); cursor: pointer;
+      border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .detail-tap:hover { color: var(--text-primary); }
+    .detail-tap.active {
+      color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500;
+    }
+    .detail-tap-panel { display: block; }
+    .detail-tap-panel[hidden] { display: none; }
+    /* 顶部信息行 */
+    .detail-info-header { padding: 4px 0 8px; }
+    .detail-info-title { font-size: 18px; font-weight: 600; color: var(--text-primary); display: inline-block; }
+    .detail-info-subtitle { font-size: 12px; color: var(--text-tertiary); margin-left: 8px; }
+    /* 3 个 meta chip */
+    .meta-chip-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 10px 0 14px; }
+    .meta-chip {
+      display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px;
+      background: #F1F5F9; border-radius: 4px; font-size: 12px;
+    }
+    .meta-chip-label { color: var(--text-secondary); }
+    .meta-chip-value { color: var(--text-primary); font-weight: 500; }
+    /* 6 个对比卡片 */
+    .compare-card-row { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin-bottom: 14px; }
+    .compare-card {
+      background: #fff; border: 1px solid var(--border-light); border-radius: 6px;
+      padding: 12px 14px; position: relative;
+    }
+    .compare-card-label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 6px; }
+    .compare-card-value {
+      font-size: 22px; font-weight: 600; color: var(--text-primary); font-family: var(--font-mono);
+    }
+    .compare-card-pct {
+      position: absolute; right: 12px; bottom: 12px;
+      font-size: 13px; font-weight: 500;
+      padding: 2px 8px; border-radius: 12px;
+    }
+    .compare-card-pct.up { background: #FEF2F2; color: #DC2626; }
+    .compare-card-pct.down { background: #FFF7ED; color: #EA580C; }
+    .compare-card-pct.flat { background: #F1F5F9; color: #94A3B8; }
+    .compare-card-icon {
+      position: absolute; right: 14px; top: 12px;
+      width: 32px; height: 32px; background: #EFF6FF; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center; color: var(--color-primary);
+    }
+    /* 大趋势图（tap1 指数趋势） */
+    .trend-chart-wrap { background: #fff; border-radius: 8px; padding: 16px 20px; margin-bottom: 12px; }
+    .trend-chart-svg { width: 100%; height: 360px; }
+    .trend-chart-xaxis { display: flex; justify-content: space-between; padding: 0 4px; font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
+    /* 缩略图 */
+    .trend-mini-wrap {
+      background: #fff; border-radius: 8px; padding: 8px 20px; margin-bottom: 16px;
+    }
+    .trend-mini-svg { width: 100%; height: 32px; }
+    /* 表格（tap2 指数数据） */
+    .data-table { width: 100%; border-collapse: collapse; background: #fff; border-radius: 8px; overflow: hidden; }
+    .data-table th {
+      background: #F8FAFC; padding: 12px 16px; text-align: left;
+      font-size: 13px; color: var(--text-secondary); font-weight: 500;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .data-table td {
+      padding: 12px 16px; font-size: 13px; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .data-table tr:nth-child(2n) td { background: #F8FAFC; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .col-num { font-family: var(--font-mono); color: var(--text-primary); }
+    /* 返回按钮居中 */
+    .footer-back-center {
+      display: flex; align-items: center; justify-content: center;
+      padding: 16px 0 24px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./market-price.html">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./market-price.html">盯市价格管理</a>
+          <span class="sep">/</span>
+          <span class="current">指标详情</span>
+        </div>
+
+        <!-- 标题区（固定） -->
+        <div class="detail-info-header">
+          <h1 class="page-h1" style="margin: 0;">指标详情</h1>
+        </div>
+
+        <!-- 2 tap 切换（固定，单个 tap bar） -->
+        <div class="detail-tap-bar">
+          <div class="detail-tap active" data-tap="trend" onclick="switchDetailTap('trend')">指标趋势</div>
+          <div class="detail-tap" data-tap="data" onclick="switchDetailTap('data')">指标数据</div>
+        </div>
+
+        <!-- ========== Tap 1：指标趋势 ========== -->
+        <div class="detail-tap-panel" data-tap-panel="trend">
+          <div style="margin-bottom: 4px;">
+            <span class="detail-info-title" id="trendTitle">CCTD 环渤海动力煤现货参考价: 4500K</span>
+            <span class="detail-info-subtitle">(日更新) (单位: 元/吨)</span>
+          </div>
+          <div class="meta-chip-row">
+            <div class="meta-chip"><span class="meta-chip-label">数据来源:</span><span class="meta-chip-value">中国煤炭市场网</span></div>
+            <div class="meta-chip"><span class="meta-chip-label">品种:</span><span class="meta-chip-value">动力煤</span></div>
+            <div class="meta-chip"><span class="meta-chip-label">区域:</span><span class="meta-chip-value">北方港</span></div>
+          </div>
+
+          <!-- 6 个对比卡片 -->
+          <div class="compare-card-row">
+            <div class="compare-card">
+              <div class="compare-card-label">最新价格</div>
+              <div class="compare-card-value">788.00</div>
+              <div class="compare-card-icon">¥</div>
+            </div>
+            <div class="compare-card">
+              <div class="compare-card-label">对比上期</div>
+              <div class="compare-card-value">+1.41%</div>
+              <div class="compare-card-pct up">+11.00</div>
+            </div>
+            <div class="compare-card">
+              <div class="compare-card-label">对比月初</div>
+              <div class="compare-card-value">+4.37%</div>
+              <div class="compare-card-pct up">+33.00</div>
+            </div>
+            <div class="compare-card">
+              <div class="compare-card-label">对比上月同期</div>
+              <div class="compare-card-value">+19.39%</div>
+              <div class="compare-card-pct up">+128.00</div>
+            </div>
+            <div class="compare-card">
+              <div class="compare-card-label">对比上月同期</div>
+              <div class="compare-card-value">0.00</div>
+              <div class="compare-card-pct flat">—</div>
+            </div>
+            <div class="compare-card">
+              <div class="compare-card-label">对比年初</div>
+              <div class="compare-card-value">0.00</div>
+              <div class="compare-card-pct flat">—</div>
+            </div>
+          </div>
+
+          <!-- 大趋势图 -->
+          <div class="trend-chart-wrap">
+            <svg class="trend-chart-svg" id="trendChartSvg" viewBox="0 0 1200 360" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+
+          <!-- 缩略图 -->
+          <div class="trend-mini-wrap">
+            <svg class="trend-mini-svg" id="trendMiniSvg" viewBox="0 0 1200 32" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg"></svg>
+          </div>
+
+          <!-- 返回按钮居中 -->
+          <div class="footer-back-center">
+            <button class="btn btn-default" onclick="window.location.href='./market-price.html'">返回</button>
+          </div>
+        </div>
+
+        <!-- ========== Tap 2：指数数据 ========== -->
+        <div class="detail-tap-panel" data-tap-panel="data" hidden>
+          <!-- 表格 -->
+          <div style="background: #fff; border-radius: 8px; overflow: hidden;">
+            <table class="data-table" id="dataTable">
+              <thead>
+                <tr>
+                  <th style="width: 60%;">指标日期</th>
+                  <th style="width: 30%;">指标价格</th>
+                  <th>单位</th>
+                </tr>
+              </thead>
+              <tbody id="dataTbody">
+                <!-- JS 渲染 10 行 -->
+              </tbody>
+            </table>
+            <div style="padding: 14px 20px; display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--border-light);">
+              <span style="font-size: 13px; color: var(--text-tertiary);">共有 63 条信息</span>
+              <div style="flex: 1;"></div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">‹</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--color-primary); background: var(--color-primary); color: #fff; border-radius: 4px; cursor: pointer;">1</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">2</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">3</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">4</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">5</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">6</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">7</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">›</button>
+                <span style="font-size: 13px; color: var(--text-tertiary); margin-left: 8px;">10 条/页</span>
+                <span style="font-size: 13px; color: var(--text-tertiary); margin-left: 4px;">跳至 <input type="number" min="1" value="1" style="width: 40px; height: 24px; padding: 0 4px; border: 1px solid var(--border-default); border-radius: 4px;"> 页</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.80 + v1.7.99.123 inline Utils fallback
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { console.log('[toast]', type || 'info', msg); }
+    };
+    // v1.7.99.136：tap 切换（简化版：1 个 tap bar + 2 个 panel）
+    function switchDetailTap(target) {
+      document.querySelectorAll('.detail-tap').forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-tap') === target);
+      });
+      document.querySelectorAll('.detail-tap-panel').forEach(function(p) {
+        p.hidden = p.getAttribute('data-tap-panel') !== target;
+      });
+    }
+    // 渲染大趋势图（折线 + 渐变填充 + 涨跌幅坐标）
+    function renderTrendChart() {
+      var data = [
+        639, 620, 600, 588, 595, 610, 600, 590, 605, 615, 610, 620, 615, 605, 595, 615, 635, 645, 650, 655, 650, 660, 650, 700, 750, 788
+      ];
+      var xLabels = [
+        '2023-05-30','2023-06-05','2023-06-09','2023-06-15','2023-06-21','2023-06-28',
+        '2023-07-04','2023-07-10','2023-08-22','2023-08-28','2023-09-01','2023-09-07',
+        '2023-09-13','2023-09-19','2023-09-25','2023-09-28','2023-09-29','2023-09-30',
+        '2023-10-01','2023-10-02','2023-10-03','2023-10-04','2023-10-05','2023-10-06','2023-10-07','2023-10-08'
+      ];
+      var w = 1200, h = 360, padL = 60, padR = 60, padT = 20, padB = 40;
+      var min = 538.80, max = 839.39;
+      var stepX = (w - padL - padR) / (data.length - 1);
+      var points = data.map(function(v, i) {
+        var x = padL + i * stepX;
+        var y = padT + (1 - (v - min) / (max - min)) * (h - padT - padB);
+        return [x, y];
+      });
+      var linePath = points.map(function(p, i) {
+        return (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1);
+      }).join(' ');
+      var fillPath = linePath + ' L' + points[points.length-1][0].toFixed(1) + ',' + (h - padB) + ' L' + points[0][0].toFixed(1) + ',' + (h - padB) + ' Z';
+      var yTicks = [538.80, 588.90, 639.00, 689.10, 739.20, 789.29, 839.39];
+      var yGridLines = yTicks.map(function(t) {
+        var y = padT + (1 - (t - min) / (max - min)) * (h - padT - padB);
+        return '<line x1="' + padL + '" y1="' + y + '" x2="' + (w - padR) + '" y2="' + y + '" stroke="#F1F5F9" stroke-width="1"/>'
+          + '<text x="' + (padL - 10) + '" y="' + (y + 4) + '" text-anchor="end" font-size="11" fill="#94A3B8" font-family="var(--font-mono)">' + t.toFixed(2) + '</text>';
+      }).join('');
+      var pctTicks = ['-15.68%', '-7.84%', '0', '7.84%', '15.68%', '23.52%', '31.36%'];
+      var pctLabels = pctTicks.map(function(t, i) {
+        var y = padT + i * (h - padT - padB) / (pctTicks.length - 1);
+        return '<text x="' + (w - padR + 10) + '" y="' + (y + 4) + '" font-size="11" fill="#94A3B8">' + t + '</text>';
+      }).join('');
+      var xLabelStep = Math.ceil(xLabels.length / 12);
+      var xLabelsSvg = xLabels.map(function(l, i) {
+        if (i % xLabelStep !== 0 && i !== xLabels.length - 1) return '';
+        var x = points[i][0];
+        return '<text x="' + x + '" y="' + (h - padB + 20) + '" text-anchor="middle" font-size="11" fill="#94A3B8">' + l + '</text>';
+      }).join('');
+      var dots = points.map(function(p) {
+        return '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="3" fill="#DC2626"/>';
+      }).join('');
+      var yLabelLeft = '<text x="14" y="20" font-size="12" fill="#94A3B8">价格</text>';
+      var yLabelRight = '<text x="' + (w - 10) + '" y="20" font-size="12" fill="#94A3B8" text-anchor="end">涨跌幅</text>';
+      var svg = '<defs>'
+        + '<linearGradient id="trendGrad" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="#FCA5A5" stop-opacity="0.6"/>'
+        + '<stop offset="100%" stop-color="#FEE2E2" stop-opacity="0.1"/>'
+        + '</linearGradient>'
+        + '</defs>'
+        + yGridLines
+        + pctLabels
+        + yLabelLeft
+        + yLabelRight
+        + '<path d="' + fillPath + '" fill="url(#trendGrad)" stroke="none"/>'
+        + '<path d="' + linePath + '" stroke="#DC2626" stroke-width="1.8" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
+        + dots
+        + xLabelsSvg;
+      document.getElementById('trendChartSvg').innerHTML = svg;
+    }
+    function renderTrendMini() {
+      var data = [0.2, 0.18, 0.2, 0.22, 0.25, 0.3, 0.35, 0.4, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.8];
+      var w = 1200, h = 32;
+      var stepX = w / (data.length - 1);
+      var points = data.map(function(v, i) {
+        return [i * stepX, h - v * (h - 4) - 2];
+      });
+      var linePath = points.map(function(p, i) {
+        return (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ',' + p[1].toFixed(1);
+      }).join(' ');
+      var fillPath = linePath + ' L' + w + ',' + h + ' L0,' + h + ' Z';
+      document.getElementById('trendMiniSvg').innerHTML =
+        '<defs><linearGradient id="miniGrad" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="#93C5FD" stop-opacity="0.5"/>'
+        + '<stop offset="100%" stop-color="#DBEAFE" stop-opacity="0.05"/>'
+        + '</linearGradient></defs>'
+        + '<path d="' + fillPath + '" fill="url(#miniGrad)" stroke="none"/>'
+        + '<path d="' + linePath + '" stroke="#3B82F6" stroke-width="1" fill="none"/>';
+    }
+    function renderDataTable() {
+      var data = [
+        { date: '2023-10-09', price: '788', unit: '元/吨' },
+        { date: '2023-10-08', price: '777', unit: '元/吨', highlight: true },
+        { date: '2023-10-07', price: '755', unit: '元/吨' },
+        { date: '2023-09-28', price: '747', unit: '元/吨' },
+        { date: '2023-09-27', price: '747', unit: '元/吨' },
+        { date: '2023-09-26', price: '750', unit: '元/吨' },
+        { date: '2023-09-25', price: '755', unit: '元/吨' },
+        { date: '2023-09-22', price: '759', unit: '元/吨' },
+        { date: '2023-09-21', price: '769', unit: '元/吨' },
+        { date: '2023-09-20', price: '760', unit: '元/吨' }
+      ];
+      document.getElementById('dataTbody').innerHTML = data.map(function(r) {
+        var bg = r.highlight ? ' style="background: #EFF6FF !important;"' : '';
+        return '<tr' + bg + '>'
+          + '<td class="col-num">' + r.date + '</td>'
+          + '<td class="col-num">' + r.price + '</td>'
+          + '<td>' + r.unit + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+    renderTrendChart();
+    renderTrendMini();
+    renderDataTable();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

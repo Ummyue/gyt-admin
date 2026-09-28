@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>上游货转 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 上游/下游 切换 tap（v1.7.99.57） */
+    .gt-direction-tap {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .gt-direction-tap-item {
+      padding: 10px 0;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      position: relative;
+      transition: color 0.15s;
+    }
+    .gt-direction-tap-item:hover { color: var(--color-primary); }
+    .gt-direction-tap-item.active {
+      color: var(--color-primary);
+      font-weight: 600;
+    }
+    .gt-direction-tap-item.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--color-primary);
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="#">收发货管理</a>
+          <span class="sep">/</span>
+          <a href="./goods-transfer.html">货转管理</a>
+          <span class="sep">/</span>
+          <span class="current">上游货转</span>
+        </div>
+
+        <!-- 标题 + 顶部按钮 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">货转管理</h1>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            开具货转
+          </button>
+        </div>
+
+        <!-- 上游/下游 切换 tap（v1.7.99.57：已收到 → 上游货转，已开具 → 下游货转） -->
+        <div class="gt-direction-tap">
+          <div class="gt-direction-tap-item active" data-direction="up" onclick="window.location.href='./goods-transfer-up.html'">上游货转</div>
+          <div class="gt-direction-tap-item" data-direction="down" onclick="window.location.href='./goods-transfer-down-new.html'">下游货转</div>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区（v1.7.99.57 按图 3：6 字段） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入订单或合同编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货转编号</span>
+                <input type="text" class="input" placeholder="请输入货转编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">买方企业</span>
+                <input type="text" class="input" placeholder="请输入买方企业">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">卖方企业</span>
+                <input type="text" class="input" placeholder="请输入卖方企业">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货转开具日期</span>
+                <input type="text" class="input" placeholder="开始时间 ~ 结束时间">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">状态</span>
+                <select class="select">
+                  <option>请选择状态</option>
+                  <option>待提交</option>
+                  <option>审批中</option>
+                  <option>待签约</option>
+                  <option>已签约</option>
+                  <option>退回</option>
+                  <option>已作废</option>
+                  <option>待确认</option>
+                  <option>已驳回</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.125：与「状态」筛选项同步——9 状态 = 全部 + 待提交/审批中/待签约/已签约/退回/已作废/待确认/已驳回） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" data-gt-status="all">全部 <span class="count">20</span></div>
+                <div class="cp-tab" data-gt-status="pending" style="color: #1e40af;">待提交 <span class="count" style="color: #1e40af; font-weight: 600;">0</span></div>
+                <div class="cp-tab" data-gt-status="approving" style="color: #1e40af;">审批中 <span class="count" style="color: #1e40af; font-weight: 600;">0</span></div>
+                <div class="cp-tab" data-gt-status="awaiting-sign" style="color: #a16207;">待签约 <span class="count" style="color: #a16207; font-weight: 600;">0</span></div>
+                <div class="cp-tab" data-gt-status="signed" style="color: #15803d;">已签约 <span class="count" style="color: #15803d; font-weight: 600;">0</span></div>
+                <div class="cp-tab" data-gt-status="returned" style="color: #ea580c;">退回 <span class="count" style="color: #ea580c; font-weight: 600;">0</span></div>
+                <div class="cp-tab" data-gt-status="up-voided" style="color: #6b7280;">已作废 <span class="count" style="color: #6b7280; font-weight: 600;">3</span></div>
+                <div class="cp-tab" data-gt-status="awaiting-confirm" style="color: #0369a1;">待确认 <span class="count" style="color: #0369a1; font-weight: 600;">0</span></div>
+                <div class="cp-tab" data-gt-status="rejected" style="color: #dc2626;">已驳回 <span class="count" style="color: #dc2626; font-weight: 600;">0</span></div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <button class="btn btn-text btn-sm">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  批量下载
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格（v1.7.99.57 按图 3：10 列表格 + 10 行 mock） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table" style="min-width: 1700px;">
+                <thead>
+                  <tr>
+                    <th style="width: 160px;">合同编号</th>
+                    <th style="width: 180px;">货转编号</th>
+                    <th style="width: 180px;">买方企业</th>
+                    <th style="width: 180px;">卖方企业</th>
+                    <th style="width: 180px;">收货人</th>
+                    <th style="width: 140px;">货转开具日期</th>
+                    <th style="width: 130px;text-align: right;">货转数量(吨)</th>
+                    <th style="width: 150px;">发运方式</th>
+                    <th style="width: 100px;">状态</th>
+                    <th class="col-action" style="width: 130px;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290015</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-02</td>
+                    <td style="text-align: right;" class="col-num">474.9</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290014</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-06-30</td>
+                    <td style="text-align: right;" class="col-num">1143.2</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290013</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-06-01</td>
+                    <td style="text-align: right;" class="col-num">1192</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290012</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-05-25</td>
+                    <td style="text-align: right;" class="col-num">1192</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290011</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-05-13</td>
+                    <td style="text-align: right;" class="col-num">927.5</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290010</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-05-07</td>
+                    <td style="text-align: right;" class="col-num">616</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290009</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-05-06</td>
+                    <td style="text-align: right;" class="col-num">927.5</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290008</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-28</td>
+                    <td style="text-align: right;" class="col-num">32</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290007</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-20</td>
+                    <td style="text-align: right;" class="col-num">922.25</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                  <tr>
+                    <td class="col-num">GTGYL-MSXS-20260127-s</td>
+                    <td class="col-num">SKBT202607050001-202607290006</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>河南诚泽运输有限公司</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td>2026-04-13</td>
+                    <td style="text-align: right;" class="col-num">922.25</td>
+                    <td>中欧班列-东星线路</td>
+                    <td><span class="tag tag-green">已预约</span></td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="./goods-transfer-up-detail.html">查看</a>
+                      <a href="javascript:void(0);" onclick="downloadCert(this)">下载</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 10 条记录 · 第 1 / 1 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 状态 tab 切换（v1.7.99.57）
+    (function() {
+      var tabs = document.querySelectorAll('.cp-tab-bar-tabs .cp-tab');
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          tabs.forEach(function(t) { t.classList.remove('active'); });
+          tab.classList.add('active');
+        });
+      });
+    })();
+
+    function downloadCert(el) {
+      alert('开始下载凭证（mock）');
+    }
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

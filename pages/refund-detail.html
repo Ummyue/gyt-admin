@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>退款详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 顶部信息条（v1.7.99.63 按图 4：标题 + 状态 + 流水号 + 4 字段） */
+    .detail-header { background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; }
+    .detail-header-row1 { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text-primary); white-space: nowrap; flex-shrink: 0; }
+    .detail-header-row2 { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .detail-header-row3 { display: flex; flex-wrap: wrap; gap: 18px 24px; font-size: 13px; color: var(--text-tertiary); }
+    .detail-header-row3 .item { display: inline-flex; align-items: center; gap: 6px; }
+    .detail-header-row3 .label { color: var(--text-tertiary); }
+    .detail-header-row3 .value { color: var(--text-primary); }
+
+    /* 状态 badge */
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+    .status-badge.refunded { background: #FFF7ED; color: #EA580C; }
+    .icon-copy { width: 14px; height: 14px; vertical-align: -2px; color: var(--color-primary); cursor: pointer; }
+
+    /* 步骤条（v1.7.99.192：3 步 - 登记退款信息 / 审批中 / 流程结束，退款完成） */
+    .step-bar { background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 24px 60px; margin-bottom: 16px; }
+    .step-bar-list { display: flex; align-items: flex-start; justify-content: space-between; position: relative; }
+    .step-bar-list::before { content: ''; position: absolute; top: 14px; left: 12%; right: 12%; height: 1px; background: #E5E7EB; z-index: 0; }
+    .step-item { flex: 1; position: relative; z-index: 1; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 8px; }
+    .step-circle { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2px solid #E5E7EB; color: #9CA3AF; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; flex-shrink: 0; }
+    .step-item.done .step-circle { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+    .step-item.current .step-circle { background: var(--color-primary); border-color: var(--color-primary); color: #fff; box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.15); }
+    .step-item.rejected .step-circle { background: #fee2e2; border-color: #B91C1C; color: #B91C1C; }
+    .step-item.pending .step-name { color: var(--text-tertiary); }
+    .step-item.rejected .step-name { color: #B91C1C; }
+    .step-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .step-time { font-size: 12px; color: var(--text-tertiary); }
+    .step-icon-wrap { display: flex; align-items: center; gap: 16px; }
+
+    /* tab 切换 */
+    .detail-tab { display: flex; gap: 24px; padding: 0 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; }
+    .detail-tab-item { padding: 10px 0; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .detail-tab-item.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+
+    /* 详情区块 */
+    .info-section { background: #fff; border-radius: 6px; padding: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .info-section-title { padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--border-color); border-left: 3px solid var(--color-primary); padding-left: 17px; }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 退款信息 4 列布局（4 行 3 字段 + 1 行 3 字段 实际是 3+3+3+2 = 11 字段） */
+    .refund-info-grid { display: grid; grid-template-columns: 110px 1fr 110px 1fr 110px 1fr; }
+    .refund-info-grid .label,
+    .refund-info-grid .value { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border-color); }
+    .refund-info-grid .label { background: #F8FAFC; color: var(--text-tertiary); }
+    .refund-info-grid .value { color: var(--text-primary); }
+    .refund-info-grid .col-divider { border-right: 1px solid var(--border-color); }
+    .refund-info-grid .amount-orange { color: #EA580C; font-weight: 600; }
+
+    /* 附件表 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td { padding: 10px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .attach-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .attach-table tr:last-child td { border-bottom: none; }
+    .attach-table .attach-name { color: var(--color-primary); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./refund-list.html">退款管理</a>
+          <span class="sep">/</span>
+          <span class="current">退款详情</span>
+        </div>
+
+        <!-- 顶部信息条（v1.7.99.192：标题 + 状态 + 流水号 + 4 字段，删返回按钮） -->
+        <div class="detail-header">
+          <div class="detail-header-row1">
+            <span class="detail-title">退款详情</span>
+            <span class="status-badge refunded">已退款</span>
+          </div>
+          <div class="detail-header-row2">
+            <span style="font-size: 13px; color: var(--text-tertiary);">资金流水号：</span>
+            <span style="font-size: 14px; font-weight: 600; color: var(--text-primary);" id="refundNo">SKTK2025092210000005</span>
+            <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" onclick="copyRefundNo()" title="复制资金流水号" style="cursor: pointer;">
+              <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+            </svg>
+          </div>
+          <div class="detail-header-row3">
+            <span class="item"><span class="label">所属合同编号：</span><span class="value">TYYGJ-SM-202506-002</span></span>
+            <span class="item"><span class="label">卖方企业：</span><span class="value">天宇豪国际贸易集团有限公司</span></span>
+            <span class="item"><span class="label">买方企业：</span><span class="value">陕西魏煤供应链管理有限公司</span></span>
+            <span class="item"><span class="label">创建时间：</span><span class="value">2025-09-22 10:00:20</span></span>
+          </div>
+        </div>
+
+        <!-- 步骤条（v1.7.99.192：3 步 - 登记退款信息 / 审批中 / 流程结束，退款完成；IIFE 按 status 切每步状态） -->
+        <div class="step-bar">
+          <div class="step-bar-list">
+            <div class="step-item done" id="step1">
+              <div class="step-icon-wrap">
+                <div class="step-circle">✓</div>
+                <div style="text-align: left;">
+                  <div class="step-time">2025-09-22 10:00:20</div>
+                  <div class="step-name">登记退款信息</div>
+                </div>
+              </div>
+            </div>
+            <div class="step-item current" id="step2">
+              <div class="step-icon-wrap">
+                <div class="step-circle" id="step2Circle">2</div>
+                <div style="text-align: left;">
+                  <div class="step-time" id="step2Time">&nbsp;</div>
+                  <div class="step-name" id="step2Name">审批中</div>
+                </div>
+              </div>
+            </div>
+            <div class="step-item pending" id="step3">
+              <div class="step-icon-wrap">
+                <div class="step-circle">3</div>
+                <div style="text-align: left;">
+                  <div class="step-time">&nbsp;</div>
+                  <div class="step-name">流程结束，退款完成</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- tab 切换（v1.7.99.177：加"审批管理"tab + 按 URL ?status= 决定是否显示；默认 status=审批中） -->
+        <div class="detail-tab" id="detailTabBar">
+          <span class="detail-tab-item active" onclick="switchDetailTab('info', this)">退款信息</span>
+          <span class="detail-tab-item" id="approvalTab" onclick="switchDetailTab('approval', this)" style="display: none;">审批管理</span>
+          <span class="detail-tab-item" onclick="switchDetailTab('log', this)">操作记录</span>
+        </div>
+
+        <div id="tabPanelInfo">
+          <!-- 区块 1：退款信息（v1.7.99.63 按图 4：4 行 3 字段） -->
+          <div class="info-section">
+            <h3 class="info-section-title">退款信息</h3>
+            <div class="info-section-body no-pad">
+              <div class="refund-info-grid">
+                <!-- Row 1：退款方 / 收款方 / 资金来源 -->
+                <div class="label col-divider">退款方</div>
+                <div class="value col-divider">天宇豪国际贸易集团有限公司</div>
+                <div class="label col-divider">收款方</div>
+                <div class="value col-divider">陕西魏煤供应链管理有限公司</div>
+                <div class="label">资金来源</div>
+                <div class="value">自有资金</div>
+
+                <!-- Row 2：收款账号名称 / 收款账号开户行 / 收款账号 -->
+                <div class="label col-divider">收款账号名称</div>
+                <div class="value col-divider">陕西魏煤供应链管理有限公司</div>
+                <div class="label col-divider">收款账号开户行</div>
+                <div class="value col-divider">中国银行</div>
+                <div class="label">收款账号</div>
+                <div class="value">102084339010</div>
+
+                <!-- Row 3：退款方式 / 退款日期 / 退款金额(元) -->
+                <div class="label col-divider">退款方式</div>
+                <div class="value col-divider">银行转账</div>
+                <div class="label col-divider">退款日期</div>
+                <div class="value col-divider">2025-09-22</div>
+                <div class="label">退款金额(元)</div>
+                <div class="value amount-orange">123</div>
+
+                <!-- Row 4：退款类型 / 退款原因 / 空 -->
+                <div class="label">退款类型</div>
+                <div class="value col-divider">货款</div>
+                <div class="label col-divider">退款原因</div>
+                <div class="value col-divider">&nbsp;</div>
+                <div class="label">&nbsp;</div>
+                <div class="value">&nbsp;</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：附件（v1.7.99.63 按图 4：附件类型/文件编号/操作） -->
+          <div class="info-section">
+            <h3 class="info-section-title">附件</h3>
+            <div class="info-section-body no-pad">
+              <table class="attach-table">
+                <thead>
+                  <tr>
+                    <th style="width: 200px;">文件类型</th>
+                    <th>文件编号</th>
+                    <th style="width: 120px; text-align: right; padding-right: 24px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>退款附件</td>
+                    <td class="attach-name">入库凭证.png</td>
+                    <td style="text-align: right; padding-right: 24px;">
+                      <a href="javascript:void(0);" onclick="Utils.toast('下载：入库凭证.png', 'info')">下载</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabPanelApproval" style="display: none;">
+          <!-- v1.7.99.177 复用通用审批组件（status=审批中时显示） -->
+          <div class="approval-status-card" id="refundApprovalStatusCard">
+            <div class="approval-status-icon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                <span>审批进行中</span>
+                <div class="approval-status-chips">
+                  <span class="chip chip-orange">⏸ 待审批</span>
+                </div>
+              </div>
+              <div class="approval-status-desc">
+                <strong style="color: var(--text-primary);" id="refundApprovalNo">TK20251219003</strong> 已提交至外部审批系统，当前在「<span class="link">财务部审批</span>」阶段。
+              </div>
+            </div>
+            <div class="approval-status-actions" id="refundApprovalActions">
+              <button class="btn-cancel-approval" onclick="alert('已撤回申请')">↩ 撤回申请</button>
+            </div>
+          </div>
+
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请单号</div>
+              <div class="value" style="font-family: var(--font-mono);">TKSP-2026-0389</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2026-12-15 10:20</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交人</div>
+              <div class="value">李娜</div>
+            </div>
+          </div>
+
+          <div class="approval-grid">
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta">共 5 个节点，已通过 1 个</div>
+              </div>
+              <div class="timeline">
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">业务部审批</div>
+                    <div class="timeline-meta">李娜 · 2026-12-15 10:35</div>
+                    <div class="timeline-comment">退款单已核对，原付款凭证齐全</div>
+                  </div>
+                </div>
+                <div class="timeline-item current">
+                  <div class="timeline-dot current">2</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">财务部审批</div>
+                    <div class="timeline-meta">王强 · 进行中</div>
+                    <div class="timeline-comment">等待审批人处理，已等待 2 小时 10 分钟</div>
+                  </div>
+                </div>
+                <div class="timeline-item pending">
+                  <div class="timeline-dot pending">③</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">风控部审批</div>
+                    <div class="timeline-meta">需在财务部审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item pending">
+                  <div class="timeline-dot pending">④</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">分管副总审批</div>
+                    <div class="timeline-meta">需在风控部审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item pending">
+                  <div class="timeline-dot pending">⑤</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">总经理审批</div>
+                    <div class="timeline-meta">需在分管副总审批通过后自动触发</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-aside-title">关键指标</div>
+                <div class="approval-aside-item">
+                  <span class="label">退款金额</span>
+                  <span class="value">¥ 123</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">退款方</span>
+                  <span class="value">天宇豪国际贸易集团有限公司</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">收款方</span>
+                  <span class="value">陕西魏煤供应链管理有限公司</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">退款原因</span>
+                  <span class="value">货款调整</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabPanelLog" style="display: none;">
+          <div class="info-section">
+            <h3 class="info-section-title">操作记录</h3>
+            <div class="info-section-body">
+              <div style="color: var(--text-tertiary); font-size: 13px; padding: 24px 0; text-align: center;">暂无操作记录</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.177 审批中固定底栏（status=审批中时显示，借鉴 v1.7.99.175 合同详情页 sticky bottom bar 样式） -->
+  <div class="footer-actions" id="refundApprovalFooter" style="display: none;">
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="alert('审批通过（mock，v1.7.99.177）\n退款单号：' + (document.getElementById('refundNo')?.textContent || ''))">审批通过</button>
+    <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock，v1.7.99.177）\n退款单号：' + (document.getElementById('refundNo')?.textContent || ''))">驳回审批</button>
+  </div>
+
+  <script src="../assets/js/mockData.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    function copyRefundNo() {
+      var text = document.getElementById('refundNo').textContent.trim();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          Utils.toast('已复制：' + text, 'success');
+        });
+      } else {
+        Utils.toast('已复制：' + text, 'success');
+      }
+    }
+    function switchDetailTab(name, el) {
+      document.querySelectorAll('.detail-tab-item').forEach(function(item) { item.classList.remove('active'); });
+      if (el) el.classList.add('active');
+      document.getElementById('tabPanelInfo').style.display = (name === 'info') ? '' : 'none';
+      document.getElementById('tabPanelLog').style.display = (name === 'log') ? '' : 'none';
+      var approvalPanel = document.getElementById('tabPanelApproval');
+      if (approvalPanel) approvalPanel.style.display = (name === 'approval') ? '' : 'none';
+    }
+    // v1.7.99.192：按 status 决定是否显示"审批管理"tab + 底部固定按钮 + 步骤条 3 步状态
+    (function() {
+      var statusMap = {
+        '已退款': { bg: '#FFF7ED', color: '#EA580C' },
+        '审批中': { bg: '#fef3c7', color: '#a16207' },
+        '已驳回': { bg: '#fee2e2', color: '#b91c1c' }
+      };
+      var statusMatch = location.search.match(/[?&]status=([^&]+)/);
+      var status = statusMatch ? decodeURIComponent(statusMatch[1]) : '审批中';
+      // 1. 顶部 status badge
+      var badge = document.querySelector('.detail-header-row1 .status-badge');
+      if (badge) {
+        badge.textContent = status;
+        var style = statusMap[status] || statusMap['审批中'];
+        badge.style.background = style.bg;
+        badge.style.color = style.color;
+      }
+      // 2. 审批管理 tab + 底部按钮：仅 status=审批中 时显示
+      var approvalTab = document.getElementById('approvalTab');
+      var footer = document.getElementById('refundApprovalFooter');
+      if (status === '审批中') {
+        if (approvalTab) approvalTab.style.display = 'inline-block';
+        if (footer) footer.style.display = 'flex';
+      } else {
+        if (approvalTab) approvalTab.style.display = 'none';
+        if (footer) footer.style.display = 'none';
+      }
+      // 3. v1.7.99.192：步骤条 3 步状态切换
+      //    - 已退款：1 done + 2 done（审批通过）+ 3 done
+      //    - 审批中：1 done + 2 current（审批中）+ 3 pending
+      //    - 已驳回：1 done + 2 rejected（已驳回，红字）+ 3 pending
+      var step1 = document.getElementById('step1');
+      var step2 = document.getElementById('step2');
+      var step3 = document.getElementById('step3');
+      var step2Circle = document.getElementById('step2Circle');
+      var step2Name = document.getElementById('step2Name');
+      if (step1 && step2 && step3 && step2Circle && step2Name) {
+        if (status === '已退款') {
+          step2.className = 'step-item done';
+          step2Circle.textContent = '✓';
+          step2Name.textContent = '审批通过';
+          step3.className = 'step-item done';
+        } else if (status === '已驳回') {
+          step2.className = 'step-item rejected';
+          step2Circle.textContent = '✕';
+          step2Name.textContent = '已驳回';
+          step3.className = 'step-item pending';
+        } else {
+          // 审批中（默认）
+          step2.className = 'step-item current';
+          step2Circle.textContent = '2';
+          step2Name.textContent = '审批中';
+          step3.className = 'step-item pending';
+        }
+      }
+    })();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

@@ -1,0 +1,583 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>销项发票详情 - 豫港通 v1.7.99.84</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* 详情页区块（v1.7.99.84：发票与合同关联信息 + 发票附件 + 原发票信息 3 大区块） */
+    .detail-block { background: #fff; border-radius: 6px; margin-bottom: 14px; overflow: hidden; }
+    .detail-block-header {
+      padding: 12px 20px;
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .detail-block-header .left { display: flex; align-items: center; gap: 8px; }
+    .detail-block-header .left::before {
+      content: '';
+      display: inline-block;
+      width: 3px;
+      height: 14px;
+      background: var(--color-primary);
+      border-radius: 2px;
+    }
+    /* 关联信息顶部右侧：价格合计 + 剩余拆分 + 关联合同按钮（v1.7.99.84 按图 2） */
+    .relation-summary {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 14px 20px 4px 20px;
+      font-size: 13px;
+      color: var(--text-secondary);
+    }
+    .relation-summary .right { display: flex; gap: 32px; }
+    .relation-summary .num { color: var(--color-danger); font-weight: 600; font-size: 14px; margin-left: 4px; }
+    .relation-summary .btn-relation {
+      background: var(--color-primary);
+      color: #fff;
+      border: 0;
+      border-radius: 4px;
+      padding: 6px 14px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .relation-summary .btn-relation:hover { background: #1E40AF; }
+    /* 关联信息表格（5 列：合同编号/卖方/买方/拆分金额/操作，编辑可改） */
+    .relation-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .relation-table th, .relation-table td { padding: 12px 20px; text-align: left; }
+    .relation-table th { background: var(--bg-page); font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); }
+    .relation-table td { border-bottom: 1px solid var(--border-light); color: var(--text-primary); }
+    .relation-table tbody tr:last-child td { border-bottom: none; }
+    .relation-table .col-num { font-family: var(--font-mono); }
+    .relation-table .col-action a { color: var(--color-primary); text-decoration: none; font-size: 13px; cursor: pointer; }
+    .relation-table .col-action a.danger { color: var(--color-danger); }
+    .relation-table .col-action a:hover { text-decoration: underline; }
+    .relation-table .col-split-amount { color: var(--color-primary); cursor: pointer; }
+    .relation-table .col-split-amount:hover { text-decoration: underline; }
+    /* 发票附件（编辑页 2 列：文件名/操作） */
+    .attachment-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .attachment-table th, .attachment-table td { padding: 12px 20px; text-align: left; }
+    .attachment-table th { background: var(--bg-page); font-weight: 500; color: var(--text-secondary); border-bottom: 1px solid var(--border-light); }
+    .attachment-table td { border-bottom: 1px solid var(--border-light); }
+    .attachment-table tbody tr:last-child td { border-bottom: none; }
+    .attachment-table .col-num { font-family: var(--font-mono); color: var(--text-secondary); }
+    /* 原发票信息 OCR 增值税专用发票模拟图（同 invoice-detail.html） */
+    .ocr-invoice {
+      margin: 20px;
+      border: 1.5px solid #000;
+      background: #fff;
+      padding: 16px 18px;
+      font-size: 12px;
+      color: #000;
+      line-height: 1.6;
+    }
+    .ocr-invoice-title { text-align: center; font-size: 16px; font-weight: 700; margin-bottom: 12px; }
+    .ocr-invoice-meta { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 1fr; gap: 8px 16px; margin-bottom: 12px; font-size: 11px; }
+    .ocr-invoice-meta .label { color: #666; }
+    .ocr-invoice-main { display: grid; grid-template-columns: 60px 1fr 1fr 60px; border-top: 1px solid #000; border-bottom: 1px solid #000; border-left: 1px solid #000; border-right: 1px solid #000; }
+    .ocr-invoice-main > div { border-right: 1px solid #000; padding: 8px 10px; }
+    .ocr-invoice-main > div:last-child { border-right: none; }
+    .ocr-invoice-main .role-cell { font-weight: 600; text-align: center; background: #f8f8f8; }
+    .ocr-invoice-main .role-cell.password-cell { writing-mode: vertical-rl; text-orientation: upright; }
+    .ocr-invoice-main .role-cell.password-cell.empty { background: #fff; }
+    .ocr-invoice-main .field { color: #666; font-size: 11px; }
+    .ocr-invoice-main .value { font-size: 12px; }
+    .ocr-invoice-goods { width: 100%; border-collapse: collapse; font-size: 11px; }
+    .ocr-invoice-goods th, .ocr-invoice-goods td { border: 1px solid #000; padding: 4px 8px; text-align: center; }
+    .ocr-invoice-goods th { background: #f8f8f8; font-weight: 500; }
+    .ocr-invoice-total { display: grid; grid-template-columns: 120px 1fr 200px; border: 1px solid #000; border-top: none; font-size: 11px; }
+    .ocr-invoice-total > div { border-right: 1px solid #000; padding: 6px 10px; }
+    .ocr-invoice-total > div:last-child { border-right: none; }
+    .ocr-invoice-bottom { display: grid; grid-template-columns: 60px 1fr 60px 1fr; border: 1px solid #000; border-top: none; font-size: 11px; }
+    .ocr-invoice-bottom > div { border-right: 1px solid #000; padding: 8px 10px; }
+    .ocr-invoice-bottom > div:last-child { border-right: none; }
+    .ocr-invoice-footer { text-align: center; margin-top: 10px; font-size: 11px; color: #666; }
+    /* 底部"保存"按钮（v1.7.99.84 按图 2：居中） */
+    .detail-save-bar { text-align: center; padding: 20px 0 30px 0; }
+    .detail-save-bar .btn-save {
+      background: var(--color-primary);
+      color: #fff;
+      border: 0;
+      border-radius: 4px;
+      padding: 8px 32px;
+      font-size: 14px;
+      cursor: pointer;
+      min-width: 96px;
+    }
+    .detail-save-bar .btn-save:hover { background: #1E40AF; }
+    /* 返回顶部按钮（v1.7.99.84 按图 2 右下角） */
+    .back-to-top {
+      position: fixed;
+      right: 24px;
+      bottom: 24px;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid var(--border-default);
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+      z-index: 50;
+    }
+    .back-to-top:hover { color: var(--color-primary); }
+    /* 抽屉样式（v1.7.99.84：关联销售合同抽屉，v1.7.99.82 模式沿用） */
+    .drawer-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); display: none; z-index: 200; }
+    .drawer-mask.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 1440px; max-width: 96vw;
+      background: #fff;
+      display: none;
+      flex-direction: column;
+      z-index: 201;
+      box-shadow: -8px 0 24px rgba(0,0,0,0.15);
+    }
+    .drawer.open { display: flex; }
+    .drawer-header { padding: 14px 24px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+    .drawer-header .title { font-size: 16px; font-weight: 600; }
+    .drawer-header .close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 18px 24px; }
+    .drawer-chips { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 14px; }
+    .drawer-chips .chip {
+      background: #EFF6FF; color: var(--color-primary);
+      border: 1px solid #BFDBFE;
+      border-radius: 4px;
+      padding: 4px 10px;
+      font-size: 12px;
+      cursor: pointer;
+    }
+    .drawer-chips .chip:hover { background: #DBEAFE; }
+    .drawer-chips .chip.add {
+      background: #fff; color: var(--color-primary);
+      border: 1px dashed var(--color-primary);
+    }
+    .drawer-filter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; margin-bottom: 14px; }
+    .drawer-filter .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-filter .filter-item .label { font-size: 12px; color: var(--text-secondary); }
+    .drawer-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .drawer-table th, .drawer-table td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .drawer-table th { background: var(--bg-page); font-weight: 500; color: var(--text-secondary); }
+    .drawer-table .col-num { font-family: var(--font-mono); }
+    .drawer-pagination { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
+    .drawer-footer { padding: 12px 24px; border-top: 1px solid var(--border-light); display: flex; justify-content: flex-end; gap: 8px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 v1.7.99.84 按图 2 -->
+        <div class="breadcrumb-inline">
+          <a href="#">发票管理</a>
+          <span class="sep">/</span>
+          <a href="./invoice-out.html">销项发票</a>
+          <span class="sep">/</span>
+          <span class="current">销项发票编辑</span>
+        </div>
+
+        <!-- 标题 v1.7.99.84 按图 2 -->
+        <h1 class="page-h1" style="margin: 0 0 14px 0; color: var(--color-primary);">销项发票详情</h1>
+
+        <!-- 区块 1：发票与合同关联信息（v1.7.99.84 按图 2：5 列表格 + 关联合同按钮 + 拆分金额编辑） -->
+        <div class="detail-block">
+          <div class="detail-block-header">
+            <div class="left">发票与合同关联信息</div>
+            <button class="btn-relation" onclick="openContractDrawer()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+              关联合同
+            </button>
+          </div>
+          <div class="relation-summary">
+            <div class="left"></div>
+            <div class="right">
+              <div>价格合计总额<span class="num">¥3,162,353.94</span></div>
+              <div>剩余拆分金额<span class="num">¥0.00</span></div>
+            </div>
+          </div>
+          <div class="detail-block-body">
+            <table class="relation-table">
+              <thead>
+                <tr>
+                  <th>合同编号</th>
+                  <th>卖方名称</th>
+                  <th>买方名称</th>
+                  <th>拆分金额(元) <span style="color: var(--text-tertiary); cursor: help;" title="该合同关联到本发票的拆分金额">ⓘ</span></th>
+                  <th style="text-align: right;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="relationTbody">
+                <tr>
+                  <td class="col-num">YL-MSXS-20260127-s</td>
+                  <td>河南中豫港通供应链管理有限公司</td>
+                  <td>郑州信必达国际供应链有限公司</td>
+                  <td class="col-num col-split-amount" onclick="editSplitAmount(this)">¥ 3,162,353.94 ✏️</td>
+                  <td class="col-action" style="text-align: right;"><a href="javascript:void(0)" class="danger" onclick="deleteRelation(this)">删除</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 2：发票附件（v1.7.99.84 按图 2：2 列表格 + 重新上传/删除） -->
+        <div class="detail-block">
+          <div class="detail-block-header">
+            <div class="left">发票附件</div>
+          </div>
+          <div class="detail-block-body">
+            <table class="attachment-table">
+              <thead>
+                <tr>
+                  <th>文件名称</th>
+                  <th style="text-align: right;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-num">f59x7U3uzCfXVdLhm1LgQ==&amp;confidentialityLevel=CONFIDENTIAL</td>
+                  <td style="text-align: right;">
+                    <a href="javascript:void(0)" onclick="reuploadAttachment(this)" style="color: var(--color-primary); text-decoration: none; font-size: 13px; margin-right: 16px;">重新上传</a>
+                    <a href="javascript:void(0)" onclick="deleteAttachment(this)" style="color: var(--color-danger); text-decoration: none; font-size: 13px;">删除</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：原发票信息（v1.7.99.84 按图 2：OCR 增值税专用发票模拟图，同 invoice-detail.html） -->
+        <div class="detail-block">
+          <div class="detail-block-header">
+            <div class="left">原发票信息</div>
+          </div>
+          <div class="detail-block-body">
+            <div class="ocr-invoice">
+              <div class="ocr-invoice-title">郑州信必达国际供应链有限公司电子发票(增值税专用发票)</div>
+              <div class="ocr-invoice-meta">
+                <div><span class="label">发票代码：</span></div>
+                <div><span class="label">发票号码：</span>26412000001536119626</div>
+                <div><span class="label">开票日期：</span>2026-04-30</div>
+                <div><span class="label">校验码：</span>26412000001536119626</div>
+                <div><span class="label">机器编号：</span></div>
+              </div>
+              <div class="ocr-invoice-main">
+                <div class="role-cell">购买方</div>
+                <div>
+                  <div class="field">名称</div>
+                  <div class="value">郑州信必达国际供应链有限公司</div>
+                  <div class="field" style="margin-top: 6px;">纳税人识别号</div>
+                  <div class="value">91410100317330913K</div>
+                  <div class="field" style="margin-top: 6px;">地址、电话</div>
+                  <div class="value">&nbsp;</div>
+                  <div class="field" style="margin-top: 6px;">开户行及账号</div>
+                  <div class="value">&nbsp;</div>
+                </div>
+                <div></div>
+                <div class="role-cell password-cell empty">密码区</div>
+                <div class="role-cell">销售方</div>
+                <div>
+                  <div class="field">名称：</div>
+                  <div class="value">河南中豫港通供应链管理有限公司</div>
+                  <div class="field" style="margin-top: 6px;">纳税人识别号：</div>
+                  <div class="value">91410100MA0G8BT48U</div>
+                  <div class="field" style="margin-top: 6px;">地址、电话：</div>
+                  <div class="value">河南自贸试验区郑州片区（经开）航海东路1507号3号楼2单元5层504号 13629848306</div>
+                  <div class="field" style="margin-top: 6px;">开户行及账号：</div>
+                  <div class="value">华夏银行股份有限公司郑州分行九如路支行 15557000000802788</div>
+                </div>
+                <div></div>
+                <div class="role-cell">备注</div>
+              </div>
+              <table class="ocr-invoice-goods">
+                <thead>
+                  <tr>
+                    <th>货物或应税劳务、服务名称</th>
+                    <th>规格型号</th>
+                    <th>单位</th>
+                    <th>数量</th>
+                    <th>单价</th>
+                    <th>金额</th>
+                    <th>税率</th>
+                    <th>税额</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>*淀粉制品*木薯淀粉</td>
+                    <td>&nbsp;</td>
+                    <td>吨</td>
+                    <td>918</td>
+                    <td>3048.52212389381</td>
+                    <td>2798543.31</td>
+                    <td>13%</td>
+                    <td>363810.63</td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="ocr-invoice-total">
+                <div>价税合计（大写）</div>
+                <div>叁佰壹拾陆万贰仟叁佰伍拾叁点玖肆</div>
+                <div style="text-align: right;">（小写）¥3162353.94</div>
+              </div>
+              <div class="ocr-invoice-bottom">
+                <div class="role-cell">销售方</div>
+                <div>
+                  <div class="field">名称：</div>
+                  <div class="value">河南中豫港通供应链管理有限公司</div>
+                  <div class="field" style="margin-top: 6px;">纳税人识别号：</div>
+                  <div class="value">91410100MA0G8BT48U</div>
+                  <div class="field" style="margin-top: 6px;">地址、电话：</div>
+                  <div class="value">河南自贸试验区郑州片区（经开）航海东路1507号3号楼2单元5层504号 13629848306</div>
+                  <div class="field" style="margin-top: 6px;">开户行及账号：</div>
+                  <div class="value">华夏银行股份有限公司郑州分行九如路支行 15557000000802788</div>
+                </div>
+                <div class="role-cell">备注</div>
+                <div></div>
+              </div>
+              <div class="ocr-invoice-footer">本数据来源于中国国家税务总局发票验证系统</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部保存按钮（v1.7.99.84 按图 2） -->
+        <div class="detail-save-bar">
+          <button class="btn-save" onclick="saveInvoice()">保存</button>
+        </div>
+
+        <!-- 返回顶部按钮（v1.7.99.84 按图 2 右下角） -->
+        <div class="back-to-top" onclick="backToTop()" title="返回顶部">∧</div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 关联销售合同抽屉（v1.7.99.84：沿用 v1.7.99.82 销售结算抽屉结构） -->
+  <div class="drawer-mask" id="contractDrawerMask" onclick="closeContractDrawer()"></div>
+  <div class="drawer" id="contractDrawer">
+    <div class="drawer-header">
+      <span class="title">关联销售合同</span>
+      <span class="close" onclick="closeContractDrawer()">×</span>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-chips">
+        <span class="chip">XSXS20241119-001</span>
+        <span class="chip">XSXS20241118-002</span>
+        <span class="chip">XSXS20241112-003</span>
+        <span class="chip">XSXS20241025-004</span>
+        <span class="chip">XSXS20241015-005</span>
+        <span class="chip add">+ 添加条件</span>
+      </div>
+      <div class="drawer-filter">
+        <div class="filter-item"><span class="label">合同编号</span><input class="input" placeholder="请输入合同编号"></div>
+        <div class="filter-item"><span class="label">买方企业</span><input class="input" placeholder="请输入买方企业"></div>
+        <div class="filter-item"><span class="label">卖方企业</span><input class="input" placeholder="请输入卖方企业"></div>
+        <div class="filter-item"><span class="label">品名</span><input class="input" placeholder="请输入品名"></div>
+        <div class="filter-item"><span class="label">签订日期</span><input class="input" placeholder="请选择日期范围"></div>
+        <div class="filter-item" style="justify-content: flex-end; flex-direction: row; align-items: flex-end; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="closeContractDrawer()">查询</button>
+          <button class="btn btn-default btn-sm">重置</button>
+        </div>
+      </div>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th style="width: 6%;"></th>
+            <th style="width: 18%;">合同编号</th>
+            <th style="width: 18%;">买方企业</th>
+            <th style="width: 18%;">卖方企业</th>
+            <th style="width: 12%;">品名</th>
+            <th style="width: 9%;text-align: right;">数量（吨）</th>
+            <th style="width: 9%;text-align: right;">单价（元）</th>
+            <th style="width: 10%;">签订日期</th>
+          </tr>
+        </thead>
+        <tbody id="drawerTbody"></tbody>
+      </table>
+      <div class="drawer-pagination">
+        <span style="font-size: 13px; color: var(--text-secondary);">共 6 条记录 · 第 1 / 1 页</span>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button class="btn btn-default btn-sm" style="padding: 4px 8px;">‹</button>
+          <button class="btn btn-primary btn-sm" style="padding: 4px 10px;">1</button>
+          <button class="btn btn-default btn-sm" style="padding: 4px 8px;">›</button>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default btn-sm" onclick="closeContractDrawer()">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmContract()">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.84：关联合同抽屉 6 行 mock
+    const CONTRACT_MOCK = [
+      { no: 'XSXS20241119-001', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', product: '木薯淀粉', qty: '918', price: '3,048.52', date: '2026-01-19' },
+      { no: 'XSXS20241118-002', buyer: '浙江昌渊瑞贸易有限公司', seller: '河南中豫港通供应链管理有限公司', product: '木薯淀粉', qty: '1200', price: '3,025.00', date: '2026-01-18' },
+      { no: 'XSXS20241112-003', buyer: '河南物产集团有限公司', seller: '河南中豫港通供应链管理有限公司', product: '玉米淀粉', qty: '850', price: '2,880.00', date: '2026-01-12' },
+      { no: 'XSXS20241025-004', buyer: '河南中豫粮油集团有限公司', seller: '河南中豫港通供应链管理有限公司', product: '木薯淀粉', qty: '500', price: '3,100.00', date: '2026-01-25' },
+      { no: 'XSXS20241015-005', buyer: '河南晟宇粮油集团有限公司', seller: '河南中豫港通供应链管理有限公司', product: '甘薯淀粉', qty: '300', price: '3,200.00', date: '2026-01-15' },
+      { no: 'XSXS20241010-006', buyer: '郑州信必达国际供应链有限公司', seller: '河南中豫港通供应链管理有限公司', product: '木薯淀粉', qty: '600', price: '3,050.00', date: '2026-01-10' },
+    ];
+    function renderContractDrawer() {
+      const tbody = document.getElementById('drawerTbody');
+      if (!tbody) return;
+      tbody.innerHTML = CONTRACT_MOCK.map((c) => {
+        return `<tr>
+          <td><input type="checkbox"></td>
+          <td class="col-num">${c.no}</td>
+          <td>${c.buyer}</td>
+          <td>${c.seller}</td>
+          <td>${c.product}</td>
+          <td style="text-align: right;" class="col-num">${c.qty}</td>
+          <td style="text-align: right;" class="col-num">${c.price}</td>
+          <td>${c.date}</td>
+        </tr>`;
+      }).join('');
+    }
+    document.addEventListener('DOMContentLoaded', renderContractDrawer);
+
+    // v1.7.99.84：抽屉交互
+    function openContractDrawer() {
+      document.getElementById('contractDrawerMask').classList.add('open');
+      document.getElementById('contractDrawer').classList.add('open');
+    }
+    function closeContractDrawer() {
+      document.getElementById('contractDrawerMask').classList.remove('open');
+      document.getElementById('contractDrawer').classList.remove('open');
+    }
+    function confirmContract() {
+      // v1.7.99.84 一期：取第一个选中的合同 → 关闭抽屉
+      const checked = document.querySelectorAll('#drawerTbody input[type=checkbox]:checked');
+      if (checked.length === 0) {
+        if (window.Utils && Utils.toast) {
+          Utils.toast('请先选择一个销售合同', 'warn');
+        } else {
+          console.log('[toast] warn 请先选择一个销售合同');
+        }
+        return;
+      }
+      // 取第一个选中行的合同编号
+      const tr = checked[0].closest('tr');
+      const contractNo = tr.querySelectorAll('td')[1].innerText;
+      const buyer = tr.querySelectorAll('td')[2].innerText;
+      // 模拟填到关联信息表格
+      if (window.Utils && Utils.toast) {
+        Utils.toast('已关联合同：' + contractNo, 'success');
+      } else {
+        console.log('[toast] success 已关联合同：' + contractNo);
+      }
+      closeContractDrawer();
+    }
+
+    // v1.7.99.84：表格内交互
+    function editSplitAmount(el) {
+      const cur = el.innerText.replace('✏️', '').trim();
+      const next = window.prompt('请输入新的拆分金额（元）：', cur);
+      if (next && next !== cur) {
+        el.innerHTML = '¥ ' + next + ' ✏️';
+        if (window.Utils && Utils.toast) {
+          Utils.toast('拆分金额已更新为 ¥' + next, 'success');
+        } else {
+          console.log('[toast] success 拆分金额已更新为 ¥' + next);
+        }
+      }
+    }
+    function deleteRelation(el) {
+      if (window.confirm('确定要删除该关联合同吗？')) {
+        el.closest('tr').remove();
+        if (window.Utils && Utils.toast) {
+          Utils.toast('关联合同已删除', 'success');
+        } else {
+          console.log('[toast] success 关联合同已删除');
+        }
+      }
+    }
+    function reuploadAttachment(el) {
+      if (window.Utils && Utils.toast) {
+        Utils.toast('重新上传附件（二期实现）', 'info');
+      } else {
+        console.log('[toast] info 重新上传附件（二期实现）');
+      }
+    }
+    function deleteAttachment(el) {
+      if (window.confirm('确定要删除该附件吗？')) {
+        el.closest('tr').remove();
+        if (window.Utils && Utils.toast) {
+          Utils.toast('附件已删除', 'success');
+        } else {
+          console.log('[toast] success 附件已删除');
+        }
+      }
+    }
+    function saveInvoice() {
+      if (window.Utils && Utils.toast) {
+        Utils.toast('保存成功（二期实现）', 'success');
+      } else {
+        console.log('[toast] success 保存成功（二期实现）');
+      }
+    }
+    function backToTop() {
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // inline Utils fallback（v1.7.99.80 经验）
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[Utils.toast]', type || 'info', msg); } catch (e) {} }
+    };
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

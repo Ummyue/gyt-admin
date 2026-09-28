@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>补充协议 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body {
+      padding: 20px 24px;
+    }
+    /* 双 tap + 右上角"新增"按钮下拉（v1.7.99.7+ 起，采购/销售合同用） */
+    .tab-action-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .add-btn-dropdown {
+      position: relative;
+      display: inline-block;
+    }
+    .add-btn-dropdown-menu {
+      position: absolute;
+      top: calc(100% + 6px);
+      right: 0;
+      min-width: 240px;
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      box-shadow: 0 6px 16px rgba(0, 0, 0, 0.08);
+      padding: 4px 0;
+      display: none;
+      z-index: 100;
+    }
+    .add-btn-dropdown.open .add-btn-dropdown-menu {
+      display: block;
+    }
+    .add-btn-dropdown-menu a {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      color: var(--text-primary);
+      font-size: 13px;
+      text-decoration: none;
+      transition: background 0.15s;
+    }
+    .add-btn-dropdown-menu a:hover {
+      background: var(--bg-page);
+    }
+
+    /* 操作列按钮上下排布（v1.7.99.45 新增） */
+    .col-action-stack {
+      display: inline-flex;
+      flex-direction: column;
+      align-items: flex-end;
+      gap: 4px;
+    }
+    .col-action-stack a {
+      display: block;
+      padding: 0;
+      font-size: 13px;
+    }
+
+    /* 右侧抽屉式弹窗（v1.7.99.45 新增） */
+    .drawer-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 9998;
+      display: none;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+    .drawer-overlay.open {
+      display: block;
+      opacity: 1;
+    }
+    .drawer-panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      bottom: 0;
+      width: 1280px;
+      max-width: 92vw;
+      background: #fff;
+      box-shadow: -4px 0 20px rgba(0, 0, 0, 0.1);
+      z-index: 9999;
+      display: flex;
+      flex-direction: column;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+    }
+    .drawer-panel.open {
+      transform: translateX(0);
+    }
+    .drawer-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .drawer-title {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .drawer-close {
+      width: 32px;
+      height: 32px;
+      border-radius: 6px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      color: var(--text-secondary);
+      font-size: 18px;
+    }
+    .drawer-close:hover {
+      background: var(--bg-page);
+      color: var(--text-primary);
+    }
+    .drawer-body {
+      flex: 1;
+      overflow-y: auto;
+      padding: 20px 24px;
+    }
+    .drawer-section {
+      margin-bottom: 24px;
+    }
+    .drawer-section-title {
+      font-size: 14px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .drawer-section-title .count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 22px;
+      height: 20px;
+      padding: 0 6px;
+      background: #F3F4F6;
+      color: var(--text-secondary);
+      font-size: 12px;
+      font-weight: 500;
+      border-radius: 10px;
+    }
+    .drawer-contract-list {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    .drawer-contract-item {
+      padding: 14px 16px;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.15s;
+      background: #fff;
+    }
+    .drawer-contract-item:hover {
+      border-color: var(--color-primary);
+      background: #F0F7FF;
+    }
+    .drawer-contract-item-row1 {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      padding-bottom: 8px;
+      border-bottom: 1px dashed var(--border-light);
+    }
+    .drawer-contract-code {
+      font-family: var(--font-mono);
+      font-size: 13px;
+      color: var(--color-primary);
+      font-weight: 500;
+    }
+    .drawer-contract-status {
+      font-size: 11px;
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-weight: 500;
+    }
+    .drawer-contract-status.unsigned {
+      background: #FEF3C7;
+      color: #CA8A04;
+    }
+    .drawer-contract-status.executed {
+      background: #DCFCE7;
+      color: #16A34A;
+    }
+    .drawer-contract-status.unavailable {
+      background: #FEE2E2;
+      color: #DC2626;
+    }
+    /* 合同信息 4 列网格：合同号(横跨)/卖方·品类·合同单价 / 买方·计量单位·合同数量 / 签章状态·签订日期·业务类型 / 交货期限·创建人 */
+    .drawer-contract-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px 16px;
+      font-size: 12px;
+    }
+    .drawer-contract-grid-row1 {
+      grid-column: 1 / -1;
+      display: flex;
+      gap: 24px;
+      margin-bottom: 4px;
+      padding-bottom: 6px;
+      border-bottom: 1px dashed var(--border-light);
+    }
+    .drawer-contract-grid-row1 .field-label {
+      color: var(--text-tertiary);
+      margin-right: 4px;
+    }
+    .drawer-contract-grid-row1 .field-value {
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .drawer-contract-grid-row2 {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px 16px;
+    }
+    .drawer-field {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+    .drawer-field-label {
+      color: var(--text-tertiary);
+      font-size: 11px;
+    }
+    .drawer-field-value {
+      color: var(--text-primary);
+      font-size: 12px;
+      font-weight: 500;
+    }
+    .drawer-empty {
+      padding: 30px 20px;
+      text-align: center;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+    .drawer-footer {
+      padding: 12px 24px;
+      border-top: 1px solid var(--border-light);
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+    }
+
+    /* 抽屉顶部筛选区（v1.7.99.45-fix 新增）：6 项 / 2 行 3 列 */
+    .drawer-filter-section {
+      background: var(--bg-page);
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      padding: 14px 16px;
+      margin-bottom: 16px;
+    }
+    .drawer-filter-title {
+      font-size: 12px;
+      color: var(--text-secondary);
+      font-weight: 500;
+      margin-bottom: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .drawer-filter-title .filter-actions {
+      display: flex;
+      gap: 8px;
+    }
+    .drawer-filter-title .filter-actions button {
+      font-size: 12px;
+      padding: 3px 10px;
+      border: 1px solid var(--border-light);
+      background: #fff;
+      border-radius: 4px;
+      cursor: pointer;
+      color: var(--text-secondary);
+    }
+    .drawer-filter-title .filter-actions button:hover {
+      border-color: var(--color-primary);
+      color: var(--color-primary);
+    }
+    .drawer-filter-title .filter-actions button.primary {
+      background: var(--color-primary);
+      color: #fff;
+      border-color: var(--color-primary);
+    }
+    .drawer-filter-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 14px 16px;
+    }
+    .drawer-filter-item {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .drawer-filter-item .filter-label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      line-height: 1.4;
+    }
+    .drawer-filter-item .filter-control {
+      flex: 1;
+      min-width: 0;
+    }
+    .drawer-filter-item .input,
+    .drawer-filter-item .select {
+      width: 100%;
+    }
+
+    /* 日期范围控件（v1.7.99.45-fix2 新增）：左右 2 个 date input + 分隔符 */
+    .drawer-date-range {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .drawer-date-range input {
+      flex: 1;
+      min-width: 0;
+    }
+    .drawer-date-range .date-sep {
+      color: var(--text-tertiary);
+      font-size: 12px;
+    }
+
+    /* 抽屉内 4 个 tap（v1.7.99.45-fix2 新增）：全部 / 未签 / 已签 / 不可签 */
+    .drawer-tabs {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      margin-bottom: 16px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .drawer-tab {
+      padding: 10px 18px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      margin-bottom: -1px;
+      transition: all 0.15s;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+    .drawer-tab:hover {
+      color: var(--color-primary);
+    }
+    .drawer-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      font-weight: 500;
+    }
+    .drawer-tab .count {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 20px;
+      height: 18px;
+      padding: 0 5px;
+      background: #F3F4F6;
+      color: var(--text-secondary);
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 9px;
+    }
+    .drawer-tab.active .count {
+      background: rgba(30, 64, 175, 0.1);
+      color: var(--color-primary);
+    }
+
+    /* 「新增补充协议」按钮下拉（v1.7.99.45-fix 恢复 v1.7.99.19 旧逻辑，作为合同类型首次过滤入口） */
+    .add-btn-dropdown .btn .arrow-down {
+      margin-left: 2px;
+      transition: transform 0.15s;
+    }
+    .add-btn-dropdown.open .btn .arrow-down {
+      transform: rotate(180deg);
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="#">合同管理</a>
+          <span class="sep">/</span>
+          <span class="current">补充协议</span>
+        </div>
+
+        <!-- 标题 + 双 tap + 新增按钮 -->
+        <div class="tab-action-bar" style="margin-bottom: 14px;">
+          <div class="tab-action-bar-tabs">
+            <div class="tab-action-tab active" data-tap="framework">框架合同补充协议</div>
+            <div class="tab-action-tab" data-tap="order">订单/单批次合同补充协议</div>
+          </div>
+          <div class="add-btn-dropdown" id="addBtnDropdown">
+            <button class="btn btn-primary" onclick="toggleAddDropdown(event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              <span id="addBtnLabel">新增补充协议</span>
+              <svg class="arrow-down" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="add-btn-dropdown-menu">
+              <a href="javascript:void(0)" onclick="openSupplementDrawer('framework', event)">
+                <span style="display:inline-block;width:6px;height:6px;background:#1e40af;border-radius:50%;"></span>
+                新增补协-框架合同
+              </a>
+              <a href="javascript:void(0)" onclick="openSupplementDrawer('order', event)">
+                <span style="display:inline-block;width:6px;height:6px;background:#7c3aed;border-radius:50%;"></span>
+                新增补协-订单/单批次合同
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区 -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入合同、补协编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业名称</span>
+                <input type="text" class="input" placeholder="请输入企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">合同类型</span>
+                <select class="select"><option>全部</option><option>采购合同</option><option>销售合同</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">合同签订日期</span>
+                <input type="text" class="input" placeholder="请选择合同签订日期">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">补协签订日期</span>
+                <input type="text" class="input" placeholder="请选择补协签订日期">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">创建人</span>
+                <input type="text" class="input" placeholder="请输入创建人">
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.14 锁定：6 个） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active">全部 <span class="count">100</span></div>
+                <div class="cp-tab">待提交 <span class="count">0</span></div>
+                <div class="cp-tab" style="color: #d97706;">审批中 <span class="count" style="color: #d97706; font-weight: 600;">1</span></div>
+                <div class="cp-tab" style="color: #d97706;">待上传双签协议 <span class="count" style="color: #d97706; font-weight: 600;">10</span></div>
+                <div class="cp-tab" style="color: #15803d;">已生效 <span class="count" style="color: #15803d; font-weight: 600;">10</span></div>
+                <div class="cp-tab" style="color: #b91c1c;">驳回 <span class="count" style="color: #b91c1c; font-weight: 600;">100</span></div>
+                <div class="cp-tab" style="color: #6b7280;">已作废 <span class="count" style="color: #6b7280; font-weight: 600;">100</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格（4 列：合同信息 / 补协信息 / 补协签订日期 / 操作） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 30%;">合同信息</th>
+                    <th style="width: 40%;">补协信息</th>
+                    <th style="width: 12%;">补协签订日期</th>
+                    <th class="col-action" style="width: 18%; text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="tableBody">
+                  <!-- 行内容由 JS 根据当前 tap 渲染 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 100 条记录 · 第 1 / 10 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">4</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 双 tap 切换 + 右上角"新增"按钮下拉（v1.7.99.19 起，补协列表）
+    // 关键决策：列表页双 tap + 两套 mock 数据（采购框架合同补协 / 采购订单合同补协）
+    // tap 1 = 框架合同补协（搜采购框架合同）
+    // tap 2 = 订单合同补协（搜采购订单合同）
+
+    var MOCK_FRAMEWORK = [
+      { tag: '采', tagColor: '#1e40af', contract: 'GTGYL-MSXS-20260127-001', supplier: '杞县广润贸易有限公司', category: '糖粉', signDate: '2022-11-12', creator: '张三', supplement: 'BCXY-202203-001-补001', change: '合同单价(元/吨)：[800] 变更为 [750]', supplementDate: '2022-08-12' },
+      { tag: '采', tagColor: '#1e40af', contract: 'GTGYL-MSXS-20260120-002', supplier: '河南诚泽运输有限公司', category: '淀粉', signDate: '2022-11-15', creator: '李四', supplement: 'BCXY-202203-002-补001', change: '合同数量(吨)：[12000] 变更为 [15000]', supplementDate: '2022-09-10' },
+      { tag: '采', tagColor: '#1e40af', contract: 'GTGYL-MSXS-20260115-003', supplier: '中粮贸易有限公司', category: '谷物', signDate: '2022-10-20', creator: '王五', supplement: 'BCXY-202203-003-补001', change: '合同有效期：[2026-03-31] 延期至 [2026-04-30]', supplementDate: '2022-08-25' },
+      { tag: '采', tagColor: '#1e40af', contract: 'GTGYL-MSXS-20260110-004', supplier: '河北粮食产业集团', category: '谷物', signDate: '2022-11-01', creator: '赵六', supplement: 'BCXY-202203-004-补001', change: '合同单价(元/吨)：[3200] 变更为 [3150]', supplementDate: '2022-09-05' },
+      { tag: '采', tagColor: '#1e40af', contract: 'GTGYL-MSXS-20260105-005', supplier: '山东金粮农业有限公司', category: '淀粉', signDate: '2022-10-28', creator: '钱七', supplement: 'BCXY-202203-005-补001', change: '合同单价(元/吨)：[800] 变更为 [850]', supplementDate: '2022-08-30' }
+    ];
+
+    var MOCK_ORDER = [
+      { tag: '采', tagColor: '#1e40af', contract: 'DLXLC-DSRMT-202203-001', supplier: '杞县广润贸易有限公司', category: '糖粉', signDate: '2022-11-12', creator: '张三', supplement: 'BCXY-202203-001-补001', change: '合同单价(元/吨)：[800] 变更为 [750]', supplementDate: '2022-08-12' },
+      { tag: '采', tagColor: '#1e40af', contract: 'DLXLC-DSRMT-202203-002', supplier: '河南诚泽运输有限公司', category: '淀粉', signDate: '2022-11-15', creator: '李四', supplement: 'BCXY-202203-002-补001', change: '合同数量(吨)：[12000] 变更为 [15000]', supplementDate: '2022-09-10' },
+      { tag: '采', tagColor: '#1e40af', contract: 'DLXLC-DSRMT-202203-003', supplier: '中粮贸易有限公司', category: '谷物', signDate: '2022-10-20', creator: '王五', supplement: 'BCXY-202203-003-补001', change: '合同有效期：[2026-03-31] 延期至 [2026-04-30]', supplementDate: '2022-08-25' },
+      { tag: '采', tagColor: '#1e40af', contract: 'DLXLC-DSRMT-202203-004', supplier: '河北粮食产业集团', category: '谷物', signDate: '2022-11-01', creator: '赵六', supplement: 'BCXY-202203-004-补001', change: '合同单价(元/吨)：[3200] 变更为 [3150]', supplementDate: '2022-09-05' },
+      { tag: '采', tagColor: '#1e40af', contract: 'DLXLC-DSRMT-202203-005', supplier: '山东金粮农业有限公司', category: '淀粉', signDate: '2022-10-28', creator: '钱七', supplement: 'BCXY-202203-005-补001', change: '合同单价(元/吨)：[800] 变更为 [850]', supplementDate: '2022-08-30' }
+    ];
+
+    var currentTap = 'framework';
+
+    function renderTable() {
+      var data = currentTap === 'framework' ? MOCK_FRAMEWORK : MOCK_ORDER;
+      var html = '';
+      for (var i = 0; i < data.length; i++) {
+        var r = data[i];
+        var detailHref = currentTap === 'framework'
+          ? './contract-supplement-framework-detail.html'
+          : './contract-supplement-order-detail.html';
+        html += '<tr class="cp-row-clickable" data-status="已生效" data-detail-href="' + detailHref + '">'
+          + '<td><div style="display: flex; align-items: flex-start; gap: 8px;">'
+          +   '<span class="tag" style="background: ' + r.tagColor + '15; color: ' + r.tagColor + '; padding: 2px 6px; border-radius: 4px; font-size: 11px; font-weight: 600; flex-shrink: 0; margin-top: 2px;">' + r.tag + '</span>'
+          +   '<div style="flex: 1; min-width: 0;">'
+          +     '<div class="col-num" style="color: #1e40af; font-weight: 500; margin-bottom: 4px;">合同编号：' + r.contract + '</div>'
+          +     '<div style="display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; font-size: 12px; color: var(--text-secondary);">'
+          +       '<span>供应商：</span><span>' + r.supplier + '</span>'
+          +       '<span>品类：</span><span>' + r.category + '</span>'
+          +       '<span>签订日期：</span><span>' + r.signDate + '</span>'
+          +       '<span>创建人：</span><span>' + r.creator + '</span>'
+          +     '</div>'
+          +   '</div>'
+          + '</div></td>'
+          + '<td>'
+          +   '<div class="col-num" style="color: #1e40af; font-weight: 500; margin-bottom: 4px;">补协编号：' + r.supplement + '<span class="tag tag-green" style="margin-left: 8px;">已生效</span></div>'
+          +   '<div style="font-size: 12px; color: var(--text-secondary); line-height: 1.6;">' + r.change + '</div>'
+          + '</td>'
+          + '<td><span style="font-size: 13px; color: var(--text-primary);">' + r.supplementDate + '</span></td>'
+          + '<td class="col-action" style="text-align: right;">'
+          +   '<div class="col-action-stack">'
+          +     '<a href="' + detailHref + '">补协详情</a>'
+          +     '<a href="javascript:void(0)" onclick="alert(\'操作：上传双签附件（mock）\')">上传双签附件</a>'
+          +     '<a href="javascript:void(0)" onclick="if(confirm(\'确认作废该补充协议？此操作不可恢复。\'))alert(\'操作：作废（mock）\')" style="color: #b91c1c;">作废</a>'
+          +   '</div>'
+          + '</td>'
+          + '</tr>';
+      }
+      document.getElementById('tableBody').innerHTML = html;
+    }
+
+    function switchTap(tap) {
+      currentTap = tap;
+      document.querySelectorAll('.tab-action-tab').forEach(function(t) {
+        t.classList.toggle('active', t.getAttribute('data-tap') === tap);
+      });
+      // 更新"新增"按钮文案 + 跳转目标
+      var addBtnLabel = document.getElementById('addBtnLabel');
+      if (tap === 'framework') {
+        addBtnLabel.textContent = '新增补充协议';
+      } else {
+        addBtnLabel.textContent = '新增补充协议';
+      }
+      renderTable();
+    }
+
+    // 绑定 tap 点击
+    document.querySelectorAll('.tab-action-tab').forEach(function(t) {
+      t.addEventListener('click', function() {
+        switchTap(this.getAttribute('data-tap'));
+      });
+    });
+
+    // 「新增」按钮下拉（v1.7.99.45-fix 恢复 v1.7.99.19 旧逻辑，作为合同类型首次过滤入口）
+    function toggleAddDropdown(e) {
+      if (e) e.stopPropagation();
+      var dd = document.getElementById('addBtnDropdown');
+      if (dd) dd.classList.toggle('open');
+    }
+    document.addEventListener('click', function(e) {
+      var dd = document.getElementById('addBtnDropdown');
+      if (dd && !dd.contains(e.target)) dd.classList.remove('open');
+    });
+
+    // v1.7.99.45 + v1.7.99.45-fix 抽屉式弹窗
+    // 触发器："新增补充协议"按钮 → 下拉菜单 → 选具体合同类型 → 弹出抽屉
+    // 抽屉内容：当前 contractType 对应合同类型的「未签订补充协议」+「已生效合同列表」
+    // 抽屉顶部：6 项筛选条件（合同编号/企业名称/品类/业务类型/签订日期/创建人）
+    // 抽屉单条合同：完整 11 字段呈现（4 列网格布局）
+    // 交互：用户点击未签订合同项 → 跳转到 contract-supplement-new.html?contractId=...&contractType=framework|order
+
+    // 抽屉内的合同 mock 数据（v1.7.99.45-fix2：4 个 tap + 业务类型 4 种）
+    // 数据结构：按 4 个 tap 分类（all/unsigned/effective/unavailable）
+    // 业务类型 4 种（v1.7.99.45-fix2 锁定）：存货业务 / 预付业务 / 账期业务 / 购销业务
+    var DRAWER_CONTRACTS = {
+      framework: [
+        // 未签补协合同（合同已生效 + 业务允许签补协 + 还没签过）
+        { code: 'GTGYL-MSXS-20260122-001', seller: '河南诚泽运输有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '淀粉', unit: '吨', price: '3,400', quantity: '20,000', signStatus: '待盖章', signDate: '2026-01-22', deadline: '2026-12-31', bizType: '存货业务', creator: '张三', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20260118-002', seller: '杞县广润贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '糖粉', unit: '吨', price: '5,800', quantity: '15,000', signStatus: '已双签', signDate: '2026-01-18', deadline: '2026-12-15', bizType: '存货业务', creator: '李四', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20260115-003', seller: '中粮贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '2,950', quantity: '18,000', signStatus: '已双签', signDate: '2026-01-15', deadline: '2026-11-30', bizType: '预付业务', creator: '王五', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20260110-004', seller: '河北粮食产业集团', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,200', quantity: '22,000', signStatus: '已双签', signDate: '2026-01-10', deadline: '2026-12-20', bizType: '购销业务', creator: '赵六', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20260105-005', seller: '山东金粮农业有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '淀粉', unit: '吨', price: '3,380', quantity: '16,000', signStatus: '已双签', signDate: '2026-01-05', deadline: '2026-12-10', bizType: '账期业务', creator: '钱七', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20251228-006', seller: '河南双汇投资发展有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '糖粉', unit: '吨', price: '6,100', quantity: '12,500', signStatus: '已双签', signDate: '2025-12-28', deadline: '2026-10-31', bizType: '存货业务', creator: '孙八', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20251220-007', seller: '益海嘉里粮油工业有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,050', quantity: '25,000', signStatus: '已双签', signDate: '2025-12-20', deadline: '2026-12-25', bizType: '预付业务', creator: '周九', status: 'unsigned' },
+        { code: 'GTGYL-MSXS-20251215-008', seller: '北大荒农垦集团有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,150', quantity: '30,000', signStatus: '已双签', signDate: '2025-12-15', deadline: '2026-12-28', bizType: '购销业务', creator: '吴十', status: 'unsigned' },
+        // 已签补协合同（已有已生效的补充协议，不可重复签）
+        { code: 'GTGYL-MSXS-20251210-001', seller: '杞县广润贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '糖粉', unit: '吨', price: '5,750', quantity: '12,000', signStatus: '已双签', signDate: '2025-12-10', deadline: '2026-10-15', bizType: '存货业务', creator: '张三', status: 'effective', supplement: 'BCXY-202203-001-补001' },
+        { code: 'GTGYL-MSXS-20251205-002', seller: '河南诚泽运输有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '淀粉', unit: '吨', price: '3,420', quantity: '15,000', signStatus: '已双签', signDate: '2025-12-05', deadline: '2026-11-20', bizType: '购销业务', creator: '李四', status: 'effective', supplement: 'BCXY-202203-002-补001' },
+        { code: 'GTGYL-MSXS-20251128-003', seller: '中粮贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '2,920', quantity: '20,000', signStatus: '已双签', signDate: '2025-11-28', deadline: '2026-09-30', bizType: '预付业务', creator: '王五', status: 'effective', supplement: 'BCXY-202203-003-补001' },
+        // 不可签补协合同（业务不允许签补协 / 合同状态不允许 / 特殊业务规则）
+        { code: 'GTGYL-MSXS-20251220-009', seller: '山东寿光蔬菜产业集团', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,180', quantity: '15,000', signStatus: '已双签', signDate: '2025-12-20', deadline: '2026-08-31', bizType: '运输合同', creator: '郑十一', status: 'unavailable', reason: '运输合同不允许签补协' },
+        { code: 'GTGYL-MSXS-20251115-010', seller: '安阳钢铁集团有限责任公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,100', quantity: '18,000', signStatus: '已作废', signDate: '2025-11-15', deadline: '2026-07-31', bizType: '存货业务', creator: '王十二', status: 'unavailable', reason: '合同已作废，无法补协' }
+      ],
+      order: [
+        { code: 'DLXLC-DSRMT-202203-001', seller: '杞县广润贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '糖粉', unit: '吨', price: '5,800', quantity: '500', signStatus: '已双签', signDate: '2022-03-15', deadline: '2026-09-30', bizType: '存货业务', creator: '张三', status: 'unsigned' },
+        { code: 'DLXLC-DSRMT-202203-002', seller: '河南诚泽运输有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '淀粉', unit: '吨', price: '3,400', quantity: '800', signStatus: '已双签', signDate: '2022-03-18', deadline: '2026-10-15', bizType: '预付业务', creator: '李四', status: 'unsigned' },
+        { code: 'DLXLC-DSRMT-202203-003', seller: '中粮贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '2,950', quantity: '1,200', signStatus: '已双签', signDate: '2022-03-20', deadline: '2026-10-30', bizType: '账期业务', creator: '王五', status: 'unsigned' },
+        { code: 'DLXLC-DSRMT-202203-004', seller: '河北粮食产业集团', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,200', quantity: '1,500', signStatus: '已双签', signDate: '2022-03-22', deadline: '2026-11-15', bizType: '购销业务', creator: '赵六', status: 'unsigned' },
+        { code: 'DLXLC-DSRMT-202203-005', seller: '山东金粮农业有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '淀粉', unit: '吨', price: '3,380', quantity: '900', signStatus: '已双签', signDate: '2022-03-25', deadline: '2026-11-25', bizType: '存货业务', creator: '钱七', status: 'unsigned' },
+        { code: 'DLXLC-DSRMT-202203-006', seller: '河南双汇投资发展有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '糖粉', unit: '吨', price: '6,100', quantity: '350', signStatus: '已双签', signDate: '2022-03-28', deadline: '2026-10-25', bizType: '存货业务', creator: '孙八', status: 'unsigned' },
+        { code: 'DLXLC-DSRMT-202202-001', seller: '河北粮食产业集团', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '3,150', quantity: '2,000', signStatus: '已双签', signDate: '2022-02-25', deadline: '2026-09-15', bizType: '购销业务', creator: '赵六', status: 'effective', supplement: 'BCXY-202203-004-补001' },
+        { code: 'DLXLC-DSRMT-202202-002', seller: '中粮贸易有限公司', buyer: '河南中豫港通供应链管理有限公司', category: '谷物', unit: '吨', price: '2,980', quantity: '1,800', signStatus: '已双签', signDate: '2022-02-28', deadline: '2026-08-30', bizType: '预付业务', creator: '王五', status: 'effective', supplement: 'BCXY-202203-005-补001' }
+        // v1.7.99.88：移除"已终止"状态行（原 DLXLC-DSRMT-202202-003 已下线）
+      ]
+    };
+
+    var CURRENT_DRAWER_TYPE = null;
+    var CURRENT_DRAWER_TAB = 'all';  // all / unsigned / effective / unavailable
+    var CURRENT_DRAWER_FILTERS = { code: '', seller: '', category: '全部', bizType: '全部', signDateStart: '', signDateEnd: '', creator: '' };
+
+    function openSupplementDrawer(type, e) {
+      if (e) e.stopPropagation();
+      // 关闭按钮下拉
+      var dd = document.getElementById('addBtnDropdown');
+      if (dd) dd.classList.remove('open');
+      // 如果没传 type，用当前 tap（兼容旧的 onclick 行为）
+      if (!type) type = currentTap;
+      CURRENT_DRAWER_TYPE = type;
+      CURRENT_DRAWER_TAB = 'all';
+      CURRENT_DRAWER_FILTERS = { code: '', seller: '', category: '全部', bizType: '全部', signDateStart: '', signDateEnd: '', creator: '' };
+
+      var data = DRAWER_CONTRACTS[type] || [];
+      var title = type === 'framework' ? '新增框架合同补充协议' : '新增订单/单批次合同补充协议';
+
+      // 4 个 tap 数量统计
+      var tabCounts = {
+        all: data.length,
+        unsigned: data.filter(function(c) { return c.status === 'unsigned'; }).length,
+        effective: data.filter(function(c) { return c.status === 'effective'; }).length,
+        unavailable: data.filter(function(c) { return c.status === 'unavailable'; }).length
+      };
+
+      // 渲染抽屉
+      var drawerHtml = ''
+        + '<div class="drawer-overlay" id="drawerOverlay" onclick="closeSupplementDrawer()"></div>'
+        + '<div class="drawer-panel" id="drawerPanel">'
+        +   '<div class="drawer-header">'
+        +     '<div class="drawer-title">' + title + '</div>'
+        +     '<button class="drawer-close" onclick="closeSupplementDrawer()">×</button>'
+        +   '</div>'
+        +   '<div class="drawer-body">'
+        +     renderDrawerFilterSection()
+        +     renderDrawerTabs(tabCounts)
+        +     '<div class="drawer-contract-list" id="drawerContractList">'
+        +       renderContractList(getCurrentTabContracts(data), type)
+        +     '</div>'
+        +   '</div>'
+        +   '<div class="drawer-footer">'
+        +     '<button class="btn btn-secondary" onclick="closeSupplementDrawer()">取消</button>'
+        +   '</div>'
+        + '</div>';
+
+      // 插入到 body 末尾（避开祖先 overflow 裁切）
+      var container = document.createElement('div');
+      container.id = 'drawerContainer';
+      container.innerHTML = drawerHtml;
+      document.body.appendChild(container);
+
+      // 触发动画
+      setTimeout(function() {
+        document.getElementById('drawerOverlay').classList.add('open');
+        document.getElementById('drawerPanel').classList.add('open');
+      }, 10);
+    }
+
+    // 4 个 tap 渲染（v1.7.99.45-fix2 新增）
+    function renderDrawerTabs(counts) {
+      var tabs = [
+        { key: 'all', label: '全部合同' },
+        { key: 'unsigned', label: '未签补协合同' },
+        { key: 'effective', label: '已签补协合同' },
+        { key: 'unavailable', label: '不可签补协合同' }
+      ];
+      var html = '<div class="drawer-tabs">';
+      tabs.forEach(function(t) {
+        var activeClass = (t.key === CURRENT_DRAWER_TAB) ? ' active' : '';
+        var count = counts[t.key] || 0;
+        html += '<div class="drawer-tab' + activeClass + '" data-tab-key="' + t.key + '" onclick="switchDrawerTab(\'' + t.key + '\')">'
+          + t.label + '<span class="count">' + count + '</span></div>';
+      });
+      html += '</div>';
+      return html;
+    }
+
+    // 切换 tap
+    function switchDrawerTab(key) {
+      CURRENT_DRAWER_TAB = key;
+      // 更新 tab active 状态
+      document.querySelectorAll('.drawer-tab').forEach(function(el) {
+        el.classList.toggle('active', el.getAttribute('data-tab-key') === key);
+      });
+      // 重新渲染当前 tap 的合同列表（应用筛选条件）
+      applyDrawerFilters();
+    }
+
+    // 顶部筛选区（6 项 / 2 行 3 列，label 在顶部）
+    function renderDrawerFilterSection() {
+      return ''
+        + '<div class="drawer-filter-section">'
+        +   '<div class="drawer-filter-title">'
+        +     '<span>筛选条件</span>'
+        +     '<div class="filter-actions">'
+        +       '<button type="button" onclick="resetDrawerFilters()">重置</button>'
+        +       '<button type="button" class="primary" onclick="applyDrawerFilters()">查询</button>'
+        +     '</div>'
+        +   '</div>'
+        +   '<div class="drawer-filter-grid">'
+        +     '<div class="drawer-filter-item"><label class="filter-label">合同编号</label><div class="filter-control"><input type="text" class="input" id="drawerFilterCode" placeholder="请输入订单或合同编号"></div></div>'
+        +     '<div class="drawer-filter-item"><label class="filter-label">企业名称</label><div class="filter-control"><input type="text" class="input" id="drawerFilterSeller" placeholder="请输入企业名称"></div></div>'
+        +     '<div class="drawer-filter-item"><label class="filter-label">品类</label><div class="filter-control"><select class="select" id="drawerFilterCategory"><option>全部</option><option>淀粉</option><option>谷物</option><option>糖粉</option></select></div></div>'
+        +     '<div class="drawer-filter-item"><label class="filter-label">业务类型</label><div class="filter-control"><select class="select" id="drawerFilterBizType"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select></div></div>'
+        +     '<div class="drawer-filter-item"><label class="filter-label">签订日期</label><div class="filter-control"><div class="drawer-date-range"><input type="date" class="input" id="drawerFilterSignDateStart"><span class="date-sep">~</span><input type="date" class="input" id="drawerFilterSignDateEnd"></div></div></div>'
+        +     '<div class="drawer-filter-item"><label class="filter-label">创建人</label><div class="filter-control"><input type="text" class="input" id="drawerFilterCreator" placeholder="请输入创建人"></div></div>'
+        +   '</div>'
+        + '</div>';
+    }
+
+    // 合同完整 11 字段呈现（4 列网格布局）
+    function renderContractList(contracts, contractType) {
+      var html = '';
+      contracts.forEach(function(c) {
+        var statusClass = '', statusText = '';
+        if (c.status === 'effective') { statusClass = 'executed'; statusText = '已生效'; }
+        else if (c.status === 'unavailable') { statusClass = 'unavailable'; statusText = '不可签'; }
+        else { statusClass = 'unsigned'; statusText = '未签订'; }
+
+        var clickAction = '';
+        if (c.status === 'effective') {
+          clickAction = 'onclick="alert(\'该合同已有已生效补充协议，不可重复签订。\')"';
+        } else if (c.status === 'unavailable') {
+          clickAction = 'onclick="alert(\'' + (c.reason || '该合同不可签补充协议') + '\')"';
+        } else {
+          clickAction = 'onclick="selectContractFromDrawer(\'' + c.code + '\', \'' + contractType + '\')"';
+        }
+
+        html += ''
+          + '<div class="drawer-contract-item" ' + clickAction + ' data-code="' + c.code + '" data-seller="' + c.seller + '" data-category="' + c.category + '" data-biztype="' + c.bizType + '" data-signdate="' + c.signDate + '" data-creator="' + c.creator + '" data-status="' + c.status + '">'
+          +   '<div class="drawer-contract-item-row1">'
+          +     '<div style="display:flex;align-items:center;gap:12px;">'
+          +       '<span style="font-size:11px;color:var(--text-tertiary);">合同编号</span>'
+          +       '<span class="drawer-contract-code">' + c.code + '</span>'
+          +     '</div>'
+          +     '<span class="drawer-contract-status ' + statusClass + '">' + statusText + '</span>'
+          +   '</div>'
+          +   '<div class="drawer-contract-grid">'
+          +     '<div class="drawer-field"><span class="drawer-field-label">卖方企业</span><span class="drawer-field-value">' + c.seller + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">买方企业</span><span class="drawer-field-value">' + c.buyer + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">品类</span><span class="drawer-field-value">' + c.category + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">计量单位</span><span class="drawer-field-value">' + c.unit + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">合同单价(元/吨)</span><span class="drawer-field-value">' + c.price + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">合同数量(吨)</span><span class="drawer-field-value">' + c.quantity + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">合同签章状态</span><span class="drawer-field-value">' + c.signStatus + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">签订日期</span><span class="drawer-field-value">' + c.signDate + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">业务类型</span><span class="drawer-field-value">' + c.bizType + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">合同交货期限</span><span class="drawer-field-value">' + c.deadline + '</span></div>'
+          +     '<div class="drawer-field"><span class="drawer-field-label">创建人</span><span class="drawer-field-value">' + c.creator + '</span></div>'
+          +     (c.supplement ? '<div class="drawer-field" style="grid-column: 1 / -1;"><span class="drawer-field-label">关联补协编号</span><span class="drawer-field-value" style="color:#1e40af;">' + c.supplement + '</span></div>' : '')
+          +     (c.reason ? '<div class="drawer-field" style="grid-column: 1 / -1;"><span class="drawer-field-label">不可签原因</span><span class="drawer-field-value" style="color:#dc2626;">' + c.reason + '</span></div>' : '')
+          +   '</div>'
+          + '</div>';
+      });
+      if (contracts.length === 0) {
+        html = '<div class="drawer-empty">暂无相关合同</div>';
+      }
+      return html;
+    }
+
+    // 重置筛选条件
+    function resetDrawerFilters() {
+      var defaults = {
+        drawerFilterCode: '',
+        drawerFilterSeller: '',
+        drawerFilterCategory: '全部',
+        drawerFilterBizType: '全部',
+        drawerFilterSignDateStart: '',
+        drawerFilterSignDateEnd: '',
+        drawerFilterCreator: ''
+      };
+      Object.keys(defaults).forEach(function(id) {
+        var el = document.getElementById(id);
+        if (el) el.value = defaults[id];
+      });
+    }
+
+    // 获取当前 tap 的合同列表
+    function getCurrentTabContracts(allData) {
+      if (CURRENT_DRAWER_TAB === 'all') return allData;
+      return allData.filter(function(c) { return c.status === CURRENT_DRAWER_TAB; });
+    }
+
+    // 应用筛选条件
+    function applyDrawerFilters() {
+      if (!CURRENT_DRAWER_TYPE) return;
+      var code = (document.getElementById('drawerFilterCode').value || '').trim().toLowerCase();
+      var seller = (document.getElementById('drawerFilterSeller').value || '').trim();
+      var category = document.getElementById('drawerFilterCategory').value;
+      var bizType = document.getElementById('drawerFilterBizType').value;
+      var signDateStart = (document.getElementById('drawerFilterSignDateStart').value || '').trim();
+      var signDateEnd = (document.getElementById('drawerFilterSignDateEnd').value || '').trim();
+      var creator = (document.getElementById('drawerFilterCreator').value || '').trim();
+      CURRENT_DRAWER_FILTERS = { code: code, seller: seller, category: category, bizType: bizType, signDateStart: signDateStart, signDateEnd: signDateEnd, creator: creator };
+
+      var allData = DRAWER_CONTRACTS[CURRENT_DRAWER_TYPE];
+      var tabData = getCurrentTabContracts(allData);
+      var filtered = filterContracts(tabData);
+
+      document.getElementById('drawerContractList').innerHTML = renderContractList(filtered, CURRENT_DRAWER_TYPE);
+    }
+
+    // 筛选匹配
+    function filterContracts(list) {
+      return list.filter(function(c) {
+        if (CURRENT_DRAWER_FILTERS.code && (c.code || '').toLowerCase().indexOf(CURRENT_DRAWER_FILTERS.code) === -1) return false;
+        if (CURRENT_DRAWER_FILTERS.seller && (c.seller || '').indexOf(CURRENT_DRAWER_FILTERS.seller) === -1) return false;
+        if (CURRENT_DRAWER_FILTERS.category && CURRENT_DRAWER_FILTERS.category !== '全部' && c.category !== CURRENT_DRAWER_FILTERS.category) return false;
+        if (CURRENT_DRAWER_FILTERS.bizType && CURRENT_DRAWER_FILTERS.bizType !== '全部' && c.bizType !== CURRENT_DRAWER_FILTERS.bizType) return false;
+        if (CURRENT_DRAWER_FILTERS.creator && (c.creator || '').indexOf(CURRENT_DRAWER_FILTERS.creator) === -1) return false;
+        // 签订日期范围
+        if (CURRENT_DRAWER_FILTERS.signDateStart && c.signDate < CURRENT_DRAWER_FILTERS.signDateStart) return false;
+        if (CURRENT_DRAWER_FILTERS.signDateEnd && c.signDate > CURRENT_DRAWER_FILTERS.signDateEnd) return false;
+        return true;
+      });
+    }
+
+    function selectContractFromDrawer(contractId, contractType) {
+      // 跳转到对应的新增补充协议页面，带入合同号
+      var targetUrl = contractType === 'framework'
+        ? './contract-supplement-new.html?contractId=' + encodeURIComponent(contractId) + '&contractType=framework'
+        : './contract-supplement-order-new.html?contractId=' + encodeURIComponent(contractId) + '&contractType=order';
+      window.location.href = targetUrl;
+    }
+
+    function closeSupplementDrawer() {
+      var overlay = document.getElementById('drawerOverlay');
+      var panel = document.getElementById('drawerPanel');
+      if (overlay) overlay.classList.remove('open');
+      if (panel) panel.classList.remove('open');
+      // 动画结束后移除 DOM
+      setTimeout(function() {
+        var container = document.getElementById('drawerContainer');
+        if (container) container.parentNode.removeChild(container);
+      }, 300);
+    }
+
+    // 行点击进入详情页（v1.7.99.11 起，project-list 等列表页用）
+    (function() {
+      function bindRowClick() {
+        var rows = document.querySelectorAll('.cp-row-clickable');
+        rows.forEach(function(row) {
+          row.addEventListener('click', function(e) {
+            if (e.target.closest('.col-action')) return;
+            if (e.target.closest('button, a')) return;
+            var status = row.getAttribute('data-status') || '';
+            var detailHref = row.getAttribute('data-detail-href');
+            if (!detailHref) return;
+            var url = detailHref + (status ? '?status=' + encodeURIComponent(status) : '');
+            window.location.href = url;
+          });
+        });
+      }
+      bindRowClick();
+      // 切 tap 后重新绑定
+      var origSwitch = switchTap;
+      switchTap = function() {
+        origSwitch.apply(this, arguments);
+        bindRowClick();
+      };
+    })();
+
+    // 初始化：先解析 URL hash 再渲染（v1.7.99.16m 锁定：#tap=xxx 跳转要 JS 主动解析）
+    var initHash = location.hash.match(/tap=([\w-]+)/);
+    if (initHash && (initHash[1] === 'framework' || initHash[1] === 'order')) {
+      switchTap(initHash[1]);
+    } else {
+      renderTable();
+    }
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

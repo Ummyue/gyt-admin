@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增放货指令 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* v1.7.99.90：新增放货指令表单页（按 user 截图 1:1 重制） */
+    .page-body { padding: 16px 24px 80px; background: var(--bg-page); min-height: 100vh; }
+    .breadcrumb-inline { font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .breadcrumb-inline a { color: var(--text-tertiary); text-decoration: none; }
+    .breadcrumb-inline a:hover { color: var(--color-primary); }
+    .breadcrumb-inline .sep { margin: 0 8px; color: var(--text-tertiary); }
+    .breadcrumb-inline .current { color: var(--text-primary); font-weight: 500; }
+    .page-h1 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0 0 20px 0; }
+    .form-section { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .form-section-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .form-section-header .bar { width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px; }
+    .form-section-header .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .form-section-body { padding: 24px; }
+    .info-table { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px 32px; }
+    .info-cell { display: flex; align-items: center; gap: 12px; min-height: 24px; }
+    .info-label { font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; min-width: 80px; text-align: right; }
+    .info-value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .info-value.mono { font-family: var(--font-mono); color: var(--color-primary); }
+    .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px 32px; }
+    .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-label { font-size: 13px; color: var(--text-primary); font-weight: 500; display: flex; align-items: center; gap: 4px; }
+    .form-label .required { color: var(--color-danger); }
+    .input, .select { width: 100%; height: 36px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff; box-sizing: border-box; }
+    .input::placeholder, .select::placeholder { color: var(--text-tertiary); }
+    .input-with-icon { position: relative; }
+    .input-icon { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); color: var(--text-tertiary); pointer-events: none; }
+    /* 运输方式 radio */
+    .radio-group { display: flex; align-items: center; gap: 24px; height: 36px; }
+    .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; font-size: 13px; color: var(--text-primary); }
+    .radio-item input { width: 16px; height: 16px; accent-color: var(--color-primary); cursor: pointer; }
+    .textarea { width: 100%; min-height: 90px; padding: 10px 12px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 13px; color: var(--text-primary); box-sizing: border-box; resize: vertical; font-family: inherit; }
+    /* 站点表格 */
+    .station-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .station-table th, .station-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .station-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .station-table td { color: var(--text-primary); }
+    .station-add-btn { color: var(--color-primary); background: none; border: 0; font-size: 13px; cursor: pointer; padding: 0; }
+    /* 业务线下游回款信息 */
+    .biz-receive-summary { display: flex; align-items: center; gap: 24px; padding: 16px 24px; border-bottom: 1px solid var(--border-light); flex-wrap: wrap; }
+    .biz-receive-item { display: flex; align-items: center; gap: 6px; font-size: 13px; color: var(--text-primary); }
+    .biz-receive-item .label { color: var(--text-tertiary); }
+    .biz-receive-item .val { font-weight: 600; color: var(--text-primary); }
+    .biz-receive-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .biz-receive-table th, .biz-receive-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .biz-receive-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .biz-receive-table td { color: var(--text-primary); }
+    .biz-receive-table td.detail-link { color: var(--color-primary); cursor: pointer; }
+    .biz-receive-table .mono { font-family: var(--font-mono); }
+    /* 附件 */
+    .attach-tip-block { background: #EFF6FF; border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; font-size: 12px; color: var(--text-secondary); line-height: 1.7; }
+    .attach-tip-block strong { color: var(--text-primary); font-weight: 600; }
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td { padding: 14px 16px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 13px; vertical-align: middle; }
+    .attach-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .attach-table td { color: var(--text-primary); }
+    .attach-upload-btn { border: 1px solid var(--color-primary); color: var(--color-primary); background: #fff; border-radius: 4px; padding: 4px 16px; font-size: 12px; cursor: pointer; }
+    .attach-upload-btn:hover { background: var(--color-primary-light); }
+    .attach-required { color: var(--color-danger); margin-right: 4px; }
+    .attach-file-row { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .attach-file-pill { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; background: #F0F4FA; border-radius: 4px; font-size: 12px; color: var(--color-primary); position: relative; }
+    .attach-file-pill .x { color: var(--text-tertiary); cursor: pointer; }
+    .attach-file-tooltip { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); background: #1F2937; color: #fff; padding: 4px 10px; border-radius: 4px; font-size: 11px; white-space: nowrap; margin-bottom: 6px; }
+    .attach-file-tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 4px solid transparent; border-top-color: #1F2937; }
+    /* 底部按钮 */
+    .footer-actions { position: fixed; bottom: 0; left: 0; right: 0; background: #fff; border-top: 1px solid var(--border-light); padding: 14px 24px; display: flex; align-items: center; gap: 12px; z-index: 50; }
+    .footer-actions .spacer { flex: 1; }
+    .btn { padding: 8px 24px; border-radius: 4px; font-size: 13px; cursor: pointer; border: 0; }
+    .btn-secondary { background: #fff; color: var(--text-primary); border: 1px solid var(--border-strong); }
+    .btn-secondary:hover { background: #F8FAFC; }
+    .btn-primary { background: var(--color-primary); color: #fff; }
+    .btn-primary:hover { background: #1E3A8A; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body">
+        <div class="breadcrumb-inline">
+          <a href="#">放货管理</a>
+          <span class="sep">/</span>
+          <a href="#">放货管理</a>
+          <span class="sep">/</span>
+          <span class="current">新增放货指令</span>
+        </div>
+        <h1 class="page-h1">新增放货指令</h1>
+
+        <!-- ========== 区块 1：合同信息 ========== -->
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="bar"></span>
+            <span class="title">合同信息</span>
+          </div>
+          <div class="form-section-body">
+            <div class="info-table">
+              <div class="info-cell">
+                <span class="info-label">合同编号</span>
+                <span class="info-value mono">销售090701long有一天突然
+                  <a href="javascript:void(0)" title="复制" style="margin-left: 4px; color: var(--color-primary); text-decoration: none;">⧉</a>
+                </span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">卖方企业</span>
+                <span class="info-value">河南荣厚实业有限公司</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">买方企业</span>
+                <span class="info-value">周口替换商贸有限公司</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">品名</span>
+                <span class="info-value">品名</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">基准价格</span>
+                <span class="info-value">1,000元/吨</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">数量</span>
+                <span class="info-value">1,000 吨</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">交货期限</span>
+                <span class="info-value">2023-08-22至2023-08-24</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">运输方式</span>
+                <span class="info-value">火运</span>
+              </div>
+              <div class="info-cell">
+                <span class="info-label">收货人</span>
+                <span class="info-value">收货人</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 区块 2：放货信息 ========== -->
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="bar"></span>
+            <span class="title">放货信息</span>
+          </div>
+          <div class="form-section-body">
+            <div class="form-grid-3">
+              <!-- Row 1 -->
+              <div class="form-field">
+                <label class="form-label">放货日期 <span class="required">*</span></label>
+                <div class="input-with-icon">
+                  <input type="text" class="input" placeholder="开始日期" style="padding-right: 28px;">
+                  <span class="input-icon">📅</span>
+                </div>
+              </div>
+              <div class="form-field">
+                <label class="form-label">放货数量(吨) <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入放货数量">
+              </div>
+              <div class="form-field">
+                <label class="form-label">仓库名称 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入仓库名称">
+              </div>
+              <!-- Row 2 -->
+              <div class="form-field">
+                <label class="form-label">提货联系人姓名 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入提货联系人姓名">
+              </div>
+              <div class="form-field">
+                <label class="form-label">提货人联系方式 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入提货人联系方式">
+              </div>
+              <div class="form-field">
+                <label class="form-label">提货联系人身份证号 <span class="required">*</span></label>
+                <input type="text" class="input" placeholder="请输入提货联系人身份证号">
+              </div>
+              <!-- Row 3 -->
+              <div class="form-field">
+                <label class="form-label">运输方式 <span class="required">*</span></label>
+                <div class="radio-group" id="transportRadioGroup">
+                  <label class="radio-item">
+                    <input type="radio" name="transport" value="truck"> 汽运
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="transport" value="rail" checked> 火运
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="transport" value="ship"> 船运
+                  </label>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 区块 3：站表格（发站/到站/收货人/托运人） ========== -->
+        <div class="form-section">
+          <div class="form-section-body" style="padding: 0;">
+            <table class="station-table">
+              <thead>
+                <tr>
+                  <th style="width: 60px;">序号</th>
+                  <th>发站 <span style="color: var(--color-danger);">*</span></th>
+                  <th>到站 <span style="color: var(--color-danger);">*</span></th>
+                  <th>收货人</th>
+                  <th>托运人</th>
+                  <th style="width: 80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>1</td>
+                  <td><input type="text" class="input" placeholder="请输入发站"></td>
+                  <td><input type="text" class="input" placeholder="请输入到站"></td>
+                  <td><input type="text" class="input" placeholder="请输入收货人"></td>
+                  <td><input type="text" class="input" placeholder="请输入托运人"></td>
+                  <td><button type="button" class="station-add-btn" onclick="addStationRow(this)">新增</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========== 区块 4：备注 ========== -->
+        <div class="form-section">
+          <div class="form-section-body">
+            <div class="form-field">
+              <label class="form-label">备注</label>
+              <textarea class="textarea" maxlength="200" placeholder="请输入备注，上限200字"></textarea>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== 区块 5：业务线下游回款信息 ========== -->
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="bar"></span>
+            <span class="title">业务线下游回款信息</span>
+          </div>
+          <div class="biz-receive-summary">
+            <div class="biz-receive-item"><span class="label">下游企业累计已回款货款（元）:</span><span class="val">123,234.23元</span></div>
+            <div class="biz-receive-item"><span class="label">累计已出库货值（元）:</span><span class="val">23,234.23</span></div>
+            <div class="biz-receive-item"><span class="label">剩余可出库货值（元）:</span><span class="val">100,000.00</span></div>
+          </div>
+          <div class="form-section-body" style="padding: 0;">
+            <table class="biz-receive-table">
+              <thead>
+                <tr>
+                  <th>收款编号</th>
+                  <th>回款时间</th>
+                  <th>回款金额（元）</th>
+                  <th>认领至本合同金额（元）</th>
+                  <th>可认领余额（元）</th>
+                  <th>回款方式</th>
+                  <th>认领状态</th>
+                  <th style="width: 80px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="mono">SKJSD2021090911100001</span></td>
+                  <td>2020-09-21</td>
+                  <td>378</td>
+                  <td>37,828.00</td>
+                  <td>378</td>
+                  <td>电汇</td>
+                  <td>已认领</td>
+                  <td class="detail-link">详情</td>
+                </tr>
+                <tr>
+                  <td><span class="mono">SKJSD2021090911100001</span></td>
+                  <td>2020-09-21</td>
+                  <td>378</td>
+                  <td>37,828.00</td>
+                  <td>378</td>
+                  <td>电汇</td>
+                  <td>已认领</td>
+                  <td class="detail-link">详情</td>
+                </tr>
+                <tr>
+                  <td><span class="mono">SKJSD2021090911100001</span></td>
+                  <td>2020-09-21</td>
+                  <td>378</td>
+                  <td>37,828.00</td>
+                  <td>378</td>
+                  <td>电汇</td>
+                  <td>已认领</td>
+                  <td class="detail-link">详情</td>
+                </tr>
+                <tr>
+                  <td><span class="mono">SKJSD2021090911100001</span></td>
+                  <td>2020-09-21</td>
+                  <td>378</td>
+                  <td>37,828.00</td>
+                  <td>378</td>
+                  <td>电汇</td>
+                  <td>已认领</td>
+                  <td class="detail-link">详情</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========== 区块 6：附件 ========== -->
+        <div class="form-section">
+          <div class="form-section-header">
+            <span class="bar"></span>
+            <span class="title">附件</span>
+          </div>
+          <div class="form-section-body">
+            <div class="attach-tip-block">
+              <div><strong>附件上传要求：</strong></div>
+              <div>可支持格式为png，jpeg，jpg，gif，pdf，doc，docx，xlsx，xls的附件，单个附件大小不得超过100M的文件。</div>
+            </div>
+            <table class="attach-table">
+              <tbody>
+                <tr>
+                  <td style="width: 25%;"><span class="attach-required">*</span>出库通知书附件</td>
+                  <td style="width: 55%;">
+                    <div class="attach-file-row">
+                      <div class="attach-file-pill">
+                        <span>📄</span>
+                        <span>44354657687.pdf</span>
+                        <span class="x" onclick="this.closest('.attach-file-pill').remove()">×</span>
+                        <div class="attach-file-tooltip">2023-12-12 12:23:32</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td style="width: 20%;"><button type="button" class="attach-upload-btn">+ 上传</button></td>
+                </tr>
+                <tr>
+                  <td>其他附件</td>
+                  <td></td>
+                  <td><button type="button" class="attach-upload-btn">+ 上传</button></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-actions">
+        <div class="spacer"></div>
+        <button type="button" class="btn btn-secondary" onclick="history.back()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="onSubmit()">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[Utils.toast]', type || 'info', msg); } catch (e) {} }
+    };
+
+    function addStationRow(btn) {
+      var tr = btn.closest('tr');
+      var tbody = tr.parentNode;
+      var rowCount = tbody.querySelectorAll('tr').length;
+      var newRow = document.createElement('tr');
+      newRow.innerHTML = '<td>' + (rowCount + 1) + '</td>'
+        + '<td><input type="text" class="input" placeholder="请输入发站"></td>'
+        + '<td><input type="text" class="input" placeholder="请输入到站"></td>'
+        + '<td><input type="text" class="input" placeholder="请输入收货人"></td>'
+        + '<td><input type="text" class="input" placeholder="请输入托运人"></td>'
+        + '<td><button type="button" class="station-add-btn" onclick="addStationRow(this)">新增</button></td>';
+      tbody.appendChild(newRow);
+    }
+
+    function onSubmit() {
+      var checked = document.querySelector('input[name="transport"]:checked');
+      if (!checked) {
+        alert('请选择运输方式');
+        return;
+      }
+      alert('放货指令已提交');
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

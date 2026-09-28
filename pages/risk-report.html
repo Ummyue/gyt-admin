@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>业务报表 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+</head>
+<body>
+  <div class="topbar">
+  <div class="topbar-logo">
+    <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+    <span>豫港通</span>
+  </div>
+        <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item active" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+  <div class="topbar-right">
+    <div class="topbar-icon-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <span class="badge"></span>
+    </div>
+    <div class="topbar-user">
+      <div class="topbar-user-avatar">张</div>
+      <div>
+        <div class="topbar-user-name">张爽</div>
+        <div class="topbar-user-org">港通供应链</div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <div class="page-header">
+      <div class="breadcrumb">风险运营管理 / 业务报表</div>
+      <h1 class="page-title">业务报表</h1>
+    </div>
+    <div class="page-body">
+    <div class="filter-bar">
+        <input type="text" placeholder="请输入项目编号" class="filter-input">
+        <input type="text" placeholder="请输入项目名称" class="filter-input">
+        <input type="text" placeholder="请输入业务线" class="filter-input">
+        <input type="text" placeholder="请输入报表日期" class="filter-input">
+        
+        <button class="btn btn-primary btn-sm">查询</button>
+        <button class="btn btn-default btn-sm">重置</button>
+    </div>
+    <div class="tab-bar">
+        <div class="tab-item active">项目台账 <span class="tab-count">0</span></div>
+<div class="tab-item">业务线台账 <span class="tab-count">0</span></div>
+<div class="tab-item">资金占压表 <span class="tab-count">0</span></div>
+<div class="tab-item">库存明细表 <span class="tab-count">0</span></div>
+<div class="tab-item">应收应付表 <span class="tab-count">0</span></div>
+<div class="tab-item">风控统计报表 <span class="tab-count">0</span></div>
+    </div>
+    <table class="data-table">
+      <thead><tr><th>项目编号</th><th>项目名称</th><th>业务线</th><th>业务类型</th><th>合同金额(元)</th><th>在管金额(元)</th><th>敞口金额(元)</th><th>报表日期</th></tr></thead>
+      <tbody>
+        <tr><td>LX20260120-001</td><td>中粮贸易玉米存货融资</td><td>粮食-玉米</td><td>存货类</td><td>¥50,000,000</td><td>¥30,000,000</td><td>¥20,000,000</td><td>2026-07-25</td></tr>
+<tr><td>LX20260115-002</td><td>河北粮食大豆存货融资</td><td>粮食-大豆</td><td>存货类</td><td>¥80,000,000</td><td>¥50,000,000</td><td>¥30,000,000</td><td>2026-07-25</td></tr>
+      </tbody>
+    </table>
+    </div>
+  </div>
+  <!-- /main-content -->
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

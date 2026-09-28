@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>入库记录 - 豫港通 v1.7.99.86</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* 11 列：入库日期 / 品类 / 入库数量(吨) / 入库单价(元/吨) / 车数 / 合同编号 / 业务线号 / 发货单位 / 仓库&货位 / 数据类型 / 操作 */
+    .cp-table th.col-num, .cp-table td.col-num { font-family: var(--font-mono); }
+    .cp-table .col-num { font-family: var(--font-mono); color: var(--text-secondary); }
+    .cp-table .col-qty { text-align: right; font-family: var(--font-mono); }
+    .cp-table .col-price { text-align: right; font-family: var(--font-mono); }
+    /* 数据类型 tag 颜色（v1.7.99.86 按图 1 颜色） */
+    .dt-tag { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .dt-tag.manual { background: #FEF3C7; color: #A16207; }
+    .dt-tag.system { background: #DBEAFE; color: #1E40AF; }
+    /* v1.7.99.100：新增入库下拉菜单 + 抽屉式弹层（关联采购合同） */
+    .inbound-add-menu {
+      position: absolute;
+      top: calc(100% + 4px);
+      right: 0;
+      min-width: 180px;
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 6px;
+      box-shadow: 0 4px 12px rgba(15, 23, 42, 0.12);
+      z-index: 100;
+      padding: 4px 0;
+    }
+    .inbound-add-menu-item {
+      padding: 10px 16px;
+      font-size: 13px;
+      color: var(--text-primary);
+      cursor: pointer;
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+      transition: background 0.15s;
+    }
+    .inbound-add-menu-item:hover { background: var(--bg-page); }
+    .inbound-add-menu-item .hint { font-size: 11px; color: var(--text-tertiary); }
+    /* 抽屉 */
+    .drawer-mask {
+      position: fixed; inset: 0;
+      background: rgba(15, 23, 42, 0.45);
+      z-index: 999;
+      display: none;
+    }
+    .drawer-mask.open { display: block; }
+    .drawer-panel {
+      position: fixed;
+      top: 0; right: 0; bottom: 0;
+      width: 880px;
+      max-width: 90vw;
+      background: #fff;
+      box-shadow: -4px 0 12px rgba(15, 23, 42, 0.12);
+      z-index: 1000;
+      transform: translateX(100%);
+      transition: transform 0.25s ease;
+      display: flex;
+      flex-direction: column;
+    }
+    .drawer-panel.open { transform: translateX(0); }
+    .drawer-header {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .drawer-close {
+      background: none; border: 0; cursor: pointer;
+      color: var(--text-tertiary); font-size: 18px;
+      width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center;
+      border-radius: 4px;
+    }
+    .drawer-close:hover { background: var(--bg-page); color: var(--text-primary); }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .drawer-filter-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 16px; margin-bottom: 16px; }
+    .drawer-filter-grid .dfilter-cell { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-filter-grid label { font-size: 12px; color: var(--text-tertiary); }
+    .drawer-filter-grid input,
+    .drawer-filter-grid select {
+      width: 100%; height: 32px; padding: 0 10px;
+      border: 1px solid var(--border-strong); border-radius: 4px;
+      font-size: 13px; color: var(--text-primary);
+      background: #fff; box-sizing: border-box;
+    }
+    .drawer-filter-grid .dfilter-full { grid-column: span 1; }
+    .drawer-filter-grid .dfilter-date { display: flex; align-items: center; gap: 6px; }
+    .drawer-filter-grid .dfilter-date input { flex: 1; }
+    .drawer-table-wrap { overflow-x: auto; }
+    .drawer-table { table-layout: fixed; width: 100%; min-width: 100%; border-collapse: collapse; }
+    .drawer-table th, .drawer-table td {
+      padding: 10px 12px; text-align: left;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 13px;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .drawer-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .drawer-table td { color: var(--text-primary); }
+    .drawer-table .mono { font-family: var(--font-mono); color: var(--color-primary); }
+    .drawer-table tr.selected { background: #EFF6FF; }
+    .drawer-table tr:hover { background: #F8FAFC; }
+    .drawer-table .col-radio { width: 40px; }
+    .drawer-footer {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 12px; padding: 14px 24px;
+      border-top: 1px solid var(--border-light);
+      background: #fff;
+    }
+    .btn-secondary { background: #fff; color: var(--text-primary); border: 1px solid var(--border-strong); padding: 8px 20px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+    .btn-secondary:hover { background: var(--bg-page); }
+    .btn-primary { background: var(--color-primary); color: #fff; border: 0; padding: 8px 20px; border-radius: 4px; font-size: 13px; cursor: pointer; }
+    .btn-primary:hover { background: #1E3A8A; }
+    .btn-primary:disabled { background: #94A3B8; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">仓储管理</a>
+          <span class="sep">/</span>
+          <a href="#">入库管理</a>
+          <span class="sep">/</span>
+          <span class="current">入库记录</span>
+        </div>
+
+        <!-- 标题 + 右上 新增入库（v1.7.99.100 升级：点击下拉弹 2 个入库类型：采购入库 / 盘盈入库） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; position: relative;">
+          <h1 class="page-h1" style="margin: 0;">入库记录</h1>
+          <div class="inbound-add-dropdown" id="inboundAddDropdown" style="position: relative;">
+            <button class="btn btn-primary" id="inboundAddBtn" onclick="toggleInboundAddMenu(event)">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              新增入库
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" style="margin-left: 4px;"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="inbound-add-menu" id="inboundAddMenu" style="display: none;">
+              <div class="inbound-add-menu-item" onclick="selectInboundType('purchase')">
+                <span>采购入库</span>
+                <span class="hint">关联采购合同</span>
+              </div>
+              <div class="inbound-add-menu-item" onclick="selectInboundType('inventory_profit')">
+                <span>盘盈入库</span>
+                <span class="hint">实物盘盈生成入库</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 合并 panel -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：9 字段筛选区（v1.7.99.86 按图 1：编号/发货单位/入库日期/品类/仓位/货位/关联业务线状态/数据类型/入库类型） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入订单、单据、上报计划、入库编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">发货单位</span>
+                <input type="text" class="input" placeholder="请输入发货单位">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">入库日期</span>
+                <input type="text" class="input" placeholder="开始时间 ~ 结束时间">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">品类</span>
+                <input type="text" class="input" placeholder="请输入品类">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">仓位</span>
+                <select class="select"><option>请选择仓位</option><option>1 号仓</option><option>2 号仓</option><option>3 号仓</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货位</span>
+                <input type="text" class="input" placeholder="请输入货位">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">关联业务线状态</span>
+                <select class="select"><option>请选择业务线状态</option><option>已关联</option><option>未关联</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">数据类型</span>
+                <select class="select"><option>请选择数据类型</option><option>手动新增(采购入库)</option><option>系统自动(上游同步)</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">入库类型</span>
+                <select class="select"><option>请选择入库类型</option><option>采购入库</option><option>盘盈入库</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：4 tab 状态机（v1.7.99.86 按图 1：全部/汽运/火运/船运） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" onclick="switchTab(this, 'all')">全部</div>
+                <div class="cp-tab" onclick="switchTab(this, 'road')">汽运</div>
+                <div class="cp-tab" onclick="switchTab(this, 'rail')">火运</div>
+                <div class="cp-tab" onclick="switchTab(this, 'ship')">船运</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：11 列表格（v1.7.99.86 按图 1：入库日期/品类/入库数量(吨)/入库单价(元/吨)/车数/合同编号/业务线号/发货单位/仓库&货位/数据类型/操作） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 8%;">入库日期</th>
+                    <th style="width: 7%;">品类</th>
+                    <th style="width: 8%;text-align: right;">入库数量(吨)</th>
+                    <th style="width: 9%;text-align: right;">入库单价(元/吨)</th>
+                    <th style="width: 6%;text-align: right;">车数</th>
+                    <th style="width: 14%;">合同编号</th>
+                    <th style="width: 12%;">业务线号</th>
+                    <th style="width: 12%;">发货单位</th>
+                    <th style="width: 12%;">仓库&货位</th>
+                    <th style="width: 6%;">数据类型</th>
+                    <th class="col-action" style="width: auto;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="inboundTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页（v1.7.99.86 按图 1：共 92 条信息 + 1-2 页 + 10 条/页） -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 92 条信息</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // v1.7.99.86：10 行 mock（按图 1 1:1 复制）
+    // 合同号 GTGYL-MSXS-20260127-s + 业务线号 SKYWX202607050001 + 发货单位 河南诚泽运输 + 数据类型 手动新增(采购入库)
+    const INBOUND_MOCK = [
+      { date: '2026-07-14', category: '木薯淀粉', qty: '1143.2', price: '4200.00', carCount: 40, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-06-08', category: '木薯淀粉', qty: '1192', price: '4200.00', carCount: 40, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-06-05', category: '木薯淀粉', qty: '1182', price: '4200.00', carCount: 40, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-05-26', category: '木薯淀粉', qty: '927.5', price: '4200.00', carCount: 30, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-05-13', category: '木薯淀粉', qty: '618', price: '4200.00', carCount: 20, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-05-08', category: '木薯淀粉', qty: '927.5', price: '4200.00', carCount: 30, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-04-30', category: '木薯淀粉', qty: '32', price: '4150.00', carCount: 1, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-04-24', category: '木薯淀粉', qty: '1945', price: '4150.00', carCount: 60, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-04-15', category: '木薯淀粉', qty: '474.9', price: '4150.00', carCount: 23, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+      { date: '2026-04-03', category: '木薯淀粉', qty: '973.25', price: '3900.00', carCount: 32, contract: 'GTGYL-MSXS-20260127-s', bizLine: 'SKYWX202607050001', shipper: '河南诚泽运输有限公司', warehouse: '中粮贸易集团纸... 6合国际合作与电商分...', dataType: 'manual' },
+    ];
+
+    const DT_LABEL = { manual: '手动新增(采购入库)', system: '系统自动(上游同步)' };
+
+    function renderInboundTable() {
+      const tbody = document.getElementById('inboundTbody');
+      tbody.innerHTML = INBOUND_MOCK.map((r) => {
+        return `<tr>
+          <td>${r.date}</td>
+          <td>${r.category}</td>
+          <td style="text-align: right;" class="col-qty">${r.qty}</td>
+          <td style="text-align: right;" class="col-price">${r.price}</td>
+          <td style="text-align: right;" class="col-num">${r.carCount}</td>
+          <td class="col-num">${r.contract}</td>
+          <td class="col-num">${r.bizLine}</td>
+          <td>${r.shipper}</td>
+          <td>${r.warehouse}</td>
+          <td><span class="dt-tag ${r.dataType}">${DT_LABEL[r.dataType] || r.dataType}</span></td>
+          <td class="col-action" style="text-align: right;">
+            <a href="javascript:void(0)" data-action="view">详情</a>
+            <a href="javascript:void(0)" data-action="edit">编辑</a>
+            <a href="javascript:void(0)" data-action="delete" class="danger">删除</a>
+          </td>
+        </tr>`;
+      }).join('');
+    }
+
+    function switchTab(el, key) {
+      document.querySelectorAll('.cp-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+    }
+    document.addEventListener('DOMContentLoaded', renderInboundTable);
+
+    // 操作列点击事件委托（v1.7.99.80/83/84/85 模式：inline Utils fallback）
+    document.body.addEventListener('click', function(e) {
+      var target = e.target;
+      if (target.tagName === 'A' && target.closest('.col-action')) {
+        var action = target.getAttribute('data-action');
+        if (!action) return;
+        e.preventDefault();
+        var labels = { view: '查看', edit: '编辑', delete: '删除' };
+        if (action === 'delete' && !window.confirm('确定要删除这条入库记录吗？')) return;
+        if (window.Utils && Utils.toast) {
+          Utils.toast('【' + (labels[action] || action) + '】操作已触发（二期实现）', 'info');
+        } else {
+          console.log('[toast] info 【' + (labels[action] || action) + '】操作已触发（二期实现）');
+        }
+      }
+    });
+
+    // inline Utils fallback（v1.7.99.80 经验）
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[Utils.toast]', type || 'info', msg); } catch (e) {} }
+    };
+
+    // v1.7.99.100 核心：新增入库下拉菜单 + 抽屉式弹层
+    // mock 关联采购合同（沿用 GTGYL-MSXS-20260127-s 主合同）
+    var CONTRACT_MOCK = [
+      {
+        contractNo: 'GTGYL-MSXS-20260127-s',
+        seller: '河南诚泽运输有限公司',
+        receiver: '河南中豫港通供应链管理有限公司',
+        delivery: '2026-01-27 ~ 2026-12-31',
+        signDate: '2026-01-27',
+        transport: '火运',
+        qty: '20000',
+        basePrice: '¥3,400/吨',
+        product: '进口木薯淀粉'
+      },
+      {
+        contractNo: 'DLXLC-DSRMT-202203-001',
+        seller: '天宇源国际供应链有限公司',
+        receiver: '云南云核地质环境测试有限公司',
+        delivery: '2026-03-01 ~ 2026-08-31',
+        signDate: '2026-02-28',
+        transport: '汽运',
+        qty: '5000',
+        basePrice: '¥2,850/吨',
+        product: '玉米'
+      }
+    ];
+
+    function toggleInboundAddMenu(e) {
+      e.stopPropagation();
+      var menu = document.getElementById('inboundAddMenu');
+      menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+    }
+    // 点击其他位置关闭下拉
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('inboundAddMenu');
+      var btn = document.getElementById('inboundAddBtn');
+      if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    function selectInboundType(type) {
+      // 关闭下拉
+      document.getElementById('inboundAddMenu').style.display = 'none';
+      if (type === 'purchase') {
+        // 采购入库：弹出抽屉选合同
+        openContractDrawer('purchase');
+      } else if (type === 'inventory_profit') {
+        // v1.7.99.117 盘盈入库：弹"侧边抽屉"（与采购合同抽屉同款 .drawer-mask/.drawer-panel），点"确认进入"跳到无合同版新增页
+        openInventoryProfitDrawer();
+      }
+    }
+
+    // v1.7.99.117 盘盈入库侧边抽屉（提示实物盘盈无合同关联）
+    function openInventoryProfitDrawer() {
+      document.getElementById('inventoryProfitMask').classList.add('open');
+      document.getElementById('inventoryProfitPanel').classList.add('open');
+    }
+    function closeInventoryProfitDrawer() {
+      document.getElementById('inventoryProfitMask').classList.remove('open');
+      document.getElementById('inventoryProfitPanel').classList.remove('open');
+    }
+    function inventoryProfitConfirm() {
+      closeInventoryProfitDrawer();
+      Utils.toast('已选择盘盈入库，跳转到无合同版新增页', 'success');
+      setTimeout(function() { window.location.href = './warehouse-inbound-overflow-new.html?type=inventory_profit'; }, 500);
+    }
+
+    function openContractDrawer(type) {
+      // 渲染 mock 表格
+      var tbody = document.getElementById('drawerTbody');
+      tbody.innerHTML = CONTRACT_MOCK.map(function(c, i) {
+        return '<tr data-idx="' + i + '" onclick="selectContractRow(this, ' + i + ')">' +
+          '<td class="col-radio"><input type="radio" name="contractSel" value="' + i + '"></td>' +
+          '<td class="mono">' + c.contractNo + '</td>' +
+          '<td>' + c.seller + '</td>' +
+          '<td>' + c.receiver + '</td>' +
+          '<td>' + c.delivery + '</td>' +
+          '<td>' + c.signDate + '</td>' +
+          '<td>' + c.transport + '</td>' +
+          '<td style="text-align: right;">' + c.qty + '</td>' +
+          '<td style="text-align: right;">' + c.basePrice + '</td>' +
+          '<td>' + c.product + '</td>' +
+          '</tr>';
+      }).join('');
+      // 打开抽屉
+      document.getElementById('drawerMask').classList.add('open');
+      document.getElementById('drawerPanel').classList.add('open');
+      // 重置选中
+      window._selectedContractIdx = null;
+      updateConfirmBtn();
+    }
+
+    function closeContractDrawer() {
+      document.getElementById('drawerMask').classList.remove('open');
+      document.getElementById('drawerPanel').classList.remove('open');
+    }
+
+    function selectContractRow(tr, idx) {
+      // 设置单选
+      document.querySelectorAll('#drawerTbody tr').forEach(function(r) { r.classList.remove('selected'); });
+      tr.classList.add('selected');
+      var radio = tr.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+      window._selectedContractIdx = idx;
+      updateConfirmBtn();
+    }
+
+    function updateConfirmBtn() {
+      var btn = document.getElementById('drawerConfirmBtn');
+      if (btn) btn.disabled = (window._selectedContractIdx === null || window._selectedContractIdx === undefined);
+    }
+
+    // 抽屉底部按钮
+    function drawerCancel() {
+      closeContractDrawer();
+    }
+    function drawerSkip() {
+      // v1.7.99.115 暂不关联：跳到无合同版新增页（无合同信息+无业务线信息）
+      closeContractDrawer();
+      Utils.toast('暂不关联合同，跳转到无合同版新增页', 'info');
+      setTimeout(function() { window.location.href = './warehouse-inbound-overflow-new.html?type=purchase'; }, 500);
+    }
+    function drawerConfirm() {
+      var idx = window._selectedContractIdx;
+      if (idx === null || idx === undefined) {
+        Utils.toast('请先选择一个采购合同', 'warning');
+        return;
+      }
+      var c = CONTRACT_MOCK[idx];
+      closeContractDrawer();
+      Utils.toast('已选择合同：' + c.contractNo, 'success');
+      // 跳转到新增入库页（携带合同号）
+      setTimeout(function() {
+        window.location.href = './warehouse-inbound-new.html?type=purchase&contract=' + encodeURIComponent(c.contractNo);
+      }, 500);
+    }
+  </script>
+  </div>
+  <!-- /main-content -->
+
+  <!-- v1.7.99.115：抽屉式弹层（关联采购合同 - 删 v1.7.99.100 线下合同/线上合同 tab） -->
+  <div class="drawer-mask" id="drawerMask" onclick="closeContractDrawer()"></div>
+  <div class="drawer-panel" id="drawerPanel">
+    <div class="drawer-header">
+      <span class="drawer-title">关联采购合同</span>
+      <button class="drawer-close" onclick="closeContractDrawer()">×</button>
+    </div>
+    <div class="drawer-body">
+      <!-- 8 字段筛选区（v1.7.99.100 按图 5：编号/企业名称/收货人/运输方式/品名/业务类型/签订日期/合同状态） -->
+      <div class="drawer-filter-grid">
+        <div class="dfilter-cell">
+          <label>编号</label>
+          <input type="text" placeholder="请输入订单或合同编号">
+        </div>
+        <div class="dfilter-cell">
+          <label>企业名称</label>
+          <input type="text" placeholder="请输入企业名称">
+        </div>
+        <div class="dfilter-cell">
+          <label>收货人</label>
+          <input type="text" placeholder="请输入收货人">
+        </div>
+        <div class="dfilter-cell">
+          <label>运输方式</label>
+          <select><option value="">请选择运输方式</option><option>汽运</option><option>火运</option><option>船运</option></select>
+        </div>
+        <div class="dfilter-cell">
+          <label>品名</label>
+          <input type="text" placeholder="请输入品名">
+        </div>
+        <div class="dfilter-cell">
+          <label>业务类型</label>
+          <select><option value="">请选择业务类型</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+        </div>
+        <div class="dfilter-cell dfilter-full">
+          <label>签订日期</label>
+          <div class="dfilter-date">
+            <input type="text" placeholder="开始时间">
+            <span style="color: var(--text-tertiary);">~</span>
+            <input type="text" placeholder="结束时间">
+          </div>
+        </div>
+        <div class="dfilter-cell">
+          <label>合同状态</label>
+          <select><option value="">请选择合同状态</option><option>待盖章</option><option>已双签</option><option>执行中</option><option>已完结</option></select>
+        </div>
+      </div>
+      <!-- 9 列表格（v1.7.99.100 按图 5：合同编号/卖方企业名称/收货人/交货期限/签订日期/运输方式/数量/基准价格/品名） -->
+      <div class="drawer-table-wrap">
+        <table class="drawer-table">
+          <colgroup>
+            <col class="col-radio" style="width: 4%;">
+            <col style="width: 16%;"><col style="width: 15%;"><col style="width: 15%;"><col style="width: 14%;"><col style="width: 10%;">
+            <col style="width: 7%;"><col style="width: 7%;"><col style="width: 7%;"><col style="width: 5%;">
+          </colgroup>
+          <thead>
+            <tr>
+              <th></th>
+              <th>合同编号</th>
+              <th>卖方企业名称</th>
+              <th>收货人</th>
+              <th>交货期限</th>
+              <th>签订日期</th>
+              <th>运输方式</th>
+              <th>数量</th>
+              <th>基准价格</th>
+              <th>品名</th>
+            </tr>
+          </thead>
+          <tbody id="drawerTbody">
+            <!-- JS 渲染 -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-secondary" onclick="drawerCancel()">取消</button>
+      <button class="btn-secondary" onclick="drawerSkip()">暂不关联</button>
+      <button class="btn-primary" id="drawerConfirmBtn" disabled onclick="drawerConfirm()">确定</button>
+    </div>
+  </div>
+
+  <!-- v1.7.99.117：盘盈入库侧边抽屉（实物盘盈无合同关联，点确认进入跳到无合同版新增页） -->
+  <div class="drawer-mask" id="inventoryProfitMask" onclick="closeInventoryProfitDrawer()"></div>
+  <div class="drawer-panel" id="inventoryProfitPanel" style="width: 440px; max-width: 90vw;">
+    <div class="drawer-header">
+      <span class="drawer-title">盘盈入库</span>
+      <button class="drawer-close" onclick="closeInventoryProfitDrawer()">×</button>
+    </div>
+    <div class="drawer-body" style="display: flex; flex-direction: column; gap: 16px;">
+      <!-- 提示标题 -->
+      <div style="display: flex; align-items: center; gap: 10px; padding: 14px 16px; background: #EFF6FF; border-left: 3px solid var(--color-primary); border-radius: 4px;">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="color: var(--color-primary); flex-shrink: 0;"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>
+        <span style="font-size: 14px; color: var(--text-primary); font-weight: 500;">实物盘盈无合同关联</span>
+      </div>
+      <!-- 说明文字 -->
+      <div style="font-size: 13px; color: var(--text-secondary); line-height: 1.8; padding: 0 4px;">
+        盘盈入库由<strong>实物盘盈生成入库单</strong>（如仓库盘点发现账面数量少于实物数量），<strong style="color: #DC2626;">不关联采购合同</strong>，<strong style="color: #DC2626;">不联动业务线</strong>。点击"确认进入"将跳转至无合同版新增页。
+      </div>
+      <!-- 业务字段预览 -->
+      <div style="background: #F8FAFC; border-radius: 6px; padding: 14px 16px; display: flex; flex-direction: column; gap: 10px;">
+        <div style="font-size: 12px; color: var(--text-tertiary); font-weight: 500;">后续填写字段（无合同版新增页）</div>
+        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 16px; font-size: 12px;">
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">入库数量</span><span style="color: var(--text-primary);">*</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">入库单价</span><span style="color: var(--text-primary);">*</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">入库日期</span><span style="color: var(--text-primary);">*</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">品名</span><span style="color: var(--text-primary);">*</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">发货单位</span><span style="color: var(--text-primary);">*</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">收货单位</span><span style="color: var(--text-primary);">*</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">仓房&货位</span></div>
+          <div style="display: flex; gap: 6px;"><span style="color: var(--text-tertiary);">运输方式</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn-secondary" onclick="closeInventoryProfitDrawer()">取消</button>
+      <button class="btn-primary" onclick="inventoryProfitConfirm()">确认进入</button>
+    </div>
+  </div>
+
+  <script>
+    // v1.7.99.115 删 v1.7.99.100 抽屉 tab 切换函数（线下合同/线上合同 tab 整段删除）
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

@@ -1,0 +1,639 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增采购结算单 - 豫港通 v1.7.99.70</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px 80px 24px; }
+    /* 区块通用 */
+    .info-section { background: #fff; border-radius: 8px; margin-bottom: 16px; border: 1px solid var(--border-light); }
+    .info-section-head {
+      padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .info-section-head::before {
+      content: ''; display: inline-block; width: 3px; height: 14px;
+      background: var(--color-primary); border-radius: 2px;
+    }
+    .info-section-body { padding: 20px; }
+    /* 合同信息 11 字段 3 列 4 行 */
+    .contract-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 14px 20px; align-items: center;
+    }
+    .contract-item { display: flex; gap: 8px; align-items: center; font-size: 13px; }
+    .contract-item .label { color: var(--text-tertiary); flex-shrink: 0; }
+    .contract-item .value { color: var(--text-primary); font-weight: 500; }
+    /* 选择结算货物 5 列表格 */
+    .settle-goods-table { width: 100%; border-collapse: collapse; }
+    .settle-goods-table th, .settle-goods-table td {
+      padding: 10px 12px; font-size: 13px; text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .settle-goods-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .settle-goods-table .col-num { font-family: var(--font-mono); color: var(--color-primary); }
+    .settle-goods-table input[type=checkbox] { accent-color: var(--color-primary); cursor: pointer; }
+    .settle-goods-table .tag-effective { background: #D1FAE5; color: #047857; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .settle-summary { padding: 10px 16px; font-size: 13px; color: var(--text-secondary); background: var(--bg-page); border-bottom-left-radius: 8px; border-bottom-right-radius: 8px; }
+    .settle-summary .num { color: var(--text-primary); font-weight: 500; }
+    /* 结算单信息 6 字段 3 列 2 行 */
+    .settle-form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 20px; align-items: start; }
+    .form-field label { display: block; font-size: 13px; color: var(--text-primary); margin-bottom: 6px; }
+    .form-field label .required { color: #DC2626; margin-right: 2px; }
+    .form-field input, .form-field textarea, .form-field select {
+      width: 100%; padding: 6px 10px; font-size: 13px;
+      border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; color: var(--text-primary);
+    }
+    .form-field input[readonly] { background: #F8FAFC; color: var(--text-tertiary); }
+    .form-field .yellow { background: #FEF9E7; }
+    .form-field .purple { background: #F5F3FF; }
+    .form-field .full { grid-column: 1 / -1; }
+    .form-field textarea { min-height: 80px; resize: vertical; line-height: 1.5; }
+    /* 紫色签章状态下拉触发器（v1.7.99.70 仿 margin-adjust .adjust-type-trigger） */
+    .sign-status-select { position: relative; display: inline-block; width: 100%; }
+    .sign-status-trigger {
+      display: flex; align-items: center; justify-content: space-between;
+      width: 100%; padding: 6px 10px; font-size: 13px;
+      border: 1px solid #7C3AED; border-radius: 4px; background: #fff; cursor: pointer;
+    }
+    .sign-status-trigger .help-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #7C3AED; color: #fff; font-size: 10px; font-weight: 700;
+      margin-left: 6px; flex-shrink: 0;
+    }
+    .sign-status-trigger .arrow {
+      display: inline-block; width: 8px; height: 8px;
+      border-right: 1.5px solid #7C3AED; border-bottom: 1.5px solid #7C3AED;
+      transform: rotate(45deg); margin-left: 6px;
+    }
+    .sign-status-dropdown {
+      position: absolute; top: calc(100% + 2px); left: 0; right: 0;
+      background: #fff; border: 1px solid var(--border-light); border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.08); z-index: 100; display: none;
+    }
+    .sign-status-dropdown.open { display: block; }
+    .sign-status-dropdown .item {
+      padding: 8px 12px; cursor: pointer; font-size: 13px; color: var(--text-primary);
+    }
+    .sign-status-dropdown .item:hover { background: #F3F4F6; }
+    .sign-status-dropdown .item.active { background: #EDE9FE; color: #7C3AED; }
+    /* 蓝底附件提示条 */
+    .tip-box {
+      padding: 10px 16px; background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 4px; font-size: 13px; color: #1E40AF; margin-bottom: 16px;
+    }
+    .tip-box .label { font-weight: 600; margin-right: 8px; }
+    /* 附件单据类型/文件名表 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td {
+      padding: 10px 14px; font-size: 13px; text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .attach-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .attach-table .upload-btn {
+      padding: 4px 14px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 12px; color: var(--color-primary);
+    }
+    .attach-table .upload-btn:hover { border-color: var(--color-primary); }
+    .attach-table .file-item { color: var(--color-primary); cursor: pointer; }
+    .attach-table .file-time { color: var(--text-tertiary); font-size: 12px; margin-left: 8px; }
+    .attach-table .file-remove { color: #DC2626; cursor: pointer; margin-left: 8px; }
+    /* 底部按钮 */
+    .form-footer {
+      display: flex; justify-content: center; gap: 12px; padding: 20px 0 40px 0;
+    }
+    .form-footer .btn-cancel {
+      padding: 8px 24px; border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; cursor: pointer; font-size: 14px;
+    }
+    .form-footer .btn-submit {
+      padding: 8px 24px; border: 0; border-radius: 4px;
+      background: #1E40AF; color: #fff; cursor: pointer; font-size: 14px;
+    }
+    .form-footer .btn-submit:hover { background: #1D4ED8; }
+    /* 二次确认弹窗 */
+    .modal-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+      display: none; align-items: center; justify-content: center; z-index: 200;
+    }
+    .modal-mask.open { display: flex; }
+    .modal {
+      width: 480px; background: #fff; border-radius: 8px; overflow: hidden;
+    }
+    .modal-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 15px; font-weight: 600;
+    }
+    .modal-body { padding: 20px; font-size: 14px; color: var(--text-primary); line-height: 1.6; }
+    .modal-body .warning-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      background: #F59E0B; color: #fff; font-weight: 700; font-size: 14px;
+      margin-right: 8px; vertical-align: middle;
+    }
+    .modal-body .description { color: var(--text-secondary); font-size: 13px; margin-top: 8px; }
+    .modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+    .modal-footer .btn-default { padding: 6px 16px; background: #fff; border: 1px solid var(--border-default); border-radius: 4px; cursor: pointer; font-size: 13px; }
+    .modal-footer .btn-primary { padding: 6px 16px; background: #1E40AF; border: 0; color: #fff; border-radius: 4px; cursor: pointer; font-size: 13px; }
+    /* 提交后 tips 浮层 */
+    .tips-toast {
+      position: fixed; top: 24px; left: 50%; transform: translateX(-50%);
+      background: #10B981; color: #fff; padding: 12px 24px; border-radius: 6px;
+      font-size: 14px; z-index: 300; box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      display: none;
+    }
+    .tips-toast.show { display: block; animation: fadeOut 3s forwards; }
+    @keyframes fadeOut {
+      0% { opacity: 1; }
+      70% { opacity: 1; }
+      100% { opacity: 0; }
+    }
+    /* 1440px 抽屉（v1.7.99.70 仿 margin-adjust） */
+    .drawer-mask {
+      position: fixed; inset: 0; background: rgba(0,0,0,0.45);
+      display: none; z-index: 150;
+    }
+    .drawer-mask.open { display: block; }
+    .drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 1440px; max-width: 90vw; background: #fff;
+      display: none; flex-direction: column;
+      z-index: 200; /* v1.7.99.75 修复：抽屉必须在蒙层（z-index 150）之上 */
+    }
+    /* v1.7.99.76 修复：去掉 left: 50% — 之前 left:50% + right:0 + width:1440 = drawer 右边界 2400 超出 viewport 1920 共 480px，导致 footer 取消/确定按钮（justify-content: flex-end）在视口外看不见。其它抽屉（margin-adjust / contract-* / goods-transfer-*）都没 left:50% */
+    .drawer.open { display: flex; }
+    .drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .drawer-header .title { font-size: 16px; font-weight: 600; }
+    .drawer-header .close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .drawer-chips { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .drawer-chips .chip {
+      padding: 4px 12px; border: 1px solid #1E40AF; border-radius: 14px;
+      color: #1E40AF; font-size: 12px; background: #EFF6FF; cursor: pointer;
+    }
+    .drawer-filter {
+      display: grid; grid-template-columns: repeat(3, 1fr);
+      gap: 12px 20px; margin-bottom: 16px;
+    }
+    .drawer-filter .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-filter .filter-item .label { font-size: 12px; color: var(--text-tertiary); }
+    .drawer-filter .filter-item .input,
+    .drawer-filter .filter-item .select {
+      padding: 6px 10px; border: 1px solid var(--border-default); border-radius: 4px; font-size: 13px;
+    }
+    .drawer-actions { display: flex; gap: 8px; justify-content: flex-end; margin-bottom: 16px; }
+    .drawer-table { width: 100%; border-collapse: collapse; }
+    .drawer-table th, .drawer-table td {
+      padding: 10px 12px; font-size: 13px; text-align: left;
+      border-bottom: 1px solid var(--border-light);
+    }
+    .drawer-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .drawer-table input[type=radio] { accent-color: var(--color-primary); cursor: pointer; }
+    .drawer-pagination { display: flex; justify-content: space-between; align-items: center; padding: 12px 0; }
+    .drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-light);
+      display: flex; justify-content: flex-end; gap: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <div class="breadcrumb-inline">
+          <a href="#">结算管理</a>
+          <span class="sep">/</span>
+          <a href="./settlement-purchase.html">采购结算</a>
+          <span class="sep">/</span>
+          <span class="current">新增采购结算</span>
+        </div>
+
+        <h1 class="page-h1" style="margin: 0 0 16px 0;">新增采购结算单</h1>
+
+        <!-- 区块 1：采购订单/单批次合同信息（v1.7.99.70 11 字段 3 列 4 行） -->
+        <div class="info-section">
+          <div class="info-section-head">采购订单/单批次合同信息</div>
+          <div class="info-section-body">
+            <div class="contract-grid" id="contractGrid">
+              <div class="contract-item"><span class="label">卖方企业：</span><span class="value">河南中豫港通供应链管理有限公司</span></div>
+              <div class="contract-item"><span class="label">买方企业：</span><span class="value">郑州信必达供应链管理有限公司</span></div>
+              <div class="contract-item"><span class="label">品名：</span><span class="value">进口木薯淀粉</span></div>
+              <div class="contract-item"><span class="label">计量单位：</span><span class="value">吨</span></div>
+              <div class="contract-item"><span class="label">合同单价（元/吨）：</span><span class="value">3,400</span></div>
+              <div class="contract-item"><span class="label">合同数量（吨）：</span><span class="value">20,000</span></div>
+              <div class="contract-item"><span class="label">税率（%）：</span><span class="value">13</span></div>
+              <div class="contract-item"><span class="label">签订日期：</span><span class="value">2026-01-22</span></div>
+              <div class="contract-item"><span class="label">合同交货期限：</span><span class="value">2026-01-22~2026-12-31</span></div>
+              <div class="contract-item"><span class="label">运输方式：</span><span class="value">火运</span></div>
+              <div class="contract-item"><span class="label">业务实际负责人：</span><span class="value">张三-13328888888</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：选择结算货物（v1.7.99.70 带 checkbox 表格 + 5 行 mock） -->
+        <div class="info-section">
+          <div class="info-section-head">选择结算货物</div>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="settle-goods-table">
+              <thead>
+                <tr>
+                  <th style="width: 6%;"></th>
+                  <th style="width: 28%;">货转编号</th>
+                  <th style="width: 12%;text-align: right;">货转数量（吨）</th>
+                  <th style="width: 12%;">货转日期</th>
+                  <th style="width: 26%;">收货人</th>
+                  <th style="width: 12%;">状态</th>
+                </tr>
+              </thead>
+              <tbody id="settleGoodsTbody"></tbody>
+            </table>
+            <div class="settle-summary" id="settleSummary">已选 0 个货物，黑字 0吨，重量：0吨，车数：0</div>
+          </div>
+        </div>
+
+        <!-- 区块 3：结算单信息（v1.7.99.70 6 字段 3 列 2 行 + 紫色签章下拉） -->
+        <div class="info-section">
+          <div class="info-section-head">结算单信息</div>
+          <div class="info-section-body">
+            <div class="settle-form-grid">
+              <div class="form-field">
+                <label>结算单号</label>
+                <input type="text" placeholder="请输入结算单号">
+              </div>
+              <div class="form-field">
+                <label><span class="required">*</span>结算日期</label>
+                <input type="text" class="yellow" placeholder="请选择结算日期">
+              </div>
+              <div class="form-field">
+                <label><span class="required">*</span>供货周期</label>
+                <input type="text" class="yellow" placeholder="请选择供货周期">
+              </div>
+              <div class="form-field">
+                <label><span class="required">*</span>结算金额（元）</label>
+                <input type="text" placeholder="请输入结算金额">
+              </div>
+              <div class="form-field">
+                <label><span class="required">*</span>结算数量（吨）</label>
+                <input type="text" placeholder="请输入结算数量">
+              </div>
+              <div class="form-field">
+                <label><span class="required">*</span>结算单价（元/吨）<span style="display:inline-flex;align-items:center;justify-content:center;width:14px;height:14px;border-radius:50%;background:#1E40AF;color:#fff;font-size:10px;margin-left:4px;">?</span></label>
+                <input type="text" class="purple" placeholder="-">
+              </div>
+              <div class="form-field">
+                <label><span class="required">*</span>签章状态</label>
+                <div class="sign-status-select">
+                  <div class="sign-status-trigger" onclick="toggleSignDropdown(event)">
+                    <span id="signStatusLabel">请选择签章状态</span>
+                    <span style="display:flex;align-items:center;">
+                      <span class="help-icon">?</span>
+                      <span class="arrow"></span>
+                    </span>
+                  </div>
+                  <div class="sign-status-dropdown" id="signStatusDropdown">
+                    <div class="item" onclick="pickSignStatus('待盖章', this)">待盖章</div>
+                    <div class="item" onclick="pickSignStatus('双签', this)">双签</div>
+                  </div>
+                </div>
+              </div>
+              <div class="form-field full">
+                <label>备注</label>
+                <textarea placeholder="请输入备注，最多200字"></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 4：附件（v1.7.99.70 签章状态联动单据类型） -->
+        <div class="info-section">
+          <div class="info-section-head">附件</div>
+          <div class="info-section-body">
+            <div class="tip-box">
+              <span class="label">附件上传要求：</span>可支持格式为 png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100MB 的文件。
+            </div>
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 30%;">单据类型</th>
+                  <th style="width: 50%;">文件名</th>
+                  <th style="width: 20%;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="attachTbody">
+                <tr>
+                  <td><span class="required">*</span><span id="attachTypeLabel">待盖章附件</span></td>
+                  <td>
+                    <span class="file-item">44354657687.pdf</span>
+                    <span class="file-time">2023-12-12 12:23:32</span>
+                    <span class="file-remove" onclick="this.parentElement.innerHTML='<button class=\"upload-btn\" onclick=\"alert(\'上传\')\">+ 上传</button>'">×</span>
+                  </td>
+                  <td><button class="upload-btn" onclick="alert('预览/重新上传')">重新上传</button></td>
+                </tr>
+                <tr>
+                  <td>其他附件</td>
+                  <td><button class="upload-btn" onclick="alert('上传')">+ 上传</button></td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="form-footer">
+          <button class="btn-cancel" onclick="confirmCancel()">取消</button>
+          <button class="btn-submit" onclick="confirmSubmit()">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 选择采购销售订单/单批次合同 1440px 抽屉（v1.7.99.70 默认打开） -->
+  <div class="drawer-mask open" id="drawerMask"></div>
+  <div class="drawer open" id="drawer">
+    <div class="drawer-header">
+      <span class="title">选择采购销售订单/单批次合同</span>
+      <span class="close" onclick="closeDrawer()">×</span>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-chips">
+        <span class="chip">DLXLC001</span>
+        <span class="chip">FFHH002</span>
+        <span class="chip" style="background: #fff; border-style: dashed;">+ 添加条件</span>
+      </div>
+      <div class="drawer-filter">
+        <div class="filter-item"><span class="label">订单/单批次合同编号</span><input class="input" placeholder="请输入订单/单批次合同编号"></div>
+        <div class="filter-item"><span class="label">卖方企业</span><input class="input" placeholder="请输入卖方企业"></div>
+        <div class="filter-item"><span class="label">买方企业</span><input class="input" placeholder="请输入买方企业"></div>
+        <div class="filter-item"><span class="label">品名</span><input class="input" placeholder="请输入品名"></div>
+        <div class="filter-item"><span class="label">签订日期</span><input class="input" placeholder="请选择日期范围"></div>
+        <div class="filter-item" style="justify-content: flex-end; flex-direction: row; align-items: flex-end; gap: 8px;">
+          <button class="btn btn-primary btn-sm" onclick="closeDrawer()">查询</button>
+          <button class="btn btn-default btn-sm">重置</button>
+        </div>
+      </div>
+      <table class="drawer-table">
+        <thead>
+          <tr>
+            <th style="width: 6%;"></th>
+            <th style="width: 22%;">订单/单批次合同编号</th>
+            <th style="width: 18%;">卖方企业</th>
+            <th style="width: 12%;">业务类型</th>
+            <th style="width: 12%;">品名</th>
+            <th style="width: 10%;text-align: right;">合同数量（吨）</th>
+            <th style="width: 10%;text-align: right;">合同单价（元）</th>
+            <th style="width: 10%;">签订日期</th>
+          </tr>
+        </thead>
+        <tbody id="drawerTbody"></tbody>
+      </table>
+      <div class="drawer-pagination">
+        <span style="font-size: 13px; color: var(--text-secondary);">共 6 条记录 · 第 1 / 1 页</span>
+        <div style="display: flex; gap: 4px; align-items: center;">
+          <button class="btn btn-default btn-sm" style="padding: 4px 8px;">‹</button>
+          <button class="btn btn-primary btn-sm" style="padding: 4px 10px;">1</button>
+          <button class="btn btn-default btn-sm" style="padding: 4px 8px;">›</button>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default btn-sm" onclick="closeDrawer()">取消</button>
+      <button class="btn btn-primary btn-sm" onclick="confirmContract()">确定</button>
+    </div>
+  </div>
+
+  <!-- 二次确认弹窗（v1.7.99.70 3 种） -->
+  <div class="modal-mask" id="cancelModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span>取消确认</span>
+        <span class="close" onclick="closeModal('cancelModal')" style="cursor:pointer; color: var(--text-tertiary);">×</span>
+      </div>
+      <div class="modal-body">
+        <span class="warning-icon">!</span>确定要进行取消操作吗？
+        <div class="description">取消后，结算单不会被保存。</div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('cancelModal')">取消</button>
+        <button class="btn-primary" onclick="doCancel()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="submitModal">
+    <div class="modal">
+      <div class="modal-header">
+        <span id="submitModalTitle">提交确认</span>
+        <span class="close" onclick="closeModal('submitModal')" style="cursor:pointer; color: var(--text-tertiary);">×</span>
+      </div>
+      <div class="modal-body">
+        <span class="warning-icon">!</span><span id="submitModalText">请确认信息填写完成并提交？</span>
+        <div class="description" id="submitModalDesc"></div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn-default" onclick="closeModal('submitModal')">取消</button>
+        <button class="btn-primary" onclick="doSubmit()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 提交后 tips 浮层 -->
+  <div class="tips-toast" id="tipsToast"></div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    /* ========== 1. 采购合同抽屉 mock（v1.7.99.70） ========== */
+    const PURCHASE_CONTRACTS_MOCK = [
+      { no: 'DLXLC001', seller: '河南中豫港通供应链管理有限公司', bizType: '存货类', product: '进口木薯淀粉', qty: '20,000', price: '3,400', date: '2026-01-22' },
+      { no: 'FFHH002', seller: '河津腾博煤焦有限公司', bizType: '订单类', product: '木薯淀粉', qty: '18,000', price: '3,400', date: '2026-01-15' },
+      { no: 'GTGYL-XSXS-20260105-002', seller: '山东金粮农业有限公司', bizType: '存货类', product: '谷物', qty: '15,000', price: '2,800', date: '2026-01-05' },
+      { no: 'GTGYL-XSXS-20260110-003', seller: '河北粮产股份有限公司', bizType: '订单类', product: '玉米', qty: '20,000', price: '2,600', date: '2026-01-10' },
+      { no: 'GTGYL-XSXS-20260115-004', seller: '重庆基创建设开发有限公司', bizType: '预付款类', product: '木薯淀粉', qty: '10,000', price: '3,200', date: '2026-01-15' },
+      { no: 'GTGYL-XSXS-20260120-005', seller: '郑州信必达供应链管理有限公司', bizType: '存货类', product: '糖粉', qty: '20,000', price: '6,500', date: '2026-01-20' },
+    ];
+    let selectedContract = null;
+
+    function renderContractTable() {
+      const tb = document.getElementById('drawerTbody');
+      tb.innerHTML = PURCHASE_CONTRACTS_MOCK.map((c, i) => `
+        <tr>
+          <td><input type="radio" name="contractRadio" value="${i}" onclick="selectedContract = ${i}"></td>
+          <td class="col-num">${c.no}</td>
+          <td>${c.seller}</td>
+          <td>${c.bizType}</td>
+          <td>${c.product}</td>
+          <td style="text-align: right;">${c.qty}</td>
+          <td style="text-align: right;">${c.price}</td>
+          <td>${c.date}</td>
+        </tr>
+      `).join('');
+    }
+
+    function openDrawer() {
+      document.getElementById('drawerMask').classList.add('open');
+      document.getElementById('drawer').classList.add('open');
+    }
+    function closeDrawer() {
+      if (!confirm('不选择合同将无法继续填写结算信息，确定要返回吗？')) return;
+      document.getElementById('drawerMask').classList.remove('open');
+      document.getElementById('drawer').classList.remove('open');
+      window.location.href = './settlement-purchase.html';
+    }
+    function confirmContract() {
+      if (selectedContract === null) { alert('请先选择一个合同'); return; }
+      // 关闭抽屉
+      document.getElementById('drawerMask').classList.remove('open');
+      document.getElementById('drawer').classList.remove('open');
+      // 渲染 5 行已生效货转
+      renderSettleGoods();
+    }
+
+    /* ========== 2. 结算货物（v1.7.99.70 5 行 mock） ========== */
+    const SETTLE_GOODS_MOCK = [
+      { no: 'TYYGJ-HNRH-202306-008-202306120032', qty: '2,898', date: '2023-05-06', receiver: '天宇潇国际贸易集团有限公司', status: '已生效' },
+      { no: 'TYYGJ-HNRH-202306-008-202306120032', qty: '2,898', date: '2023-05-06', receiver: '天宇潇国际贸易集团有限公司', status: '已生效' },
+      { no: 'TYYGJ-HNRH-202306-008-202306120032', qty: '2,898', date: '2023-05-06', receiver: '天宇潇国际贸易集团有限公司', status: '已生效' },
+      { no: 'TYYGJ-HNRH-202306-008-202306120032', qty: '2,898', date: '2023-05-06', receiver: '天宇潇国际贸易集团有限公司', status: '已生效' },
+      { no: 'TYYGJ-HNRH-202306-008-202306120032', qty: '2,898', date: '2023-05-06', receiver: '天宇潇国际贸易集团有限公司', status: '已生效' },
+    ];
+    function renderSettleGoods() {
+      const tb = document.getElementById('settleGoodsTbody');
+      tb.innerHTML = SETTLE_GOODS_MOCK.map((g, i) => `
+        <tr>
+          <td><input type="checkbox" data-qty="${g.qty}" onchange="updateSummary()"></td>
+          <td class="col-num">${g.no}</td>
+          <td style="text-align: right;">${g.qty}</td>
+          <td>${g.date}</td>
+          <td>${g.receiver}</td>
+          <td><span class="tag-effective">${g.status}</span></td>
+        </tr>
+      `).join('');
+    }
+    function updateSummary() {
+      const cbs = document.querySelectorAll('#settleGoodsTbody input[type=checkbox]:checked');
+      let count = cbs.length, total = 0;
+      cbs.forEach(cb => { total += parseFloat(cb.dataset.qty.replace(/,/g, '')) || 0; });
+      document.getElementById('settleSummary').innerHTML = `已选 <span class="num">${count}</span> 个货物，黑字 <span class="num">${total.toLocaleString()}</span>吨，重量：<span class="num">${total.toLocaleString()}</span>吨，车数：<span class="num">156</span>`;
+    }
+
+    /* ========== 3. 紫色签章状态下拉（v1.7.99.70） ========== */
+    let currentSignStatus = '';
+    function toggleSignDropdown(e) {
+      if (e) e.stopPropagation();
+      document.getElementById('signStatusDropdown').classList.toggle('open');
+    }
+    function pickSignStatus(v, el) {
+      currentSignStatus = v;
+      document.getElementById('signStatusLabel').textContent = v;
+      // 高亮 active
+      document.querySelectorAll('.sign-status-dropdown .item').forEach(i => i.classList.remove('active'));
+      el.classList.add('active');
+      document.getElementById('signStatusDropdown').classList.remove('open');
+      // 联动附件单据类型
+      const attachType = document.getElementById('attachTypeLabel');
+      if (v === '待盖章') attachType.textContent = '待盖章附件';
+      else if (v === '双签') attachType.textContent = '已生效附件';
+    }
+    document.addEventListener('click', () => {
+      const dd = document.getElementById('signStatusDropdown');
+      if (dd) dd.classList.remove('open');
+    });
+
+    /* ========== 4. 3 种二次确认弹窗（v1.7.99.70） ========== */
+    function openModal(id) { document.getElementById(id).classList.add('open'); }
+    function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+    function confirmCancel() { openModal('cancelModal'); }
+    function doCancel() { closeModal('cancelModal'); window.location.href = './settlement-purchase.html'; }
+    function confirmSubmit() {
+      if (!currentSignStatus) { alert('请先选择签章状态'); return; }
+      // 动态切换文案
+      const text = document.getElementById('submitModalText');
+      const desc = document.getElementById('submitModalDesc');
+      const title = document.getElementById('submitModalTitle');
+      if (currentSignStatus === '待盖章') {
+        title.textContent = '待盖章弹窗';
+        text.textContent = '请确认信息填写完成并提交？';
+        desc.textContent = '提交后，结算单将推送钉钉进行审核，审核通过后，将线下盖章的结算单上传到系统。';
+      } else if (currentSignStatus === '双签') {
+        title.textContent = '驳回弹窗';
+        text.textContent = '请确认信息填写完成并提交？';
+        desc.textContent = '当前结算单无需盖章。提交后，将直接生效。';
+      }
+      openModal('submitModal');
+    }
+    function doSubmit() {
+      closeModal('submitModal');
+      // 3 种提交后 tips
+      const tip = document.getElementById('tipsToast');
+      if (currentSignStatus === '待盖章') {
+        tip.textContent = '结算单已推送钉钉审核，状态变更为审批中';
+        tip.style.background = '#1E40AF';
+      } else if (currentSignStatus === '双签') {
+        tip.textContent = '结算单已生效，状态变更为已生效';
+        tip.style.background = '#10B981';
+      }
+      tip.classList.add('show');
+      setTimeout(() => { tip.classList.remove('show'); window.location.href = './settlement-purchase.html'; }, 2500);
+    }
+
+    /* ========== 5. 启动（v1.7.99.70 默认打开抽屉） ========== */
+    document.addEventListener('DOMContentLoaded', () => {
+      renderContractTable();
+      openDrawer();
+    });
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

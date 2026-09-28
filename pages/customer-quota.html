@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>额度管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+                    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;"><div class="page-header">
+        <div class="breadcrumb">
+          <span>准入管理</span>
+          <span class="separator">/</span>
+          <span>客户管理</span>
+          <span class="separator">/</span>
+          <span class="current">额度管理</span>
+        </div>
+        <h1 class="page-title">额度管理</h1>
+      </div>
+
+      <div class="filter-bar">
+        <div class="filter-item">
+          <div class="filter-item-label">客户名称</div>
+          <input type="text" class="input" placeholder="请输入客户名称">
+        </div>
+        <div class="filter-item">
+          <div class="filter-item-label">客户分类</div>
+          <select class="select"><option>全部</option><option>上游企业</option><option>下游企业</option><option>第三方物流</option><option>第三方仓储</option></select>
+        </div>
+        <div class="filter-item">
+          <div class="filter-item-label">额度状态</div>
+          <select class="select"><option>全部</option><option>正常</option><option>冻结</option><option>已用尽</option></select>
+        </div>
+        <div class="filter-actions">
+          <button class="btn btn-primary btn-sm">查询</button>
+          <button class="btn btn-secondary btn-sm">重置</button>
+        </div>
+      </div>
+
+      <div style="flex: 1; padding: 16px 24px 24px; overflow-y: auto; background: var(--bg-page);">
+        <div class="card" style="padding: 0;">
+          <div class="table-card">
+            <table class="table">
+              <thead>
+                <tr>
+                  <th>客户名称</th>
+                  <th>客户分类</th>
+                  <th>总额度（元）</th>
+                  <th>已用额度</th>
+                  <th>可用额度</th>
+                  <th>使用率</th>
+                  <th>冻结金额</th>
+                  <th>状态</th>
+                  <th>调整权限</th>
+                  <th>操作</th>
+                </tr>
+              </thead>
+              <tbody id="quotaTbody">
+                <!-- v1.7.99.65：由 JS 渲染（见 QUOTA_MOCK + renderQuotaTable） -->
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="pagination" id="quotaPagination">
+          <div>共 8 条记录 · 第 1 / 1 页</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // ========== v1.7.99.65 真实脱敏 mock 数据（8 行覆盖 4 种状态） ==========
+    var QUOTA_MOCK = [
+      { id: 1, name: '菏泽德坤煤炭有限公司', type: '上游企业', tagCls: 'tag-blue', tagText: '上游', total: 50000000, used: 18750000, status: '正常', auth: '总经办' },
+      { id: 2, name: '河南双汇集团有限责任公司', type: '下游企业', tagCls: 'tag-blue', tagText: '下游', total: 80000000, used: 24000000, status: '正常', auth: '总经办' },
+      { id: 3, name: '中外运国际仓储中心', type: '第三方仓储', tagCls: 'tag-cyan', tagText: '仓储', total: 20000000, used: 17400000, status: '预警', auth: '总经办' },
+      { id: 4, name: '山东金粮农业有限公司', type: '上游企业', tagCls: 'tag-blue', tagText: '上游', total: 30000000, used: 30000000, status: '已用尽', auth: '总经办' },
+      { id: 5, name: '郑州铁龙物流有限公司', type: '第三方物流', tagCls: 'tag-yellow', tagText: '物流', total: 5000000, used: 0, status: '冻结', auth: '—' },
+      { id: 6, name: '国电投河南电力燃料有限公司', type: '下游企业', tagCls: 'tag-blue', tagText: '下游', total: 60000000, used: 12000000, status: '正常', auth: '总经办' },
+      { id: 7, name: '重庆基创建设开发有限公司', type: '下游企业', tagCls: 'tag-blue', tagText: '下游', total: 28000000, used: 25200000, status: '预警', auth: '总经办' },
+      { id: 8, name: '中远海运物流有限公司', type: '第三方物流', tagCls: 'tag-yellow', tagText: '物流', total: 15000000, used: 15000000, status: '已用尽', auth: '总经办' }
+    ];
+
+    var QUOTA_STATUS_META = {
+      '正常':   { cls: 'tag-green',  actions: ['查看', '调整', '冻结'] },
+      '预警':   { cls: 'tag-yellow', actions: ['查看', '调整'] },
+      '已用尽': { cls: 'tag-red',    actions: ['查看', '调整'] },
+      '冻结':   { cls: 'tag-gray',   actions: ['查看', '解冻'] }
+    };
+
+    function fmt(n) { return '¥ ' + n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+    function pct(used, total) { return total === 0 ? 0 : Math.round(used / total * 100); }
+
+    function renderQuotaTable() {
+      var tbody = document.getElementById('quotaTbody');
+      if (!tbody) return;
+      tbody.innerHTML = QUOTA_MOCK.map(function(q) {
+        var meta = QUOTA_STATUS_META[q.status] || QUOTA_STATUS_META['正常'];
+        var avail = q.total - q.used;
+        var availColor = avail <= 0 ? 'var(--color-danger)' : (q.used / q.total > 0.85 ? 'var(--color-warning)' : 'var(--color-success)');
+        var p = pct(q.used, q.total);
+        var barColor = p >= 100 ? 'var(--color-danger)' : (p >= 85 ? 'var(--color-warning)' : 'var(--color-success)');
+        var actionBtns = meta.actions.map(function(act) {
+          if (act === '查看') return '<a href="javascript:void(0)" class="btn-text" onclick="quotaAction(\'查看\', ' + q.id + ')">查看</a>';
+          if (act === '调整') return '<a href="javascript:void(0)" class="btn-text" onclick="quotaAction(\'调整\', ' + q.id + ')">调整</a>';
+          if (act === '冻结') return '<a href="javascript:void(0)" class="btn-text" style="color: var(--color-danger);" onclick="quotaAction(\'冻结\', ' + q.id + ')">冻结</a>';
+          if (act === '解冻') return '<a href="javascript:void(0)" class="btn-text" style="color: var(--color-primary);" onclick="quotaAction(\'解冻\', ' + q.id + ')">解冻</a>';
+          return '<a href="javascript:void(0)">' + act + '</a>';
+        }).join('');
+        return '<tr>'
+          + '<td><div style="font-weight: 500;">' + q.name + '</div><div style="font-size: 12px; color: var(--text-tertiary);">' + q.type + '</div></td>'
+          + '<td><span class="tag ' + q.tagCls + '">' + q.tagText + '</span></td>'
+          + '<td>' + fmt(q.total) + '</td>'
+          + '<td>' + fmt(q.used) + '</td>'
+          + '<td style="color: ' + availColor + '; font-weight: 600;">' + fmt(avail) + '</td>'
+          + '<td><div class="progress" style="width: 80px;"><div class="progress-bar"><div class="progress-fill" style="width: ' + p + '%; background: ' + barColor + ';"></div></div><span class="progress-text">' + p + '%</span></div></td>'
+          + '<td>' + fmt(q.used) + '</td>'
+          + '<td><span class="tag ' + meta.cls + '">' + q.status + '</span></td>'
+          + '<td>' + q.auth + '</td>'
+          + '<td><div class="table-actions">' + actionBtns + '</div></td>'
+          + '</tr>';
+      }).join('');
+    }
+
+    function quotaAction(act, id) {
+      var q = QUOTA_MOCK.find(function(x) { return x.id === id; });
+      if (!q) return;
+      if (act === '冻结') {
+        if (!confirm('确定要冻结【' + q.name + '】的额度吗？\n\n冻结后该客户无法继续使用额度。')) return;
+        q.status = '冻结';
+        Utils.toast('已冻结额度：' + q.name, 'success');
+      } else if (act === '解冻') {
+        q.status = '正常';
+        Utils.toast('已解冻额度：' + q.name, 'success');
+      } else if (act === '调整') {
+        Utils.toast('调整额度：' + q.name + '（弹窗 mock）', 'info');
+      } else if (act === '查看') {
+        Utils.toast('查看额度详情：' + q.name, 'info');
+      }
+      renderQuotaTable();
+    }
+
+    renderQuotaTable();
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

@@ -1,0 +1,352 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>填写发货信息 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    .info-section { background: #fff; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; }
+    .info-section-title {
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+      padding-left: 10px; border-left: 3px solid var(--color-primary);
+      margin-bottom: 16px; line-height: 1.2;
+    }
+    /* 合同信息 readonly 表格（灰色背景） */
+    .readonly-grid { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 12px; column-gap: 24px; font-size: 13px; }
+    .readonly-grid .readonly-cell { display: flex; flex-direction: column; gap: 4px; }
+    .readonly-grid .readonly-label { color: var(--text-tertiary); font-size: 12px; }
+    .readonly-grid .readonly-value {
+      background: #F1F5F9; border-radius: 4px; padding: 8px 12px;
+      color: var(--text-primary); font-weight: 500;
+    }
+    /* 顶部选择合同 */
+    .contract-select-bar { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px; margin-bottom: 16px; display: flex; align-items: center; gap: 16px; }
+    .contract-select-bar label.required { color: var(--color-danger); }
+    /* 发货信息表单 */
+    .form-grid-dispatch { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 16px; column-gap: 24px; font-size: 13px; }
+    .form-grid-dispatch .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-grid-dispatch .form-label { color: var(--text-tertiary); font-size: 12px; }
+    .form-grid-dispatch .form-label .required { color: var(--color-danger); margin-right: 2px; }
+    .form-grid-dispatch .input,
+    .form-grid-dispatch .select { padding: 6px 10px; font-size: 13px; }
+    /* 附件上传行 */
+    .attach-row { display: flex; align-items: center; gap: 16px; padding: 12px 0; border-bottom: 1px solid var(--border-color); }
+    .attach-row:last-child { border-bottom: none; }
+    .attach-row .attach-label { width: 80px; color: var(--text-primary); font-size: 13px; }
+    .attach-row .attach-label .required { color: var(--color-danger); margin-right: 2px; }
+    .attach-row .attach-btn { padding: 4px 12px; background: #fff; border: 1px solid var(--border-color); border-radius: 4px; font-size: 12px; color: var(--text-primary); cursor: pointer; }
+    .attach-row .attach-btn:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    /* 底部按钮 */
+    .form-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 24px; background: #fff; border-radius: 8px; margin-top: 16px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./shipment-out.html">收发货管理</a>
+          <span class="sep">/</span>
+          <a href="./shipment-out.html">发货管理</a>
+          <span class="sep">/</span>
+          <span class="current">填写发货信息</span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="page-h1" style="margin: 14px 0;">填写发货信息</h1>
+
+        <!-- 顶部：选择合同 + 暂不关联 -->
+        <div class="contract-select-bar">
+          <label class="required">*</label>
+          <span style="font-size: 13px; color: var(--text-tertiary);">选择合同</span>
+          <select class="select" style="flex: 1; max-width: 320px;">
+            <option>YL-MSXS-20260127-s</option>
+          </select>
+          <label style="display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--text-tertiary); cursor: pointer;">
+            <input type="checkbox"> 暂不关联
+          </label>
+        </div>
+
+        <!-- 区块 1：合同信息（v1.7.99.54 按图 3：11 字段 readonly 表格） -->
+        <div class="info-section">
+          <div class="info-section-title">合同信息</div>
+          <div class="readonly-grid">
+            <div class="readonly-cell">
+              <div class="readonly-label">合同编号</div>
+              <div class="readonly-value">YL-MSXS-20260127-s</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">订单编号</div>
+              <div class="readonly-value">SKBT202607040003</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">基准价格</div>
+              <div class="readonly-value">3444.830</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">数量</div>
+              <div class="readonly-value">20000 吨</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">交货期限</div>
+              <div class="readonly-value">2026-01-27 ~ 2026-12-31</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">运输方式</div>
+              <div class="readonly-value">火运</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">交货方式</div>
+              <div class="readonly-value"></div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">发站</div>
+              <div class="readonly-value">万泰站</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">到站</div>
+              <div class="readonly-value">新郑</div>
+            </div>
+            <div class="readonly-cell">
+              <div class="readonly-label">收货人</div>
+              <div class="readonly-value">河南中豫港通供应链管理有限公司</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：发货信息（v1.7.99.165 4 状态机：火运+汽运/火运/汽运/船运 + 班列信息下拉） -->
+        <div class="info-section">
+          <div class="info-section-title">发货信息</div>
+          <div class="form-grid-dispatch">
+            <div class="form-field">
+              <label class="form-label"><span class="required">*</span>运输方式</label>
+              <select class="select" id="transportMode" onchange="onTransportModeChange()">
+                <option value="rail-truck">火运+汽运</option>
+                <option value="rail">火运</option>
+                <option value="truck">汽运</option>
+                <option value="ship">船运</option>
+              </select>
+            </div>
+
+            <!-- 班列名称（仅火运 / 火运+汽运 显示，*必填） -->
+            <div class="form-field" data-only="rail-truck,rail" style="grid-column: span 2;">
+              <label class="form-label"><span class="required">*</span>班列名称</label>
+              <select class="select">
+                <option>国内班列</option>
+                <option>中欧班列-东线线路</option>
+                <option>中欧班列-欧盟线路</option>
+                <option>中欧班列-中俄线路</option>
+                <option>中欧班列-中亚线路</option>
+              </select>
+            </div>
+
+            <!-- 汽运：发货批次（单批次/多批次 radio） -->
+            <div class="form-field" data-only="truck" style="grid-column: span 2;">
+              <label class="form-label"><span class="required">*</span>发货批次</label>
+              <div style="display: flex; gap: 20px; padding: 6px 0;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="radio" name="batchType" checked> 单批次发货</label>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;"><input type="radio" name="batchType"> 多批次发货</label>
+              </div>
+            </div>
+
+            <!-- 托运人（仅火运 / 火运+汽运） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label">托运人</label>
+              <input type="text" class="input" placeholder="托运人">
+            </div>
+
+            <!-- 运单号（仅火运 / 火运+汽运，*必填） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label"><span class="required">*</span>运单号</label>
+              <input type="text" class="input" placeholder="运单号">
+            </div>
+
+            <!-- 发货数量(吨) — 火运/火运+汽运（无 *）/ 汽运（*）/ 船运（*） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label">发货数量(吨)</label>
+              <input type="text" class="input" placeholder="发货数量(吨)">
+            </div>
+            <div class="form-field" data-only="truck,ship">
+              <label class="form-label"><span class="required">*</span>发货数量(吨)</label>
+              <input type="text" class="input" placeholder="发货数量(吨)">
+            </div>
+
+            <!-- 车数 — 火运/火运+汽运（*）/ 汽运（*）/ 船运（*） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label"><span class="required">*</span>车数</label>
+              <input type="text" class="input" placeholder="车数">
+            </div>
+            <div class="form-field" data-only="truck,ship">
+              <label class="form-label"><span class="required">*</span>车数</label>
+              <input type="text" class="input" placeholder="车数">
+            </div>
+
+            <!-- 发货日期 — 火运/火运+汽运（*）/ 汽运（*）/ 船运（*） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label"><span class="required">*</span>发货日期</label>
+              <input type="date" class="input">
+            </div>
+            <div class="form-field" data-only="truck,ship">
+              <label class="form-label"><span class="required">*</span>发货日期</label>
+              <input type="date" class="input">
+            </div>
+
+            <!-- 发货地址 — 汽运/船运（*） -->
+            <div class="form-field" data-only="truck,ship">
+              <label class="form-label"><span class="required">*</span>发货地址</label>
+              <input type="text" class="input" placeholder="发货地址">
+            </div>
+
+            <!-- 收货地址 — 汽运/船运（*） -->
+            <div class="form-field" data-only="truck,ship">
+              <label class="form-label"><span class="required">*</span>收货地址</label>
+              <input type="text" class="input" placeholder="收货地址">
+            </div>
+
+            <!-- 发站（仅火运 / 火运+汽运，灰底，readonly 自合同信息"万泰站"） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label">发站</label>
+              <input type="text" class="input" value="万泰站" readonly style="background: #F1F5F9;">
+            </div>
+
+            <!-- 到站（仅火运 / 火运+汽运，灰底，readonly 自合同信息"新郑"） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label">到站</label>
+              <input type="text" class="input" value="新郑" readonly style="background: #F1F5F9;">
+            </div>
+
+            <!-- 铁路计划号（仅火运 / 火运+汽运） -->
+            <div class="form-field" data-only="rail-truck,rail">
+              <label class="form-label">铁路计划号</label>
+              <input type="text" class="input" placeholder="铁路计划号">
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 3：运输信息（v1.7.99.165 仅火运 / 火运+汽运 显示：运单号/车种/车号/票重/操作） -->
+        <div class="info-section" data-only="rail-truck,rail" id="transportInfoSection">
+          <div style="display: flex; align-items: center; gap: 12px; margin-bottom: 12px;">
+            <div class="info-section-title" style="margin-bottom: 0;">运输信息</div>
+            <button class="btn btn-default btn-sm">新增</button>
+          </div>
+          <div class="cp-table-wrap">
+            <table class="cp-table">
+              <thead>
+                <tr>
+                  <th style="width: 25%;"><span style="color: var(--color-danger);">*</span>运单号</th>
+                  <th style="width: 25%;">车种</th>
+                  <th style="width: 25%;"><span style="color: var(--color-danger);">*</span>车号</th>
+                  <th style="width: 20%;">票重(吨)</th>
+                  <th style="width: 5%;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colspan="5" style="text-align: center; padding: 40px 0; color: var(--text-tertiary);">
+                    <div style="font-size: 28px; opacity: 0.4; margin-bottom: 8px;">📦</div>
+                    <div>暂无数据</div>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 4：附件信息（v1.7.99.165 按运输方式显示不同附件行） -->
+        <div class="info-section">
+          <div class="info-section-title">附件信息</div>
+          <!-- 火运 / 火运+汽运：大票（必）+ 车号表 + 其他凭证 -->
+          <div data-only="rail-truck,rail">
+            <div class="attach-row">
+              <div class="attach-label"><span class="required">*</span>大票</div>
+              <button class="attach-btn">上传</button>
+            </div>
+            <div class="attach-row">
+              <div class="attach-label">车号表</div>
+              <button class="attach-btn">上传</button>
+            </div>
+            <div class="attach-row">
+              <div class="attach-label">其他凭证</div>
+              <button class="attach-btn">上传</button>
+            </div>
+          </div>
+          <!-- 汽运 / 船运：运输凭证（必） -->
+          <div data-only="truck,ship">
+            <div class="attach-row">
+              <div class="attach-label"><span class="required">*</span>运输凭证</div>
+              <button class="attach-btn">上传</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- 底部按钮 -->
+        <div class="form-footer">
+          <button class="btn btn-default" onclick="history.back()">取消</button>
+          <button class="btn btn-primary" onclick="alert('操作：提交发货信息（mock：实际生产会调 POST /api/shipment）')">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.165：运输方式 4 状态机（火运+汽运/火运/汽运/船运）切换显示
+    function onTransportModeChange() {
+      var sel = document.getElementById('transportMode');
+      var mode = sel.value;
+      document.querySelectorAll('[data-only]').forEach(function(el) {
+        var modes = el.getAttribute('data-only').split(',');
+        if (modes.indexOf(mode) >= 0) {
+          el.style.display = '';
+        } else {
+          el.style.display = 'none';
+        }
+      });
+    }
+    // 页面加载时执行一次（按 select 默认值）
+    onTransportModeChange();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

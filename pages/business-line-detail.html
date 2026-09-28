@@ -1,0 +1,1278 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>业务线详情 - 豫港通 v1.7.99.87</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; background: var(--bg-page); }
+    /* 业务线详情 v1.7.99.87：面包屑 + 头部 + 概览 + tap + 左侧导航 + 内容 */
+    .bl-header { background: #fff; border-radius: 8px; padding: 20px 24px; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); position: relative; }
+    .bl-header-title { font-size: 16px; font-weight: 600; color: var(--text-primary); display: flex; align-items: center; gap: 8px; margin-bottom: 16px; }
+    .bl-header-title .bl-tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; background: #DBEAFE; color: #1E40AF; font-size: 12px; font-weight: 500; }
+    .bl-header-title .bl-actions { margin-left: auto; }
+    /* 业务链路 3 段（v1.7.99.87 中游深蓝实心 + 白字，v1.7.99.154 去掉"中游"字样） */
+    .bl-link-chain { display: flex; align-items: center; gap: 12px; margin-bottom: 12px; flex-wrap: wrap; }
+    .bl-link-chain-item { display: inline-flex; align-items: center; padding: 6px 14px; border: 1px solid var(--color-primary); border-radius: 4px; color: var(--color-primary); font-size: 13px; background: #fff; }
+    .bl-link-chain-item.middle { background: #1E40AF; color: #fff; border-color: #1E40AF; font-weight: 500; }
+    .bl-link-chain-arrow { color: var(--text-tertiary); font-size: 16px; }
+    .bl-link-chain-prefix { color: var(--text-tertiary); font-size: 12px; margin-right: 4px; }
+    .bl-link-chain-row { display: flex; align-items: center; gap: 4px; }
+    .bl-link-chain-row .bl-link-chain-prefix { min-width: 36px; }
+    .bl-header-meta { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 8px; column-gap: 24px; font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; }
+    .bl-header-meta .meta-value { color: var(--text-primary); font-weight: 500; }
+    .bl-header-meta .meta-link { color: var(--color-primary); font-weight: 500; cursor: pointer; }
+    .bl-header-tags { display: flex; gap: 8px; flex-wrap: wrap; }
+    .bl-header-tag { display: inline-flex; align-items: center; padding: 4px 10px; border-radius: 4px; background: #F3F4F6; color: var(--text-secondary); font-size: 12px; }
+    .bl-header-tag .bl-icon { width: 14px; height: 14px; margin-right: 4px; display: inline-flex; align-items: center; }
+
+    /* KPI 2x5 grid（v1.7.99.87 业务线详情头部概览：10 个 cell 含高亮 + 闪电 + 涨跌幅） */
+    .bl-overview { background: #fff; border-radius: 8px; padding: 0 0 12px 0; margin-bottom: 16px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); overflow: hidden; }
+    .bl-kpi-grid { display: grid; grid-template-columns: repeat(5, 1fr); }
+    .bl-kpi-cell { padding: 14px 18px; border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); position: relative; }
+    .bl-kpi-cell:nth-child(5n) { border-right: none; }
+    .bl-kpi-cell:last-child { border-bottom: none; }
+    .bl-kpi-cell.highlight { background: #FEFCE8; }
+    .bl-kpi-label { color: var(--text-tertiary); font-size: 12px; margin-bottom: 6px; }
+    .bl-kpi-value { color: var(--text-primary); font-size: 15px; font-weight: 600; }
+    .bl-kpi-value .unit { color: var(--text-tertiary); font-size: 12px; font-weight: normal; margin: 0 2px; }
+    .bl-kpi-value .delta-up { color: #16A34A; font-size: 12px; margin-left: 4px; font-weight: 500; }
+    .bl-kpi-value .delta-down { color: #DC2626; font-size: 12px; margin-left: 4px; font-weight: 500; }
+    .bl-kpi-value .lightning { color: #FBBF24; font-size: 14px; vertical-align: middle; margin-right: 2px; }
+    .bl-kpi-cell.highlight .bl-kpi-value { color: var(--text-primary); }
+
+    /* 3 个 tap：采购合同/销售合同/业务线台账 */
+    .bl-tap-bar { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border-color); background: #fff; padding: 0 24px; border-radius: 8px 8px 0 0; }
+    .bl-tap { padding: 12px 18px; font-size: 14px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .bl-tap:hover { color: var(--color-primary); }
+    .bl-tap.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+
+    /* 内容区：左侧 5 步导航 + 右侧内容 */
+    .bl-content { background: #fff; border-radius: 0 0 8px 8px; padding: 20px 24px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); display: flex; gap: 24px; min-height: 600px; }
+    .bl-side-nav { width: 120px; flex-shrink: 0; border-right: 1px solid var(--border-color); padding-right: 16px; }
+    .bl-side-nav-item { padding: 10px 12px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-radius: 4px; margin-bottom: 4px; position: relative; white-space: nowrap; }
+    .bl-side-nav-item:hover { background: var(--bg-hover); color: var(--color-primary); }
+    .bl-side-nav-item.active { background: #EFF6FF; color: var(--color-primary); font-weight: 500; }
+    .bl-side-nav-item.active::before { content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%); width: 3px; height: 16px; background: var(--color-primary); border-radius: 0 2px 2px 0; }
+    .bl-side-nav-item .bl-step-dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; background: var(--color-primary); margin-right: 6px; vertical-align: middle; }
+    .bl-side-nav-item:not(.active) .bl-step-dot { background: var(--text-tertiary); }
+
+    .bl-main { flex: 1; min-width: 0; }
+
+    /* tap 内容切换 */
+    .bl-tap-panel { display: none; }
+    .bl-tap-panel.active { display: block; }
+    .bl-side-panel { display: none; }
+    .bl-side-panel.active { display: block; }
+
+    /* 基础信息 6 列 5 行（v1.7.99.87：label + value 横向 pair × 3 对 × 5 行 = 6 列布局） */
+    .bl-info-table { width: 100%; border-collapse: collapse; font-size: 13px; border: 1px solid var(--border-light); border-radius: 4px; overflow: hidden; }
+    .bl-info-table tr { border-bottom: 1px solid var(--border-light); }
+    .bl-info-table tr:last-child { border-bottom: none; }
+    .bl-info-table td { padding: 14px 16px; vertical-align: middle; }
+    .bl-info-table td.info-label { color: var(--text-tertiary); font-size: 12px; background: var(--bg-page); width: 12%; }
+    .bl-info-table td.info-value { color: var(--text-primary); font-weight: 500; width: 21%; }
+    .bl-info-table td.info-value .info-link { color: var(--color-primary); text-decoration: none; }
+    .bl-info-table td.info-value .info-link:hover { text-decoration: underline; }
+    .bl-info-table td.info-value .info-tag { display: inline-block; padding: 1px 6px; border-radius: 3px; background: #DBEAFE; color: #1E40AF; font-size: 11px; margin-left: 6px; font-weight: 500; }
+    .bl-info-table td.info-value .info-tag-double { display: inline-block; padding: 1px 6px; border-radius: 3px; background: #1E40AF; color: #fff; font-size: 11px; margin-left: 6px; font-weight: 500; }
+
+    /* 区块标题 + 角标 */
+    .bl-section-title { font-size: 14px; font-weight: 600; color: var(--text-primary); margin: 0 0 14px; display: flex; align-items: center; gap: 8px; }
+    .bl-section-title .bl-section-action { margin-left: auto; color: var(--color-primary); font-size: 13px; text-decoration: none; }
+    .bl-section-title .bl-section-bar { display: inline-block; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px; }
+
+    /* 货物运输内部 2 tap */
+    .bl-sub-tap-bar { display: flex; align-items: center; gap: 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 12px; }
+    .bl-sub-tap { padding: 8px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .bl-sub-tap:hover { color: var(--color-primary); }
+    .bl-sub-tap.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .bl-sub-tap .bl-sub-tap-badge { display: inline-block; min-width: 18px; height: 18px; line-height: 18px; padding: 0 5px; background: var(--bg-hover); color: var(--text-secondary); font-size: 11px; text-align: center; border-radius: 9px; margin-left: 4px; }
+    .bl-sub-tap.active .bl-sub-tap-badge { background: var(--color-primary); color: #fff; }
+
+    .bl-sub-panel { display: none; }
+    .bl-sub-panel.active { display: block; }
+
+    /* 表格 */
+    .bl-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .bl-table th { text-align: left; padding: 10px 12px; background: #F9FAFB; color: var(--text-secondary); font-weight: 500; border-bottom: 1px solid var(--border-color); }
+    .bl-table td { padding: 12px; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    .bl-table tr:last-child td { border-bottom: none; }
+    .bl-table a { color: var(--color-primary); text-decoration: none; }
+    .bl-table a:hover { text-decoration: underline; }
+
+    /* 状态 tag（按图复用） */
+    .tag { display: inline-flex; align-items: center; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+    .tag-green { background: #DCFCE7; color: #16A34A; }
+    .tag-yellow { background: #FEF3C7; color: #CA8A04; }
+    .tag-orange { background: #FFEDD5; color: #EA580C; }
+    .tag-red { background: #FEE2E2; color: #DC2626; }
+    .tag-gray { background: #F3F4F6; color: #6B7280; }
+    .tag-blue { background: #DBEAFE; color: #1E40AF; }
+
+    /* 合同附件 section（v1.7.99.87 改：一键下载 button + 3 列表格） */
+    .bl-attachment { display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; }
+    .bl-attachment .bl-section-title { margin: 0; }
+    .bl-attachment .bl-link { color: var(--color-primary); font-size: 13px; text-decoration: none; }
+    .bl-attachment .bl-link:hover { text-decoration: underline; }
+    .bl-attachment .btn-download-all { padding: 4px 12px; border: 1px solid var(--color-primary); color: var(--color-primary); background: #fff; border-radius: 4px; font-size: 12px; cursor: pointer; }
+    .bl-attachment .btn-download-all:hover { background: var(--color-primary-lighter); }
+
+    /* 顶部操作按钮（结算单/发票） */
+    .bl-page-actions { display: flex; justify-content: flex-end; gap: 8px; margin-bottom: 12px; }
+
+    /* v1.7.99.53 业务线台账 - 数据卡 + 图表占位 */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
+    .kpi-card { background: #F8FAFC; border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 16px; }
+    .kpi-label { color: var(--text-tertiary); font-size: 12px; margin-bottom: 4px; }
+    .kpi-value { color: var(--text-primary); font-size: 18px; font-weight: 600; }
+    .kpi-value .unit { color: var(--text-tertiary); font-size: 12px; font-weight: normal; margin-left: 2px; }
+    .kpi-card.highlight { border-color: #DBEAFE; background: #EFF6FF; }
+    .kpi-card.highlight .kpi-value { color: var(--color-primary); }
+    /* 库存统计右侧"风险预警"大数字卡 */
+    .risk-card { display: flex; flex-direction: column; align-items: center; justify-content: center; background: #FFFBEB; border: 1px solid #FCD34D; border-radius: 6px; padding: 12px 16px; min-height: 80px; }
+    .risk-card-label { color: #92400E; font-size: 12px; }
+    .risk-card-value { color: #DC2626; font-size: 32px; font-weight: 700; }
+    /* 时间 tap + 自定义日期 */
+    .time-tap-bar { display: flex; align-items: center; gap: 8px; margin-bottom: 12px; }
+    .time-tap { padding: 4px 12px; font-size: 12px; color: var(--text-secondary); border: 1px solid var(--border-color); border-radius: 4px; cursor: pointer; }
+    .time-tap.active { color: #fff; background: var(--color-primary); border-color: var(--color-primary); }
+    .time-tap-date { display: flex; align-items: center; gap: 6px; color: var(--text-tertiary); font-size: 12px; }
+    .time-tap-date input { width: 100px; padding: 3px 6px; font-size: 12px; border: 1px solid var(--border-color); border-radius: 4px; }
+    /* 折线图占位 */
+    .chart-line { position: relative; height: 280px; border: 1px solid var(--border-color); border-radius: 6px; padding: 16px; background: #fff; }
+    .chart-line-canvas { position: relative; width: 100%; height: 200px; }
+    .chart-line-canvas svg { width: 100%; height: 100%; }
+    .chart-line-legend { display: flex; justify-content: center; gap: 24px; padding: 8px 0; font-size: 12px; color: var(--text-tertiary); }
+    .chart-line-legend .dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 4px; vertical-align: middle; }
+    .chart-line-export { position: absolute; top: 12px; right: 16px; font-size: 12px; color: var(--color-primary); cursor: pointer; }
+    /* 环形图 */
+    .donut-wrap { display: flex; flex-direction: column; align-items: center; padding: 16px; }
+    .donut { width: 180px; height: 180px; position: relative; }
+    .donut-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .donut-center .pct { font-size: 14px; color: var(--text-tertiary); }
+    .donut-center .name { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    .donut-center .val { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+    /* 空状态（销售合同货物运输无数据） */
+    .cp-empty { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; color: var(--text-tertiary); }
+    .cp-empty-icon { font-size: 36px; margin-bottom: 8px; opacity: 0.4; }
+    .cp-empty-text { font-size: 13px; }
+
+    /* 顶部返回 button（v1.7.99.87 新加） */
+    .bl-top-back { position: absolute; top: -4px; right: 0; padding: 6px 16px; border: 1px solid var(--border-default); color: var(--text-secondary); background: #fff; border-radius: 4px; font-size: 13px; cursor: pointer; }
+    .bl-top-back:hover { color: var(--color-primary); border-color: var(--color-primary); }
+
+    /* 右下角返回顶部 button（v1.7.99.87 新加，参考 v1.7.99.84 invoice-out-detail 返回顶部） */
+    .bl-back-top { position: fixed; bottom: 32px; right: 32px; width: 40px; height: 40px; border-radius: 50%; background: #fff; border: 1px solid var(--border-default); box-shadow: 0 2px 8px rgba(0,0,0,0.1); display: flex; align-items: center; justify-content: center; cursor: pointer; color: var(--text-secondary); z-index: 50; transition: all 0.18s; }
+    .bl-back-top:hover { color: var(--color-primary); border-color: var(--color-primary); transform: translateY(-2px); }
+
+    /* v1.7.99.202：操作下拉菜单（4 项：解除业务线/申请业务完结/一键下载附件/查看合规验证报告） */
+    .bl-action-menu { position: absolute; top: 100%; right: 0; margin-top: 6px; min-width: 160px; background: #fff; border: 1px solid var(--border-default); border-radius: 6px; box-shadow: 0 4px 12px rgba(0,0,0,0.12); z-index: 100; padding: 6px 0; }
+    .bl-action-menu a { display: block; padding: 8px 16px; font-size: 13px; color: var(--color-primary); text-decoration: none; cursor: pointer; }
+    .bl-action-menu a:hover { background: #EFF6FF; }
+
+    /* v1.7.99.202：通用 modal 弹窗（遮罩 + 弹窗体） */
+    .bl-modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.4); z-index: 200; display: none; align-items: center; justify-content: center; }
+    .bl-modal-mask.show { display: flex; }
+    .bl-modal { background: #fff; border-radius: 8px; width: 520px; max-width: 90vw; box-shadow: 0 8px 24px rgba(0,0,0,0.15); overflow: hidden; }
+    .bl-modal-header { display: flex; align-items: center; justify-content: space-between; padding: 16px 24px; background: #F9FAFB; border-bottom: 1px solid var(--border-default); }
+    .bl-modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .bl-modal-close { font-size: 20px; color: var(--text-tertiary); cursor: pointer; line-height: 1; padding: 4px 8px; background: none; border: 0; }
+    .bl-modal-close:hover { color: var(--text-primary); }
+    .bl-modal-body { padding: 24px; }
+    .bl-modal-body-text { font-size: 13px; color: var(--text-primary); line-height: 1.6; }
+    .bl-modal-radio-group { display: flex; align-items: center; gap: 32px; font-size: 13px; color: var(--text-primary); }
+    .bl-modal-radio-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .bl-modal-checkbox-group { display: flex; align-items: center; gap: 32px; font-size: 13px; color: var(--text-primary); }
+    .bl-modal-checkbox-group label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .bl-modal-footer { display: flex; align-items: center; justify-content: flex-end; gap: 12px; padding: 16px 24px; border-top: 1px solid var(--border-default); }
+    .bl-modal-footer .btn-default { padding: 6px 20px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; font-size: 13px; color: var(--text-secondary); cursor: pointer; }
+    .bl-modal-footer .btn-primary { padding: 6px 20px; border: 0; background: var(--color-primary); color: #fff; border-radius: 4px; font-size: 13px; cursor: pointer; }
+    .bl-modal-footer .btn-primary:hover { background: #1E40AF; }
+    /* 解除业务线弹窗的标题带感叹号 icon */
+    .bl-modal-title-icon { display: inline-flex; align-items: center; justify-content: center; width: 22px; height: 22px; background: var(--color-primary); color: #fff; border-radius: 50%; font-size: 14px; font-weight: 700; margin-right: 8px; vertical-align: -3px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto;">
+
+        <!-- 面包屑 v1.7.99.87：2 级（业务线管理 / 业务线详情） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px;">
+          <div class="breadcrumb-inline">
+            <a href="#">业务线管理</a><span class="sep">/</span>
+            <span class="current">业务线详情</span>
+          </div>
+          <button class="btn-default" style="padding: 6px 16px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; font-size: 13px; color: var(--text-secondary); cursor: pointer;" onclick="window.history.back()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><polyline points="15 18 9 12 15 6"/></svg>
+            返回
+          </button>
+        </div>
+
+        <!-- 头部：业务线详情 + 操作 -->
+        <div class="bl-header">
+          <div class="bl-header-title">
+            <span>业务线详情</span>
+            <span class="bl-tag">执行中</span>
+            <div class="bl-actions" style="position: relative;">
+              <button class="btn btn-primary btn-sm" id="blActionBtn" onclick="toggleBlActionMenu(event)">操作</button>
+              <!-- v1.7.99.202：操作下拉菜单（4 项：解除业务线/申请业务完结/一键下载附件/查看合规验证报告） -->
+              <div class="bl-action-menu" id="blActionMenu" style="display: none;">
+                <a href="javascript:void(0)" onclick="openBlModal('release')">解除业务线</a>
+                <a href="javascript:void(0)" onclick="openBlModal('finish')">申请业务完结</a>
+                <a href="javascript:void(0)" onclick="openBlModal('download')">一键下载附件</a>
+                <a href="javascript:void(0)" onclick="openBlModal('compliance')">查看合规验证报告</a>
+              </div>
+            </div>
+          </div>
+          <!-- 业务链路：上游/中/下游 v1.7.99.154 去掉"中游"字样 -->
+          <div class="bl-link-chain">
+            <div class="bl-link-chain-row">
+              <span class="bl-link-chain-prefix">上游：</span>
+              <span class="bl-link-chain-item">河南诚泽运输有限公司</span>
+            </div>
+            <span class="bl-link-chain-arrow">→</span>
+            <div class="bl-link-chain-row">
+              <span class="bl-link-chain-item middle">河南中豫港通供应链管理有限公司</span>
+            </div>
+            <span class="bl-link-chain-arrow">→</span>
+            <div class="bl-link-chain-row">
+              <span class="bl-link-chain-prefix">下游：</span>
+              <span class="bl-link-chain-item">郑州信必达国际供应链有限公司</span>
+            </div>
+          </div>
+          <!-- 业务线信息行 v1.7.99.87：业务线号 + 采购合同 + 销售合同 + 创建时间（合同号 -s 后缀） -->
+          <div class="bl-header-meta">
+            <div>业务线号：<span class="meta-value">SKYWX202607050001</span></div>
+            <div>采购合同：<span class="meta-link">GTGYL-MSXS-20260127-s</span></div>
+            <div>销售合同：<span class="meta-link">YL-MSXS-20260127-s</span></div>
+            <div>创建时间：<span class="meta-value">2026-07-05 09:50:24</span></div>
+          </div>
+          <!-- 4 个 tag v1.7.99.87：日期 + 火运 + 存货类 + 自有资金 -->
+          <div class="bl-header-tags">
+            <span class="bl-header-tag"><span class="bl-icon">📅</span>2026-01-27至2026-12-31</span>
+            <span class="bl-header-tag"><span class="bl-icon">🚆</span>火运</span>
+            <span class="bl-header-tag"><span class="bl-icon">📦</span>存货类</span>
+            <span class="bl-header-tag"><span class="bl-icon">💰</span>自有资金</span>
+          </div>
+        </div>
+
+        <!-- KPI 2x5 grid v1.7.99.87：10 个 cell 含高亮黄 + 闪电 + 涨跌幅（18%↑） -->
+        <div class="bl-overview">
+          <div class="bl-kpi-grid">
+            <!-- Row 1 -->
+            <div class="bl-kpi-cell">
+              <div class="bl-kpi-label">采购合同 | 销售合同</div>
+              <div class="bl-kpi-value">已双签 | 已双签</div>
+            </div>
+            <div class="bl-kpi-cell highlight">
+              <div class="bl-kpi-label">已收货转</div>
+              <div class="bl-kpi-value"><span class="lightning">⚡</span>3000<span class="unit">吨</span></div>
+            </div>
+            <div class="bl-kpi-cell highlight">
+              <div class="bl-kpi-label">已支付货款/财务余额/业务余额</div>
+              <div class="bl-kpi-value"><span class="lightning">⚡</span>3000<span class="unit">元</span> / 0<span class="unit">元</span> / 100<span class="unit">元</span></div>
+            </div>
+            <div class="bl-kpi-cell">
+              <div class="bl-kpi-label">采购结算</div>
+              <div class="bl-kpi-value">200<span class="unit">吨</span> | 3000<span class="unit">元</span></div>
+            </div>
+            <div class="bl-kpi-cell">
+              <div class="bl-kpi-label">进项发票金额</div>
+              <div class="bl-kpi-value">3000<span class="unit">元</span></div>
+            </div>
+            <!-- Row 2 -->
+            <div class="bl-kpi-cell">
+              <div class="bl-kpi-label">库存</div>
+              <div class="bl-kpi-value">2800<span class="unit">吨</span></div>
+            </div>
+            <div class="bl-kpi-cell highlight">
+              <div class="bl-kpi-label">已开货转</div>
+              <div class="bl-kpi-value"><span class="lightning">⚡</span>200<span class="unit">吨</span></div>
+            </div>
+            <div class="bl-kpi-cell highlight">
+              <div class="bl-kpi-label">已回货款/保证金</div>
+              <div class="bl-kpi-value"><span class="lightning">⚡</span>200<span class="unit">元</span> / 100<span class="unit">元</span> <span class="delta-up">(18% ↑)</span></div>
+            </div>
+            <div class="bl-kpi-cell">
+              <div class="bl-kpi-label">销售结算</div>
+              <div class="bl-kpi-value">200<span class="unit">吨</span> | 3000<span class="unit">元</span></div>
+            </div>
+            <div class="bl-kpi-cell">
+              <div class="bl-kpi-label">销项发票金额</div>
+              <div class="bl-kpi-value">3000<span class="unit">元</span></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 个 tap：采购合同/销售合同/业务线台账 -->
+        <div class="bl-tap-bar">
+          <div class="bl-tap active" data-bl-tap="purchase">采购合同</div>
+          <div class="bl-tap" data-bl-tap="sales">销售合同</div>
+          <div class="bl-tap" data-bl-tap="standing">业务线台账</div>
+        </div>
+
+        <!-- 采购合同 tap 内容 -->
+        <div class="bl-tap-panel active" data-bl-tap-panel="purchase">
+          <div class="bl-content">
+            <!-- 左侧 5 步导航 -->
+            <div class="bl-side-nav">
+              <div class="bl-side-nav-item active" data-bl-side="sign"><span class="bl-step-dot"></span>合同签订</div>
+              <div class="bl-side-nav-item" data-bl-side="ship"><span class="bl-step-dot"></span>货物运输</div>
+              <div class="bl-side-nav-item" data-bl-side="flow"><span class="bl-step-dot"></span>资金流水</div>
+              <div class="bl-side-nav-item" data-bl-side="settle"><span class="bl-step-dot"></span>结算单</div>
+              <div class="bl-side-nav-item" data-bl-side="invoice"><span class="bl-step-dot"></span>发票</div>
+            </div>
+            <div class="bl-main">
+
+              <!-- 合同签订 v1.7.99.87：基础信息 6 列 5 行布局 + 合同附件加"一键下载" -->
+              <div class="bl-side-panel active" data-bl-side-panel="sign">
+                <h3 class="bl-section-title"><span class="bl-section-bar"></span>基础信息</h3>
+                <table class="bl-info-table">
+                  <tr>
+                    <td class="info-label">合同编号</td>
+                    <td class="info-value"><a class="info-link">GTGYL-MSXS-20260127-s</a><span class="info-tag">长协</span><span class="info-tag-double">双签</span></td>
+                    <td class="info-label">买方企业</td>
+                    <td class="info-value">河南中豫港通供应链管理有限公司</td>
+                    <td class="info-label">卖方企业</td>
+                    <td class="info-value">河南诚泽运输有限公司</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">签订日期</td>
+                    <td class="info-value">2026-01-27</td>
+                    <td class="info-label">业务类型</td>
+                    <td class="info-value">-</td>
+                    <td class="info-label">品名</td>
+                    <td class="info-value">进口木薯淀粉</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">合同价格</td>
+                    <td class="info-value">3,400<span class="unit">元/吨</span></td>
+                    <td class="info-label">合同数量</td>
+                    <td class="info-value">20,000<span class="unit">吨</span></td>
+                    <td class="info-label">交货期限</td>
+                    <td class="info-value">2026-01-27至2026-12-31</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">运输方式</td>
+                    <td class="info-value">中欧班列-东盟线路</td>
+                    <td class="info-label">发站</td>
+                    <td class="info-value">万象站</td>
+                    <td class="info-label">到站</td>
+                    <td class="info-value">新郑</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">托运人</td>
+                    <td class="info-value">无</td>
+                    <td class="info-label">收货人</td>
+                    <td class="info-value">河南中豫港通供应链管理有限公司</td>
+                    <td class="info-label"></td>
+                    <td class="info-value"></td>
+                  </tr>
+                </table>
+
+                <h3 class="bl-section-title" style="margin-top: 24px;"><span class="bl-section-bar"></span>合同附件</h3>
+                <div class="bl-attachment">
+                  <div style="font-size: 13px; color: var(--text-tertiary);">附件共 1 份</div>
+                  <button class="btn-download-all" type="button">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    一键下载
+                  </button>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 30%;">单据类型</th>
+                        <th>文件名称</th>
+                        <th style="width: 15%;text-align: right;">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>线下合同</td>
+                        <td><a>采购合同.pdf</a></td>
+                        <td style="text-align: right;"><a>下载</a></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 货物运输（按图 4+图 5） -->
+              <div class="bl-side-panel" data-bl-side-panel="ship">
+                <div class="bl-sub-tap-bar">
+                  <div class="bl-sub-tap active" data-sub-tap="dispatch">发运信息</div>
+                  <div class="bl-sub-tap" data-sub-tap="transfer">货转信息</div>
+                </div>
+
+                <div class="bl-sub-panel active" data-sub-tap-panel="dispatch">
+                  <div class="cp-table-wrap">
+                    <table class="bl-table">
+                      <thead>
+                        <tr>
+                          <th>批次号</th>
+                          <th>发运日期</th>
+                          <th>运输方式</th>
+                          <th>发运数量(吨)</th>
+                          <th>收货数量(吨)</th>
+                          <th>状态</th>
+                          <th>发运地</th>
+                          <th>收货地</th>
+                          <th>操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>BN202607290006</td><td>2026-03-24</td><td>火运</td><td>973.25</td><td>0</td><td><span class="tag tag-yellow">待配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607290003</td><td>2026-03-13</td><td>火运</td><td>942.5</td><td>0</td><td><span class="tag tag-yellow">待配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607290002</td><td>2026-03-04</td><td>火运</td><td>1,205.45</td><td>0</td><td><span class="tag tag-yellow">待配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607290001</td><td>2026-03-03</td><td>火运</td><td>918</td><td>0</td><td><span class="tag tag-yellow">待配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607070005</td><td>2026-02-24</td><td>火运</td><td>612</td><td>612</td><td><span class="tag tag-green">已配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607070004</td><td>2026-03-04</td><td>火运</td><td>918</td><td>918</td><td><span class="tag tag-green">已配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607070003</td><td>2026-01-31</td><td>火运</td><td>527</td><td>527</td><td><span class="tag tag-green">已配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                        <tr><td>BN202607070002</td><td>2026-01-27</td><td>火运</td><td>980</td><td>980</td><td><span class="tag tag-green">已配载</span></td><td>万泰站</td><td>新郑</td><td><a>详情</a> <a>轨迹</a></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                <div class="bl-sub-panel" data-sub-tap-panel="transfer">
+                  <div class="bl-sub-tap-bar" style="margin-top: -12px; margin-bottom: 12px;">
+                    <span style="font-size: 13px; color: var(--text-tertiary); margin-right: 8px;">货转信息(6)</span>
+                    <div class="bl-sub-tap active" data-sub-tap-inner="all" style="padding: 4px 12px; font-size: 12px;">全部</div>
+                    <div class="bl-sub-tap" data-sub-tap-inner="attached" style="padding: 4px 12px; font-size: 12px;">有附件</div>
+                    <div class="bl-sub-tap" data-sub-tap-inner="none" style="padding: 4px 12px; font-size: 12px;">无附件</div>
+                  </div>
+                  <div class="cp-table-wrap">
+                    <table class="bl-table">
+                      <thead>
+                        <tr>
+                          <th>货转编号</th>
+                          <th>货转开日期</th>
+                          <th>货转数量(吨)</th>
+                          <th>品名</th>
+                          <th>运输方式</th>
+                          <th>状态</th>
+                          <th>操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>SKBT202607050001-202607290002</td><td>2026-03-04</td><td>1,205.45</td><td>进口木薯淀粉</td><td>火运</td><td><span class="tag tag-green">已配载</span></td><td><a>详情</a> <a>下载</a></td></tr>
+                        <tr><td>SKBT202607050001-202607290001</td><td>2026-03-03</td><td>918</td><td>进口木薯淀粉</td><td>火运</td><td><span class="tag tag-green">已配载</span></td><td><a>详情</a> <a>下载</a></td></tr>
+                        <tr><td>SKBT202607050001-202607070005</td><td>2026-02-25</td><td>612</td><td>进口木薯淀粉</td><td>火运</td><td><span class="tag tag-green">已配载</span></td><td><a>详情</a> <a>下载</a></td></tr>
+                        <tr><td>SKBT202607050001-202607070003</td><td>2026-02-06</td><td>980</td><td>进口木薯淀粉</td><td>火运</td><td><span class="tag tag-green">已配载</span></td><td><a>详情</a> <a>下载</a></td></tr>
+                        <tr><td>SKBT202607050001-202607070005</td><td>2026-02-03</td><td>918</td><td>进口木薯淀粉</td><td>火运</td><td><span class="tag tag-green">已配载</span></td><td><a>详情</a> <a>下载</a></td></tr>
+                        <tr><td>SKBT202607050001-202607070004</td><td>2026-02-02</td><td>527</td><td>进口木薯淀粉</td><td>火运</td><td><span class="tag tag-green">已配载</span></td><td><a>详情</a> <a>下载</a></td></tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 资金流水（按图 6） -->
+              <div class="bl-side-panel" data-bl-side-panel="flow">
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th>资金流水号</th>
+                        <th>付款类型</th>
+                        <th>资金来源</th>
+                        <th>付款金额(元)</th>
+                        <th>付款日期</th>
+                        <th>付款状态</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>SKJ20260707180010</td><td>销售付款</td><td>自有资金</td><td>104,940</td><td>2026-03-06</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070718186009</td><td>预付款</td><td>自有资金</td><td>1,676,780</td><td>2026-02-24</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070718170008</td><td>预付款</td><td>自有资金</td><td>156,060</td><td>2026-02-12</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070718160006</td><td>结算付款</td><td>自有资金</td><td>89,590</td><td>2026-02-10</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070717300004</td><td>预付款</td><td>自有资金</td><td>166,600</td><td>2026-02-09</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070718160007</td><td>预付款</td><td>自有资金</td><td>2,965,140</td><td>2026-02-03</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070718150005</td><td>预付款</td><td>自有资金</td><td>1,722,210</td><td>2026-02-02</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                      <tr><td>SKJ2026070717300003</td><td>预付款</td><td>自有资金</td><td>3,165,400</td><td>2026-01-29</td><td><span class="tag tag-green">已付款</span></td><td><a>详情</a></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 结算单（按图 7） -->
+              <div class="bl-side-panel" data-bl-side-panel="settle">
+                <div class="bl-page-actions">
+                  <button class="btn btn-primary btn-sm">新增结算单</button>
+                  <button class="btn btn-secondary btn-sm">新增线下结算单</button>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th>结算单编号</th>
+                        <th>结算日期</th>
+                        <th>结算金额(元)</th>
+                        <th>结算单价(元/吨)</th>
+                        <th>结算数量(吨)</th>
+                        <th>运输方式</th>
+                        <th>结算状态</th>
+                        <th>结算附件</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>20260312-001</td><td>2026-03-06</td><td>2,080,800</td><td>3,400</td><td>612</td><td>中欧班列-车厘特路</td><td><span class="tag tag-green">已结算</span></td><td><a>第四批商品验收单(2).pdf</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                      <tr><td>20260212-001</td><td>2026-02-12</td><td>3,121,200</td><td>3,400</td><td>918</td><td>中欧班列-东莞铁路</td><td><span class="tag tag-green">已结算</span></td><td><a>第三批商品验收单(2).pdf</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                      <tr><td>20260210-001</td><td>2026-02-10</td><td>1,791,800</td><td>3,400</td><td>527</td><td>中欧班列-东莞铁路</td><td><span class="tag tag-green">已结算</span></td><td><a>商品验收单2.pdf</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                      <tr><td>20260127-001</td><td>2026-02-09</td><td>3,332,000</td><td>3,400</td><td>980</td><td>中欧班列-东莞铁路</td><td><span class="tag tag-green">已结算</span></td><td><a>第一批济南品检收单(2026020611).pdf</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 发票（按图 8） -->
+              <div class="bl-side-panel" data-bl-side-panel="invoice">
+                <div class="bl-sub-tap-bar">
+                  <div class="bl-sub-tap active" data-bl-inv="in">进项发票(4)</div>
+                  <div class="bl-sub-tap" data-bl-inv="out">销项发票(0)</div>
+                  <div style="margin-left: auto; display: flex; gap: 8px;">
+                    <div class="bl-sub-tap active" data-bl-inv-att="all" style="padding: 4px 12px; font-size: 12px;">全部</div>
+                    <div class="bl-sub-tap" data-bl-inv-att="attached" style="padding: 4px 12px; font-size: 12px;">有附件</div>
+                    <div class="bl-sub-tap" data-bl-inv-att="none" style="padding: 4px 12px; font-size: 12px;">无附件</div>
+                    <button class="btn btn-primary btn-sm">新增发票</button>
+                  </div>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th>发票代码</th>
+                        <th>发票号码</th>
+                        <th>开票日期</th>
+                        <th>不含税金额(元)</th>
+                        <th>税额(元)</th>
+                        <th>价税合计(元)</th>
+                        <th>拆分到本业务金额(元)</th>
+                        <th>发票附件</th>
+                        <th>发票状态</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>0141200001453011436</td><td></td><td>2026-04-24</td><td>1,841,415.93</td><td>239,384.07</td><td>2,080,800</td><td>2,080,800</td><td>2073016487771556529.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                      <tr><td>0141200001098555511</td><td></td><td>2026-03-30</td><td>2,506,982.3</td><td>326,297.7</td><td>2,836,280</td><td>2,836,280</td><td>2073016312946814977.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                      <tr><td>0141200001108112015</td><td></td><td>2026-03-30</td><td>2,762,123.89</td><td>359,076.11</td><td>3,121,200</td><td>3,121,200</td><td>20730181461832044930.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                      <tr><td>01412000000683176981</td><td></td><td>2026-02-28</td><td>2,524,353.96</td><td>263,166.02</td><td>2,287,520</td><td>2,287,520</td><td>2073617875707401094.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 销售合同 tap（v1.7.99.53 按用户图 1-6 实现） -->
+        <div class="bl-tap-panel" data-bl-tap-panel="sales">
+          <div class="bl-content">
+            <!-- 左侧 5 步导航 -->
+            <div class="bl-side-nav">
+              <div class="bl-side-nav-item active" data-bl-side="sign"><span class="bl-step-dot"></span>合同签订</div>
+              <div class="bl-side-nav-item" data-bl-side="ship"><span class="bl-step-dot"></span>货物运输</div>
+              <div class="bl-side-nav-item" data-bl-side="receipt"><span class="bl-step-dot"></span>回款</div>
+              <div class="bl-side-nav-item" data-bl-side="settle"><span class="bl-step-dot"></span>结算单</div>
+              <div class="bl-side-nav-item" data-bl-side="invoice"><span class="bl-step-dot"></span>发票</div>
+            </div>
+            <div class="bl-main">
+
+              <!-- 销售合同 - 合同签订 v1.7.99.87：6 列 5 行基础信息 + 合同附件加"一键下载" -->
+              <div class="bl-side-panel active" data-bl-side-panel="sign">
+                <h3 class="bl-section-title"><span class="bl-section-bar"></span>基础信息</h3>
+                <table class="bl-info-table">
+                  <tr>
+                    <td class="info-label">合同编号</td>
+                    <td class="info-value"><a class="info-link">YL-MSXS-20260127-s</a><span class="info-tag">综合</span><span class="info-tag">合同</span></td>
+                    <td class="info-label">卖方企业</td>
+                    <td class="info-value">郑州信必达国际供应链有限公司</td>
+                    <td class="info-label">买方企业</td>
+                    <td class="info-value">河南中豫港通供应链管理有限公司</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">签订日期</td>
+                    <td class="info-value">2026-01-27</td>
+                    <td class="info-label">业务类型</td>
+                    <td class="info-value">-</td>
+                    <td class="info-label">品名</td>
+                    <td class="info-value">进口木薯淀粉</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">合同价格</td>
+                    <td class="info-value">3,444.83<span class="unit">元/吨</span></td>
+                    <td class="info-label">合同数量</td>
+                    <td class="info-value">25,000<span class="unit">吨</span></td>
+                    <td class="info-label">交货期限</td>
+                    <td class="info-value">2026-01-27至2026-12-31</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">运输方式</td>
+                    <td class="info-value">中欧班列-东盟铁路</td>
+                    <td class="info-label">发站</td>
+                    <td class="info-value">万泰站</td>
+                    <td class="info-label">到站</td>
+                    <td class="info-value">新郑</td>
+                  </tr>
+                  <tr>
+                    <td class="info-label">付款账户</td>
+                    <td class="info-value">河南中豫港通供应链管理有限公司</td>
+                    <td class="info-label">回款账户</td>
+                    <td class="info-value" style="font-family: var(--font-mono); font-size: 12px;">华夏银行股份有限公司郑州九如路支行 1555 7000 0038 0278 8</td>
+                    <td class="info-label"></td>
+                    <td class="info-value"></td>
+                  </tr>
+                </table>
+
+                <h3 class="bl-section-title" style="margin-top: 24px;"><span class="bl-section-bar"></span>合同附件</h3>
+                <div class="bl-attachment">
+                  <div style="font-size: 13px; color: var(--text-tertiary);">附件共 1 份</div>
+                  <button class="btn-download-all" type="button">
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    一键下载
+                  </button>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 30%;">单据类型</th>
+                        <th>文件名称</th>
+                        <th style="width: 15%;text-align: right;">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>线下合同</td>
+                        <td><a class="bl-link">销售合同.pdf</a></td>
+                        <td style="text-align: right;"><a class="bl-link">下载</a></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 销售合同 - 货物运输（按图 2+图 3，发运/货转 空数据） -->
+              <div class="bl-side-panel" data-bl-side-panel="ship">
+                <div class="bl-sub-tap-bar">
+                  <div class="bl-sub-tap active" data-sub-tap="dispatch">发运信息</div>
+                  <div class="bl-sub-tap" data-sub-tap="transfer">货转信息</div>
+                </div>
+                <div class="bl-sub-panel active" data-sub-tap-panel="dispatch">
+                  <div class="cp-empty">
+                    <div class="cp-empty-icon">📦</div>
+                    <div class="cp-empty-text">暂无数据</div>
+                  </div>
+                </div>
+                <div class="bl-sub-panel" data-sub-tap-panel="transfer">
+                  <div class="cp-empty">
+                    <div class="cp-empty-icon">📦</div>
+                    <div class="cp-empty-text">暂无数据</div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- 销售合同 - 回款（按图 4） -->
+              <div class="bl-side-panel" data-bl-side-panel="receipt">
+                <div class="kpi-grid" style="grid-template-columns: 1fr 1fr 1fr 1fr; margin-bottom: 16px;">
+                  <div class="kpi-card highlight"><div class="kpi-label">已结算金额(元)</div><div class="kpi-value">10,461,948.71</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已回款金额(元)</div><div class="kpi-value">0</div></div>
+                  <div class="kpi-card"><div class="kpi-label">小微企业应收账款(元)</div><div class="kpi-value">0</div></div>
+                  <div class="kpi-card"><div class="kpi-label">其他企业应收账款(元)</div><div class="kpi-value">0</div></div>
+                </div>
+                <div class="bl-page-actions" style="margin-bottom: 12px;">
+                  <button class="btn btn-primary btn-sm">新增还款</button>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th>回款编号</th>
+                        <th>回款日期</th>
+                        <th>回款金额(元)</th>
+                        <th>认领企业应收账款(元)</th>
+                        <th>认领金额(元)</th>
+                        <th>小微企业应收账款(元)</th>
+                        <th>回款来源</th>
+                        <th>数据来源</th>
+                        <th>认领状态</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>SKHK202607050001</td><td>2026-01-28</td><td>233,200</td><td>233,200</td><td>233,200</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050002</td><td>2026-02-02</td><td>185,595.59</td><td>155,685.54</td><td>155,685.54</td><td>73,626.74</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050003</td><td>2026-02-03</td><td>298,335.39</td><td>218,336.39</td><td>218,336.39</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050004</td><td>2026-02-04</td><td>535,538.44</td><td>325,538.44</td><td>325,538.44</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050005</td><td>2026-02-04</td><td>446,449.97</td><td>446,449.97</td><td>446,449.97</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050006</td><td>2026-02-05</td><td>520,263.46</td><td>520,263.46</td><td>520,263.46</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050007</td><td>2026-02-08</td><td>158,332.16</td><td>158,332.16</td><td>158,332.16</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050008</td><td>2026-02-07</td><td>108,502.16</td><td>108,502.16</td><td>108,502.16</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050009</td><td>2026-02-09</td><td>210,623.6</td><td>210,623.6</td><td>210,623.6</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050010</td><td>2026-02-10</td><td>168,532.76</td><td>168,532.76</td><td>168,532.76</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050011</td><td>2026-02-10</td><td>158,311.6</td><td>158,311.6</td><td>158,311.6</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050012</td><td>2026-02-24</td><td>595,411.0</td><td>595,411.0</td><td>595,411.0</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050013</td><td>2026-03-04</td><td>210,823.4</td><td>210,823.4</td><td>210,823.4</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050014</td><td>2026-03-15</td><td>105,411.0</td><td>105,411.0</td><td>105,411.0</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                      <tr><td>SKHK202607050015</td><td>2026-03-25</td><td>57,204.99</td><td>57,204.99</td><td>57,204.99</td><td>0</td><td>手动添加</td><td>业务录入</td><td><span class="tag tag-green">已认领</span></td><td><a>详情</a> <a>修改</a> <a>删除</a></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 销售合同 - 结算单（按图 5） -->
+              <div class="bl-side-panel" data-bl-side-panel="settle">
+                <div class="bl-page-actions">
+                  <button class="btn btn-primary btn-sm">新增线下结算单</button>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th>结算单编号</th>
+                        <th>结算日期</th>
+                        <th>结算金额(元)</th>
+                        <th>结算单价(元/吨)</th>
+                        <th>结算数量(吨)</th>
+                        <th>运输方式</th>
+                        <th>结算状态</th>
+                        <th>结算附件</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>20260306-004</td><td>2026-03-06</td><td>2,108,235.96</td><td>3,444.83</td><td>612</td><td>中欧班列-车厘特路</td><td><span class="tag tag-green">已结算</span></td><td><a class="bl-link">商品验收单0306.png</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                      <tr><td>20260212-003</td><td>2026-02-12</td><td>3,162,353.94</td><td>3,444.83</td><td>918</td><td>中欧班列-车厘特路</td><td><span class="tag tag-green">已结算</span></td><td><a class="bl-link">商品验收单0212.png</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                      <tr><td>20260210-002</td><td>2026-02-10</td><td>1,815,425.41</td><td>3,444.83</td><td>527</td><td>中欧班列-车厘特路</td><td><span class="tag tag-green">已结算</span></td><td><a class="bl-link">商品验收单0210.png</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                      <tr><td>20260208001</td><td>2026-02-06</td><td>3,375,933.4</td><td>3,444.83</td><td>980</td><td>中欧班列-车厘特路</td><td><span class="tag tag-green">已结算</span></td><td><a class="bl-link">商品验收单0206.png</a></td><td><a>详情</a> <a>下载</a></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <!-- 销售合同 - 发票（按图 6，销项发票 3 行） -->
+              <div class="bl-side-panel" data-bl-side-panel="invoice">
+                <div class="bl-sub-tap-bar">
+                  <div class="bl-sub-tap" data-bl-inv="in">进项发票(0)</div>
+                  <div class="bl-sub-tap active" data-bl-inv="out">销项发票(3)</div>
+                  <div style="margin-left: auto; display: flex; gap: 8px;">
+                    <div class="bl-sub-tap active" data-bl-inv-att="all" style="padding: 4px 12px; font-size: 12px;">全部</div>
+                    <div class="bl-sub-tap" data-bl-inv-att="attached" style="padding: 4px 12px; font-size: 12px;">有附件</div>
+                    <div class="bl-sub-tap" data-bl-inv-att="none" style="padding: 4px 12px; font-size: 12px;">无附件</div>
+                    <button class="btn btn-primary btn-sm">新增发票</button>
+                  </div>
+                </div>
+                <div class="cp-table-wrap">
+                  <table class="bl-table">
+                    <thead>
+                      <tr>
+                        <th>发票代码</th>
+                        <th>发票号码</th>
+                        <th>开票日期</th>
+                        <th>不含税金额(元)</th>
+                        <th>税额(元)</th>
+                        <th>价税合计(元)</th>
+                        <th>拆分到本业务金额(元)</th>
+                        <th>发票附件</th>
+                        <th>发票状态</th>
+                        <th>操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>2641200000001537411331</td><td></td><td>2026-04-30</td><td>1,865,695.54</td><td>242,540.42</td><td>2,108,235.96</td><td>2,108,235.96</td><td>2013619130768940113.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                      <tr><td>2641200000000684302871</td><td></td><td>2026-02-28</td><td>2,051,049.68</td><td>266,635.94</td><td>2,317,681.62</td><td>2,317,681.62</td><td>2013618827961208834.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                      <tr><td>2641200000001114262161</td><td></td><td>2026-03-31</td><td>5,341,620.47</td><td>694,410.66</td><td>6,036,031.13</td><td>6,036,031.13</td><td>2013618705443833345.pdf?bigimg=1_0.png</td><td><span class="tag tag-green">正常</span></td><td><a>详情</a></td></tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- 业务线台账 tap（v1.7.99.53 按用户图 7-9 实现） -->
+        <div class="bl-tap-panel" data-bl-tap-panel="standing">
+          <div class="bl-content">
+            <!-- 左侧 3 步导航 -->
+            <div class="bl-side-nav">
+              <div class="bl-side-nav-item active" data-bl-side="overview"><span class="bl-step-dot"></span>库存数据总览</div>
+              <div class="bl-side-nav-item" data-bl-side="stat"><span class="bl-step-dot"></span>库存统计</div>
+              <div class="bl-side-nav-item" data-bl-side="category"><span class="bl-step-dot"></span>品类库存列表</div>
+            </div>
+            <div class="bl-main">
+
+              <!-- 库存数据总览（按图 7，v1.7.99.55 修正字段名+数据卡数量） -->
+              <div class="bl-side-panel active" data-bl-side-panel="overview">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 100px; gap: 12px; margin-bottom: 16px;">
+                  <div class="kpi-card"><div class="kpi-label">账面库存(吨)</div><div class="kpi-value">12,540.85</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已付款金额(元)</div><div class="kpi-value">¥10,325,800</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已收货物量(吨)</div><div class="kpi-value">0</div></div>
+                  <div class="kpi-card"><div class="kpi-label">累计出库金额(元)</div><div class="kpi-value">¥10,325,800</div></div>
+                  <div class="risk-card">
+                    <div class="risk-card-label">风险预警</div>
+                    <div class="risk-card-value">0</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                  <div class="kpi-card"><div class="kpi-label">账面库存货值(元)</div><div class="kpi-value">¥50,201,351.29</div></div>
+                  <div class="kpi-card"><div class="kpi-label">累计入库货值(元)</div><div class="kpi-value">¥60,663,310</div></div>
+                  <div class="kpi-card"><div class="kpi-label">累计出库货值(元)</div><div class="kpi-value">¥10,461,948.71</div></div>
+                </div>
+                <h3 class="bl-section-title" style="display: flex; align-items: center; gap: 12px;">
+                  库存统计
+                  <div class="time-tap-bar" style="margin: 0;">
+                    <div class="time-tap active">全部</div>
+                    <div class="time-tap">本周</div>
+                    <div class="time-tap">本月</div>
+                    <div class="time-tap">近三个月</div>
+                    <div class="time-tap">近六个月</div>
+                    <div class="time-tap-date">自定义时间: <input type="text" value="2023-01-01"> - <input type="text" value="2026-07-29"></div>
+                  </div>
+                  <span class="chart-line-export">📥 数据导出</span>
+                </h3>
+                <div class="chart-line">
+                  <div class="chart-line-legend">
+                    <span><span class="dot" style="background: #1E40AF;"></span>入库吨位</span>
+                    <span><span class="dot" style="background: #10B981;"></span>出库吨位</span>
+                    <span><span class="dot" style="background: #F59E0B;"></span>库存吨位</span>
+                  </div>
+                  <div class="chart-line-canvas" id="stockChartOverview"></div>
+                </div>
+              </div>
+
+              <!-- 库存统计（按图 8，v1.7.99.55 修正字段名+数据卡数量） -->
+              <div class="bl-side-panel" data-bl-side-panel="stat">
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr 100px; gap: 12px; margin-bottom: 16px;">
+                  <div class="kpi-card highlight"><div class="kpi-label">账面库存(吨)</div><div class="kpi-value">12,540.85</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已付款金额(元)</div><div class="kpi-value">¥10,325,800</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已回款金额(元)</div><div class="kpi-value">¥0</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已开票金额(元)</div><div class="kpi-value">¥0</div></div>
+                  <div class="risk-card">
+                    <div class="risk-card-label">风险预警</div>
+                    <div class="risk-card-value">0</div>
+                  </div>
+                </div>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                  <div class="kpi-card"><div class="kpi-label">账面库存货值(元)</div><div class="kpi-value">¥50,201,351.29</div></div>
+                  <div class="kpi-card"><div class="kpi-label">累计入库货值(元)</div><div class="kpi-value">¥60,663,310</div></div>
+                  <div class="kpi-card"><div class="kpi-label">累计出库货值(元)</div><div class="kpi-value">¥10,461,948.71</div></div>
+                </div>
+                <h3 class="bl-section-title" style="display: flex; align-items: center; gap: 12px;">
+                  库存统计
+                  <div class="time-tap-bar" style="margin: 0;">
+                    <div class="time-tap active">全部</div>
+                    <div class="time-tap">本周</div>
+                    <div class="time-tap">本月</div>
+                    <div class="time-tap">近三个月</div>
+                    <div class="time-tap">近六个月</div>
+                    <div class="time-tap-date">自定义时间: <input type="text" value="2023-01-01"> - <input type="text" value="2026-07-29"></div>
+                  </div>
+                  <span class="chart-line-export">📥 数据导出</span>
+                </h3>
+                <div class="chart-line">
+                  <div class="chart-line-legend">
+                    <span><span class="dot" style="background: #1E40AF;"></span>入库吨位</span>
+                    <span><span class="dot" style="background: #10B981;"></span>出库吨位</span>
+                    <span><span class="dot" style="background: #F59E0B;"></span>库存吨位</span>
+                  </div>
+                  <div class="chart-line-canvas" id="stockChartStat"></div>
+                </div>
+              </div>
+
+              <!-- 品类库存列表（按图 9，v1.7.99.55 修正字段名） -->
+              <div class="bl-side-panel" data-bl-side-panel="category">
+                <h3 class="bl-section-title">库存数据总览</h3>
+                <div style="display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 12px; margin-bottom: 16px;">
+                  <div class="kpi-card"><div class="kpi-label">账面库存(吨)</div><div class="kpi-value">12,540.85</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已付款金额(元)</div><div class="kpi-value">¥10,325,800</div></div>
+                  <div class="kpi-card"><div class="kpi-label">已收货物量(吨)</div><div class="kpi-value">0</div></div>
+                  <div class="kpi-card"><div class="kpi-label">累计出库金额(元)</div><div class="kpi-value">¥10,325,800</div></div>
+                </div>
+                <h3 class="bl-section-title">库存统计</h3>
+                <div class="chart-line" style="margin-bottom: 24px;">
+                  <div class="chart-line-legend">
+                    <span><span class="dot" style="background: #1E40AF;"></span>入库吨位</span>
+                    <span><span class="dot" style="background: #10B981;"></span>出库吨位</span>
+                    <span><span class="dot" style="background: #F59E0B;"></span>库存吨位</span>
+                  </div>
+                  <div class="chart-line-canvas" id="stockChartCategory"></div>
+                </div>
+                <h3 class="bl-section-title">品类库存列表</h3>
+                <div style="display: flex; gap: 24px; align-items: flex-start;">
+                  <div class="donut-wrap" style="flex: 0 0 220px;">
+                    <div class="donut" id="donutCategory"></div>
+                  </div>
+                  <div class="cp-table-wrap" style="flex: 1;">
+                    <table class="bl-table">
+                      <thead>
+                        <tr>
+                          <th>品名</th>
+                          <th>账面库存（吨）</th>
+                          <th>流通库存（吨）</th>
+                          <th>累计入库（吨）</th>
+                          <th>累计入库货值（元）</th>
+                          <th>累计出库（吨）</th>
+                          <th>累计出库货值（元）</th>
+                          <th>操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>木薯淀粉</td>
+                          <td>12,540.85</td>
+                          <td>50,201,361.29</td>
+                          <td>15,577.85</td>
+                          <td>60,663,310</td>
+                          <td>3,037</td>
+                          <td>10,461,948.71</td>
+                          <td><a class="bl-link">入库明细</a> <a class="bl-link">出库明细</a></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // 3 个 tap 切换（采购合同/销售合同/业务线台账）— v1.7.99.53 限定到自身
+    document.querySelectorAll('.bl-tap').forEach(function(t) {
+      t.addEventListener('click', function() {
+        var key = this.getAttribute('data-bl-tap');
+        document.querySelectorAll('.bl-tap').forEach(function(x) { x.classList.toggle('active', x.getAttribute('data-bl-tap') === key); });
+        document.querySelectorAll('.bl-tap-panel').forEach(function(p) { p.classList.toggle('active', p.getAttribute('data-bl-tap-panel') === key); });
+      });
+    });
+
+    // 左侧导航（v1.7.99.53 修复：限定到当前 tap-panel 内，避免跨 tap 串扰）
+    document.querySelectorAll('.bl-side-nav-item').forEach(function(it) {
+      it.addEventListener('click', function() {
+        var tapPanel = this.closest('.bl-tap-panel');
+        if (!tapPanel) return;
+        var key = this.getAttribute('data-bl-side');
+        tapPanel.querySelectorAll('.bl-side-nav-item').forEach(function(x) { x.classList.toggle('active', x.getAttribute('data-bl-side') === key); });
+        tapPanel.querySelectorAll('.bl-side-panel').forEach(function(p) { p.classList.toggle('active', p.getAttribute('data-bl-side-panel') === key); });
+      });
+    });
+
+    // 货物运输 2 tap（发运信息/货转信息）— v1.7.99.53 限定到当前 side-panel
+    document.querySelectorAll('.bl-sub-tap[data-sub-tap]').forEach(function(t) {
+      t.addEventListener('click', function() {
+        var key = this.getAttribute('data-sub-tap');
+        var parent = this.closest('.bl-side-panel');
+        if (!parent) return;
+        parent.querySelectorAll('.bl-sub-tap[data-sub-tap]').forEach(function(x) { x.classList.toggle('active', x.getAttribute('data-sub-tap') === key); });
+        parent.querySelectorAll('.bl-sub-panel').forEach(function(p) { p.classList.toggle('active', p.getAttribute('data-sub-tap-panel') === key); });
+      });
+    });
+
+    // 发票 2 tap（进项/销项） + 3 子 tap（全部/有附件/无附件）— v1.7.99.53 限定到当前 invoice panel
+    document.querySelectorAll('.bl-side-panel[data-bl-side-panel="invoice"] .bl-sub-tap[data-bl-inv]').forEach(function(t) {
+      t.addEventListener('click', function() {
+        var parent = this.closest('.bl-side-panel');
+        if (!parent) return;
+        var key = this.getAttribute('data-bl-inv');
+        parent.querySelectorAll('.bl-sub-tap[data-bl-inv]').forEach(function(x) { x.classList.toggle('active', x.getAttribute('data-bl-inv') === key); });
+      });
+    });
+    document.querySelectorAll('.bl-side-panel[data-bl-side-panel="invoice"] .bl-sub-tap[data-bl-inv-att]').forEach(function(t) {
+      t.addEventListener('click', function() {
+        var parent = this.closest('.bl-side-panel');
+        if (!parent) return;
+        var key = this.getAttribute('data-bl-inv-att');
+        parent.querySelectorAll('.bl-sub-tap[data-bl-inv-att]').forEach(function(x) { x.classList.toggle('active', x.getAttribute('data-bl-inv-att') === key); });
+      });
+    });
+
+    // 业务线台账 - 时间 tap 切换（v1.7.99.53）
+    document.querySelectorAll('.time-tap').forEach(function(t) {
+      t.addEventListener('click', function() {
+        var parent = this.parentElement;
+        parent.querySelectorAll('.time-tap').forEach(function(x) { x.classList.remove('active'); });
+        this.classList.add('active');
+      });
+    });
+
+    // 业务线台账 - 折线图占位（v1.7.99.53：纯 SVG 占位 + 模拟数据）
+    function drawStockChart(canvasId) {
+      var canvas = document.getElementById(canvasId);
+      if (!canvas) return;
+      // 12 个月模拟数据
+      var months = ['2025-10-04', '2025-10-27', '2025-11-16', '2025-12-24', '2026-01-28', '2026-02-16', '2026-03-09', '2026-04-23', '2026-05-26', '2026-06-09', '2026-07-17', '2026-08-08'];
+      var inData  = [120, 280, 450, 320, 580, 420, 510, 360, 240, 180, 220, 300];  // 入库吨位（柱状）
+      var outData = [80, 150, 220, 180, 350, 280, 320, 240, 180, 120, 150, 200];   // 出库吨位
+      var stockData = [120, 250, 480, 620, 850, 990, 1180, 1300, 1360, 1420, 1490, 1590]; // 库存吨位（折线）
+      var w = canvas.clientWidth || 800, h = 200;
+      var maxVal = 1600, padding = 30;
+      var xStep = (w - padding * 2) / (months.length - 1);
+      var yScale = (h - padding * 2) / maxVal;
+      // 网格线
+      var svg = '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" xmlns="http://www.w3.org/2000/svg">';
+      // 4 条水平网格线
+      for (var i = 0; i < 5; i++) {
+        var y = padding + ((h - padding * 2) / 4) * i;
+        svg += '<line x1="' + padding + '" y1="' + y + '" x2="' + (w - padding) + '" y2="' + y + '" stroke="#E2E8F0" stroke-width="1" stroke-dasharray="2 2" />';
+      }
+      // 入库柱状
+      var barW = 6;
+      for (var i = 0; i < inData.length; i++) {
+        var x = padding + xStep * i - barW / 2;
+        var barH = inData[i] * yScale;
+        svg += '<rect x="' + x + '" y="' + (h - padding - barH) + '" width="' + barW + '" height="' + barH + '" fill="#1E40AF" opacity="0.6" />';
+      }
+      // 出库柱状
+      for (var i = 0; i < outData.length; i++) {
+        var x = padding + xStep * i - barW / 2 + 6;
+        var barH = outData[i] * yScale;
+        svg += '<rect x="' + x + '" y="' + (h - padding - barH) + '" width="' + barW + '" height="' + barH + '" fill="#10B981" opacity="0.6" />';
+      }
+      // 库存折线
+      var points = [];
+      for (var i = 0; i < stockData.length; i++) {
+        var x = padding + xStep * i;
+        var y = h - padding - stockData[i] * yScale;
+        points.push(x + ',' + y);
+      }
+      svg += '<polyline points="' + points.join(' ') + '" fill="none" stroke="#F59E0B" stroke-width="2.5" />';
+      // 库存点
+      for (var i = 0; i < points.length; i++) {
+        var p = points[i].split(',');
+        svg += '<circle cx="' + p[0] + '" cy="' + p[1] + '" r="3" fill="#F59E0B" />';
+      }
+      // X 轴标签
+      for (var i = 0; i < months.length; i++) {
+        var x = padding + xStep * i;
+        svg += '<text x="' + x + '" y="' + (h - 5) + '" text-anchor="middle" font-size="10" fill="#94A3B8">' + months[i].slice(5) + '</text>';
+      }
+      svg += '</svg>';
+      canvas.innerHTML = svg;
+    }
+    drawStockChart('stockChartOverview');
+    drawStockChart('stockChartStat');
+    drawStockChart('stockChartCategory');
+
+    // 业务线台账 - 环形图占位（v1.7.99.53：100% 木薯淀粉）
+    function drawDonut(donutId) {
+      var donut = document.getElementById(donutId);
+      if (!donut) return;
+      // 100% 单色
+      var svg = '<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">';
+      svg += '<circle cx="100" cy="100" r="70" fill="none" stroke="#F1F5F9" stroke-width="24" />';
+      svg += '<circle cx="100" cy="100" r="70" fill="none" stroke="#1E1B4B" stroke-width="24" stroke-dasharray="439.6 439.6" transform="rotate(-90 100 100)" />';
+      svg += '</svg>';
+      donut.innerHTML = svg + '<div class="donut-center"><div class="name">木薯淀粉</div><div class="pct">100%</div><div class="val">12,540.85</div></div>';
+    }
+    drawDonut('donutCategory');
+  </script>
+  <!-- 右下角返回顶部 button（v1.7.99.87 新加） -->
+  <div class="bl-back-top" onclick="window.scrollTo({top: 0, behavior: 'smooth'})" title="返回顶部">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="18 15 12 9 6 15"/></svg>
+  </div>
+
+  <!-- v1.7.99.202：业务线操作相关 3 个弹窗 -->
+  <!-- 弹窗 1：解除业务线（带感叹号 icon + 二次确认） -->
+  <div class="bl-modal-mask" id="blModalRelease">
+    <div class="bl-modal">
+      <div class="bl-modal-header">
+        <div class="bl-modal-title"><span class="bl-modal-title-icon">!</span>解除业务线</div>
+        <button class="bl-modal-close" onclick="closeBlModal('release')">×</button>
+      </div>
+      <div class="bl-modal-body">
+        <div class="bl-modal-body-text">解除后，该业务线将删除，不影响上下游合同数据。确认要解除吗？</div>
+      </div>
+      <div class="bl-modal-footer">
+        <button class="btn-default" onclick="closeBlModal('release')">取消</button>
+        <button class="btn-primary" onclick="confirmBlAction('release')">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 2：申请业务完结（单选：上游采购合同 / 下游销售合同） -->
+  <div class="bl-modal-mask" id="blModalFinish">
+    <div class="bl-modal">
+      <div class="bl-modal-header">
+        <div class="bl-modal-title">业务线完结申请</div>
+        <button class="bl-modal-close" onclick="closeBlModal('finish')">×</button>
+      </div>
+      <div class="bl-modal-body">
+        <div class="bl-modal-radio-group">
+          <span style="margin-right: 8px;">申请完结合同：</span>
+          <label><input type="radio" name="blFinishType" value="upstream"> 上游采购合同</label>
+          <label><input type="radio" name="blFinishType" value="downstream"> 下游销售合同</label>
+        </div>
+      </div>
+      <div class="bl-modal-footer">
+        <button class="btn-default" onclick="closeBlModal('finish')">取消</button>
+        <button class="btn-primary" onclick="confirmBlAction('finish')">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- 弹窗 3：一键下载附件（多选：上游附件 / 下游附件，默认全选） -->
+  <div class="bl-modal-mask" id="blModalDownload">
+    <div class="bl-modal">
+      <div class="bl-modal-header">
+        <div class="bl-modal-title">一键下载附件</div>
+        <button class="bl-modal-close" onclick="closeBlModal('download')">×</button>
+      </div>
+      <div class="bl-modal-body">
+        <div class="bl-modal-checkbox-group">
+          <label><input type="checkbox" name="blDownloadType" value="upstream" checked> 上游附件</label>
+          <label><input type="checkbox" name="blDownloadType" value="downstream" checked> 下游附件</label>
+        </div>
+      </div>
+      <div class="bl-modal-footer">
+        <button class="btn-default" onclick="closeBlModal('download')">取消</button>
+        <button class="btn-primary" onclick="confirmBlAction('download')">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.202：操作下拉菜单 + 弹窗 JS -->
+  <script>
+    // 操作下拉切换
+    function toggleBlActionMenu(e) {
+      e.stopPropagation();
+      var menu = document.getElementById('blActionMenu');
+      menu.style.display = (menu.style.display === 'none' || menu.style.display === '') ? 'block' : 'none';
+    }
+    // 点击外部关闭下拉
+    document.addEventListener('click', function(e) {
+      var menu = document.getElementById('blActionMenu');
+      var btn = document.getElementById('blActionBtn');
+      if (menu && btn && !btn.contains(e.target) && !menu.contains(e.target)) {
+        menu.style.display = 'none';
+      }
+    });
+
+    // 打开弹窗
+    function openBlModal(type) {
+      // 先关闭下拉
+      var menu = document.getElementById('blActionMenu');
+      if (menu) menu.style.display = 'none';
+
+      // v1.7.99.203：查看合规验证报告——跳到对应业务线的合规验证报告详情页（report-compliance.html 列表页"查看报告"链接同款）
+      if (type === 'compliance') {
+        window.location.href = './report-compliance-detail.html';
+        return;
+      }
+
+      var map = {
+        'release': 'blModalRelease',
+        'finish': 'blModalFinish',
+        'download': 'blModalDownload'
+      };
+      var id = map[type];
+      if (id) document.getElementById(id).classList.add('show');
+    }
+    // 关闭弹窗
+    function closeBlModal(type) {
+      var map = {
+        'release': 'blModalRelease',
+        'finish': 'blModalFinish',
+        'download': 'blModalDownload'
+      };
+      var id = map[type];
+      if (id) document.getElementById(id).classList.remove('show');
+    }
+    // 弹窗确定按钮
+    function confirmBlAction(type) {
+      if (type === 'finish') {
+        var checked = document.querySelector('input[name="blFinishType"]:checked');
+        if (!checked) {
+          if (typeof Utils !== 'undefined' && Utils.toast) {
+            Utils.toast('请选择要完结合同类型', 'warning');
+          } else {
+            alert('请选择要完结合同类型');
+          }
+          return;
+        }
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+          Utils.toast('已提交' + (checked.value === 'upstream' ? '上游采购合同' : '下游销售合同') + '完结申请', 'success');
+        } else {
+          alert('已提交完结申请');
+        }
+        closeBlModal('finish');
+      } else if (type === 'download') {
+        var checkboxes = document.querySelectorAll('input[name="blDownloadType"]:checked');
+        if (checkboxes.length === 0) {
+          if (typeof Utils !== 'undefined' && Utils.toast) {
+            Utils.toast('请至少选择一个附件类型', 'warning');
+          } else {
+            alert('请至少选择一个附件类型');
+          }
+          return;
+        }
+        var labels = [];
+        checkboxes.forEach(function(cb) { labels.push(cb.parentElement.textContent.trim()); });
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+          Utils.toast('已下载：' + labels.join('、'), 'success');
+        } else {
+          alert('已下载：' + labels.join('、'));
+        }
+        closeBlModal('download');
+      } else if (type === 'release') {
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+          Utils.toast('业务线已解除', 'success');
+        } else {
+          alert('业务线已解除');
+        }
+        closeBlModal('release');
+      }
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

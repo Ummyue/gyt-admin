@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>风险运营管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .placeholder-card {
+      max-width: 560px;
+      margin: 60px auto;
+      padding: 40px 32px;
+      background: #ffffff;
+      border: 1px solid var(--border-default);
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
+    }
+    .placeholder-icon {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 20px;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 36px;
+    }
+    .placeholder-title {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin-bottom: 8px;
+    }
+    .placeholder-desc {
+      font-size: 14px;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 24px;
+    }
+    .placeholder-tags {
+      display: inline-flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: center;
+    }
+    .placeholder-tag {
+      padding: 4px 12px;
+      background: #f1f5f9;
+      color: var(--text-secondary);
+      font-size: 12px;
+      border-radius: 999px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+  <div class="topbar-logo">
+    <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+    <span>豫港通</span>
+  </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+  <div class="topbar-right">
+    <div class="topbar-icon-btn">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+      <span class="badge"></span>
+    </div>
+    <div class="topbar-user">
+      <div class="topbar-user-avatar">张</div>
+      <div>
+        <div class="topbar-user-name">张爽</div>
+        <div class="topbar-user-org">港通供应链</div>
+      </div>
+    </div>
+  </div>
+</div>
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+    <div class="page-header">
+      <div class="breadcrumb">风险运营管理</div>
+      <h1 class="page-title">风险运营管理</h1>
+    </div>
+    <div class="page-body" style="padding: 24px;">
+      <div class="placeholder-card">
+        <div class="placeholder-icon">⚠️</div>
+        <div class="placeholder-title">该模块暂无页面</div>
+        <div class="placeholder-desc">
+          按最新业务划分，原「风险运营管理」下的"驾驶舱 / 业务报表 / 合规验证报告管理"<br>
+          三个二级菜单已合并到「数据中心」模块下。
+        </div>
+        <div class="placeholder-tags">
+          <span class="placeholder-tag">驾驶舱 → 数据中心</span>
+          <span class="placeholder-tag">业务报表 → 数据中心</span>
+          <span class="placeholder-tag">合规验证报告管理 → 数据中心</span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /main-content -->
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

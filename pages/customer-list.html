@@ -1,0 +1,955 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>客户管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* tap 切换模块 */
+    .tab-action-tab {
+      padding: 10px 18px;
+      font-size: 14px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .tab-action-tab:hover { color: var(--text-primary); }
+    .tab-action-tab.active {
+      color: var(--color-primary);
+      border-bottom-color: var(--color-primary);
+      font-weight: 500;
+    }
+    .customer-tap-panel { display: block; }
+    .customer-tap-panel[hidden] { display: none; }
+    /* 客户类型 tag 颜色 */
+    .tag-blue { background: #DBEAFE; color: #1E40AF; }
+    .tag-orange { background: #FED7AA; color: #9A3412; }
+    .tag-green { background: #DCFCE7; color: #166534; }
+    .tag-cyan { background: #CFFAFE; color: #155E75; }
+    .tag-gray { background: #F1F5F9; color: #475569; }
+
+    /* v1.7.99.135：新增企业额度设置 弹窗样式（按 user 2026-08-05 反馈图1） */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: flex; align-items: center; justify-content: center;
+      z-index: 1000; padding: 20px;
+    }
+    .modal-panel {
+      background: #fff; border-radius: 8px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.18);
+      max-width: 95vw; max-height: 90vh; display: flex; flex-direction: column;
+      overflow: hidden;
+    }
+    .modal-header {
+      padding: 18px 24px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close {
+      background: none; border: none; font-size: 24px; line-height: 1;
+      color: var(--text-tertiary); cursor: pointer; padding: 0; width: 28px; height: 28px;
+      display: flex; align-items: center; justify-content: center; border-radius: 4px;
+    }
+    .modal-close:hover { background: var(--bg-hover); color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; flex: 1; overflow-y: auto; }
+    .modal-footer {
+      padding: 14px 24px; border-top: 1px solid var(--border-light);
+      display: flex; align-items: center; justify-content: flex-end; gap: 12px;
+    }
+    /* form 字段（与 design-system.css 对齐） */
+    .form-row { display: flex; align-items: center; gap: 16px; }
+    .form-label {
+      flex: 0 0 90px; font-size: 13px; color: var(--text-secondary);
+      text-align: right; line-height: 1.4;
+    }
+    .form-input {
+      flex: 1; height: 36px; padding: 0 12px; font-size: 14px;
+      border: 1px solid var(--border-default); border-radius: 4px;
+      background: #fff; color: var(--text-primary); outline: none;
+    }
+    .form-input:focus { border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(30,64,175,0.08); }
+    /* 紫色 select/input（图1 标记点） */
+    .form-input-purple {
+      background: #F3E8FF !important; color: #6B21A8;
+      border-color: #E9D5FF !important;
+    }
+    .form-input-purple::placeholder { color: #C4B5FD; }
+    .required-marker { color: #DC2626; margin-right: 2px; }
+    /* 关联项目信息 sub-block */
+    .form-block { background: #fff; }
+    .form-block-header {
+      display: flex; align-items: center; justify-content: space-between;
+      margin-bottom: 12px;
+    }
+    .form-block-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .add-row-link {
+      background: none; border: none; cursor: pointer; padding: 0;
+      color: var(--color-primary); font-size: 13px;
+    }
+    .add-row-link:hover { text-decoration: underline; }
+    /* 关联项目表 */
+    .quota-project-table {
+      width: 100%; border-collapse: collapse; font-size: 13px;
+      border: 1px solid var(--border-light); border-radius: 4px; overflow: hidden;
+    }
+    .quota-project-table th {
+      background: #F8FAFC; font-weight: 500; color: var(--text-secondary);
+      padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light);
+    }
+    .quota-project-table td {
+      padding: 8px 12px; border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .quota-project-table tr:last-child td { border-bottom: none; }
+    .delete-row-link {
+      color: var(--color-primary); cursor: pointer; font-size: 13px;
+      text-decoration: none;
+    }
+    .delete-row-link:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+                    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-header">
+        <div class="breadcrumb">
+          <span>准入管理</span>
+          <span class="separator">/</span>
+          <span>项目准入</span>
+          <span class="separator">/</span>
+          <span class="current">客户管理</span>
+        </div>
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">客户管理</h1>
+          <a class="btn btn-primary" id="addBtn" href="./customer-apply.html">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            <span id="addBtnText">新增客户</span>
+          </a>
+        </div>
+
+        <!-- 业务分类 tap（v1.7.99.15：客户基础信息 / 客户额度信息 双 tap 切换） -->
+        <div class="tab-action-bar" style="margin-bottom: 0; justify-content: flex-start;">
+          <div class="tab-action-tab active" data-tap="basic">客户基础信息</div>
+          <div class="tab-action-tab" data-tap="quota">客户额度信息</div>
+        </div>
+      </div>
+
+      <div style="flex: 1; padding: 16px 24px 80px; overflow-y: auto;">
+        <!-- ========== Tap 1：客户基础信息 ========== -->
+        <div class="customer-tap-panel" data-tap-panel="basic">
+          <!-- 筛选区 -->
+          <div class="card" data-filter-panel style="margin-bottom: 0; padding: 0; border-radius: 8px 8px 0 0;">
+            <div style="padding: 14px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span style="font-size: 13px; color: var(--text-tertiary);">当前搜索：</span>
+              <span data-filter-chips class="filter-chips"></span>
+              <span class="filter-empty-hint" style="font-size: 13px; color: var(--text-tertiary);">（无筛选条件）</span>
+              <button class="clear-all-btn" type="button" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              <div style="flex: 1;"></div>
+              <a style="font-size: 13px; color: var(--color-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                数据导出
+              </a>
+            </div>
+            <div style="padding: 0 20px 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px;">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目名称</span>
+                <input type="text" class="input" placeholder="请输入项目名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业类别</span>
+                <select class="select"><option>请选择企业类别</option><option>上游企业</option><option>下游企业</option><option>第三方物流</option><option>第三方仓储</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业名称</span>
+                <input type="text" class="input" placeholder="请输入企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业简称</span>
+                <input type="text" class="input" placeholder="请输入企业简称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">法定代表人</span>
+                <input type="text" class="input" placeholder="请输入法定代表人">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">所属区域</span>
+                <select class="select"><option>请选择区域信息</option><option>河南</option><option>山东</option><option>河北</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">联系人姓名</span>
+                <input type="text" class="input" placeholder="请输入联系人姓名">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">联系人电话</span>
+                <input type="text" class="input" placeholder="请输入联系人电话">
+              </div>
+            </div>
+          </div>
+
+          <!-- 状态 tab（v1.7.99.123 补全：8 tab 枚举 = 全部 + 7 状态，对齐 CUSTOMER_STATUS_META） -->
+          <div class="cp-block cp-block-tab" id="customerBasicStatusTabs" style="display: flex; align-items: center; gap: 24px; padding: 12px 20px; background: #fff; border-top: 1px dashed var(--border-light); border-bottom: 1px solid var(--border-light);">
+            <div class="cp-tab active" data-status="all" style="color: var(--color-primary); border-bottom: 2px solid var(--color-primary); padding: 6px 0; cursor: pointer;">全部 <span class="tab-count" data-count-key="all" style="color: var(--color-primary); font-weight: 600;">0</span></div>
+            <div class="cp-tab" data-status="待提交" style="color: #1E40AF; padding: 6px 0; cursor: pointer;">待提交 <span class="tab-count" data-count-key="待提交" style="color: #1E40AF; font-weight: 600;">0</span></div>
+            <div class="cp-tab" data-status="审核中" style="color: #A16207; padding: 6px 0; cursor: pointer;">审核中 <span class="tab-count" data-count-key="审核中" style="color: #A16207; font-weight: 600;">0</span></div>
+            <div class="cp-tab" data-status="执行中" style="color: #15803D; padding: 6px 0; cursor: pointer;">执行中 <span class="tab-count" data-count-key="执行中" style="color: #15803D; font-weight: 600;">0</span></div>
+            <div class="cp-tab" data-status="已完结" style="color: #64748B; padding: 6px 0; cursor: pointer;">已完结 <span class="tab-count" data-count-key="已完结" style="color: #64748B; font-weight: 600;">0</span></div>
+            <div class="cp-tab" data-status="驳回" style="color: #DC2626; padding: 6px 0; cursor: pointer;">驳回 <span class="tab-count" data-count-key="驳回" style="color: #DC2626; font-weight: 600;">0</span></div>
+            <div class="cp-tab" data-status="已作废" style="color: #94A3B8; padding: 6px 0; cursor: pointer;">已作废 <span class="tab-count" data-count-key="已作废" style="color: #94A3B8; font-weight: 600;">0</span></div>
+            <!-- v1.7.99.123 新增：状态机说明按钮（点击弹出状态机 modal） -->
+            <div style="margin-left: auto;">
+              <button type="button" class="btn-link-primary" onclick="openStatusMachineModal()" style="background: none; border: 0; color: var(--color-primary); font-size: 13px; cursor: pointer; padding: 0;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="vertical-align: -2px; margin-right: 4px;"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+                查看状态机说明
+              </button>
+            </div>
+          </div>
+
+          <!-- 表格 -->
+          <div class="card" style="border-radius: 0 0 8px 8px; border-top: none; padding: 0; overflow: hidden;">
+            <div style="overflow-x: auto;">
+              <table class="cp-table" style="min-width: 1800px;">
+                <thead>
+                  <tr>
+                    <th style="width: 7%;">客户类型</th>
+                    <th style="width: 12%;">企业名称</th>
+                    <th style="width: 12%;">关联项目名称</th>
+                    <th style="width: 12%;">统一社会信用代码</th>
+                    <th style="width: 6%;">企业简称</th>
+                    <th style="width: 5%;">法定代表人</th>
+                    <th style="width: 7%;">注册资本（万元）</th>
+                    <th style="width: 9%;">所属地区</th>
+                    <th style="width: 6%;">负责人姓名</th>
+                    <th style="width: 7%;">负责人电话</th>
+                    <th style="width: 6%;">联系人姓名</th>
+                    <th style="width: 7%;">联系人电话</th>
+                    <th style="width: 110px; min-width: 110px;" class="col-status">流程状态</th>
+                    <th style="width: 140px; min-width: 140px;" class="col-action" style="text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="customerTbody">
+                  <!-- v1.7.99.65：由 JS 渲染（见 CUSTOMER_MOCK + renderCustomerTable） -->
+                </tbody>
+              </table>
+            </div>
+            <div style="padding: 14px 20px; display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--border-light);">
+              <span style="font-size: 13px; color: var(--text-tertiary);">共 26 条记录 · 第 1 / 3 页</span>
+              <div style="flex: 1;"></div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">&lt;</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--color-primary); background: var(--color-primary); color: #fff; border-radius: 4px; cursor: pointer;">1</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">2</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">3</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">&gt;</button>
+                <span style="font-size: 13px; color: var(--text-tertiary); margin-left: 8px;">10 条/页</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /tap 1 -->
+
+        <!-- ========== Tap 2：客户额度信息 ========== -->
+        <div class="customer-tap-panel" data-tap-panel="quota" hidden>
+          <div class="card" data-filter-panel style="margin-bottom: 0; padding: 0; border-radius: 8px 8px 0 0;">
+            <div style="padding: 14px 20px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap;">
+              <span style="font-size: 13px; color: var(--text-tertiary);">当前搜索：</span>
+              <span data-filter-chips class="filter-chips"></span>
+              <span class="filter-empty-hint" style="font-size: 13px; color: var(--text-tertiary);">（无筛选条件）</span>
+              <button class="clear-all-btn" type="button" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              <div style="flex: 1;"></div>
+              <a style="font-size: 13px; color: var(--color-primary); cursor: pointer; display: inline-flex; align-items: center; gap: 4px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+                数据导出
+              </a>
+            </div>
+            <div style="padding: 0 20px 16px; display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 24px;">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业名称</span>
+                <input type="text" class="input" placeholder="请输入企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目名称</span>
+                <input type="text" class="input" placeholder="请输入项目名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目编号</span>
+                <input type="text" class="input" placeholder="请输入项目编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">授信额度</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <input type="text" class="input" placeholder="¥" style="flex: 1;">
+                  <span style="color: var(--text-tertiary);">—</span>
+                  <input type="text" class="input" placeholder="¥" style="flex: 1;">
+                </div>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">授信到期日期</span>
+                <input type="text" class="input" placeholder="请选择授信到期日期">
+              </div>
+            </div>
+          </div>
+
+          <div class="cp-block cp-block-tab" style="display: flex; align-items: center; gap: 24px; padding: 12px 20px; background: #fff; border-top: 1px dashed var(--border-light); border-bottom: 1px solid var(--border-light);">
+            <div class="cp-tab active" data-status="all" style="color: var(--color-primary); border-bottom: 2px solid var(--color-primary); padding: 6px 0; cursor: pointer;">全部 <span style="color: var(--color-primary); font-weight: 600;">12</span></div>
+            <div class="cp-tab" data-status="ineffective" style="color: #64748B; padding: 6px 0; cursor: pointer;">未生效 <span style="color: #64748B; font-weight: 600;">3</span></div>
+            <div class="cp-tab" data-status="effective" style="color: #15803D; padding: 6px 0; cursor: pointer;">已生效 <span style="color: #15803D; font-weight: 600;">7</span></div>
+            <div class="cp-tab" data-status="expired" style="color: #DC2626; padding: 6px 0; cursor: pointer;">已失效 <span style="color: #DC2626; font-weight: 600;">2</span></div>
+          </div>
+
+          <div class="card" style="border-radius: 0 0 8px 8px; border-top: none; padding: 0; overflow: hidden;">
+            <div style="overflow-x: auto;">
+              <table class="cp-table" style="min-width: 1500px;">
+                <thead>
+                  <tr>
+                    <th style="width: 16%;">企业名称</th>
+                    <th style="width: 12%;">项目编号</th>
+                    <th style="width: 14%;">项目名称</th>
+                    <th style="width: 10%;">授信额度(元)</th>
+                    <th style="width: 10%;">已用额度(元)</th>
+                    <th style="width: 10%;">可用额度(元)</th>
+                    <th style="width: 14%;">授信有效期</th>
+                    <th style="width: 6%;">状态</th>
+                    <th style="width: 140px; min-width: 140px;" class="col-action" style="text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>中国投资技术股份有限公司</td>
+                    <td style="font-family: var(--font-mono); color: var(--color-primary);">LX20260122001</td>
+                    <td>进口木薯淀粉业务</td>
+                    <td style="text-align: right;">10,000.00</td>
+                    <td style="text-align: right;">1,000.00</td>
+                    <td style="text-align: right; color: #15803D; font-weight: 600;">7,000.00</td>
+                    <td>2024-12-12 ~ 2025-04-30</td>
+                    <td><span class="tag tag-gray">已失效</span></td>
+                    <td class="col-action" style="text-align: right;"><a href="javascript:void(0)">编辑</a></td>
+                  </tr>
+                  <tr>
+                    <td>山西宏达钢铁有限公司</td>
+                    <td style="font-family: var(--font-mono); color: var(--color-primary);">LX20260122001</td>
+                    <td>进口木薯淀粉业务</td>
+                    <td style="text-align: right;">10,000.00</td>
+                    <td style="text-align: right;">1,000.00</td>
+                    <td style="text-align: right; color: #15803D; font-weight: 600;">7,000.00</td>
+                    <td>2024-12-12 ~ 2025-04-30</td>
+                    <td><span class="tag tag-green">已生效</span></td>
+                    <td class="col-action" style="text-align: right;"><a href="javascript:void(0)">编辑</a></td>
+                  </tr>
+                  <tr>
+                    <td>上海蔚来汽车有限公司</td>
+                    <td style="font-family: var(--font-mono); color: var(--color-primary);">LX20260122001</td>
+                    <td>进口木薯淀粉业务</td>
+                    <td style="text-align: right;">10,000.00</td>
+                    <td style="text-align: right;">1,000.00</td>
+                    <td style="text-align: right; color: #15803D; font-weight: 600;">7,000.00</td>
+                    <td>2024-12-12 ~ 2025-04-30</td>
+                    <td><span class="tag tag-orange">未生效</span></td>
+                    <td class="col-action" style="text-align: right;"><a href="javascript:void(0)">编辑</a></td>
+                  </tr>
+                  <tr>
+                    <td>四川中厚测试企业一分司</td>
+                    <td style="font-family: var(--font-mono); color: var(--color-primary);">LX20260122001</td>
+                    <td>进口木薯淀粉业务</td>
+                    <td style="text-align: right;">10,000.00</td>
+                    <td style="text-align: right;">1,000.00</td>
+                    <td style="text-align: right; color: #15803D; font-weight: 600;">7,000.00</td>
+                    <td>2024-12-12 ~ 2025-04-30</td>
+                    <td><span class="tag tag-gray">已失效</span></td>
+                    <td class="col-action" style="text-align: right;"><a href="javascript:void(0)">编辑</a></td>
+                  </tr>
+                  <tr>
+                    <td>中国投资技术股份有限公司</td>
+                    <td style="font-family: var(--font-mono); color: var(--color-primary);">LX20260122001</td>
+                    <td>进口木薯淀粉业务</td>
+                    <td style="text-align: right;">10,000.00</td>
+                    <td style="text-align: right;">1,000.00</td>
+                    <td style="text-align: right; color: #15803D; font-weight: 600;">7,000.00</td>
+                    <td>2024-12-12 ~ 2025-04-30</td>
+                    <td><span class="tag tag-green">已生效</span></td>
+                    <td class="col-action" style="text-align: right;"><a href="javascript:void(0)">编辑</a></td>
+                  </tr>
+                  <tr>
+                    <td>回迁房合作服务商（中孚）</td>
+                    <td style="font-family: var(--font-mono); color: var(--color-primary);">LX20260122001</td>
+                    <td>进口木薯淀粉业务</td>
+                    <td style="text-align: right;">10,000.00</td>
+                    <td style="text-align: right;">1,000.00</td>
+                    <td style="text-align: right; color: #15803D; font-weight: 600;">7,000.00</td>
+                    <td>2024-12-12 ~ 2025-04-30</td>
+                    <td><span class="tag tag-orange">未生效</span></td>
+                    <td class="col-action" style="text-align: right;"><a href="javascript:void(0)">编辑</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+            <div style="padding: 14px 20px; display: flex; align-items: center; gap: 16px; border-top: 1px solid var(--border-light);">
+              <span style="font-size: 13px; color: var(--text-tertiary);">共 12 条记录 · 第 1 / 2 页</span>
+              <div style="flex: 1;"></div>
+              <div style="display: flex; align-items: center; gap: 6px;">
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">&lt;</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--color-primary); background: var(--color-primary); color: #fff; border-radius: 4px; cursor: pointer;">1</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">2</button>
+                <button style="padding: 4px 10px; border: 1px solid var(--border-default); background: #fff; border-radius: 4px; cursor: pointer;">&gt;</button>
+                <span style="font-size: 13px; color: var(--text-tertiary); margin-left: 8px;">10 条/页</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /tap 2 -->
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // ========== v1.7.99.123 inline Utils fallback（v1.7.99.80 模式：避免 console error 阻断 JS） ==========
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { console.log('[toast]', type, msg); },
+      nav: function(url) { window.location.href = url; }
+    };
+    // tap 切换（v1.7.99.15：客户基础信息 / 客户额度信息）
+    (function() {
+      var tabs = document.querySelectorAll('.tab-action-tab[data-tap]');
+      var panels = document.querySelectorAll('.customer-tap-panel');
+      var addBtn = document.getElementById('addBtn');
+      var addBtnText = document.getElementById('addBtnText');
+      function switchTap(target) {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        panels.forEach(function(p) { p.hidden = true; });
+        var activeTab = document.querySelector('.tab-action-tab[data-tap="' + target + '"]');
+        if (activeTab) activeTab.classList.add('active');
+        var activePanel = document.querySelector('.customer-tap-panel[data-tap-panel="' + target + '"]');
+        if (activePanel) activePanel.hidden = false;
+        // v1.7.99.15.2: tap 切换时同步切换右上角按钮
+        if (target === 'quota') {
+          addBtnText.textContent = '新增客户额度';
+          // v1.7.99.135：客户额度 tap 改造（按 user 2026-08-05 反馈"新增企业额度如图2标记点，点击后补做图1弹窗"）—— 弹窗而非跳转
+          addBtn.setAttribute('href', 'javascript:void(0)');
+          addBtn.setAttribute('onclick', 'openAddQuotaModal(); return false;');
+        } else {
+          addBtnText.textContent = '新增客户';
+          addBtn.setAttribute('href', './customer-apply.html');
+          addBtn.removeAttribute('onclick');
+        }
+      }
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          switchTap(tab.getAttribute('data-tap'));
+        });
+      });
+      // URL hash 支持：#tap=quota 直接跳到 tap 2
+      var hash = location.hash.match(/tap=([\w-]+)/);
+      if (hash) switchTap(hash[1]);
+    })();
+
+    // 行点击进入详情
+    document.querySelectorAll('.cp-row-clickable').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        if (e.target.closest('.col-action')) return;
+        var href = row.getAttribute('data-detail-href');
+        if (href) window.location.href = href;
+      });
+      row.style.cursor = 'pointer';
+    });
+
+    // ========== v1.7.99.65 真实脱敏 mock 数据（脱敏规则严格遵守） ==========
+    var CUSTOMER_MOCK = [
+      { id: 1, type: '上游企业', name: '菏泽德坤煤炭有限公司', project: '木薯淀粉存货类供应链项目', code: '91371700MA0M1W7W2G', shortName: '菏泽德坤', legal: '陈行', capital: 10000, region: '中国/山东/菏泽/牡丹区', owner: '吴敬达', ownerPhone: '138 0000 XXXX', contact: '胡孟杰', contactPhone: '138 0001 XXXX', status: '待提交' },
+      { id: 2, type: '下游企业', name: '河南双汇集团有限责任公司', project: '木薯淀粉存货类供应链项目', code: '91411100MA0M1W7W2G', shortName: '双汇', legal: '万隆', capital: 80000, region: '中国/河南/漯河/召陵区', owner: '马相杰', ownerPhone: '138 0002 XXXX', contact: '张莉', contactPhone: '138 0003 XXXX', status: '审核中' },
+      { id: 3, type: '第三方物流', name: '中远海运物流有限公司', project: '木薯淀粉存货类供应链项目', code: '91310000MA0M1W7W2G', shortName: '中远海运', legal: '李建红', capital: 50000, region: '中国/上海/浦东新区', owner: '王海民', ownerPhone: '138 0004 XXXX', contact: '陈刚', contactPhone: '138 0005 XXXX', status: '执行中' },
+      { id: 4, type: '第三方仓储', name: '中外运国际仓储中心', project: '玉米预付业务供应链项目', code: '91110000MA0M1W7W2G', shortName: '中外运仓储', legal: '李关鹏', capital: 30000, region: '中国/北京/朝阳区', owner: '韩雪', ownerPhone: '138 0006 XXXX', contact: '刘伟', contactPhone: '138 0007 XXXX', status: '执行中' },
+      { id: 5, type: '下游企业', name: '郑州粮食批发市场', project: '玉米预付业务项目', code: '91410100MA0M1W7W2G', shortName: '郑粮', legal: '李伟', capital: 5000, region: '中国/河南/郑州/中原区', owner: '陈刚', ownerPhone: '138 0008 XXXX', contact: '张丽', contactPhone: '138 0009 XXXX', status: '驳回', rejectReason: '下游主体工商经营状态异常' },
+      { id: 6, type: '上游企业', name: '山东金粮农业有限公司', project: '糖粉账期业务项目', code: '91370100MA0M1W7W2G', shortName: '金粮', legal: '李绍远', capital: 15000, region: '中国/山东/济南/历城区', owner: '张志强', ownerPhone: '138 0010 XXXX', contact: '王芳', contactPhone: '138 0011 XXXX', status: '已完结' },
+      { id: 7, type: '上游企业', name: '河北粮食产业集团有限公司', project: '谷物购销业务项目', code: '91130100MA0K1J5P0G', shortName: '河北粮产', legal: '赵建国', capital: 20000, region: '中国/河北/石家庄/裕华区', owner: '李梅', ownerPhone: '138 0012 XXXX', contact: '王磊', contactPhone: '138 0013 XXXX', status: '已作废', voidReason: '上游主体主动放弃' },
+      { id: 8, type: '下游企业', name: '重庆基创建设开发有限公司', project: '糖粉账期业务项目', code: '91500100MA0M1W7W2G', shortName: '基创建设', legal: '黄建明', capital: 28000, region: '中国/重庆/渝北区', owner: '陈波', ownerPhone: '138 0014 XXXX', contact: '王琳', contactPhone: '138 0015 XXXX', status: '执行中' },
+      { id: 9, type: '第三方物流', name: '郑州铁龙物流有限公司', project: '木薯淀粉存货类项目', code: '91410100MA0M1W7W2G', shortName: '铁龙物流', legal: '张建伟', capital: 8000, region: '中国/河南/郑州/管城区', owner: '李强', ownerPhone: '138 0016 XXXX', contact: '张敏', contactPhone: '138 0017 XXXX', status: '待提交' },
+      { id: 10, type: '上游企业', name: '山西省金能物资贸易有限公司', project: '玉米预付业务供应链项目', code: '91140100MA0M1W7W2G', shortName: '山西金能', legal: '韩志国', capital: 18000, region: '中国/山西/太原/迎泽区', owner: '王鹏', ownerPhone: '138 0018 XXXX', contact: '刘佳', contactPhone: '138 0019 XXXX', status: '审核中' },
+      { id: 11, type: '下游企业', name: '国能濮阳热电有限公司', project: '谷物购销业务项目', code: '91410900MA0M1W7W2G', shortName: '国能濮阳', legal: '马建国', capital: 35000, region: '中国/河南/濮阳/华龙区', owner: '陈志国', ownerPhone: '138 0020 XXXX', contact: '李娜', contactPhone: '138 0021 XXXX', status: '执行中' },
+      { id: 12, type: '下游企业', name: '国电投河南电力燃料有限公司', project: '木薯淀粉存货类供应链项目', code: '91410100MA0M1W7W2G', shortName: '国电投', legal: '韩振华', capital: 60000, region: '中国/河南/郑州/金水区', owner: '马志远', ownerPhone: '138 0022 XXXX', contact: '王静', contactPhone: '138 0023 XXXX', status: '已完结' }
+    ];
+
+    // ========== v1.7.99.124 状态机映射（v1.7.99.65 锁 → v1.7.99.124 删「已通过」对齐项目准入 + 执行中加「发起完结」） ==========
+    var CUSTOMER_STATUS_META = {
+      '待提交': { cls: 'pending', color: '#1E40AF', actions: ['查看', '编辑', '提交', '作废'] },
+      '审核中': { cls: 'approving', color: '#A16207', actions: ['查看', '撤回'] },
+      '执行中': { cls: 'executing', color: '#15803D', actions: ['查看', '查看额度', '发起完结'] },
+      '已完结': { cls: 'finished', color: '#15803D', actions: ['查看'] },
+      '驳回':   { cls: 'rejected', color: '#64748B', actions: ['查看', '编辑', '重新提交', '作废'] },
+      '已作废': { cls: 'voided', color: '#DC2626', actions: ['查看'] }
+    };
+    var TYPE_TAG = {
+      '上游企业': 'tag-blue',
+      '下游企业': 'tag-orange',
+      '第三方物流': 'tag-green',
+      '第三方仓储': 'tag-cyan'
+    };
+
+    // ========== v1.7.99.65 渲染客户表格 ==========
+    function renderCustomerTable() {
+      var tbody = document.getElementById('customerTbody');
+      if (!tbody) return;
+      tbody.innerHTML = CUSTOMER_MOCK.map(function(c) {
+        var meta = CUSTOMER_STATUS_META[c.status] || CUSTOMER_STATUS_META['待提交'];
+        var typeTag = TYPE_TAG[c.type] || 'tag-blue';
+        var actionBtns = meta.actions.map(function(act) {
+          if (act === '查看') return '<a href="./customer-detail.html?no=' + c.id + '">查看</a>';
+          if (act === '查看额度') return '<a href="./customer-quota.html?customer=' + c.id + '" style="color: #1E40AF;">查看额度</a>';
+          if (act === '编辑') return '<a href="./customer-apply.html?no=' + c.id + '">编辑</a>';
+          if (act === '提交' || act === '重新提交') return '<a href="javascript:void(0)" onclick="customerFlow(\'' + act + '\', ' + c.id + ')">' + act + '</a>';
+          if (act === '撤回') return '<a href="javascript:void(0)" style="color: #EA580C;" onclick="customerActionConfirm(\'撤回\', ' + c.id + ')">撤回</a>';
+          if (act === '作废') return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="customerActionConfirm(\'作废\', ' + c.id + ')">作废</a>';
+          // v1.7.99.124 新增：执行中 → 发起完结（弹窗二次确认，红字）
+          if (act === '发起完结') return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="openCustomerActionConfirm(\'发起完结\', ' + c.id + ')">发起完结</a>';
+          return '<a href="javascript:void(0)">' + act + '</a>';
+        }).join(' ');
+        return '<tr class="cp-row-clickable" data-status="' + c.status + '" data-detail-href="./customer-detail.html?no=' + c.id + '" style="cursor: pointer;">'
+          + '<td><span class="tag ' + typeTag + '">' + c.type + '</span></td>'
+          + '<td>' + c.name + '</td>'
+          + '<td>' + c.project + '</td>'
+          + '<td style="font-family: var(--font-mono);">' + c.code + '</td>'
+          + '<td>' + c.shortName + '</td>'
+          + '<td>' + c.legal + '</td>'
+          + '<td style="text-align: right;">' + c.capital.toLocaleString('zh-CN', { minimumFractionDigits: 2 }) + '</td>'
+          + '<td>' + c.region + '</td>'
+          + '<td>' + c.owner + '</td>'
+          + '<td>' + c.ownerPhone + '</td>'
+          + '<td>' + c.contact + '</td>'
+          + '<td>' + c.contactPhone + '</td>'
+          + '<td class="col-status"><span class="status-tag ' + meta.cls + '"><span class="dot"></span>' + c.status + '</span></td>'
+          + '<td class="col-action" style="text-align: right;">' + actionBtns + '</td>'
+          + '</tr>';
+      }).join('');
+      // v1.7.99.123 状态切换后自动刷新 tab 计数 + 重新应用当前 tab 过滤
+      updateStatusCounts();
+      reapplyStatusFilter();
+    }
+
+    // v1.7.99.123 重新应用当前 tab 过滤（状态切换后行重新渲染时保持过滤状态）
+    function reapplyStatusFilter() {
+      if (typeof _currentStatus === 'undefined' || _currentStatus === 'all') return;
+      var tbody = document.getElementById('customerTbody');
+      if (!tbody) return;
+      var rows = tbody.querySelectorAll('tr');
+      rows.forEach(function(row) {
+        var rowStatus = row.getAttribute('data-status');
+        if (rowStatus === _currentStatus) {
+          row.style.display = '';
+        } else {
+          row.style.display = 'none';
+        }
+      });
+    }
+
+    // ========== v1.7.99.65 状态切换动作（v1.7.99.124 删「启动」分支——已通过已砍） ==========
+    function customerFlow(act, id) {
+      var c = CUSTOMER_MOCK.find(function(x) { return x.id === id; });
+      if (!c) return;
+      if (act === '提交' || act === '重新提交') { c.status = '审核中'; }
+      Utils.toast(act + '成功：' + c.name, 'success');
+      renderCustomerTable();
+    }
+    function customerActionConfirm(act, id) {
+      var c = CUSTOMER_MOCK.find(function(x) { return x.id === id; });
+      if (!c) return;
+      if (!confirm('确定要' + act + '客户【' + c.name + '】吗？\n\n' + (act === '作废' ? '作废后数据将不可恢复。' : '撤回后可重新编辑/提交。'))) return;
+      if (act === '作废') c.status = '已作废';
+      else if (act === '撤回') c.status = '待提交';
+      Utils.toast(act + '成功：' + c.name, 'success');
+      renderCustomerTable();
+    }
+
+    // ========== v1.7.99.124 新增：执行中 → 发起完结（custom modal 弹窗二次确认） ==========
+    var _pendingCustomerAction = null;
+    function openCustomerActionConfirm(act, id) {
+      var c = CUSTOMER_MOCK.find(function(x) { return x.id === id; });
+      if (!c) return;
+      _pendingCustomerAction = { act: act, id: id, c: c };
+      var title = '';
+      var text = '';
+      if (act === '发起完结') {
+        title = '发起完结确认';
+        text = '确定要发起客户 <strong>' + c.name + '</strong> 的完结流程吗？<br><br>完结后该客户将变更为「已完结」状态，'
+          + '不能再产生新的业务，但历史业务数据仍可查询。<br><br>请确认该客户的所有业务已正常收尾。';
+      } else {
+        title = act + '确认';
+        text = '确定要' + act + '客户 <strong>' + c.name + '</strong> 吗？';
+      }
+      // 移除已有的 modal
+      var existing = document.getElementById('customerActionConfirmModal');
+      if (existing) existing.remove();
+      var modal = document.createElement('div');
+      modal.id = 'customerActionConfirmModal';
+      modal.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 10000; display: flex; align-items: center; justify-content: center;';
+      var isDanger = (act === '发起完结');
+      modal.innerHTML = ''
+        + '<div style="background: #fff; border-radius: 8px; width: 480px; max-width: 90vw; box-shadow: 0 20px 60px rgba(0,0,0,0.2);">'
+        + '  <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-light, #F1F5F9); display: flex; align-items: center; justify-content: space-between;">'
+        + '    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">' + title + '</div>'
+        + '    <span onclick="closeCustomerActionConfirm()" style="cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px;">×</span>'
+        + '  </div>'
+        + '  <div style="padding: 20px 24px; font-size: 13px; color: var(--text-secondary); line-height: 1.7;">' + text + '</div>'
+        + '  <div style="padding: 12px 24px; border-top: 1px solid var(--border-light, #F1F5F9); display: flex; justify-content: flex-end; gap: 8px;">'
+        + '    <button onclick="closeCustomerActionConfirm()" style="padding: 6px 18px; background: #fff; color: var(--text-primary); border: 1px solid var(--border-default, #E2E8F0); border-radius: 4px; font-size: 13px; cursor: pointer;">取消</button>'
+        + '    <button onclick="doCustomerActionConfirm()" style="padding: 6px 18px; background: ' + (isDanger ? '#DC2626' : 'var(--color-primary, #1E40AF)') + '; color: #fff; border: 0; border-radius: 4px; font-size: 13px; cursor: pointer;">确认' + act + '</button>'
+        + '  </div>'
+        + '</div>';
+      document.body.appendChild(modal);
+      // 蒙层点击关闭
+      modal.addEventListener('click', function(e) { if (e.target === modal) closeCustomerActionConfirm(); });
+    }
+    function closeCustomerActionConfirm() {
+      var modal = document.getElementById('customerActionConfirmModal');
+      if (modal) modal.remove();
+      _pendingCustomerAction = null;
+    }
+    function doCustomerActionConfirm() {
+      if (!_pendingCustomerAction) return;
+      var p = _pendingCustomerAction;
+      var act = p.act, c = p.c;
+      if (act === '发起完结') { c.status = '已完结'; }
+      Utils.toast(act + '成功：' + c.name, 'success');
+      closeCustomerActionConfirm();
+      renderCustomerTable();
+    }
+
+    // 状态机 badge CSS（v1.7.99.65）
+    (function() {
+      var style = document.createElement('style');
+      style.textContent = '.status-tag{display:inline-flex;align-items:center;gap:6px;font-size:13px;font-weight:500;white-space:nowrap;}'
+        + '.status-tag .dot{display:inline-block;width:6px;height:6px;border-radius:50%;}'
+        + '.status-tag.pending{color:#1E40AF}.status-tag.pending .dot{background:#1E40AF}'
+        + '.status-tag.approving{color:#A16207}.status-tag.approving .dot{background:#A16207}'
+        + '.status-tag.approved{color:#047857}.status-tag.approved .dot{background:#047857}'
+        + '.status-tag.executing{color:#15803D}.status-tag.executing .dot{background:#15803D}'
+        + '.status-tag.finished{color:#15803D}.status-tag.finished .dot{background:#15803D}'
+        + '.status-tag.rejected{color:#64748B}.status-tag.rejected .dot{background:#64748B}'
+        + '.status-tag.voided{color:#DC2626}.status-tag.voided .dot{background:#DC2626}';
+      document.head.appendChild(style);
+    })();
+
+    // 初始化
+    renderCustomerTable();
+
+    // ========== v1.7.99.123 状态机：tab 切换 + 计数动态计算 ==========
+    // 当前选中的状态（'all' = 全部）
+    var _currentStatus = 'all';
+
+    // 动态计算每个状态的计数（基于当前 mock）
+    function updateStatusCounts() {
+      var counts = { 'all': CUSTOMER_MOCK.length };
+      CUSTOMER_MOCK.forEach(function(c) {
+        counts[c.status] = (counts[c.status] || 0) + 1;
+      });
+      console.log('[v1.7.99.123 updateStatusCounts] counts=', JSON.stringify(counts));
+      document.querySelectorAll('#customerBasicStatusTabs .tab-count').forEach(function(span) {
+        var key = span.getAttribute('data-count-key');
+        var oldVal = span.textContent;
+        var newVal = counts[key] || 0;
+        console.log('[v1.7.99.123] tab', key, oldVal, '->', newVal);
+        span.textContent = newVal;
+      });
+    }
+
+    // 切换状态 tab（高亮 + 过滤表格）
+    function switchCustomerStatusTab(targetStatus) {
+      _currentStatus = targetStatus;
+      // 1. tab 样式切换
+      document.querySelectorAll('#customerBasicStatusTabs .cp-tab').forEach(function(t) {
+        var status = t.getAttribute('data-status');
+        if (status === targetStatus) {
+          t.classList.add('active');
+          t.style.borderBottom = '2px solid ' + t.style.color;
+        } else {
+          t.classList.remove('active');
+          t.style.borderBottom = '2px solid transparent';
+        }
+      });
+      // 2. 过滤表格行
+      var tbody = document.getElementById('customerTbody');
+      if (!tbody) return;
+      var rows = tbody.querySelectorAll('tr');
+      var visibleCount = 0;
+      rows.forEach(function(row) {
+        var rowStatus = row.getAttribute('data-status');
+        if (targetStatus === 'all' || rowStatus === targetStatus) {
+          row.style.display = '';
+          visibleCount++;
+        } else {
+          row.style.display = 'none';
+        }
+      });
+      Utils.toast('已切换到【' + (targetStatus === 'all' ? '全部' : targetStatus) + '】，共 ' + visibleCount + ' 条', 'info');
+    }
+
+    // 绑定 tab 点击事件
+    document.querySelectorAll('#customerBasicStatusTabs .cp-tab').forEach(function(tab) {
+      tab.addEventListener('click', function() {
+        switchCustomerStatusTab(tab.getAttribute('data-status'));
+      });
+    });
+
+    // 初始化计数
+    updateStatusCounts();
+
+    // ========== v1.7.99.124 状态机说明 modal（6 状态 × 对应按钮，v1.7.99.124 删「已通过」对齐项目准入 + 执行中加「发起完结」） ==========
+    function openStatusMachineModal() {
+      var existing = document.getElementById('statusMachineModal');
+      if (existing) existing.remove();
+      var modal = document.createElement('div');
+      modal.id = 'statusMachineModal';
+      modal.style.cssText = 'position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 9999; display: flex; align-items: center; justify-content: center;';
+      // v1.7.99.124：6 状态 = 待提交 / 审核中 / 执行中 / 已完结 / 驳回 / 已作废（删「已通过」对齐项目准入）
+      var statusRows = [
+        { status: '待提交', desc: '客户信息填写中，尚未提交审核', actions: ['查看', '编辑', '提交', '作废'], color: '#1E40AF' },
+        { status: '审核中', desc: '客户信息已提交，等待风控审核', actions: ['查看', '撤回'], color: '#A16207' },
+        { status: '执行中', desc: '客户已启动，可查看额度信息或发起完结', actions: ['查看', '查看额度', '发起完结'], color: '#15803D' },
+        { status: '已完结', desc: '客户业务已完结，仅可查看', actions: ['查看'], color: '#64748B' },
+        { status: '驳回',   desc: '客户信息被驳回，可编辑后重新提交', actions: ['查看', '编辑', '重新提交', '作废'], color: '#DC2626' },
+        { status: '已作废', desc: '客户信息已作废，仅可查看', actions: ['查看'], color: '#94A3B8' }
+      ];
+      var rowsHtml = statusRows.map(function(r) {
+        var actionsHtml = r.actions.map(function(a) {
+          // v1.7.99.124：发起完结 也是终止性操作，按红字展示
+          var actionColor = (a === '撤回' || a === '作废' || a === '发起完结') ? '#DC2626' : '#1E40AF';
+          return '<span style="display: inline-block; padding: 2px 8px; margin: 2px; background: ' + (actionColor === '#DC2626' ? '#FEE2E2' : '#EFF6FF') + '; color: ' + actionColor + '; border-radius: 3px; font-size: 12px;">' + a + '</span>';
+        }).join(' ');
+        return '<tr>' +
+          '<td style="padding: 12px 16px; border-bottom: 1px solid var(--border-light, #F1F5F9);">' +
+            '<span style="display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: ' + r.color + '; margin-right: 6px;"></span>' +
+            '<strong style="color: ' + r.color + ';">' + r.status + '</strong>' +
+          '</td>' +
+          '<td style="padding: 12px 16px; border-bottom: 1px solid var(--border-light, #F1F5F9); color: var(--text-secondary); font-size: 12px;">' + r.desc + '</td>' +
+          '<td style="padding: 12px 16px; border-bottom: 1px solid var(--border-light, #F1F5F9);">' + actionsHtml + '</td>' +
+          '</tr>';
+      }).join('');
+
+      modal.innerHTML = '' +
+        '<div style="background: #fff; border-radius: 8px; width: 760px; max-width: 90vw; max-height: 85vh; box-shadow: 0 20px 60px rgba(0,0,0,0.2); display: flex; flex-direction: column;">' +
+        '  <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-light, #F1F5F9); display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;">' +
+        '    <div style="font-size: 16px; font-weight: 600; color: var(--text-primary);">客户状态机说明</div>' +
+        '    <span onclick="closeStatusMachineModal()" style="cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px;">×</span>' +
+        '  </div>' +
+        '  <div style="padding: 16px 24px; flex: 1; overflow-y: auto;">' +
+        '    <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px; line-height: 1.7;">客户从「待提交」到「执行中 / 已完结 / 已作废」共经历 6 个状态（与项目准入状态机一致）。每个状态对应不同的可用操作按钮（点击表格行末操作列）。</div>' +
+        '    <table style="width: 100%; border-collapse: collapse; font-size: 13px;">' +
+        '      <thead>' +
+        '        <tr style="background: #F8FAFC;">' +
+        '          <th style="padding: 10px 16px; text-align: left; color: var(--text-tertiary); font-weight: 500; font-size: 12px; width: 15%;">状态</th>' +
+        '          <th style="padding: 10px 16px; text-align: left; color: var(--text-tertiary); font-weight: 500; font-size: 12px; width: 40%;">状态描述</th>' +
+        '          <th style="padding: 10px 16px; text-align: left; color: var(--text-tertiary); font-weight: 500; font-size: 12px; width: 45%;">可用操作按钮</th>' +
+        '        </tr>' +
+        '      </thead>' +
+        '      <tbody>' + rowsHtml + '</tbody>' +
+        '    </table>' +
+        '  </div>' +
+        '  <div style="padding: 12px 24px; border-top: 1px solid var(--border-light, #F1F5F9); display: flex; justify-content: flex-end; flex-shrink: 0;">' +
+        '    <button onclick="closeStatusMachineModal()" class="btn btn-primary" style="padding: 6px 18px; background: var(--color-primary); color: #fff; border: 0; border-radius: 4px; font-size: 13px; cursor: pointer;">关闭</button>' +
+        '  </div>' +
+        '</div>';
+      document.body.appendChild(modal);
+      modal.addEventListener('click', function(e) { if (e.target === modal) closeStatusMachineModal(); });
+    }
+    function closeStatusMachineModal() {
+      var modal = document.getElementById('statusMachineModal');
+      if (modal) modal.remove();
+    }
+  </script>
+  </div>
+  <!-- /main-content -->
+
+  <!-- v1.7.99.135：新增企业额度设置 弹窗（按 user 2026-08-05 反馈"新增企业额度如图2标记点，点击后补做图1弹窗"修复） -->
+  <div class="modal-overlay" id="addQuotaModal" style="display: none;">
+    <div class="modal-panel" style="width: 720px;">
+      <div class="modal-header">
+        <div class="modal-title">新增企业额度设置</div>
+        <button type="button" class="modal-close" onclick="closeAddQuotaModal()" aria-label="关闭">×</button>
+      </div>
+      <div class="modal-body">
+        <!-- 区块 1：企业名称（必填） -->
+        <div class="form-row" style="margin-bottom: 0;">
+          <label class="form-label"><span class="required-marker">*</span>企业名称</label>
+          <select class="form-input form-input-purple" id="addQuotaCustomerName">
+            <option value="">请选择企业</option>
+            <option>中国投资技术股份有限公司</option>
+            <option>山西宏达钢铁有限公司</option>
+            <option>上海蔚来汽车有限公司</option>
+            <option>四川中厚测试企业一分司</option>
+            <option>回迁房合作服务商（中孚）</option>
+            <option>河南国际物流枢纽建设运营有限公司</option>
+          </select>
+        </div>
+
+        <!-- 区块 2：关联项目信息 -->
+        <div class="form-block" style="margin-top: 20px;">
+          <div class="form-block-header">
+            <div class="form-block-title">关联项目信息</div>
+            <button type="button" class="add-row-link" onclick="addQuotaRow()">+ 新增行</button>
+          </div>
+          <table class="quota-project-table" id="addQuotaProjectTable">
+            <thead>
+              <tr>
+                <th style="width: 60px;">序号</th>
+                <th>项目编号</th>
+                <th style="width: 28%;"><span class="required-marker">*</span>授信额度</th>
+                <th style="width: 26%;"><span class="required-marker">*</span>授信有效期</th>
+                <th style="width: 90px;">操作</th>
+              </tr>
+            </thead>
+            <tbody id="addQuotaTbody">
+              <!-- JS 渲染 1 行默认 -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" onclick="closeAddQuotaModal()">取消</button>
+        <button type="button" class="btn btn-primary" onclick="saveAddQuota()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // v1.7.99.135：新增企业额度弹窗
+    function openAddQuotaModal() {
+      var modal = document.getElementById('addQuotaModal');
+      if (!modal) return;
+      // 每次打开重置 1 行
+      document.getElementById('addQuotaCustomerName').value = '';
+      renderQuotaProjectRows();
+      modal.style.display = 'flex';
+    }
+    function closeAddQuotaModal() {
+      var modal = document.getElementById('addQuotaModal');
+      if (modal) modal.style.display = 'none';
+    }
+    // 点击蒙层关闭
+    document.getElementById('addQuotaModal').addEventListener('click', function(e) {
+      if (e.target === this) closeAddQuotaModal();
+    });
+    // Esc 关闭
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') closeAddQuotaModal();
+    });
+    // 关联项目信息 行 增删
+    function renderQuotaProjectRows() {
+      var tbody = document.getElementById('addQuotaTbody');
+      if (!tbody) return;
+      var rows = tbody.querySelectorAll('tr');
+      // 重置 = 只保留 1 行
+      tbody.innerHTML = buildQuotaProjectRow(1);
+    }
+    function buildQuotaProjectRow(idx) {
+      return '<tr>'
+        + '<td style="text-align: center; color: var(--text-secondary);">' + idx + '</td>'
+        + '<td><select class="form-input form-input-purple" style="width: 100%;">'
+        +   '<option value="">请选择项目</option>'
+        +   '<option>LX20260122001 - 进口木薯淀粉业务</option>'
+        +   '<option>LX20260122002 - 玉米预付采购业务</option>'
+        +   '<option>LX20260122003 - 钢铁供应链业务</option>'
+        +   '<option>LX20260122004 - 物流运输业务</option>'
+        +   '<option>LX20260122005 - 仓储服务业务</option>'
+        + '</select></td>'
+        + '<td><input type="text" class="form-input" placeholder="请输入授信额度" style="width: 100%;"></td>'
+        + '<td><input type="text" class="form-input form-input-purple" placeholder="请选择授信有效期" style="width: 100%;"></td>'
+        + '<td style="text-align: center;"><a href="javascript:void(0)" class="delete-row-link" onclick="delQuotaRow(this)">删除行</a></td>'
+        + '</tr>';
+    }
+    function addQuotaRow() {
+      var tbody = document.getElementById('addQuotaTbody');
+      if (!tbody) return;
+      var newIdx = tbody.querySelectorAll('tr').length + 1;
+      tbody.insertAdjacentHTML('beforeend', buildQuotaProjectRow(newIdx));
+    }
+    function delQuotaRow(btn) {
+      var tbody = document.getElementById('addQuotaTbody');
+      if (!tbody) return;
+      var rows = tbody.querySelectorAll('tr');
+      if (rows.length <= 1) {
+        // 最后 1 行不能删（清空内容）
+        var firstRow = rows[0];
+        firstRow.querySelectorAll('input, select').forEach(function(el) { el.value = ''; });
+        return;
+      }
+      btn.closest('tr').remove();
+      // 重排序号
+      tbody.querySelectorAll('tr').forEach(function(tr, i) {
+        tr.querySelector('td').textContent = i + 1;
+      });
+    }
+    function saveAddQuota() {
+      var customer = document.getElementById('addQuotaCustomerName').value;
+      if (!customer) {
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+          Utils.toast('请选择企业名称', 'error');
+        } else {
+          alert('请选择企业名称');
+        }
+        return;
+      }
+      // 校验每行授信额度 + 授信有效期
+      var rows = document.querySelectorAll('#addQuotaTbody tr');
+      var valid = true;
+      rows.forEach(function(tr) {
+        var project = tr.querySelectorAll('select')[0].value;
+        var amount = tr.querySelectorAll('input')[0].value;
+        var period = tr.querySelectorAll('input')[1].value;
+        if (!project || !amount || !period) valid = false;
+      });
+      if (!valid) {
+        if (typeof Utils !== 'undefined' && Utils.toast) {
+          Utils.toast('请完整填写每行的项目编号、授信额度、授信有效期', 'error');
+        } else {
+          alert('请完整填写每行的项目编号、授信额度、授信有效期');
+        }
+        return;
+      }
+      if (typeof Utils !== 'undefined' && Utils.toast) {
+        Utils.toast('新增企业额度成功（mock）', 'success');
+      } else {
+        alert('新增企业额度成功（mock）');
+      }
+      closeAddQuotaModal();
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

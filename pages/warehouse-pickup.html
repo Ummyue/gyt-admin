@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>提货管理 - 豫港通 v1.7.99.86</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* 9 列表格列宽 */
+    .cp-table th.col-num, .cp-table td.col-num { font-family: var(--font-mono); }
+    .cp-table .col-num { font-family: var(--font-mono); color: var(--text-secondary); }
+    .cp-table .col-qty { text-align: right; font-family: var(--font-mono); }
+    /* 状态 badge 颜色（v1.7.99.86：提货管理 2 tab = 已开具 / 已收到——下表里只有已生效/未生效之类） */
+    .pickup-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; }
+    .pickup-status.issued { background: #DBEAFE; color: #1E40AF; }
+    .pickup-status.received { background: #D1FAE5; color: #047857; }
+    .pickup-status.pending { background: #FEF3C7; color: #A16207; }
+    /* empty state（v1.7.99.86 按图 3：暂无数据） */
+    .empty-state {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      padding: 80px 20px;
+      color: var(--text-tertiary);
+      font-size: 13px;
+    }
+    .empty-state-icon {
+      width: 64px;
+      height: 64px;
+      border: 1.5px dashed #CBD5E1;
+      border-radius: 12px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-bottom: 12px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">仓储管理</a>
+          <span class="sep">/</span>
+          <a href="#">提放货管理</a>
+          <span class="sep">/</span>
+          <span class="current">提货管理</span>
+        </div>
+
+        <!-- 标题 + 右上 提货申请 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">提货管理</h1>
+          <button class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            提货申请
+          </button>
+        </div>
+
+        <!-- 合并 panel -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：4+1 字段筛选区（v1.7.99.86 按图 3：编号/提货开具方/提货接收方/提货日期 + 状态） -->
+          <div class="cp-block">
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入订单、合同或提货编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">提货开具方</span>
+                <input type="text" class="input" placeholder="请输入提货开具方企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">提货接收方</span>
+                <input type="text" class="input" placeholder="请输入提货接收方企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">提货日期</span>
+                <input type="text" class="input" placeholder="开始时间 ~ 结束时间">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">状态</span>
+                <select class="select"><option>请选择状态</option><option>已开具</option><option>已收到</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：2 tab 状态机（v1.7.99.86 按图 3：已开具/已收到，v1.7.99.152 增加枚举数据 + 可交互） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" onclick="switchTab(this, 'issued')">已开具</div>
+                <div class="cp-tab" onclick="switchTab(this, 'received')">已收到</div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <button class="btn btn-text btn-sm" style="margin-right: 12px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  数据导出
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：9 列表格（v1.7.99.86 按图 3：合同编号/提货编号/提货开具方/提货接收方/提货日期/提货数量(吨)/状态/最新操作时间/操作，v1.7.99.152 加 6 行 + 5 行 mock） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 14%;">合同编号</th>
+                    <th style="width: 12%;">提货编号</th>
+                    <th style="width: 14%;">提货开具方</th>
+                    <th style="width: 14%;">提货接收方</th>
+                    <th style="width: 10%;">提货日期</th>
+                    <th style="width: 8%;text-align: right;">提货数量(吨)</th>
+                    <th class="col-status" style="width: 8%;">状态</th>
+                    <th style="width: 10%;">最新操作时间</th>
+                    <th class="col-action" style="width: auto;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="pickupTbody">
+                  <!-- v1.7.99.152 加枚举数据：默认显示"已开具" 6 行 mock -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // v1.7.99.152 提货管理 mock 数据 + 状态机交互
+    const PICKUP_MOCK = {
+      issued: [
+        { contract: 'GTGYL-MSXS-20241115-001', pickupNo: 'TH20241115-0001', issuer: '中豫港通供应链', receiver: '河南港通供应链', date: '2024-11-15', qty: '1,200.50', opTime: '2024-11-15 14:30' },
+        { contract: 'XSHT-TYYGJ-20241203-002', pickupNo: 'TH20241203-0001', issuer: '天宇源国际贸易', receiver: '荣厚实业有限公司', date: '2024-12-03', qty: '850.00', opTime: '2024-12-03 09:15' },
+        { contract: 'CGHT-GQCS-20241018-003', pickupNo: 'TH20241018-0001', issuer: '高琦测试煤业', receiver: '河南荣厚实业', date: '2024-10-18', qty: '2,350.75', opTime: '2024-10-18 16:45' },
+        { contract: 'XSHT-SXJY-20241122-001', pickupNo: 'TH20241122-0001', issuer: '山西锦阳鑫煤炭', receiver: '郑州信必达国际', date: '2024-11-22', qty: '1,800.00', opTime: '2024-11-22 11:20' },
+        { contract: 'GTGYL-HKJC-20241208-002', pickupNo: 'TH20241208-0001', issuer: '河南机场物流', receiver: '东航物流有限公司', date: '2024-12-08', qty: '650.30', opTime: '2024-12-08 10:00' },
+        { contract: 'CGHT-SYMT-20241128-001', pickupNo: 'TH20241128-0001', issuer: '陕煤物流监管', receiver: '晋煤集团', date: '2024-11-28', qty: '3,200.00', opTime: '2024-11-28 15:30' },
+      ],
+      received: [
+        { contract: 'GTGYL-MSXS-20240915-001', pickupNo: 'TH20240915-0001', issuer: '中豫港通供应链', receiver: '河南港通供应链', date: '2024-09-15', qty: '950.00', opTime: '2024-09-15 14:00' },
+        { contract: 'XSHT-TYYGJ-20241008-001', pickupNo: 'TH20241008-0001', issuer: '天宇源国际贸易', receiver: '荣厚实业有限公司', date: '2024-10-08', qty: '720.50', opTime: '2024-10-08 11:30' },
+        { contract: 'CGHT-GQCS-20240825-002', pickupNo: 'TH20240825-0001', issuer: '高琦测试煤业', receiver: '河南荣厚实业', date: '2024-08-25', qty: '1,580.00', opTime: '2024-08-25 16:00' },
+        { contract: 'XSHT-SXJY-20240711-001', pickupNo: 'TH20240711-0001', issuer: '山西锦阳鑫煤炭', receiver: '郑州信必达国际', date: '2024-07-11', qty: '2,100.00', opTime: '2024-07-11 09:45' },
+        { contract: 'CGHT-SYMT-20240618-001', pickupNo: 'TH20240618-0001', issuer: '陕煤物流监管', receiver: '晋煤集团', date: '2024-06-18', qty: '1,750.80', opTime: '2024-06-18 13:20' },
+      ],
+    };
+
+    function renderPickup(key) {
+      const data = PICKUP_MOCK[key] || [];
+      const tbody = document.getElementById('pickupTbody');
+      if (data.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="9"><div class="empty-state"><div class="empty-state-icon"><svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#94A3B8" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M8 10h8M8 14h5"/></svg></div>暂无数据</div></td></tr>';
+        return;
+      }
+      tbody.innerHTML = data.map(r => `
+        <tr class="cp-row-clickable">
+          <td class="col-num" style="font-weight: 600;">${r.contract}</td>
+          <td class="col-num">${r.pickupNo}</td>
+          <td>${r.issuer}</td>
+          <td>${r.receiver}</td>
+          <td>${r.date}</td>
+          <td class="col-qty">${r.qty}</td>
+          <td class="col-status"><span class="tag tag-blue">${key === 'issued' ? '已开具' : '已收到'}</span></td>
+          <td>${r.opTime}</td>
+          <td class="col-action" style="text-align: right;"><a href="#">查看</a></td>
+        </tr>
+      `).join('');
+    }
+
+    function switchTab(el, key) {
+      document.querySelectorAll('.cp-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      renderPickup(key);
+    }
+
+    // 初始渲染
+    renderPickup('issued');
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

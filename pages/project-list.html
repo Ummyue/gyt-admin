@@ -1,0 +1,656 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>项目列表 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* v1.7.99.65：项目列表筛选项第 2 行多 2 个数字范围控件，扩展为 4 列 */
+    .cp-filter { grid-template-columns: repeat(4, 1fr); }
+    .cp-filter .range-input { width: 56px; }
+    /* v1.7.99.73：项目列表 15 列总声明 110% 加上 cp-table min-width 1500px → 表格 2038px > wrap 1650px →
+       流程状态列起点 1669px 在 wrap 边界外，默认 scrollLeft=0 时只看到 19px（截断成"审"）。
+       修复：覆盖 cp-table min-width: 0 + 14 个 th width% 重分配到 91%（配合 col-action 130px fixed，让表格 ≤ wrap 1650px）
+       + table-layout: fixed + 内容超长省略号（避免长公司名撑出表格）*/
+    .cp-table { min-width: 0; table-layout: fixed; }
+    .cp-table th, .cp-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .col-status { min-width: 120px; }
+    .cp-filter .range-input-wide { width: 64px; }
+
+    /* 流程状态机（v1.7.99.65：8 状态 + 6 种 badge 颜色） */
+    .status-tag { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 500; white-space: nowrap; }
+    .status-tag .dot { display: inline-block; width: 6px; height: 6px; border-radius: 50%; }
+    .status-tag.pending { color: #1E40AF; }
+    .status-tag.pending .dot { background: #1E40AF; }
+    .status-tag.approving { color: #A16207; }
+    .status-tag.approving .dot { background: #A16207; }
+    .status-tag.needmore { color: #EA580C; }
+    .status-tag.needmore .dot { background: #EA580C; }
+    .status-tag.approved { color: #047857; }
+    .status-tag.approved .dot { background: #047857; }
+    .status-tag.rejected { color: #64748B; }
+    .status-tag.rejected .dot { background: #64748B; }
+    .status-tag.executing { color: #15803D; }
+    .status-tag.executing .dot { background: #15803D; }
+    .status-tag.finished { color: #15803D; }
+    .status-tag.finished .dot { background: #15803D; }
+    .status-tag.voided { color: #DC2626; }
+    .status-tag.voided .dot { background: #DC2626; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item active" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn" id="notifBell" onclick="toggleNotifDropdown(event)" style="position: relative;">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge" id="notifBadge">6</span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">准入管理</a>
+          <span class="sep">/</span>
+          <span class="current">项目立项</span>
+        </div>
+
+        <!-- 标题 + 新增 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">项目立项</h1>
+          <div style="display: flex; gap: 10px;">
+            <a class="btn btn-primary" href="./project-apply.html">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              新增立项申请
+            </a>
+            <button class="btn btn-text btn-sm">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              数据导出
+            </button>
+          </div>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区 -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">立项申请编号</span>
+                <input type="text" class="input" placeholder="请输入立项申请编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">项目名称</span>
+                <input type="text" class="input" placeholder="请输入项目名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业名称</span>
+                <input type="text" class="input" placeholder="模糊搜索关联企业">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">业务类型</span>
+                <select class="select"><option>全部</option><option>存货业务</option><option>预付业务</option><option>账期业务</option><option>购销业务</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">货物品类</span>
+                <select class="select"><option>全部</option><option>淀粉</option><option>谷物</option><option>糖粉</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">业务周期</span>
+                <div style="display: flex; align-items: center; gap: 6px;">
+                  <input type="date" class="input" style="flex: 1;">
+                  <span style="color: var(--text-tertiary); font-size: 12px;">~</span>
+                  <input type="date" class="input" style="flex: 1;">
+                </div>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">总投资金额</span>
+                <div style="display: flex; align-items: center; gap: 4px;">
+                  <input type="number" class="input range-input-wide" placeholder="前小" min="0">
+                  <span style="color: var(--text-tertiary);">~</span>
+                  <input type="number" class="input range-input-wide" placeholder="后大" min="0">
+                  <span style="color: var(--text-tertiary);">万</span>
+                </div>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">立项时间</span>
+                <input type="date" class="input" max="">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">申请时间</span>
+                <input type="date" class="input" max="">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">业务负责人</span>
+                <select class="select"><option>请选择业务负责人</option><option>张爽</option><option>李建国</option><option>王慧敏</option><option>陈志远</option></select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.72：7 状态 + 切换交互；待补件/已通过 已砍掉） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs" id="statusTabs">
+                <div class="cp-tab active" data-status="">全部 <span class="count">156</span></div>
+                <div class="cp-tab" data-status="待提交" style="color: #1E40AF;">待提交 <span class="count" style="color: #1E40AF; font-weight: 600;">12</span></div>
+                <div class="cp-tab" data-status="审批中" style="color: #A16207;">审批中 <span class="count" style="color: #A16207; font-weight: 600;">23</span></div>
+                <div class="cp-tab" data-status="执行中" style="color: #15803D;">执行中 <span class="count" style="color: #15803D; font-weight: 600;">76</span></div>
+                <div class="cp-tab" data-status="已完结" style="color: #15803D;">已完结 <span class="count" style="color: #15803D; font-weight: 600;">36</span></div>
+                <div class="cp-tab" data-status="驳回" style="color: #64748B;">驳回 <span class="count" style="color: #64748B; font-weight: 600;">4</span></div>
+                <div class="cp-tab" data-status="已作废" style="color: #DC2626;">已作废 <span class="count" style="color: #DC2626; font-weight: 600;">2</span></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格（v1.7.99.65：15 列 + 真实脱敏公司名 + 8 状态 + 4-5 操作按钮按状态切换） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 7%;">立项申请编号</th>
+                    <th style="width: 10%;">项目名称</th>
+                    <th style="width: 8%;">上游企业</th>
+                    <th style="width: 8%;">下游企业</th>
+                    <th style="width: 4%;">物流企业</th>
+                    <th style="width: 4%;">仓储企业</th>
+                    <th style="width: 4%;">业务类型</th>
+                    <th style="width: 4%;">货物品类</th>
+                    <th style="width: 6%;text-align: right;">总投资金额(万元)</th>
+                    <th style="width: 10%;">业务周期</th>
+                    <th style="width: 6%;">立项日期</th>
+                    <th style="width: 3%;">业务负责人</th>
+                    <th style="width: 7%;">申请时间</th>
+                    <th class="col-status" style="width: 10%;">流程状态</th>
+                    <th class="col-action" style="width: 130px;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="projectTbody">
+                  <!-- mock 数据由 JS 渲染：见 PROJECT_MOCK，下方 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div id="paginationInfo">共 156 条记录 · 第 1 / 16 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages" id="paginationPages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size" id="pageSizeSel">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.65：上传客户准入报告 modal（执行中状态下触发） -->
+  <div id="uploadModal" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
+    <div style="width: 600px; max-height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden;">
+      <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
+        <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">上传客户准入报告</span>
+        <div style="flex: 1;"></div>
+        <button onclick="closeUploadModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px;">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
+        </button>
+      </div>
+      <div style="flex: 1; overflow-y: auto; padding: 20px 24px;">
+        <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">支持上传 pdf / jpeg / jpg / png 格式文件，单个文件不超过 10MB</div>
+        <div id="uploadFileList" style="margin-bottom: 12px;"></div>
+        <div id="uploadDropzone" style="border: 2px dashed var(--border-default); border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.15s;" onclick="triggerFileInput()">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" style="margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          <div style="font-size: 13px; color: var(--text-secondary); margin-bottom: 4px;">点击或拖拽文件至此区域</div>
+          <div style="font-size: 12px; color: var(--text-tertiary);">支持 pdf / jpeg / jpg / png 格式</div>
+        </div>
+        <input type="file" id="uploadFileInput" accept=".pdf,.jpeg,.jpg,.png" style="display: none;" onchange="handleFileSelect(event)">
+      </div>
+      <div style="padding: 14px 24px; border-top: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
+        <div style="flex: 1;"></div>
+        <button class="btn btn-secondary" onclick="closeUploadModal()">取消</button>
+        <button class="btn btn-primary" onclick="confirmUpload()">确认上传</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.65：撤回 / 作废 二次确认 modal + v1.7.99.134 删「终止」 -->
+  <div id="actionConfirmModal" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
+    <div style="width: 480px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
+      <div style="padding: 20px 24px; display: flex; align-items: center; gap: 12px;">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#EA580C" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+        <span id="actionConfirmTitle" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">操作确认</span>
+      </div>
+      <div style="padding: 0 24px 20px 24px; font-size: 13px; color: var(--text-secondary); line-height: 1.7;" id="actionConfirmText">
+        确定要执行此操作吗？
+      </div>
+      <div style="padding: 14px 24px; border-top: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
+        <div style="flex: 1;"></div>
+        <button class="btn btn-secondary" onclick="closeActionConfirm()">取消</button>
+        <button class="btn btn-primary" id="actionConfirmBtn" onclick="doActionConfirm()">确认</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // ========== v1.7.99.124 inline Utils fallback（v1.7.99.80 模式：避免 console error 阻断 JS） ==========
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { console.log('[toast]', type, msg); },
+      nav: function(url) { window.location.href = url; }
+    };
+    // ========== v1.7.99.65 真实脱敏 mock 数据（v1.0/v1.7.99.x 占位符"XXXXX-A"全替换为真实公司名） ==========
+    var PROJECT_MOCK = [
+      // Row 1: 审批中
+      { no: 'LX20260122001', name: '木薯淀粉存货类供应链项目', up: '菏泽德坤煤炭有限公司', down: '河南诚泽运输有限公司', logistics: '郑州铁龙物流有限公司', warehouse: '中储发展郑州分公司', type: '存货业务', category: '淀粉', amount: 10000.00, period: '2026-01-22 ~ 2027-01-22', lxDate: '2026-01-22', owner: '张爽', applyDate: '2026-01-22 09:30', status: '审批中' },
+      // Row 2: 执行中
+      { no: 'LX20260205002', name: '玉米预付业务供应链项目', up: '山西省金能物资贸易有限公司', down: '河南诚泽运输有限公司', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '预付业务', category: '谷物', amount: 8500.00, period: '2026-02-05 ~ 2026-12-22', lxDate: '2026-02-05', owner: '李建国', applyDate: '2026-02-05 10:15', status: '执行中' },
+      // Row 3: 待提交
+      { no: 'LX20260208003', name: '糖粉账期业务项目', up: '河北钰钜贸易有限公司', down: '国电投河南电力燃料有限公司', logistics: '远洋国际物流有限公司', warehouse: '中外运国际仓储中心', type: '账期业务', category: '糖粉', amount: 12000.00, period: '2026-02-08 ~ 2027-02-08', lxDate: '2026-02-08', owner: '王慧敏', applyDate: '2026-02-08 14:20', status: '待提交' },
+      // Row 4: 审批中
+      { no: 'LX20260212004', name: '谷物购销业务项目', up: '山东省金岭粮油有限公司', down: '国能濮阳热电有限公司', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '购销业务', category: '谷物', amount: 15500.00, period: '2026-02-12 ~ 2026-12-06', lxDate: '2026-02-12', owner: '张爽', applyDate: '2026-02-12 11:00', status: '审批中' },
+      // Row 5: 执行中
+      { no: 'LX20260215005', name: '淀粉制品存货类项目', up: '天宇豪国际贸易集团有限公司', down: '重庆基创建设开发有限公司', logistics: '中远海运物流有限公司', warehouse: '中外运国际仓储中心', type: '存货业务', category: '淀粉', amount: 9800.00, period: '2026-02-15 ~ 2026-11-17', lxDate: '2026-02-15', owner: '李建国', applyDate: '2026-02-15 16:30', status: '执行中' },
+      // Row 6: 驳回
+      { no: 'LX20260218006', name: '玉米预付业务项目', up: '山东金粮农业有限公司', down: '郑州粮食批发市场', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '预付业务', category: '谷物', amount: 11200.00, period: '2026-02-18 ~ 2027-02-18', lxDate: '2026-02-18', owner: '王慧敏', applyDate: '2026-02-18 09:45', status: '驳回', rejectReason: '下游企业"郑州粮食批发市场"工商经营状态异常，需补充最新营业执照' },
+      // Row 7: 执行中
+      { no: 'LX20260220007', name: '木薯淀粉存货类项目', up: '江苏德茂粮油有限公司', down: '国电投河南电力燃料有限公司', logistics: '郑州铁龙物流有限公司', warehouse: '中储发展郑州分公司', type: '存货业务', category: '淀粉', amount: 13400.00, period: '2026-02-20 ~ 2027-02-20', lxDate: '2026-02-20', owner: '张爽', applyDate: '2026-02-20 13:20', status: '执行中' },
+      // Row 9: 已完结
+      { no: 'LX20260225009', name: '谷物购销业务项目', up: '山东省金岭粮油有限公司', down: '重庆基创建设开发有限公司', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '购销业务', category: '谷物', amount: 16800.00, period: '2026-02-25 ~ 2027-02-25', lxDate: '2026-02-25', owner: '王慧敏', applyDate: '2026-02-25 15:00', status: '已完结' },
+      // Row 10: 待提交
+      { no: 'LX20260301010', name: '淀粉制品存货类项目', up: '天宇豪国际贸易集团有限公司', down: '国能濮阳热电有限公司', logistics: '郑州铁龙物流有限公司', warehouse: '中储发展郑州分公司', type: '存货业务', category: '淀粉', amount: 10500.00, period: '2026-03-01 ~ 2027-03-01', lxDate: '2026-03-01', owner: '张爽', applyDate: '2026-03-01 09:00', status: '待提交' },
+      // Row 12: 执行中
+      { no: 'LX20260308012', name: '糖粉账期业务项目', up: '山东金粮农业有限公司', down: '国能河南燃料有限公司', logistics: '远洋国际物流有限公司', warehouse: '中外运国际仓储中心', type: '账期业务', category: '糖粉', amount: 9800.00, period: '2026-03-08 ~ 2027-03-08', lxDate: '2026-03-08', owner: '张爽', applyDate: '2026-03-08 11:15', status: '执行中' },
+      // Row 13: 已作废
+      { no: 'LX20260312013', name: '谷物购销业务项目（已作废）', up: '江苏德茂粮油有限公司', down: '郑州粮食批发市场', logistics: '郑州铁龙物流有限公司', warehouse: '中储发展郑州分公司', type: '购销业务', category: '谷物', amount: 6700.00, period: '2026-03-12 ~ 2026-09-08', lxDate: '2026-03-12', owner: '王慧敏', applyDate: '2026-03-12 14:00', status: '已作废', voidReason: '下游主体主动放弃' },
+      // Row 14: 审批中
+      { no: 'LX20260315014', name: '淀粉制品存货类项目', up: '菏泽德坤煤炭有限公司', down: '河南诚泽运输有限公司', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '存货业务', category: '淀粉', amount: 11000.00, period: '2026-03-15 ~ 2027-03-15', lxDate: '2026-03-15', owner: '李建国', applyDate: '2026-03-15 16:00', status: '审批中' },
+      // Row 16: 已完结
+      { no: 'LX20260320016', name: '糖粉账期业务项目', up: '河北省粮食产业集团有限公司', down: '重庆基创建设开发有限公司', logistics: '中远海运物流有限公司', warehouse: '中外运国际仓储中心', type: '账期业务', category: '糖粉', amount: 19800.00, period: '2026-03-20 ~ 2027-03-20', lxDate: '2026-03-20', owner: '张爽', applyDate: '2026-03-20 09:00', status: '已完结' }
+    ];
+
+    // ========== v1.7.99.72 状态机映射 ==========
+    // 7 状态（v1.7.99.65 砍「待补件」「已通过」；审批通过直跳「执行中」，无需手动「启动执行」）
+    // v1.7.99.124：执行中加「发起完结」文字按钮（弹窗二次确认 → 状态变「已完结」，与客户"执行中"对齐）
+    var STATUS_META = {
+      '待提交':   { cls: 'pending',   color: '#1E40AF', actions: ['查看', '编辑', '提交', '作废'] },
+      '审批中':   { cls: 'approving', color: '#A16207', actions: ['查看', '撤回'] },
+      // v1.7.99.134：执行中删「终止」操作（按 user 2026-08-05 反馈"准入立项中的，终止操作去除"）——只保留 发起完结（正常收尾流程）
+      '执行中':   { cls: 'executing', color: '#15803D', actions: ['查看', '上传客户准入报告', '发起完结'] },
+      '已完结':   { cls: 'finished',  color: '#15803D', actions: ['查看'] },
+      '驳回':     { cls: 'rejected',  color: '#64748B', actions: ['查看', '编辑', '重新提交', '作废'] },
+      '已作废':   { cls: 'voided',    color: '#DC2626', actions: ['查看'] }
+    };
+
+    // ========== v1.7.99.65 全局状态 ==========
+    var currentStatus = '';  // 当前选中的状态 tab
+
+    // ========== v1.7.99.65 date input max=今日 ==========
+    (function() {
+      var today = new Date().toISOString().slice(0, 10);
+      document.querySelectorAll('.cp-filter input[type="date"]').forEach(function(el) {
+        el.setAttribute('max', today);
+      });
+    })();
+
+    // ========== v1.7.99.65 渲染表格 ==========
+    function renderTable() {
+      var tbody = document.getElementById('projectTbody');
+      var list = currentStatus ? PROJECT_MOCK.filter(function(p) { return p.status === currentStatus; }) : PROJECT_MOCK;
+      if (list.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="15" style="text-align: center; padding: 60px 0; color: var(--text-tertiary);">该状态下暂无数据</td></tr>';
+        document.getElementById('paginationInfo').textContent = '共 0 条记录';
+        return;
+      }
+      tbody.innerHTML = list.map(function(p, idx) {
+        var meta = STATUS_META[p.status] || STATUS_META['待提交'];
+        var actionBtns = meta.actions.map(function(act) {
+          if (act === '查看') return '<a href="./project-detail.html?no=' + p.no + '&status=' + encodeURIComponent(p.status) + '">查看</a>';
+          if (act === '编辑') return '<a href="./project-apply.html?no=' + p.no + '">编辑</a>';
+          if (act === '提交') return '<a href="javascript:void(0)" onclick="doFlow(\'提交\', \'' + p.no + '\')">提交</a>';
+          if (act === '作废') return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="confirmAction(\'作废\', \'' + p.no + '\')">作废</a>';
+          if (act === '撤回') return '<a href="javascript:void(0)" style="color: #EA580C;" onclick="confirmAction(\'撤回\', \'' + p.no + '\')">撤回</a>';
+          if (act === '重新提交') return '<a href="javascript:void(0)" onclick="doFlow(\'重新提交\', \'' + p.no + '\')">重新提交</a>';
+          if (act === '上传客户准入报告') return '<a href="javascript:void(0)" style="color: #1E40AF;" onclick="openUploadModal(\'' + p.no + '\')">上传客户准入报告</a>';
+          // v1.7.99.124 新增：执行中 → 发起完结（弹窗二次确认，红字）
+          if (act === '发起完结') return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="confirmAction(\'发起完结\', \'' + p.no + '\')">发起完结</a>';
+          // v1.7.99.134：删「终止」操作（按 user 2026-08-05 反馈"准入立项中的，终止操作去除"）—— 终止按钮已废弃
+          return '<a href="javascript:void(0)">' + act + '</a>';
+        }).join(' ');
+        return '<tr class="cp-row-clickable" data-status="' + p.status + '" data-no="' + p.no + '" data-detail-href="./project-detail.html">'
+          + '<td class="col-num">' + p.no + '</td>'
+          + '<td>' + p.name + '</td>'
+          + '<td>' + p.up + '</td>'
+          + '<td>' + p.down + '</td>'
+          + '<td>' + p.logistics + '</td>'
+          + '<td>' + p.warehouse + '</td>'
+          + '<td>' + p.type + '</td>'
+          + '<td>' + p.category + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + p.amount.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) + '</td>'
+          + '<td>' + p.period + '</td>'
+          + '<td>' + p.lxDate + '</td>'
+          + '<td>' + p.owner + '</td>'
+          + '<td class="col-num">' + p.applyDate + '</td>'
+          + '<td class="col-status"><span class="status-tag ' + meta.cls + '"><span class="dot"></span>' + p.status + '</span></td>'
+          + '<td class="col-action" style="text-align: right;">' + actionBtns + '</td>'
+          + '</tr>';
+      }).join('');
+      document.getElementById('paginationInfo').textContent = '共 ' + list.length + ' 条记录 · 第 1 / 1 页';
+      // 重新绑定行点击
+      bindRowClick();
+    }
+
+    // ========== v1.7.99.65 tab 切换 ==========
+    document.getElementById('statusTabs').addEventListener('click', function(e) {
+      var tab = e.target.closest('.cp-tab');
+      if (!tab) return;
+      document.querySelectorAll('#statusTabs .cp-tab').forEach(function(t) { t.classList.remove('active'); });
+      tab.classList.add('active');
+      currentStatus = tab.getAttribute('data-status') || '';
+      renderTable();
+    });
+
+    // ========== v1.7.99.65 行点击 → 详情 ==========
+    function bindRowClick() {
+      document.querySelectorAll('.cp-row-clickable').forEach(function(row) {
+        row.addEventListener('click', function(e) {
+          if (e.target.closest('.col-action')) return;
+          if (e.target.closest('button, a')) return;
+          var no = row.getAttribute('data-no');
+          var status = row.getAttribute('data-status') || '';
+          window.location.href = './project-detail.html?no=' + no + '&status=' + encodeURIComponent(status);
+        });
+      });
+    }
+
+    // ========== v1.7.99.65 操作按钮：作废 / 撤回 二次确认 + v1.7.99.134 删「终止」 ==========
+    var pendingAction = null;
+    function confirmAction(act, no) {
+      pendingAction = { act: act, no: no };
+      var title = '';
+      var text = '';
+      if (act === '作废') {
+        title = '作废确认';
+        text = '确定要作废立项申请 <strong>' + no + '</strong> 吗？<br><br>作废后数据将不可恢复，且无法再编辑/提交。';
+      } else if (act === '撤回') {
+        title = '撤回确认';
+        text = '确定要撤回立项申请 <strong>' + no + '</strong> 吗？<br><br>撤回后可重新编辑/提交。';
+      // v1.7.99.134：删「终止」操作分支（按 user 2026-08-05 反馈"准入立项中的，终止操作去除"）
+      } else if (act === '发起完结') {
+        // v1.7.99.124 新增：执行中 → 发起完结（弹窗二次确认 → 状态变「已完结」）
+        title = '发起完结确认';
+        text = '确定要发起项目 <strong>' + no + '</strong> 的完结流程吗？<br><br>完结后该项目将变更为「已完结」状态，'
+          + '不能再产生新的业务，但历史业务数据仍可查询。<br><br>请确认该项目所有业务已正常收尾。';
+      }
+      document.getElementById('actionConfirmTitle').textContent = title;
+      document.getElementById('actionConfirmText').innerHTML = text;
+      document.getElementById('actionConfirmModal').style.display = 'flex';
+    }
+    function closeActionConfirm() {
+      document.getElementById('actionConfirmModal').style.display = 'none';
+      pendingAction = null;
+    }
+    function doActionConfirm() {
+      if (!pendingAction) return;
+      Utils.toast(pendingAction.act + '成功：' + pendingAction.no, 'success');
+      // 模拟状态切换：把对应行改成对应终态
+      if (pendingAction.act === '作废') {
+        var row = PROJECT_MOCK.find(function(p) { return p.no === pendingAction.no; });
+        if (row) { row.status = '已作废'; row.voidReason = '手动作废'; }
+      } else if (pendingAction.act === '撤回') {
+        var row = PROJECT_MOCK.find(function(p) { return p.no === pendingAction.no; });
+        if (row) row.status = '待提交';
+      // v1.7.99.134：删「终止」状态切换分支（按 user 2026-08-05 反馈"准入立项中的，终止操作去除"）
+      } else if (pendingAction.act === '发起完结') {
+        // v1.7.99.124 新增：执行中 → 已完结（与「终止」目标态相同，但「发起完结」是正常收尾流程）
+        var row = PROJECT_MOCK.find(function(p) { return p.no === pendingAction.no; });
+        if (row) row.status = '已完结';
+      }
+      closeActionConfirm();
+      renderTable();
+    }
+
+    // ========== v1.7.99.72 流程动作：提交 / 重新提交（v1.7.99.65 砍掉「启动执行」，审批通过直跳「执行中」） ==========
+    function doFlow(act, no) {
+      var row = PROJECT_MOCK.find(function(p) { return p.no === no; });
+      if (!row) return;
+      if (act === '提交' || act === '重新提交') {
+        row.status = '审批中';
+        Utils.toast('已提交审批：' + no, 'success');
+      }
+      renderTable();
+    }
+
+    // ========== v1.7.99.65 上传客户准入报告 modal ==========
+    var uploadedFiles = [];
+    var uploadTargetNo = '';
+    function openUploadModal(no) {
+      uploadTargetNo = no;
+      document.getElementById('uploadModal').style.display = 'flex';
+      uploadedFiles = [];
+      renderUploadFileList();
+    }
+    function closeUploadModal() {
+      document.getElementById('uploadModal').style.display = 'none';
+      uploadedFiles = [];
+      document.getElementById('uploadFileInput').value = '';
+    }
+    function triggerFileInput() { document.getElementById('uploadFileInput').click(); }
+    function handleFileSelect(e) {
+      var file = e.target.files[0];
+      if (!file) return;
+      addFile(file);
+      e.target.value = '';
+    }
+    function addFile(file) {
+      var validExts = ['.pdf', '.jpeg', '.jpg', '.png'];
+      var fileName = file.name.toLowerCase();
+      var isValid = validExts.some(function(ext) { return fileName.endsWith(ext); });
+      if (!isValid) { alert('文件格式不支持，仅支持 pdf / jpeg / jpg / png'); return; }
+      if (file.size > 10 * 1024 * 1024) { alert('文件大小超过 10MB'); return; }
+      uploadedFiles = [{ name: file.name, size: file.size, sizeStr: formatFileSize(file.size) }];
+      renderUploadFileList();
+    }
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / 1024 / 1024).toFixed(1) + ' MB';
+    }
+    function renderUploadFileList() {
+      var wrap = document.getElementById('uploadFileList');
+      if (uploadedFiles.length === 0) { wrap.innerHTML = ''; return; }
+      var file = uploadedFiles[0];
+      wrap.innerHTML = '<div style="display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: #F8FAFC; border: 1px solid var(--border-default); border-radius: 6px;">'
+        + '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="var(--color-primary)" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>'
+        + '<div style="flex: 1; min-width: 0;"><div style="font-size: 13px; color: var(--text-primary); font-weight: 500; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">' + file.name + '</div>'
+        + '<div style="font-size: 12px; color: var(--text-tertiary); margin-top: 2px;">' + file.sizeStr + '</div></div>'
+        + '<button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: var(--color-primary);" onclick="triggerFileInput()">替换</button>'
+        + '<button class="btn-text" style="padding: 4px 8px; font-size: 12px; color: #dc2626;" onclick="removeUploadFile()">删除</button>'
+        + '</div>';
+    }
+    function removeUploadFile() { uploadedFiles = []; renderUploadFileList(); }
+    function confirmUpload() {
+      if (uploadedFiles.length === 0) { alert('请先上传文件'); return; }
+      Utils.toast('客户准入报告上传成功：' + uploadTargetNo + '（' + uploadedFiles[0].name + '）', 'success');
+      closeUploadModal();
+    }
+
+    // 初始化
+    renderTable();
+  </script>
+
+  <!-- v1.7.99.170 顶部铃铛 · 消息通知弹窗（合同 / 项目准入 2 类型） -->
+  <style>
+    .notif-dropdown { position: fixed; top: 60px; right: 80px; width: 400px; max-height: 580px; background: #fff; border: 1px solid var(--border-default); border-radius: 8px; box-shadow: 0 6px 24px rgba(0,0,0,0.12); z-index: 999; display: none; flex-direction: column; overflow: hidden; }
+    .notif-dropdown.open { display: flex; }
+    .notif-header { padding: 12px 16px; border-bottom: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; }
+    .notif-title { font-size: 14px; font-weight: 600; color: var(--text-primary); }
+    .notif-tabs { display: flex; padding: 0 16px; border-bottom: 1px solid var(--border-light); background: #fafbfc; }
+    .notif-tab { padding: 10px 14px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .notif-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .notif-tab .num { background: var(--color-danger); color: #fff; font-size: 11px; padding: 0 6px; border-radius: 8px; margin-left: 4px; line-height: 16px; display: inline-block; }
+    .notif-list { flex: 1; overflow-y: auto; max-height: 420px; }
+    .notif-empty { padding: 60px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+    .notif-item { padding: 12px 16px; border-bottom: 1px solid var(--border-light); cursor: pointer; display: flex; gap: 10px; align-items: flex-start; transition: background 0.15s; }
+    .notif-item:hover { background: #f8fafc; }
+    .notif-item:last-child { border-bottom: 0; }
+    .notif-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--color-danger); margin-top: 6px; flex-shrink: 0; }
+    .notif-item.read .notif-dot { background: transparent; }
+    .notif-body { flex: 1; min-width: 0; }
+    .notif-row1 { display: flex; align-items: center; gap: 6px; margin-bottom: 4px; }
+    .notif-row1 .type { font-size: 11px; padding: 1px 6px; border-radius: 3px; flex-shrink: 0; }
+    .notif-row1 .type.contract { background: #dbeafe; color: #1e40af; }
+    .notif-row1 .type.project { background: #ffedd5; color: #9a3412; }
+    .notif-row1 .no { font-size: 12px; color: var(--text-tertiary); font-family: 'SF Mono', Menlo, monospace; }
+    .notif-title2 { font-size: 13px; color: var(--text-primary); font-weight: 500; margin-bottom: 4px; line-height: 1.5; }
+    .notif-meta { font-size: 12px; color: var(--text-tertiary); display: flex; gap: 10px; }
+    .notif-foot { padding: 10px 16px; border-top: 1px solid var(--border-light); display: flex; align-items: center; justify-content: space-between; background: #fafbfc; }
+    .notif-foot a { font-size: 12px; color: var(--color-primary); text-decoration: none; cursor: pointer; }
+    .notif-foot a:hover { text-decoration: underline; }
+  </style>
+
+  <div class="notif-dropdown" id="notifDropdown">
+    <div class="notif-header">
+      <div class="notif-title">🔔 消息通知</div>
+      <a onclick="markAllNotifRead(event)" style="font-size: 12px; color: var(--color-primary); cursor: pointer;">全部标记已读</a>
+    </div>
+    <div class="notif-tabs">
+      <div class="notif-tab active" data-notif-tab="contract" onclick="switchNotifTab(event, 'contract')">合同 <span class="num" id="numContract">3</span></div>
+      <div class="notif-tab" data-notif-tab="project" onclick="switchNotifTab(event, 'project')">项目准入 <span class="num" id="numProject">3</span></div>
+    </div>
+    <div class="notif-list" id="notifList"></div>
+    <div class="notif-foot">
+      <a onclick="closeNotifDropdown()">关闭</a>
+      <a onclick="alert('查看全部消息（mock）')">查看全部 →</a>
+    </div>
+  </div>
+
+  <script>
+    // v1.7.99.170：铃铛下拉 · 合同 / 项目准入 2 类型待审批消息
+    var NOTIF_MOCK = {
+      contract: [
+        { id: 'c1', type: 'contract', no: 'CGHT202607040003', title: '河南中豫港通供应链管理有限公司 → 河南诚泽运输有限公司', submitter: '张爽', time: '5 分钟前', href: './contract-purchase-order-detail.html' },
+        { id: 'c2', type: 'contract', no: 'XSDD-2026-001-002', title: '中原粮食集团有限公司 → 河南中豫港通供应链管理有限公司', submitter: '李四', time: '30 分钟前', href: './contract-sales-order-detail.html' },
+        { id: 'c3', type: 'contract', no: 'BC-2026-0801-001', title: '河南诚泽运输有限公司 - 补充协议（订单）', submitter: '王五', time: '1 小时前', href: './contract-supplement-order-detail.html' }
+      ],
+      project: [
+        { id: 'p1', type: 'project', no: 'LX-2026-0722-001', title: '木薯淀粉存货类供应链项目 - 上游企业：菏泽德坤煤炭有限公司', submitter: '张爽', time: '10 分钟前', href: './project-detail.html' },
+        { id: 'p2', type: 'project', no: 'LX-2026-0805-001', title: '玉米预付业务供应链项目 - 上游企业：山西省金能物资贸易', submitter: '李四', time: '2 小时前', href: './project-detail.html' },
+        { id: 'p3', type: 'project', no: 'LX-2026-0810-001', title: '谷物购销业务项目 - 上游企业：山东金岭粮油有限公司', submitter: '王五', time: '昨天 18:32', href: './project-detail.html' }
+      ]
+    };
+    var currentNotifTab = 'contract';
+
+    function toggleNotifDropdown(e) {
+      e.stopPropagation();
+      var dd = document.getElementById('notifDropdown');
+      dd.classList.toggle('open');
+      if (dd.classList.contains('open')) renderNotifList(currentNotifTab);
+    }
+    function closeNotifDropdown() {
+      document.getElementById('notifDropdown').classList.remove('open');
+    }
+    function switchNotifTab(e, key) {
+      e.stopPropagation();
+      currentNotifTab = key;
+      document.querySelectorAll('.notif-tab').forEach(function(t) { t.classList.remove('active'); });
+      document.querySelector('.notif-tab[data-notif-tab="' + key + '"]').classList.add('active');
+      renderNotifList(key);
+    }
+    function renderNotifList(key) {
+      var list = NOTIF_MOCK[key] || [];
+      var html = '';
+      if (list.length === 0) {
+        html = '<div class="notif-empty">暂无待审批消息 🎉</div>';
+      } else {
+        html = list.map(function(n) {
+          return ''
+            + '<div class="notif-item" onclick="notifItemClick(event, \'' + n.href + '\')">'
+            +   '<div class="notif-dot"></div>'
+            +   '<div class="notif-body">'
+            +     '<div class="notif-row1"><span class="type ' + n.type + '">' + (n.type === 'contract' ? '合同' : '项目准入') + '</span><span class="no">' + n.no + '</span></div>'
+            +     '<div class="notif-title2">' + n.title + '</div>'
+            +     '<div class="notif-meta"><span>👤 ' + n.submitter + '</span><span>🕐 ' + n.time + '</span></div>'
+            +   '</div>'
+            + '</div>';
+        }).join('');
+      }
+      document.getElementById('notifList').innerHTML = html;
+    }
+    function notifItemClick(e, href) {
+      e.stopPropagation();
+      window.location.href = href;
+    }
+    function markAllNotifRead(e) {
+      e.stopPropagation();
+      document.querySelectorAll('.notif-item .notif-dot').forEach(function(d) { d.style.background = 'transparent'; });
+      document.getElementById('notifBadge').style.display = 'none';
+    }
+    // 点击外部关闭弹窗
+    document.addEventListener('click', function(e) {
+      var dd = document.getElementById('notifDropdown');
+      if (dd.classList.contains('open') && !dd.contains(e.target) && e.target.id !== 'notifBell' && !e.target.closest('#notifBell')) {
+        closeNotifDropdown();
+      }
+    });
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>入库信息详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* v1.7.99.100：入库记录详情页重制（3 tab：入库信息/入库明细/操作记录）
+       沿用 v1.7.99.86 列表页规范 + v1.7.99.89 表单页 inline 模式 + v1.7.99.99 表格经验 */
+    .page-body { padding: 16px 24px 80px; background: var(--bg-page); min-height: 100vh; }
+    .breadcrumb-inline { font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .breadcrumb-inline a { color: var(--text-tertiary); text-decoration: none; }
+    .breadcrumb-inline a:hover { color: var(--color-primary); }
+    .breadcrumb-inline .sep { margin: 0 8px; color: var(--text-tertiary); }
+    .breadcrumb-inline .current { color: var(--text-primary); font-weight: 500; }
+    .page-h1 { font-size: 22px; font-weight: 600; color: var(--text-primary); margin: 0 0 20px 0; }
+    /* 卡片 */
+    .card { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .card-header {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border-light);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .card-header .bar { width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px; }
+    .card-header .title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .card-body { padding: 24px; }
+    /* 顶部 metadata 卡片 */
+    .meta-card { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; padding: 24px; }
+    .meta-header { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; }
+    .meta-icon {
+      width: 24px; height: 24px;
+      background: var(--color-primary);
+      color: #fff;
+      border-radius: 4px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600;
+    }
+    .meta-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .meta-copy { color: var(--color-primary); cursor: pointer; font-size: 14px; margin-left: 4px; }
+    .meta-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 48px; }
+    .meta-item { display: flex; align-items: flex-start; gap: 8px; min-height: 22px; }
+    .meta-label { font-size: 13px; color: var(--text-tertiary); flex-shrink: 0; min-width: 100px; text-align: right; padding-top: 1px; }
+    .meta-value { font-size: 13px; color: var(--text-primary); font-weight: 500; flex: 1; }
+    .meta-value.mono { font-family: var(--font-mono); color: var(--color-primary); }
+    /* 3 tab 导航 */
+    .detail-tabs { display: flex; align-items: center; gap: 32px; padding: 0 24px; background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 0; border-bottom: 1px solid var(--border-light); }
+    .detail-tab { padding: 16px 0; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.2s; user-select: none; }
+    .detail-tab:hover { color: var(--text-secondary); }
+    .detail-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    .tab-content { display: none; padding: 16px 24px 24px; background: #fff; border: 1px solid var(--border-light); border-top: 0; border-radius: 0 0 8px 8px; }
+    .tab-content.active { display: block; }
+    /* 入库信息 6 列 label-value 表格 */
+    .info-pair-table { display: grid; grid-template-columns: repeat(6, 1fr); border: 1px solid var(--border-light); border-radius: 6px; overflow: hidden; }
+    .info-pair-cell { padding: 12px 16px; border-right: 1px solid var(--border-light); border-bottom: 1px solid var(--border-light); min-height: 24px; }
+    .info-pair-cell:nth-child(6n) { border-right: 0; }
+    .info-pair-cell.label { background: #F8FAFC; color: var(--text-tertiary); font-size: 13px; }
+    .info-pair-cell.value { color: var(--text-primary); font-size: 13px; font-weight: 500; }
+    .info-pair-cell.full { grid-column: span 5; }
+    /* 通用 cp-table（v1.7.99.91 教训：table-layout fixed + width 100% + min-width 100% + 每列具体 width） */
+    .cp-table-wrap { overflow-x: auto; }
+    .cp-table { table-layout: fixed; width: 100%; min-width: 100%; border-collapse: collapse; }
+    .cp-table th, .cp-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 13px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .cp-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .cp-table td { color: var(--text-primary); }
+    .cp-table .mono { font-family: var(--font-mono); color: var(--color-primary); }
+    /* 筛选区 */
+    .filter-row { display: flex; align-items: center; gap: 12px; margin-bottom: 16px; }
+    .filter-input { width: 220px; height: 32px; padding: 0 12px; border: 1px solid var(--border-strong); border-radius: 4px; font-size: 13px; color: var(--text-primary); background: #fff; box-sizing: border-box; }
+    .filter-input::placeholder { color: var(--text-tertiary); }
+    .filter-spacer { flex: 1; }
+    .btn-link { background: none; border: 0; color: var(--color-primary); font-size: 13px; cursor: pointer; display: inline-flex; align-items: center; gap: 4px; }
+    .btn-link:hover { color: #1E3A8A; }
+    .btn-link svg { width: 12px; height: 12px; }
+    /* 附件表 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+    .attach-table th { color: var(--text-tertiary); font-weight: 500; background: #F8FAFC; }
+    .attach-table td { color: var(--text-primary); }
+    .attach-table .file-name { color: var(--text-secondary); }
+    .attach-table .file-action { color: var(--color-primary); cursor: pointer; text-align: right; }
+    .attach-table .file-action:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body">
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./warehouse-inbound.html">入库管理</a>
+          <span class="sep">/</span>
+          <a href="./warehouse-inbound.html">入库记录</a>
+          <span class="sep">/</span>
+          <span class="current">入库信息详情</span>
+        </div>
+
+        <!-- 顶部 metadata 卡片（v1.7.99.100 锁定：8 字段 2 列布局 + 入库编号 + ⧉ 复制） -->
+        <div class="meta-card">
+          <div class="meta-header">
+            <h1 class="meta-title" style="margin: 0;">入库信息详情</h1>
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 16px;">
+            <span class="meta-icon">入</span>
+            <span class="meta-value mono" style="font-size: 15px;">入库编号：IN-20260729-017</span>
+            <a href="javascript:void(0)" title="复制" class="meta-copy" onclick="Utils.toast('已复制入库编号 IN-20260729-017', 'success')">⧉</a>
+          </div>
+          <div class="meta-grid">
+            <div class="meta-item">
+              <span class="meta-label">所属合同编号：</span>
+              <span class="meta-value mono">GTGYL-MSXS-20260127-s
+                <a href="javascript:void(0)" title="复制" class="meta-copy" onclick="Utils.toast('已复制合同编号 GTGYL-MSXS-20260127-s', 'success')">⧉</a>
+              </span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">卖方企业：</span>
+              <span class="meta-value">河南诚泽运输有限公司</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">买方企业：</span>
+              <span class="meta-value">河南中豫港通供应链管理有限公司</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">关联业务线号：</span>
+              <span class="meta-value mono">SKYWX202607050001</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">业务线名称：</span>
+              <span class="meta-value">河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">创建人员：</span>
+              <span class="meta-value">张爽</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">创建时间：</span>
+              <span class="meta-value">2026-07-29 16:31:41</span>
+            </div>
+            <div class="meta-item">
+              <span class="meta-label">数据类型：</span>
+              <span class="meta-value">手动新增</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 3 tab 导航（v1.7.99.100 锁定：入库信息/入库明细/操作记录） -->
+        <div class="detail-tabs">
+          <div class="detail-tab active" data-tab="info" onclick="switchDetailTab(this, 'info')">入库信息</div>
+          <div class="detail-tab" data-tab="detail" onclick="switchDetailTab(this, 'detail')">入库明细</div>
+          <div class="detail-tab" data-tab="log" onclick="switchDetailTab(this, 'log')">操作记录</div>
+        </div>
+
+        <!-- ========== Tab 1：入库信息（默认 active） ========== -->
+        <div class="tab-content active" id="tab-info">
+          <div class="card">
+            <div class="card-header">
+              <span class="bar"></span>
+              <span class="title">入库信息</span>
+            </div>
+            <div class="card-body" style="padding: 16px 0;">
+              <div class="info-pair-table">
+                <div class="info-pair-cell label">入库数量(吨)</div>
+                <div class="info-pair-cell value">1143.2</div>
+                <div class="info-pair-cell label">入库日期</div>
+                <div class="info-pair-cell value">2026-07-14</div>
+                <div class="info-pair-cell label">抗/矿口</div>
+                <div class="info-pair-cell value">老挝</div>
+
+                <div class="info-pair-cell label">品类</div>
+                <div class="info-pair-cell value">木薯淀粉</div>
+                <div class="info-pair-cell label">发货单位</div>
+                <div class="info-pair-cell value">河南诚泽运输有限公司</div>
+                <div class="info-pair-cell label">收货单位</div>
+                <div class="info-pair-cell value">河南中豫港通供应链管理有限公司</div>
+
+                <div class="info-pair-cell label">运输方式</div>
+                <div class="info-pair-cell value">火运</div>
+                <div class="info-pair-cell label">入库车数</div>
+                <div class="info-pair-cell value">40</div>
+                <div class="info-pair-cell label">仓房&货位</div>
+                <div class="info-pair-cell value">中欧班列集结中心&amp;国际邮件及电商分拨中心11#CD库区</div>
+
+                <div class="info-pair-cell label">备注</div>
+                <div class="info-pair-cell value full" style="color: var(--text-tertiary);">—</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 附件（v1.7.99.100 锁定：3 列 2 行：文件类型/文件编号/操作-下载） -->
+          <div class="card">
+            <div class="card-header">
+              <span class="bar"></span>
+              <span class="title">附件</span>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <table class="attach-table">
+                <thead>
+                  <tr>
+                    <th style="width: 30%;">文件类型</th>
+                    <th style="width: 50%;">文件编号</th>
+                    <th style="width: 20%; text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>铁路大票</td>
+                    <td class="file-name">入库单-18.pdf</td>
+                    <td class="file-action"><a href="javascript:void(0)" onclick="Utils.toast('下载入库单-18.pdf', 'success')">下载</a></td>
+                  </tr>
+                  <tr>
+                    <td>出入库明细</td>
+                    <td class="file-name">入库单-18.pdf</td>
+                    <td class="file-action"><a href="javascript:void(0)" onclick="Utils.toast('下载入库单-18.pdf', 'success')">下载</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <!-- ========== Tab 2：入库明细 ========== -->
+        <div class="tab-content" id="tab-detail">
+          <!-- 2 字段筛选区 + 右上角数据导出 -->
+          <div class="filter-row">
+            <input type="text" class="filter-input" placeholder="请输入入库流水号">
+            <input type="text" class="filter-input" placeholder="请输入车牌号">
+            <div class="filter-spacer"></div>
+            <button class="btn-link" onclick="Utils.toast('导出当前筛选结果', 'success')">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              数据导出
+            </button>
+          </div>
+
+          <!-- 11 列表格 -->
+          <div class="cp-table-wrap">
+            <table class="cp-table">
+              <colgroup>
+                <col style="width: 11%;"><col style="width: 7%;"><col style="width: 13%;"><col style="width: 8%;"><col style="width: 8%;">
+                <col style="width: 7%;"><col style="width: 8%;"><col style="width: 15%;"><col style="width: 11%;"><col style="width: 12%;">
+                <col style="width: 8%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>入库流水号</th>
+                  <th>品名</th>
+                  <th>入库时间</th>
+                  <th>入库重量(吨)</th>
+                  <th>车牌号</th>
+                  <th>运输方式</th>
+                  <th>派车方式</th>
+                  <th>仓房&amp;货位</th>
+                  <th>发货单位</th>
+                  <th>收货单位</th>
+                  <th>关联上架...</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="mono">RK2026072900018</td>
+                  <td>木薯淀粉</td>
+                  <td>2026-07-14 00:00:00</td>
+                  <td>1143.2</td>
+                  <td>—</td>
+                  <td>火运</td>
+                  <td>—</td>
+                  <td>中欧班列集结中心&amp;国际邮件及电商分拨中心11#CD库区</td>
+                  <td>河南诚泽运输有限公司</td>
+                  <td>河南中豫港通供应链管理有限公司</td>
+                  <td>—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========== Tab 3：操作记录 ========== -->
+        <div class="tab-content" id="tab-log">
+          <div class="cp-table-wrap">
+            <table class="cp-table">
+              <colgroup>
+                <col style="width: 8%;"><col style="width: 8%;"><col style="width: 20%;"><col style="width: 48%;"><col style="width: 16%;">
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>操作类型</th>
+                  <th>操作人</th>
+                  <th>所属公司</th>
+                  <th>操作内容</th>
+                  <th>操作时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>新建</td>
+                  <td>张爽</td>
+                  <td>河南中豫港通供应链管理有限公司</td>
+                  <td>新增入库,入库编号:IN-20260729-017</td>
+                  <td>2026-07-29 16:31:41</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.80 模式：inline Utils fallback（避免 console error 阻断 JS）
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[Utils.toast]', type || 'info', msg); } catch (e) {} }
+    };
+
+    // v1.7.99.100 核心：3 tab 切换
+    function switchDetailTab(el, tabKey) {
+      // 1. 切换 tab 样式
+      document.querySelectorAll('.detail-tab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      // 2. 切换 content
+      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      var target = document.getElementById('tab-' + tabKey);
+      if (target) target.classList.add('active');
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

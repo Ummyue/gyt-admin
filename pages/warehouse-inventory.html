@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>库存台账 - 豫港通 v1.7.99.86</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* ===== 8 KPI cards (v1.7.99.86 按图 4：4 列 × 2 行 + 水平滚动) ===== */
+    .kpi-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 18px;
+      position: relative;
+    }
+    .kpi-row-arrow {
+      width: 28px;
+      height: 28px;
+      border-radius: 50%;
+      background: #fff;
+      border: 1px solid var(--border-default);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      color: var(--text-secondary);
+      flex-shrink: 0;
+    }
+    .kpi-row-arrow:hover { background: var(--bg-page); color: var(--text-primary); }
+    .kpi-row-arrow.left { margin-right: 4px; }
+    .kpi-row-arrow.right { margin-left: 4px; }
+    .kpi-list {
+      display: flex;
+      gap: 12px;
+      overflow-x: auto;
+      flex: 1;
+      scrollbar-width: none;
+    }
+    .kpi-list::-webkit-scrollbar { display: none; }
+    .kpi-card {
+      flex: 0 0 168px;
+      padding: 14px 16px;
+      border-radius: 8px;
+      border: 1px solid var(--border-light);
+    }
+    .kpi-card .label {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .kpi-card .value {
+      font-size: 18px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+    .kpi-card.bg-blue { background: #EFF6FF; border-color: #DBEAFE; }
+    .kpi-card.bg-orange { background: #FFF7ED; border-color: #FED7AA; }
+    .kpi-card.bg-green { background: #F0FDF4; border-color: #BBF7D0; }
+    /* ===== 时间 chips + 自定义时间 ===== */
+    .time-filter {
+      display: flex;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 10px;
+      margin-bottom: 14px;
+    }
+    .time-chips {
+      display: inline-flex;
+      background: #F1F5F9;
+      border-radius: 6px;
+      padding: 3px;
+    }
+    .time-chip {
+      padding: 4px 12px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 4px;
+    }
+    .time-chip.active { background: #1E40AF; color: #fff; }
+    .time-chip:not(.active):hover { color: var(--text-primary); }
+    .time-range-input {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .time-range-input input {
+      width: 100px;
+      height: 28px;
+      border: 1px solid var(--border-default);
+      border-radius: 4px;
+      padding: 0 8px;
+      font-size: 12px;
+    }
+    /* ===== 折线图 (v1.7.99.86 按图 4：3 序列 折线 + bar) ===== */
+    .chart-wrap {
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 16px 20px 8px;
+      margin-bottom: 18px;
+    }
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 24px;
+      margin-bottom: 8px;
+    }
+    .chart-legend-item {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .chart-legend-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+    }
+    .chart-legend-dot.inbound { background: #1E40AF; }
+    .chart-legend-dot.outbound { background: #10B981; }
+    .chart-legend-dot.stock { background: #F97316; }
+    .chart-svg {
+      width: 100%;
+      height: 280px;
+      display: block;
+    }
+    .chart-slider {
+      width: 100%;
+      height: 28px;
+      background: linear-gradient(to right, #E2E8F0 0%, #E2E8F0 100%);
+      border-radius: 4px;
+      margin-top: 4px;
+      position: relative;
+    }
+    /* ===== 3 环形图 (v1.7.99.86 按图 4：入库/出库/库存) ===== */
+    .donut-row {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+    .donut-card {
+      background: #fff;
+      border: 1px solid var(--border-light);
+      border-radius: 8px;
+      padding: 18px 20px;
+    }
+    .donut-card-title {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 13px;
+      color: var(--text-secondary);
+      margin-bottom: 12px;
+    }
+    .donut-card-body {
+      display: flex;
+      align-items: center;
+      gap: 24px;
+    }
+    .donut-svg { width: 110px; height: 110px; flex-shrink: 0; }
+    .donut-info { flex: 1; }
+    .donut-info-cat {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 6px;
+    }
+    .donut-info-cat::before {
+      content: '';
+      width: 8px;
+      height: 8px;
+      background: #1E40AF;
+      border-radius: 50%;
+    }
+    .donut-info-val {
+      font-size: 16px;
+      font-weight: 600;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      margin-right: 8px;
+    }
+    .donut-info-pct {
+      display: inline-block;
+      padding: 1px 6px;
+      background: #1E40AF;
+      color: #fff;
+      font-size: 11px;
+      font-weight: 500;
+      border-radius: 10px;
+    }
+    .donut-nav {
+      text-align: center;
+      margin-top: 8px;
+      font-size: 11px;
+      color: var(--text-tertiary);
+    }
+    /* ===== 业务线台账 tab 表格 (v1.7.99.86 按图 5：5 列复杂表格含合并单元格) ===== */
+    .bl-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 12px;
+    }
+    .bl-table thead th {
+      text-align: left;
+      padding: 14px 16px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--text-tertiary);
+      background: var(--bg-page);
+      border-bottom: 1px solid var(--border-light);
+    }
+    .bl-table tbody td {
+      padding: 16px;
+      color: var(--text-primary);
+      border-bottom: 1px solid var(--border-light);
+      vertical-align: top;
+    }
+    .bl-table tbody tr:last-child td { border-bottom: none; }
+    .bl-table .col-biz-line { width: 26%; }
+    .bl-table .col-storage { width: 18%; }
+    .bl-table .col-stock { width: 26%; }
+    .bl-table .col-fund { width: 18%; }
+    .bl-table .col-act { width: 12%; text-align: center; }
+    .bl-table .biz-line-no {
+      display: inline-block;
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+      font-size: 13px;
+      font-weight: 500;
+      margin-right: 8px;
+    }
+    .bl-table .biz-line-status {
+      display: inline-block;
+      padding: 1px 8px;
+      background: #DBEAFE;
+      color: #1E40AF;
+      font-size: 12px;
+      border-radius: 4px;
+    }
+    .bl-table .info-row {
+      font-size: 12px;
+      color: var(--text-secondary);
+      margin-bottom: 4px;
+    }
+    .bl-table .info-row .lbl { color: var(--text-tertiary); margin-right: 4px; }
+    .bl-table .info-row .val { color: var(--text-primary); font-family: var(--font-mono); }
+    .bl-table .col-act a { color: var(--color-primary); font-size: 12px; text-decoration: none; }
+    .bl-table .col-act a:hover { text-decoration: underline; }
+    /* ===== 隐藏 / 显示 tab 内容 ===== */
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">仓储管理</a>
+          <span class="sep">/</span>
+          <a href="#">库存管理</a>
+          <span class="sep">/</span>
+          <span class="current">库存台账</span>
+        </div>
+
+        <!-- 标题 -->
+        <h1 class="page-h1" style="margin: 0 0 16px;">库存台账</h1>
+
+        <!-- 8 KPI cards (v1.7.99.86 按图 4) -->
+        <div class="kpi-row">
+          <div class="kpi-row-arrow left">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          </div>
+          <div class="kpi-list">
+            <div class="kpi-card bg-blue">
+              <div class="label">账面库存(吨)</div>
+              <div class="value">11,295.6</div>
+            </div>
+            <div class="kpi-card bg-orange">
+              <div class="label">累计入库(吨)</div>
+              <div class="value">15,577.85</div>
+            </div>
+            <div class="kpi-card bg-green">
+              <div class="label">未关联业务线入库(吨)</div>
+              <div class="value">0</div>
+            </div>
+            <div class="kpi-card bg-blue">
+              <div class="label">累计出库(吨)</div>
+              <div class="value">4,282.25</div>
+            </div>
+            <div class="kpi-card bg-orange">
+              <div class="label">未关联业务线出库(吨)</div>
+              <div class="value">0</div>
+            </div>
+            <div class="kpi-card bg-green">
+              <div class="label">库存货值(元)</div>
+              <div class="value">45,835,266.4725</div>
+            </div>
+            <div class="kpi-card bg-blue">
+              <div class="label">累计入库货值(元)</div>
+              <div class="value">60,663,310</div>
+            </div>
+            <div class="kpi-card bg-orange">
+              <div class="label">累计出库货值(元)</div>
+              <div class="value">14,828,043.5275</div>
+            </div>
+          </div>
+          <div class="kpi-row-arrow right">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+          </div>
+        </div>
+
+        <!-- 合并 panel -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：2 tab 状态机（v1.7.99.86 按图 4-5：库存概览/业务线台账） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" data-tab="overview" onclick="switchInvTab(this)">库存概览</div>
+                <div class="cp-tab" data-tab="biz-line" onclick="switchInvTab(this)">业务线台账</div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <button class="btn btn-text btn-sm" style="margin-right: 12px;">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                  数据导出
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 1: 库存概览 -->
+          <div class="tab-content active" data-content="overview">
+            <!-- 区块 2：5 chips + 自定义时间 -->
+            <div class="cp-block">
+              <div class="time-filter">
+                <div class="time-chips">
+                  <div class="time-chip active">全部</div>
+                  <div class="time-chip">本周</div>
+                  <div class="time-chip">本月</div>
+                  <div class="time-chip">上月</div>
+                  <div class="time-chip">近三个月</div>
+                  <div class="time-chip">近六个月</div>
+                </div>
+                <div class="time-range-input">
+                  <span>自定义时间</span>
+                  <input type="text" value="2023-01-01">
+                  <span>~</span>
+                  <input type="text" value="2026-07-31">
+                  <span style="font-size: 12px;">📅</span>
+                </div>
+              </div>
+
+              <!-- 区块 3：折线图 (v1.7.99.86 按图 4) -->
+              <div class="chart-wrap">
+                <div class="chart-legend">
+                  <div class="chart-legend-item"><div class="chart-legend-dot inbound"></div>入库吨位</div>
+                  <div class="chart-legend-item"><div class="chart-legend-dot outbound"></div>出库吨位</div>
+                  <div class="chart-legend-item"><div class="chart-legend-dot stock"></div>库存吨位</div>
+                </div>
+                <svg class="chart-svg" viewBox="0 0 1400 280" preserveAspectRatio="none">
+                  <!-- 网格线 (Y axis: 0, 2000, 4000, 6000, 8000, 10000, 12000) -->
+                  <g stroke="#E2E8F0" stroke-width="0.5">
+                    <line x1="50" y1="20" x2="1380" y2="20"/>
+                    <line x1="50" y1="60" x2="1380" y2="60"/>
+                    <line x1="50" y1="100" x2="1380" y2="100"/>
+                    <line x1="50" y1="140" x2="1380" y2="140"/>
+                    <line x1="50" y1="180" x2="1380" y2="180"/>
+                    <line x1="50" y1="220" x2="1380" y2="220"/>
+                  </g>
+                  <!-- Y axis labels -->
+                  <g font-size="10" fill="#94A3B8" font-family="var(--font-mono)">
+                    <text x="40" y="24" text-anchor="end">12,000</text>
+                    <text x="40" y="64" text-anchor="end">10,000</text>
+                    <text x="40" y="104" text-anchor="end">8,000</text>
+                    <text x="40" y="144" text-anchor="end">6,000</text>
+                    <text x="40" y="184" text-anchor="end">4,000</text>
+                    <text x="40" y="224" text-anchor="end">2,000</text>
+                  </g>
+                  <!-- 库存吨位 折线 (orange #F97316, top) — grows from ~2000 to ~11000 over the period -->
+                  <path d="M 60,235 L 165,232 L 270,228 L 375,224 L 480,210 L 585,195 L 690,180 L 795,150 L 900,135 L 1005,120 L 1110,105 L 1215,90 L 1320,75 L 1380,68"
+                        fill="none" stroke="#F97316" stroke-width="2"/>
+                  <!-- 库存吨位 阴影 area -->
+                  <path d="M 60,235 L 165,232 L 270,228 L 375,224 L 480,210 L 585,195 L 690,180 L 795,150 L 900,135 L 1005,120 L 1110,105 L 1215,90 L 1320,75 L 1380,68 L 1380,260 L 60,260 Z"
+                        fill="#F97316" fill-opacity="0.08" stroke="none"/>
+                  <!-- 入库吨位 bar (blue #1E40AF, small) -->
+                  <g fill="#1E40AF" fill-opacity="0.85">
+                    <rect x="100" y="248" width="14" height="8"/>
+                    <rect x="205" y="244" width="14" height="12"/>
+                    <rect x="310" y="240" width="14" height="16"/>
+                    <rect x="415" y="248" width="14" height="8"/>
+                    <rect x="520" y="244" width="14" height="12"/>
+                    <rect x="625" y="240" width="14" height="16"/>
+                    <rect x="730" y="246" width="14" height="10"/>
+                    <rect x="835" y="242" width="14" height="14"/>
+                    <rect x="940" y="244" width="14" height="12"/>
+                    <rect x="1045" y="240" width="14" height="16"/>
+                    <rect x="1150" y="246" width="14" height="10"/>
+                    <rect x="1255" y="242" width="14" height="14"/>
+                    <rect x="1360" y="248" width="14" height="8"/>
+                  </g>
+                  <!-- 出库吨位 bar (green #10B981, very small) -->
+                  <g fill="#10B981" fill-opacity="0.85">
+                    <rect x="120" y="252" width="10" height="4"/>
+                    <rect x="225" y="251" width="10" height="5"/>
+                    <rect x="330" y="252" width="10" height="4"/>
+                    <rect x="435" y="251" width="10" height="5"/>
+                    <rect x="540" y="252" width="10" height="4"/>
+                    <rect x="645" y="250" width="10" height="6"/>
+                    <rect x="750" y="252" width="10" height="4"/>
+                    <rect x="855" y="251" width="10" height="5"/>
+                    <rect x="960" y="250" width="10" height="6"/>
+                    <rect x="1065" y="252" width="10" height="4"/>
+                    <rect x="1170" y="251" width="10" height="5"/>
+                    <rect x="1275" y="252" width="10" height="4"/>
+                    <rect x="1380" y="252" width="10" height="4"/>
+                  </g>
+                  <!-- X axis labels (dates) -->
+                  <g font-size="10" fill="#94A3B8" font-family="var(--font-mono)">
+                    <text x="60" y="275">2026-02-04</text>
+                    <text x="217" y="275">2026-02-19</text>
+                    <text x="375" y="275">2026-03-05</text>
+                    <text x="530" y="275">2026-03-18</text>
+                    <text x="690" y="275">2026-03-30</text>
+                    <text x="845" y="275">2026-04-11</text>
+                    <text x="1005" y="275">2026-04-24</text>
+                    <text x="1155" y="275">2026-05-05</text>
+                    <text x="1265" y="275">2026-05-10</text>
+                    <text x="1370" y="275">2026-05-21</text>
+                  </g>
+                </svg>
+                <div class="chart-slider"></div>
+              </div>
+
+              <!-- 区块 4：3 环形图 (v1.7.99.86 按图 4：入库/出库/库存 都是 100% 单品类) -->
+              <div class="donut-row">
+                <div class="donut-card">
+                  <div class="donut-card-title">入 库</div>
+                  <div class="donut-card-body">
+                    <svg class="donut-svg" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#E2E8F0" stroke-width="14"/>
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#1E40AF" stroke-width="14"
+                              stroke-dasharray="251.2 251.2" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="donut-info">
+                      <div class="donut-info-cat">木薯淀粉</div>
+                      <div>
+                        <span class="donut-info-val">15,577.85</span>
+                        <span class="donut-info-pct">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="donut-nav">‹ 1/1 ›</div>
+                </div>
+                <div class="donut-card">
+                  <div class="donut-card-title">出 库</div>
+                  <div class="donut-card-body">
+                    <svg class="donut-svg" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#E2E8F0" stroke-width="14"/>
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#1E40AF" stroke-width="14"
+                              stroke-dasharray="251.2 251.2" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="donut-info">
+                      <div class="donut-info-cat">木薯淀粉</div>
+                      <div>
+                        <span class="donut-info-val">4,282.25</span>
+                        <span class="donut-info-pct">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="donut-nav">‹ 1/1 ›</div>
+                </div>
+                <div class="donut-card">
+                  <div class="donut-card-title">库 存</div>
+                  <div class="donut-card-body">
+                    <svg class="donut-svg" viewBox="0 0 100 100">
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#E2E8F0" stroke-width="14"/>
+                      <circle cx="50" cy="50" r="40" fill="none" stroke="#1E40AF" stroke-width="14"
+                              stroke-dasharray="251.2 251.2" stroke-dashoffset="0" transform="rotate(-90 50 50)"/>
+                    </svg>
+                    <div class="donut-info">
+                      <div class="donut-info-cat">木薯淀粉</div>
+                      <div>
+                        <span class="donut-info-val">11,295.6</span>
+                        <span class="donut-info-pct">100%</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div class="donut-nav">‹ 1/1 ›</div>
+                </div>
+              </div>
+
+              <!-- 区块 5：品类库存列表 table (v1.7.99.86 按图 4：7 列 + 操作) -->
+              <div style="margin-top: 8px;">
+                <div style="font-size: 13px; color: var(--text-primary); font-weight: 500; margin-bottom: 10px; padding-left: 4px; border-left: 3px solid #1E40AF; padding: 4px 0 4px 8px;">品类库存列表</div>
+                <div class="cp-table-wrap">
+                  <table class="cp-table">
+                    <thead>
+                      <tr>
+                        <th style="width: 10%;">品名</th>
+                        <th style="width: 11%;text-align: right;">账面库存(吨)</th>
+                        <th style="width: 13%;text-align: right;">库存货值(元)</th>
+                        <th style="width: 11%;text-align: right;">累计入库(吨)</th>
+                        <th style="width: 13%;text-align: right;">累计入库货值(元)</th>
+                        <th style="width: 11%;text-align: right;">累计出库(吨)</th>
+                        <th style="width: 13%;text-align: right;">累计出库货值(元)</th>
+                        <th class="col-action" style="width: auto;text-align: right;">操作</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td>木薯淀粉</td>
+                        <td style="text-align: right;" class="col-num">11,295.6</td>
+                        <td style="text-align: right;" class="col-num">45,835,266.47</td>
+                        <td style="text-align: right;" class="col-num">15,577.85</td>
+                        <td style="text-align: right;" class="col-num">60,663,310</td>
+                        <td style="text-align: right;" class="col-num">4,282.25</td>
+                        <td style="text-align: right;" class="col-num">14,828,043.53</td>
+                        <td class="col-action" style="text-align: right;">
+                          <a href="javascript:void(0)" data-action="inbound-detail">入库明细</a>
+                          <a href="javascript:void(0)" data-action="outbound-detail">出库明细</a>
+                        </td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Tab 2: 业务线台账 (v1.7.99.86 按图 5) -->
+          <div class="tab-content" data-content="biz-line">
+            <div class="cp-block">
+              <!-- 2 字段筛选 -->
+              <div class="cp-filter" style="grid-template-columns: 1fr 1fr; margin-bottom: 16px;">
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">编号</span>
+                  <input type="text" class="input" placeholder="请输入业务线号或合同编号">
+                </div>
+                <div class="cp-filter-item">
+                  <span class="cp-filter-label">企业名称</span>
+                  <input type="text" class="input" placeholder="请输入企业名称">
+                </div>
+              </div>
+
+              <!-- 5 列业务线台账 table (v1.7.99.86 按图 5：业务线信息/仓储信息/库存信息/资金信息/操作) -->
+              <div class="cp-table-wrap">
+                <table class="bl-table">
+                  <thead>
+                    <tr>
+                      <th class="col-biz-line">业务线信息</th>
+                      <th class="col-storage">仓储信息</th>
+                      <th class="col-stock">库存信息</th>
+                      <th class="col-fund">资金信息</th>
+                      <th class="col-act">操作</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td>
+                        <div style="margin-bottom: 6px;">
+                          <span class="biz-line-no">SKYWX202607050001</span>
+                          <span class="biz-line-status">执行中</span>
+                        </div>
+                        <div class="info-row"><span class="lbl">业务线名称:</span><span class="val">河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></div>
+                        <div class="info-row"><span class="lbl">采购合同号:</span><span class="val">GTGYL-MSXS-20260127-s</span></div>
+                        <div class="info-row"><span class="lbl">销售合同号:</span><span class="val">YL-MSXS-20260127-s</span></div>
+                      </td>
+                      <td>
+                        <div class="info-row"><span class="lbl">库点名称:</span><span class="val">国际物流组合库</span></div>
+                        <div class="info-row"><span class="lbl">货主企业:</span><span class="val">河南中豫港通供应链管理有限公司</span></div>
+                      </td>
+                      <td>
+                        <div class="info-row"><span class="lbl">账面库存(吨):</span><span class="val">11295.6</span></div>
+                        <div class="info-row"><span class="lbl">累计入库(吨):</span><span class="val">15577.85</span></div>
+                        <div class="info-row"><span class="lbl">累计出库(吨):</span><span class="val">4282.25</span></div>
+                      </td>
+                      <td>
+                        <div class="info-row"><span class="lbl">已付款金额(元):</span><span class="val">60755275.01</span></div>
+                      </td>
+                      <td class="col-act"><a href="javascript:void(0)">详情</a></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 库存台账 tab 切换
+    function switchInvTab(el) {
+      var tabKey = el.getAttribute('data-tab');
+      document.querySelectorAll('.cp-tab[data-tab]').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      document.querySelectorAll('.tab-content').forEach(function(c) { c.classList.remove('active'); });
+      var target = document.querySelector('.tab-content[data-content="' + tabKey + '"]');
+      if (target) target.classList.add('active');
+    }
+
+    // 时间 chip 切换
+    document.addEventListener('click', function(e) {
+      var chip = e.target.closest('.time-chip');
+      if (chip) {
+        document.querySelectorAll('.time-chip').forEach(function(c) { c.classList.remove('active'); });
+        chip.classList.add('active');
+      }
+    });
+
+    // KPI 横向滚动
+    document.addEventListener('click', function(e) {
+      var arrow = e.target.closest('.kpi-row-arrow');
+      if (!arrow) return;
+      var list = document.querySelector('.kpi-list');
+      if (!list) return;
+      var dir = arrow.classList.contains('left') ? -1 : 1;
+      list.scrollBy({ left: dir * 240, behavior: 'smooth' });
+    });
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

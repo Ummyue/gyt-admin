@@ -1,0 +1,618 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>付款详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 顶部信息条（v1.7.99.188 重构：删返回按钮 + 改成 grid 2 列布局 = 标题/状态 + 左付款流水号/右 5 字段） */
+    .detail-header { background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 16px 20px; margin-bottom: 16px; }
+    .detail-header-row1 { display: flex; align-items: center; gap: 10px; margin-bottom: 14px; }
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text-primary); white-space: nowrap; flex-shrink: 0; }
+    /* 顶部 grid 2 列：左付款流水号（320px）/ 右 5 字段 */
+    .detail-header-grid { display: grid; grid-template-columns: 360px 1fr; gap: 0 28px; align-items: stretch; padding-top: 14px; border-top: 1px solid var(--border-color); }
+    .detail-header-grid .pay-no-cell { display: flex; align-items: center; gap: 8px; padding-right: 24px; border-right: 1px solid var(--border-color); min-width: 0; }
+    .detail-header-grid .pay-no-cell .label { font-size: 13px; color: var(--text-tertiary); white-space: nowrap; flex-shrink: 0; }
+    .detail-header-grid .pay-no-cell .value { font-size: 14px; font-weight: 600; color: var(--text-primary); font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .detail-header-grid .fields-cell { display: flex; flex-direction: column; gap: 8px; padding: 2px 0; }
+    .detail-header-grid .fields-cell .item { display: flex; gap: 10px; font-size: 13px; line-height: 1.6; }
+    .detail-header-grid .fields-cell .label { color: var(--text-tertiary); min-width: 90px; flex-shrink: 0; }
+    .detail-header-grid .fields-cell .value { color: var(--text-primary); }
+    .icon-copy { width: 14px; height: 14px; vertical-align: -2px; color: var(--color-primary); cursor: pointer; flex-shrink: 0; }
+
+    /* 状态 badge */
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; }
+    .status-badge.paid { background: #ECFDF5; color: #059669; }
+    .status-badge.partial { background: #FFFBEB; color: #D97706; }
+    .status-badge.unpaid { background: #F3F4F6; color: #6B7280; }
+    .status-badge.approving { background: #FEF3C7; color: #A16207; }
+    .status-badge.rejected { background: #FEE2E2; color: #B91C1C; }
+
+    /* 步骤条（v1.7.99.62 按图 1：3 步 - 创建/支付/已付款/流程结束） */
+    .step-bar { background: #fff; border: 1px solid var(--border-color); border-radius: 6px; padding: 18px 32px; margin-bottom: 16px; }
+    .step-bar-list { display: flex; align-items: flex-start; justify-content: space-between; position: relative; }
+    .step-bar-list::before { content: ''; position: absolute; top: 14px; left: 5%; right: 5%; height: 1px; background: #E5E7EB; z-index: 0; }
+    .step-item { flex: 1; position: relative; z-index: 1; text-align: center; }
+    .step-circle { width: 28px; height: 28px; border-radius: 50%; background: #fff; border: 2px solid #E5E7EB; color: #9CA3AF; display: inline-flex; align-items: center; justify-content: center; font-weight: 600; font-size: 12px; margin-bottom: 6px; }
+    .step-item.done .step-circle { background: var(--color-primary); border-color: var(--color-primary); color: #fff; }
+    .step-item.current .step-circle { background: var(--color-primary); border-color: var(--color-primary); color: #fff; box-shadow: 0 0 0 4px rgba(30, 64, 175, 0.15); }
+    .step-name { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .step-time { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* tab 切换 */
+    .detail-tab { display: flex; gap: 24px; padding: 0 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; }
+    .detail-tab-item { padding: 10px 0; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+    .detail-tab-item.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+
+    /* 详情区块 */
+    .info-section { background: #fff; border-radius: 6px; padding: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .info-section-title {
+      padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      border-left: 3px solid var(--color-primary); padding-left: 17px;
+    }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 付款信息 4 列 8 字段 */
+    .pay-info-grid { display: grid; grid-template-columns: 110px 1fr 110px 1fr; }
+    .pay-info-grid .label,
+    .pay-info-grid .value { padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border-color); }
+    .pay-info-grid .label { background: #F8FAFC; color: var(--text-tertiary); }
+    .pay-info-grid .value { color: var(--text-primary); }
+    .pay-info-grid .col-divider { border-right: 1px solid var(--border-color); }
+    .pay-info-grid .amount-orange { color: #EA580C; font-weight: 600; }
+
+    /* 通用表格 */
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 10px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .data-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .data-table tr:last-child td { border-bottom: none; }
+    .data-table .link { color: var(--color-primary); cursor: pointer; }
+
+    /* tab 计数（v1.7.99.62 按图 1：右上"结算单数量 N · 已结算金额 xxx · 已结算数量 N"） */
+    .count-bar { padding: 10px 14px; font-size: 12px; color: var(--text-tertiary); text-align: right; }
+    .count-bar .num { color: var(--color-primary); font-weight: 600; margin: 0 4px; }
+
+    /* 附件表（v1.7.99.62 按图 1：单文件按钮 + 表格） */
+    .upload-row { display: flex; align-items: center; gap: 12px; padding: 10px 14px; border-bottom: 1px solid var(--border-color); }
+    .attach-name { color: var(--color-primary); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./payment-list.html">付款管理</a>
+          <span class="sep">/</span>
+          <span class="current">付款详情</span>
+        </div>
+
+        <!-- 顶部信息条（v1.7.99.188 重构：删返回按钮 + 改成 grid 2 列布局 = 标题/状态 + 左付款流水号/右 5 字段） -->
+        <div class="detail-header">
+          <div class="detail-header-row1">
+            <span class="detail-title">付款详情</span>
+            <span class="status-badge paid" id="statusBadge">已付款</span>
+          </div>
+          <div class="detail-header-grid">
+            <!-- 左列：付款流水号 + 复制（独占 360px + 右边竖线分割） -->
+            <div class="pay-no-cell">
+              <span class="label">付款流水号</span>
+              <span class="value" id="payNo">SKJZ202507071619010</span>
+              <svg class="icon-copy" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" onclick="copyNo()" title="复制流水号">
+                <rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/>
+              </svg>
+            </div>
+            <!-- 右列：5 字段（合同/业务线/付款单位/收款单位/创建时间） -->
+            <div class="fields-cell">
+              <span class="item"><span class="label">所属合同编号</span><span class="value">QTOV-MSXS-20260127-s</span></span>
+              <span class="item"><span class="label">业务线号</span><span class="value">SKYWX202507070001</span></span>
+              <span class="item"><span class="label">付款单位</span><span class="value">河南中豫港通供应链管理有限公司</span></span>
+              <span class="item"><span class="label">收款单位</span><span class="value">河南诚泽运输有限公司</span></span>
+              <span class="item"><span class="label">创建时间</span><span class="value">2026-07-07 18:19:04</span></span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 步骤条（v1.7.99.62 按图 1：3 步 - 创建/支付/已付款/流程结束） -->
+        <div class="step-bar">
+          <div class="step-bar-list">
+            <div class="step-item done">
+              <div class="step-circle">✓</div>
+              <div class="step-name">河南中豫港通供应链管理有限公司创建付款单</div>
+              <div class="step-time">2026-07-07 18:19:04</div>
+            </div>
+            <div class="step-item done">
+              <div class="step-circle">✓</div>
+              <div class="step-name">河南诚泽运输有限公司确认收款</div>
+              <div class="step-time">2026-07-07 18:19:34</div>
+            </div>
+            <div class="step-item current">
+              <div class="step-circle">3</div>
+              <div class="step-name">已付款，流程结束</div>
+              <div class="step-time">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- tab 切换（v1.7.99.177：加"审批管理"tab + 按 URL ?status= 决定是否显示；默认 status=审批中） -->
+        <div class="detail-tab" id="detailTabBar">
+          <span class="detail-tab-item active" onclick="switchDetailTab('info', this)">付款信息</span>
+          <span class="detail-tab-item" id="approvalTab" onclick="switchDetailTab('approval', this)" style="display: none;">审批管理</span>
+          <span class="detail-tab-item" onclick="switchDetailTab('log', this)">操作记录</span>
+        </div>
+
+        <div id="tabPanelInfo">
+          <!-- 区块 1：付款信息（v1.7.99.62 按图 1：4 行 4 列 = 8 字段） -->
+          <div class="info-section">
+            <h3 class="info-section-title">付款信息</h3>
+            <div class="info-section-body no-pad">
+              <div class="pay-info-grid">
+                <div class="label col-divider">付款类型</div>
+                <div class="value col-divider">货款</div>
+                <div class="label col-divider">预估单据</div>
+                <div class="value">合同资金</div>
+
+                <div class="label col-divider">付款方式</div>
+                <div class="value col-divider">银行转账</div>
+                <div class="label col-divider">资金来源</div>
+                <div class="value">自有资金</div>
+
+                <div class="label col-divider">付款日期</div>
+                <div class="value col-divider">2026-04-26</div>
+                <div class="label col-divider">收款账户</div>
+                <div class="value">6222 1715 9067 3333</div>
+
+                <div class="label">付款金额</div>
+                <div class="value amount-orange">¥ 486,000</div>
+                <div class="label">付款用途</div>
+                <div class="value">-</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：货物批次（v1.7.99.62 按图 1：表格 7 列 + 状态 + 详情） -->
+          <div class="info-section">
+            <h3 class="info-section-title">货物批次</h3>
+            <div class="info-section-body no-pad">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>发货批次号</th>
+                    <th>运输方式</th>
+                    <th style="text-align: right;">发货数量</th>
+                    <th style="text-align: right;">收货数量</th>
+                    <th>发货日期</th>
+                    <th>最后收货日期</th>
+                    <th>状态</th>
+                    <th>详情</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>PXDZ494330002</td>
+                    <td>汽运</td>
+                    <td style="text-align: right;">1,304</td>
+                    <td style="text-align: right;">1,304</td>
+                    <td>2026-04-26</td>
+                    <td>2026-04-26</td>
+                    <td><span class="status-badge paid">已收货</span></td>
+                    <td><a class="link" href="javascript:void(0)" onclick="Utils.toast('查看货物批次详情', 'info')">详情</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 3：上游结算单（v1.7.99.62 按图 1：表格 6 列 + 状态 + 右上计数） -->
+          <div class="info-section">
+            <h3 class="info-section-title">上游结算单</h3>
+            <div class="info-section-body no-pad">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>结算单编号</th>
+                    <th style="text-align: right;">结算金额(元)</th>
+                    <th style="text-align: right;">结算数量(吨)</th>
+                    <th style="text-align: right;">结算单价(元/吨)</th>
+                    <th>结算日期</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>HNCIEINYIB25(购)H11-01</td>
+                    <td style="text-align: right;">1,366,600.8</td>
+                    <td style="text-align: right;">5,044.4</td>
+                    <td style="text-align: right;">270.7</td>
+                    <td>2025-11-14</td>
+                    <td><span class="status-badge paid">已结算</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="count-bar">
+                结算单数量 <span class="num">1</span> 笔 ·
+                已结算金额 <span class="num">¥1,304</span>  ·
+                已结算数量 <span class="num">1,304</span> 车
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 4：下游结算单 -->
+          <div class="info-section">
+            <h3 class="info-section-title">下游结算单</h3>
+            <div class="info-section-body no-pad">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>结算单编号</th>
+                    <th style="text-align: right;">结算金额(元)</th>
+                    <th style="text-align: right;">结算数量(吨)</th>
+                    <th style="text-align: right;">结算单价(元/吨)</th>
+                    <th>结算日期</th>
+                    <th>状态</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>HLCG.RL.Y2-202511-13</td>
+                    <td style="text-align: right;">1,413,221.8</td>
+                    <td style="text-align: right;">5,044.4</td>
+                    <td style="text-align: right;">279.63</td>
+                    <td>2025-12-08</td>
+                    <td><span class="status-badge paid">已结算</span></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="count-bar">
+                结算单数量 <span class="num">1</span> 笔 ·
+                已结算金额 <span class="num">¥5,048.4</span>  ·
+                已结算数量 <span class="num">1</span> 笔
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 5：上游发票（v1.7.99.62 按图 1：表格 7 列 + 状态 + 详情） -->
+          <div class="info-section">
+            <h3 class="info-section-title">上游发票</h3>
+            <div class="info-section-body no-pad">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>发票代码</th>
+                    <th>发票号码</th>
+                    <th>开票日期</th>
+                    <th style="text-align: right;">不含税金额(元)</th>
+                    <th style="text-align: right;">税额(元)</th>
+                    <th style="text-align: right;">价税合计金额(元)</th>
+                    <th>发票状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>-</td>
+                    <td>25141000000106006821</td>
+                    <td>2025-12-09</td>
+                    <td style="text-align: right;">1,209,381.24</td>
+                    <td style="text-align: right;">157,219.36</td>
+                    <td style="text-align: right;">1,366,600.8</td>
+                    <td><span class="status-badge paid">正常</span></td>
+                    <td><a class="link" href="javascript:void(0)" onclick="Utils.toast('查看发票详情', 'info')">详情</a></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="count-bar">
+                发票数量 <span class="num">1</span> 张 ·
+                发票金额合计 <span class="num">¥1,209,381.24</span>  ·
+                税额合计 <span class="num">¥157,219.36</span>  ·
+                价税合计金额 <span class="num">¥1,366,600.8</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 6：下游发票 -->
+          <div class="info-section">
+            <h3 class="info-section-title">下游发票</h3>
+            <div class="info-section-body no-pad">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>发票代码</th>
+                    <th>发票号码</th>
+                    <th>开票日期</th>
+                    <th style="text-align: right;">不含税金额(元)</th>
+                    <th style="text-align: right;">税额(元)</th>
+                    <th style="text-align: right;">价税合计金额(元)</th>
+                    <th>发票状态</th>
+                    <th>操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>-</td>
+                    <td>25412000000273220979</td>
+                    <td>2025-12-09</td>
+                    <td style="text-align: right;">1,250,638.76</td>
+                    <td style="text-align: right;">162,583.04</td>
+                    <td style="text-align: right;">1,413,221.8</td>
+                    <td><span class="status-badge paid">正常</span></td>
+                    <td><a class="link" href="javascript:void(0)" onclick="Utils.toast('查看发票详情', 'info')">详情</a></td>
+                  </tr>
+                </tbody>
+              </table>
+              <div class="count-bar">
+                发票数量 <span class="num">1</span> 张 ·
+                发票金额合计 <span class="num">¥1,250,638.76</span>  ·
+                税额合计 <span class="num">¥162,583.04</span>  ·
+                价税合计金额 <span class="num">¥1,413,221.8</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 7：附件（v1.7.99.62 按图 1：单文件上传 + 表格） -->
+          <div class="info-section">
+            <h3 class="info-section-title">附件</h3>
+            <div class="info-section-body no-pad">
+              <div class="upload-row">
+                <button class="btn btn-secondary" onclick="Utils.toast('上传附件', 'info')">↑ 上传</button>
+              </div>
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th style="width: 200px;">申报类型</th>
+                    <th>文件名称</th>
+                    <th style="width: 120px; text-align: right; padding-right: 24px;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>下游货转协议</td>
+                    <td class="attach-name">开票申请签字版.pdf</td>
+                    <td style="text-align: right; padding-right: 24px;">
+                      <a class="link" href="javascript:void(0)" onclick="Utils.toast('下载附件：开票申请签字版.pdf', 'info')">下载</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabPanelApproval" style="display: none;">
+          <!-- v1.7.99.177 复用通用审批组件（status=审批中时显示） -->
+          <div class="approval-status-card" id="paymentApprovalStatusCard">
+            <div class="approval-status-icon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                <span>审批进行中</span>
+                <div class="approval-status-chips">
+                  <span class="chip chip-orange">⏸ 待审批</span>
+                </div>
+              </div>
+              <div class="approval-status-desc">
+                <strong style="color: var(--text-primary);" id="paymentApprovalNo">SKJZ202507071619010</strong> 已提交至外部审批系统，当前在「<span class="link">财务部审批</span>」阶段。
+              </div>
+            </div>
+            <div class="approval-status-actions" id="paymentApprovalActions">
+              <button class="btn-cancel-approval" onclick="alert('已撤回申请')">↩ 撤回申请</button>
+            </div>
+          </div>
+
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请单号</div>
+              <div class="value" style="font-family: var(--font-mono);">SKSP-2026-0521</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2026-07-19 16:45</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交人</div>
+              <div class="value">张爽</div>
+            </div>
+          </div>
+
+          <div class="approval-grid">
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta">共 5 个节点，已通过 1 个</div>
+              </div>
+              <div class="timeline">
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">业务部审批</div>
+                    <div class="timeline-meta">张爽 · 2026-07-19 17:02</div>
+                    <div class="timeline-comment">付款单已核对，发票金额匹配</div>
+                  </div>
+                </div>
+                <div class="timeline-item current">
+                  <div class="timeline-dot current">2</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">财务部审批</div>
+                    <div class="timeline-meta">李娜 · 进行中</div>
+                    <div class="timeline-comment">等待审批人处理，已等待 3 小时 30 分钟</div>
+                  </div>
+                </div>
+                <div class="timeline-item pending">
+                  <div class="timeline-dot pending">③</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">风控部审批</div>
+                    <div class="timeline-meta">需在财务部审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item pending">
+                  <div class="timeline-dot pending">④</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">分管副总审批</div>
+                    <div class="timeline-meta">需在风控部审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item pending">
+                  <div class="timeline-dot pending">⑤</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">总经理审批</div>
+                    <div class="timeline-meta">需在分管副总审批通过后自动触发</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-aside-title">关键指标</div>
+                <div class="approval-aside-item">
+                  <span class="label">付款金额</span>
+                  <span class="value">¥ 486,000</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">收款方</span>
+                  <span class="value">河南诚泽运输有限公司</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">付款方式</span>
+                  <span class="value">银行转账</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">付款日期</span>
+                  <span class="value">2026-04-26</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="tabPanelLog" style="display: none;">
+          <!-- 操作记录占位（v1.7.99.62 占位，TODO 后期补充完整时间线） -->
+          <div class="info-section">
+            <h3 class="info-section-title">操作记录</h3>
+            <div class="info-section-body">
+              <div style="color: var(--text-tertiary); font-size: 13px; padding: 24px 0; text-align: center;">暂无操作记录</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.177 审批中固定底栏（status=审批中时显示，借鉴 v1.7.99.175 合同详情页 sticky bottom bar 样式） -->
+  <div class="footer-actions" id="paymentApprovalFooter" style="display: none;">
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="alert('审批通过（mock，v1.7.99.177）\n付款流水号：' + (document.getElementById('payNo')?.textContent || ''))">审批通过</button>
+    <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock，v1.7.99.177）\n付款流水号：' + (document.getElementById('payNo')?.textContent || ''))">驳回审批</button>
+  </div>
+
+  <script src="../assets/js/mockData.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function copyNo() {
+      var text = document.getElementById('payNo').textContent.trim();
+      if (navigator.clipboard) {
+        navigator.clipboard.writeText(text).then(function() {
+          Utils.toast('已复制：' + text, 'success');
+        });
+      } else {
+        Utils.toast('已复制：' + text, 'success');
+      }
+    }
+    function switchDetailTab(name, el) {
+      document.querySelectorAll('.detail-tab-item').forEach(function(item) { item.classList.remove('active'); });
+      if (el) el.classList.add('active');
+      document.getElementById('tabPanelInfo').style.display = (name === 'info') ? '' : 'none';
+      document.getElementById('tabPanelLog').style.display = (name === 'log') ? '' : 'none';
+      var approvalPanel = document.getElementById('tabPanelApproval');
+      if (approvalPanel) approvalPanel.style.display = (name === 'approval') ? '' : 'none';
+    }
+    // v1.7.99.188：按 status 决定是否显示"审批管理"tab + 底部固定按钮（默认 status=审批中；URL ?status= 可覆盖）
+    // v1.7.99.188 修复 v1.7.99.177 bug：原 IIFE 直接用 URL 原始 key（如 'effective'）做 badge 文字，现在加 keyToText 映射
+    (function() {
+      var statusMap = {
+        '已付款':   { bg: '#ECFDF5', color: '#059669' },
+        '审批中':   { bg: '#fef3c7', color: '#a16207' },
+        '已驳回':   { bg: '#fee2e2', color: '#b91c1c' },
+        '部分付款': { bg: '#FFFBEB', color: '#D97706' }
+      };
+      // URL ?status= 解析（与列表页 data-gt-status + 付款业务 4 状态对齐）
+      var keyToText = {
+        'all': '已付款',
+        'paid': '已付款',
+        'effective': '已付款',
+        'approving': '审批中',
+        'awaiting-effect-voucher': '审批中',
+        'rejected': '已驳回',
+        'voided': '已付款',
+        'partial': '部分付款'
+      };
+      var statusMatch = location.search.match(/[?&]status=([^&]+)/);
+      var statusKey = statusMatch ? decodeURIComponent(statusMatch[1]) : 'approving';
+      var status = keyToText[statusKey] || '审批中';
+      // 1. 顶部 status badge
+      var badge = document.querySelector('.detail-header-row1 .status-badge');
+      if (badge) {
+        badge.textContent = status;
+        var style = statusMap[status] || statusMap['审批中'];
+        badge.style.background = style.bg;
+        badge.style.color = style.color;
+      }
+      // 2. 审批管理 tab + 底部按钮：仅 status=审批中 时显示
+      var approvalTab = document.getElementById('approvalTab');
+      var footer = document.getElementById('paymentApprovalFooter');
+      if (status === '审批中') {
+        if (approvalTab) approvalTab.style.display = 'inline-block';
+        if (footer) footer.style.display = 'flex';
+      } else {
+        if (approvalTab) approvalTab.style.display = 'none';
+        if (footer) footer.style.display = 'none';
+      }
+    })();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

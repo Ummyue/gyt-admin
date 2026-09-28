@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>填写收货信息 - 豫港通 v1.7.99.129</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 页面标题（v1.7.99.129：标题 + 蓝色下划线分隔条，沿用 v1.7.99.x 表单/详情页风格） */
+    .page-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--text-primary);
+      margin: 0 0 14px 0;
+      padding-bottom: 12px;
+      border-bottom: 2px solid;
+      border-image: linear-gradient(90deg, #1E40AF 0%, #3B82F6 50%, transparent 100%) 1;
+    }
+
+    /* 区块标题（v1.7.99.129：左侧蓝条 + 标题，沿用 design-system 区块风格） */
+    .info-section { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .info-section-head {
+      padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .info-section-head::before {
+      content: ''; display: inline-block; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px;
+    }
+    .info-section-body { padding: 20px; }
+
+    /* 合同信息 5 字段 3 列（v1.7.99.129：1:1 重制 user 截图） */
+    .contract-grid { display: grid; grid-template-columns: 60px 1fr 80px 1fr 80px 1fr; row-gap: 14px; column-gap: 12px; align-items: center; font-size: 13px; }
+    .contract-grid .label { color: var(--text-tertiary); text-align: right; }
+    .contract-grid .value { color: var(--text-primary); }
+    .contract-grid .copy-icon { color: var(--text-tertiary); cursor: pointer; margin-left: 4px; vertical-align: middle; }
+    .contract-grid .copy-icon:hover { color: var(--color-primary); }
+
+    /* 发货信息表格（v1.7.99.129：5 列表格 + 展开行） */
+    .dispatch-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .dispatch-table th, .dispatch-table td {
+      padding: 12px 14px; text-align: left; border-bottom: 1px solid var(--border-light);
+      vertical-align: middle;
+    }
+    .dispatch-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; white-space: nowrap; }
+    .dispatch-table .col-num { font-family: var(--font-mono); color: var(--color-primary, #1E40AF); }
+    .dispatch-table .col-time { color: var(--text-primary); }
+    .dispatch-table .col-time.dash { color: var(--text-tertiary); }
+    .dispatch-table .col-arrow { color: var(--text-tertiary); cursor: pointer; text-align: center; }
+    .dispatch-table tr.expanded { background: #FAFBFC; }
+    .dispatch-table tr.expanded td { border-bottom: none; }
+
+    /* 展开行（v1.7.99.129：5 列 metadata + 附件信息子表） */
+    .expanded-row { background: #FAFBFC; }
+    .expanded-row .expanded-meta {
+      display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px;
+      padding: 8px 16px 12px 32px; font-size: 13px;
+    }
+    .expanded-row .meta-item { display: flex; flex-direction: column; gap: 4px; }
+    .expanded-row .meta-label { color: var(--text-tertiary); font-size: 12px; }
+    .expanded-row .meta-value { color: var(--text-primary); }
+    .expanded-row .meta-value.address { font-size: 12px; line-height: 1.4; }
+
+    /* 附件信息子表（v1.7.99.129：类型 + 文件名 + 操作） */
+    .attachment-subtable { width: calc(100% - 32px); margin: 8px 16px 16px 32px; border-collapse: collapse; font-size: 13px; }
+    .attachment-subtable th, .attachment-subtable td { padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .attachment-subtable th { background: #fff; color: var(--text-tertiary); font-weight: 500; font-size: 12px; }
+    .attachment-subtable td { background: #fff; }
+    .attachment-subtable .col-action a { color: var(--color-primary, #1E40AF); text-decoration: none; cursor: pointer; }
+    .attachment-subtable .col-action a:hover { text-decoration: underline; }
+    .attachment-subtable .file-icon { color: var(--color-primary, #1E40AF); margin-right: 4px; }
+    .attachment-subtable .subtable-head {
+      padding: 8px 12px; font-size: 13px; font-weight: 500; color: var(--text-primary);
+      display: flex; align-items: center; gap: 8px;
+    }
+    .attachment-subtable .subtable-head::before {
+      content: ''; display: inline-block; width: 3px; height: 12px; background: var(--color-primary); border-radius: 2px;
+    }
+
+    /* 收货信息表单（v1.7.99.129：2 行 × 2 列布局） */
+    .receipt-form { display: grid; grid-template-columns: 1fr 1fr; gap: 20px 32px; font-size: 13px; }
+    .receipt-form .form-row { display: flex; flex-direction: column; gap: 6px; }
+    .receipt-form .form-label { font-size: 13px; color: var(--text-primary); }
+    .receipt-form .form-label .required { color: var(--color-danger); margin-right: 2px; }
+    .receipt-form .radio-group { display: flex; gap: 24px; padding: 8px 0; }
+    .receipt-form .radio-item { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+    .receipt-form .radio-item input[type="radio"] { cursor: pointer; }
+    .receipt-form .hint-icon {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 14px; height: 14px; border-radius: 50%;
+      background: #94A3B8; color: #fff; font-size: 10px; font-weight: 500;
+      margin-left: 2px; cursor: help;
+    }
+    .receipt-form .form-input,
+    .receipt-form .form-date {
+      width: 100%; height: 36px; padding: 0 12px; font-size: 13px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-default);
+      background: var(--bg-card); color: var(--text-primary); outline: none;
+      transition: all 0.15s;
+    }
+    .receipt-form .form-input::placeholder { color: var(--text-tertiary); }
+    .receipt-form .form-input:focus,
+    .receipt-form .form-date:focus {
+      border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-primary-light);
+    }
+    .receipt-form .form-date::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+    .receipt-form .form-date::-webkit-calendar-picker-indicator:hover { opacity: 1; }
+
+    /* 附件信息蓝底提示 + 4 行 upload（v1.7.99.129：化验凭证 / 磅单 / 磅单明细 / 其他凭证） */
+    .attachment-info-tip {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 10px 16px; background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 6px;
+      font-size: 12px; color: #1E40AF; margin-bottom: 12px;
+    }
+    .attachment-info-tip .tip-text { flex: 1; }
+    .attachment-info-tip .tip-toggle {
+      display: flex; align-items: center; gap: 4px; cursor: pointer; user-select: none;
+      color: #1E40AF; font-weight: 500;
+    }
+    .upload-table { width: 100%; border-collapse: collapse; font-size: 13px; }
+    .upload-table th, .upload-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid var(--border-light); }
+    .upload-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .upload-table .upload-btn {
+      display: inline-flex; align-items: center; gap: 4px;
+      padding: 4px 14px; border: 1px solid var(--color-primary);
+      color: var(--color-primary); background: #fff; border-radius: var(--radius-default);
+      font-size: 12px; cursor: pointer;
+    }
+    .upload-table .upload-btn:hover { background: var(--color-primary-lighter); }
+
+    /* 底部固定操作栏（v1.7.99.129：取消 + 提交 居右） */
+    .receipt-footer { display: flex; justify-content: flex-end; gap: 8px; padding: 16px 0 32px 0; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑（v1.7.99.129：收发货管理 / 收货管理 / 收货确认） -->
+        <div class="breadcrumb-inline">
+          <a href="#">收发货管理</a>
+          <span class="sep">/</span>
+          <a href="./shipment-in.html">收货管理</a>
+          <span class="sep">/</span>
+          <span class="current">收货确认</span>
+        </div>
+
+        <!-- 页面标题 -->
+        <h1 class="page-title">填写收货信息</h1>
+
+        <!-- ==================== 区块 1：合同信息（5 字段 3 列） ==================== -->
+        <div class="info-section">
+          <div class="info-section-head">合同信息</div>
+          <div class="info-section-body">
+            <div class="contract-grid">
+              <span class="label">合同编号</span>
+              <span class="value">
+                <span id="contractNo">HNCIEGNMYB26(购)HO2-01</span>
+                <svg class="copy-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" title="复制合同编号" onclick="window.Utils && window.Utils.toast && window.Utils.toast('已复制：' + document.getElementById('contractNo').textContent, 'success')"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </span>
+              <span class="label">基准价格</span>
+              <span class="value" id="contractPrice">204.04元/吨</span>
+              <span class="label">数量</span>
+              <span class="value" id="contractQuantity">6000吨</span>
+
+              <span class="label">交货期限</span>
+              <span class="value" id="contractDeliveryPeriod">2026-01-31 ~ 2026-02-12</span>
+              <span class="label">运输方式</span>
+              <span class="value" id="contractTransport" colspan="3">汽运</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== 区块 2：发货信息（5 列表格 + 展开行） ==================== -->
+        <div class="info-section">
+          <div class="info-section-head">发货信息</div>
+          <div class="info-section-body" style="padding: 0;">
+            <table class="dispatch-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;"><input type="checkbox" checked disabled style="cursor: not-allowed;"></th>
+                  <th>发货批次号</th>
+                  <th>发货数量(吨)</th>
+                  <th>已收货数量(吨)</th>
+                  <th>发货日期</th>
+                  <th style="width: 60px; text-align: center;">收货完成时间</th>
+                </tr>
+              </thead>
+              <tbody>
+                <!-- 行 1：已勾选（待收货确认）+ 展开 -->
+                <tr class="expanded">
+                  <td><input type="checkbox" checked disabled style="cursor: not-allowed;"></td>
+                  <td class="col-num" id="dispatchBn">BN202603090001</td>
+                  <td id="dispatchQuantity">5976.38</td>
+                  <td id="dispatchReceived">0</td>
+                  <td class="col-time" id="dispatchTableDate">2026-02-03</td>
+                  <td class="col-time dash" id="dispatchFinishTime">-</td>
+                </tr>
+                <!-- 展开行：5 字段 metadata + 附件信息子表 -->
+                <tr class="expanded-row">
+                  <td colspan="6" style="padding: 0;">
+                    <div class="expanded-meta">
+                      <div class="meta-item">
+                        <span class="meta-label">发货数量(吨)：</span>
+                        <span class="meta-value">5976.38</span>
+                      </div>
+                      <div class="meta-item">
+                        <span class="meta-label">发货日期：</span>
+                        <span class="meta-value">2026-02-03</span>
+                      </div>
+                      <div class="meta-item">
+                        <span class="meta-label">发货地址：</span>
+                        <span class="meta-value address">山西全慧物资贸易有限公司货场</span>
+                      </div>
+                      <div class="meta-item">
+                        <span class="meta-label">收货地址：</span>
+                        <span class="meta-value address">国电投河南电力燃料有限公司</span>
+                      </div>
+                      <div class="meta-item">
+                        <span class="meta-label">车数：</span>
+                        <span class="meta-value">116</span>
+                      </div>
+                    </div>
+                    <!-- 附件信息子表（v1.7.99.129：运输凭证 5 份 PDF） -->
+                    <table class="attachment-subtable">
+                      <thead>
+                        <tr>
+                          <th style="width: 25%;">类型</th>
+                          <th>文件名称</th>
+                          <th style="width: 80px;">操作</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>运输凭证</td><td><svg class="file-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>2026.2.3全慧-进出口磅单.pdf</td><td class="col-action"><a>下载</a></td></tr>
+                        <tr><td>运输凭证</td><td><svg class="file-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>2026.2.7全慧-进出口磅单.pdf</td><td class="col-action"><a>下载</a></td></tr>
+                        <tr><td>运输凭证</td><td><svg class="file-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>2026.2.10山西全慧-进出口磅单.pdf</td><td class="col-action"><a>下载</a></td></tr>
+                        <tr><td>运输凭证</td><td><svg class="file-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>2026.2.23全慧-进出口磅单.pdf</td><td class="col-action"><a>下载</a></td></tr>
+                        <tr><td>运输凭证</td><td><svg class="file-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>2026.2.22全慧-进出口磅单.pdf</td><td class="col-action"><a>下载</a></td></tr>
+                      </tbody>
+                    </table>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ==================== 区块 3：收货信息（表单：收货方式 + 数量 + 日期） ==================== -->
+        <div class="info-section">
+          <div class="info-section-head">收货信息</div>
+          <div class="info-section-body">
+            <div class="receipt-form">
+              <div class="form-row">
+                <label class="form-label"><span class="required">*</span>收货方式</label>
+                <div class="radio-group">
+                  <label class="radio-item">
+                    <input type="radio" name="receiptType" value="partial" checked>
+                    <span>部分收货</span>
+                    <span class="hint-icon" title="本次只确认部分到货数量，剩余批次继续保留为待收货">?</span>
+                  </label>
+                  <label class="radio-item">
+                    <input type="radio" name="receiptType" value="full">
+                    <span>全部收货</span>
+                    <span class="hint-icon" title="本次确认本批次所有货物全部到达并完成收货">?</span>
+                  </label>
+                </div>
+              </div>
+              <div class="form-row">
+                <label class="form-label"><span class="required">*</span>收货数量(吨)</label>
+                <input type="number" class="form-input" id="receiptQuantity" placeholder="请输入收货数量（吨）" min="0" step="0.01">
+              </div>
+              <div class="form-row" style="grid-column: 1 / -1;">
+                <label class="form-label"><span class="required">*</span>收货日期</label>
+                <input type="date" class="form-date" id="receiptDate" placeholder="请选择收货日期">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ==================== 区块 4：附件信息（蓝底提示 + 4 行 upload） ==================== -->
+        <div class="info-section">
+          <div class="info-section-head">附件信息</div>
+          <div class="info-section-body">
+            <div class="attachment-info-tip">
+              <span class="tip-text">【化验凭证】支持上传 jpg, jpeg, png, bmp, pdf 的附件，单个附件大小不超过 100M</span>
+              <span class="tip-toggle" onclick="toggleAttachmentTip(this)">
+                <span>展开</span>
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+              </span>
+            </div>
+            <table class="upload-table">
+              <thead>
+                <tr>
+                  <th style="width: 50%;">单据类型</th>
+                  <th>文件名称</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>化验凭证</td><td><button class="upload-btn" onclick="handleUpload('化验凭证', this)">↑ 上传</button></td></tr>
+                <tr><td>磅单</td><td><button class="upload-btn" onclick="handleUpload('磅单', this)">↑ 上传</button></td></tr>
+                <tr><td>磅单明细</td><td><button class="upload-btn" onclick="handleUpload('磅单明细', this)">↑ 上传</button></td></tr>
+                <tr><td>其他凭证</td><td><button class="upload-btn" onclick="handleUpload('其他凭证', this)">↑ 上传</button></td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 底部固定操作栏（v1.7.99.129：取消 + 提交） -->
+        <div class="receipt-footer">
+          <button class="btn btn-secondary" onclick="window.location.href='./shipment-in.html'">取消</button>
+          <button class="btn btn-primary" onclick="handleSubmit()">提交</button>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // v1.7.99.129 inline Utils fallback（v1.7.99.80 + v1.7.99.123 关键经验）
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} },
+      nav: function(url) { window.location.href = url; }
+    };
+
+    // v1.7.99.129：URL ?bn=BN202603090001 读取 BN 号（演示场景，默认 BN202603090001）
+    (function() {
+      var bnMatch = location.search.match(/[?&]bn=([^&]+)/);
+      var bn = bnMatch ? decodeURIComponent(bnMatch[1]) : 'BN202603090001';
+      // 不同 BN 号映射到不同的 mock 数据（v1.7.99.129：演示场景——4 个 BN 各自对应不同的合同/发货地址等）
+      var BN_MOCK = {
+        'BN202603090001': { contractNo: 'HNCIEGNMYB26(购)HO2-01', price: '204.04元/吨', quantity: '6000吨', deliveryPeriod: '2026-01-31 ~ 2026-02-12', transport: '汽运', dispatchBn: 'BN202603090001', dispatchQuantity: '5976.38', dispatchReceived: '0', dispatchDate: '2026-02-03', finishTime: '-', dispatchAddress: '山西全慧物资贸易有限公司货场', receiveAddress: '国电投河南电力燃料有限公司', carCount: '116' },
+        'BN202601200001': { contractNo: 'HNCIEGYLB25(购)H04-01', price: '198.50元/吨', quantity: '20000吨', deliveryPeriod: '2026-01-15 ~ 2026-02-28', transport: '火运', dispatchBn: 'BN202601200001', dispatchQuantity: '20000', dispatchReceived: '19397.72', dispatchDate: '2026-01-22', finishTime: '-', dispatchAddress: '河南永泰粮食贸易有限公司粮库', receiveAddress: '国能濮阳热电有限公司', carCount: '285' },
+        'BN202604280002': { contractNo: 'GTGYL-MSXS-20260127-s', price: '185.00元/吨', quantity: '1304吨', deliveryPeriod: '2026-04-20 ~ 2026-05-15', transport: '汽运', dispatchBn: 'BN202604280002', dispatchQuantity: '1304', dispatchReceived: '0', dispatchDate: '2026-04-28', finishTime: '-', dispatchAddress: '河南中豫港通供应链管理有限公司仓库', receiveAddress: '河南诚泽运输有限公司', carCount: '28' },
+        'BN202605150003': { contractNo: 'GTGYL-MSXS-20260127-s', price: '185.00元/吨', quantity: '850吨', deliveryPeriod: '2026-05-10 ~ 2026-05-30', transport: '汽运', dispatchBn: 'BN202605150003', dispatchQuantity: '850', dispatchReceived: '0', dispatchDate: '2026-05-15', finishTime: '-', dispatchAddress: '河南中豫港通供应链管理有限公司仓库', receiveAddress: '河南诚泽运输有限公司', carCount: '18' }
+      };
+      var data = BN_MOCK[bn] || BN_MOCK['BN202603090001'];
+      // 填入页面（v1.7.99.129：按 user 截图 1:1 重制）
+      if (data.contractNo) {
+        document.getElementById('contractNo').textContent = data.contractNo;
+        document.getElementById('contractPrice').textContent = data.price;
+        document.getElementById('contractQuantity').textContent = data.quantity;
+        document.getElementById('contractDeliveryPeriod').textContent = data.deliveryPeriod;
+        document.getElementById('contractTransport').textContent = data.transport;
+        document.getElementById('dispatchBn').textContent = data.dispatchBn;
+        document.getElementById('dispatchQuantity').textContent = data.dispatchQuantity;
+        document.getElementById('dispatchReceived').textContent = data.dispatchReceived;
+        document.getElementById('dispatchTableDate').textContent = data.dispatchDate;
+        document.getElementById('dispatchFinishTime').textContent = data.finishTime;
+        // 更新展开行 metadata（v1.7.99.129：通过 querySelector 找到对应字段）
+        var metaItems = document.querySelectorAll('.expanded-row .meta-item');
+        if (metaItems.length >= 5) {
+          metaItems[0].querySelector('.meta-value').textContent = data.dispatchQuantity;
+          metaItems[1].querySelector('.meta-value').textContent = data.dispatchDate;
+          metaItems[2].querySelector('.meta-value').textContent = data.dispatchAddress;
+          metaItems[3].querySelector('.meta-value').textContent = data.receiveAddress;
+          metaItems[4].querySelector('.meta-value').textContent = data.carCount;
+        }
+      }
+    })();
+
+    // v1.7.99.129：附件信息蓝底提示展开/收起
+    function toggleAttachmentTip(el) {
+      var label = el.querySelector('span');
+      if (label.textContent === '展开') {
+        label.textContent = '收起';
+        el.querySelector('svg').style.transform = 'rotate(180deg)';
+      } else {
+        label.textContent = '展开';
+        el.querySelector('svg').style.transform = 'rotate(0deg)';
+      }
+    }
+
+    // v1.7.99.129：上传按钮
+    function handleUpload(type, btn) {
+      Utils.toast('上传 ' + type + '（演示）', 'info');
+    }
+
+    // v1.7.99.129：提交按钮（v1.7.99.123 关键修复 inline Utils fallback 兜底）
+    function handleSubmit() {
+      var receiptType = document.querySelector('input[name="receiptType"]:checked');
+      var receiptQuantity = document.getElementById('receiptQuantity').value;
+      var receiptDate = document.getElementById('receiptDate').value;
+      var dispatchBn = document.getElementById('dispatchBn').textContent;
+      // 简单校验（v1.7.99.129：3 必填字段都不能空）
+      if (!receiptType) { Utils.toast('请选择收货方式', 'error'); return; }
+      if (!receiptQuantity) { Utils.toast('请输入收货数量', 'error'); return; }
+      if (!receiptDate) { Utils.toast('请选择收货日期', 'error'); return; }
+      Utils.toast('提交成功：' + dispatchBn + ' ' + receiptType.value + ' ' + receiptQuantity + '吨', 'success');
+      // 演示场景：提交后跳回列表页
+      setTimeout(function() { window.location.href = './shipment-in.html'; }, 800);
+    }
+
+    // v1.7.99.129：日期 input 兼容性 fallback（Safari/Firefox 不支持 type=date 时降级为 text）
+    (function() {
+      var dateInput = document.getElementById('receiptDate');
+      if (dateInput && dateInput.type !== 'date') {
+        dateInput.type = 'text';
+        dateInput.setAttribute('onfocus', '(this.type=\"date\")');
+        dateInput.setAttribute('onblur', 'if(!this.value) this.type=\"text\"');
+      }
+    })();
+  </script>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>放货指令详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 详情区块（v1.7.99.148 沿用 v1.7.99.140/145 模式：白底卡片 + 浅灰边框 + 圆角 + info-section-title） */
+    .info-section { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+    .info-section-title { padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--border-default); border-left: 3px solid var(--color-primary); padding-left: 17px; }
+    .info-section-title.no-bar { border-left: none; padding-left: 20px; }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 顶部信息条（v1.7.99.148 按 user 图 1：放 放货指令编号 + 复制 + 已完结 badge + 3 行 3 列 6 元信息） */
+    .release-header { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; padding: 16px 24px; margin-bottom: 16px; }
+    .release-header-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .release-header-top .release-icon { width: 22px; height: 22px; background: #059669; color: #fff; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 14px; font-weight: 700; flex-shrink: 0; }
+    .release-header-top .label { font-size: 13px; color: var(--text-tertiary); }
+    .release-header-top .value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .release-header-top .copy-btn { color: var(--text-tertiary); cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 2px; }
+    .release-header-top .copy-btn:hover { color: var(--color-primary); }
+    .release-header-top .status-tag { display: inline-block; padding: 2px 10px; background: #F3F4F6; border: 1px solid #E5E7EB; border-radius: 4px; font-size: 12px; color: var(--text-secondary); margin-left: 12px; }
+    .release-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 32px; }
+    .release-meta .item { display: flex; flex-direction: column; gap: 4px; }
+    .release-meta .label { font-size: 12px; color: var(--text-tertiary); }
+    .release-meta .value { font-size: 13px; color: var(--text-primary); }
+    .release-meta .value.mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .release-meta .value.mono a, .release-meta .value.mono[style*="color: var(--color-primary)"] { color: var(--color-primary); }
+
+    /* 3 tab 切换（v1.7.99.148 沿用 v1.7.99.145 模式） */
+    .detail-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-default); margin-bottom: 16px; background: #fff; border-radius: 6px 6px 0 0; padding: 0 20px; }
+    .detail-tabs .tab { padding: 14px 20px; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+    .detail-tabs .tab:hover { color: var(--text-primary); }
+    .detail-tabs .tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+
+    /* 放货信息表格（v1.7.99.148 按 user 图 1：3 行 6 列 + 备注行单独） */
+    .release-info-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .release-info-table th, .release-info-table td { padding: 12px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .release-info-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; width: 14%; }
+    .release-info-table th:last-child, .release-info-table td:last-child { border-right: 0; }
+    .release-info-table tr:last-child td { border-bottom: 0; }
+    .release-info-table tr.remark-row td { background: #F8FAFC; }
+    .release-info-table tr.remark-row td.remark-content { background: #F3F4F6; min-height: 60px; }
+
+    /* 业务线下回款信息（v1.7.99.148 按 user 图 2：3 汇总数据行 + 8 列表格 + 4 行 mock） */
+    .receipt-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px 32px; padding: 0 20px 16px 20px; }
+    .receipt-summary .item { display: flex; flex-direction: row; align-items: center; gap: 8px; font-size: 13px; }
+    .receipt-summary .label { color: var(--text-primary); white-space: nowrap; }
+    .receipt-summary .value { color: var(--text-primary); font-weight: 500; }
+
+    .receipt-table-wrap { overflow-x: auto; border: 1px solid var(--border-default); border-radius: 6px; margin: 0 20px 16px 20px; }
+    .receipt-table { width: 100%; border-collapse: separate; border-spacing: 0; min-width: 1100px; }
+    .receipt-table th, .receipt-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); white-space: nowrap; }
+    .receipt-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .receipt-table th:last-child, .receipt-table td:last-child { border-right: 0; }
+    .receipt-table tr:last-child td { border-bottom: 0; }
+    .receipt-table .col-no { width: 17%; }
+    .receipt-table .col-date { width: 10%; }
+    .receipt-table .col-amount { width: 12%; text-align: right; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .receipt-table .col-claim { width: 14%; text-align: right; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .receipt-table .col-balance { width: 12%; text-align: right; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .receipt-table .col-way { width: 8%; }
+    .receipt-table .col-status { width: 10%; }
+    .receipt-table .col-action { width: 8%; }
+    .receipt-table .mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; color: var(--text-primary); }
+    .receipt-table .col-action a { color: var(--color-primary); text-decoration: none; }
+    .receipt-table .col-action a:hover { text-decoration: underline; }
+    .receipt-table .status-tag { display: inline-block; padding: 2px 8px; background: #D1FAE5; color: #059669; border-radius: 4px; font-size: 12px; }
+
+    /* 附件表格（v1.7.99.148 按 user 图 1：3 列 = 文件类型/文件名/操作 + 1 行：付款回单） */
+    .attachment-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .attachment-table th, .attachment-table td { padding: 12px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .attachment-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .attachment-table th:last-child, .attachment-table td:last-child { border-right: 0; }
+    .attachment-table tr:last-child td { border-bottom: 0; }
+    .attachment-table .col-type { width: 18%; }
+    .attachment-table .col-name { width: 62%; }
+    .attachment-table .col-action { width: 20%; text-align: right; }
+    .attachment-table .col-action a { color: var(--color-primary); text-decoration: none; }
+    .attachment-table .col-action a:hover { text-decoration: underline; }
+    .attachment-table .col-name a { color: var(--color-primary); text-decoration: none; }
+    .attachment-table .col-name a:hover { text-decoration: underline; }
+
+    /* 出库记录表格（v1.7.99.185 按 user 图：6 列 = 出库编号/关联下煤计划编号/出库日期/仓房&货位/出库数量/车数） */
+    .outbound-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .outbound-table th, .outbound-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); white-space: nowrap; }
+    .outbound-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .outbound-table th:last-child, .outbound-table td:last-child { border-right: 0; }
+    .outbound-table tr:last-child td { border-bottom: 0; }
+    .outbound-table .col-outbound-no { width: 20%; }
+    .outbound-table .col-plan-no { width: 18%; }
+    .outbound-table .col-outbound-date { width: 12%; }
+    .outbound-table .col-warehouse { width: 18%; }
+    .outbound-table .col-outbound-qty { width: 12%; text-align: right; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .outbound-table .col-cars { width: 10%; text-align: right; }
+    .outbound-table .mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; color: var(--text-primary); }
+    .outbound-summary { padding: 12px 20px; font-size: 13px; color: var(--text-primary); display: flex; gap: 32px; }
+    .outbound-summary .item { display: flex; align-items: center; gap: 8px; }
+    .outbound-summary .value { font-weight: 500; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+
+    /* 操作记录表格（v1.7.99.185 按 user 图：5 列 = 操作类型/操作人员/所属公司/操作内容/操作时间） */
+    .log-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .log-table th, .log-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .log-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .log-table th:last-child, .log-table td:last-child { border-right: 0; }
+    .log-table tr:last-child td { border-bottom: 0; }
+    .log-table .col-log-type { width: 14%; }
+    .log-table .col-operator { width: 12%; }
+    .log-table .col-company { width: 22%; }
+    .log-table .col-content { width: 36%; }
+    .log-table .col-time { width: 16%; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; color: var(--text-secondary); }
+
+    /* 暂无数据空状态（v1.7.99.185：通用空状态，outbound/log 都用） */
+    .empty-state { padding: 60px 20px; text-align: center; border: 1px solid var(--border-default); border-radius: 6px; background: #fff; }
+    .empty-state .icon { color: #D1D5DB; margin-bottom: 12px; }
+    .empty-state .text { color: var(--text-tertiary); font-size: 13px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑（v1.7.99.148：仓储管理 / 放货管理 / 放货指令详情） -->
+        <div class="breadcrumb-inline">
+          <a href="#">仓储管理</a>
+          <span class="sep">/</span>
+          <a href="./warehouse-release.html">放货管理</a>
+          <span class="sep">/</span>
+          <span class="current">放货指令详情</span>
+        </div>
+
+        <!-- 标题 + 返回 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">放货指令详情</h1>
+          <button class="btn btn-secondary" onclick="history.back()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            返回
+          </button>
+        </div>
+
+        <!-- 顶部信息条（v1.7.99.148 按 user 图 1：放 放货指令编号 + 复制 + 已完结 badge + 3 行 3 列 6 元信息） -->
+        <div class="release-header">
+          <div class="release-header-top">
+            <div class="release-icon">放</div>
+            <span class="label">放货指令编号：</span>
+            <span class="value mono">FH-RHSY-SLKJ-202403-001-2024-03-06-015</span>
+            <span class="copy-btn" onclick="Utils.toast('已复制放货指令编号', 'info')" title="复制放货指令编号">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </span>
+            <span class="status-tag">已完结</span>
+          </div>
+          <div class="release-meta">
+            <span class="item"><span class="label">所属合同编号</span><span class="value mono" style="color: var(--color-primary);">RHSY-SLKJ-202403-001</span></span>
+            <span class="item"><span class="label">卖方企业</span><span class="value">河南荣厚实业有限公司</span></span>
+            <span class="item"><span class="label">买方企业</span><span class="value">GG测试煤业有限公司</span></span>
+            <span class="item"><span class="label">创建人</span><span class="value">杜慧杰</span></span>
+            <span class="item"><span class="label">创建时间</span><span class="value">2024-03-06 14:14:23</span></span>
+            <span class="item"><span class="label">生效时间</span><span class="value">2024-03-06 14:14:23</span></span>
+          </div>
+        </div>
+
+        <!-- 4 tab 切换（v1.7.99.191：放货信息 / 审批管理 / 出库记录 / 操作记录，审批管理 tab 名按 status 动态切换"审批管理"/"审批记录"） -->
+        <div class="detail-tabs">
+          <div class="tab active" onclick="switchDetailTab(this, 'info')">放货信息</div>
+          <div class="tab" onclick="switchDetailTab(this, 'approval')" id="approvalTab">审批管理</div>
+          <div class="tab" onclick="switchDetailTab(this, 'outbound')">出库记录</div>
+          <div class="tab" onclick="switchDetailTab(this, 'log')">操作记录</div>
+        </div>
+
+        <!-- 区块 1：放货信息（v1.7.99.185 包到 tap-info panel，3 行 6 列 + 备注行） -->
+        <div class="tab-content" id="tab-info">
+          <div class="info-section">
+            <h3 class="info-section-title">放货信息</h3>
+            <div class="info-section-body no-pad">
+              <table class="release-info-table">
+                <tbody>
+                  <tr>
+                    <th>仓库名称</th>
+                    <td>盛源站台</td>
+                    <th>放货日期</th>
+                    <td>2024-03-06至2024-04-12</td>
+                    <th>运输方式</th>
+                    <td>汽运</td>
+                  </tr>
+                  <tr>
+                    <th>提货联系人姓名</th>
+                    <td>严佳怡</td>
+                    <th>提货人联系方式</th>
+                    <td>13587210811</td>
+                    <th>提货联系人身份证号</th>
+                    <td>330521200006241529</td>
+                  </tr>
+                  <tr>
+                    <th>品名</th>
+                    <td>AAA</td>
+                    <th>放货数量(吨)</th>
+                    <td>111</td>
+                    <th>出库数量(吨)</th>
+                    <td>-</td>
+                  </tr>
+                  <tr class="remark-row">
+                    <th>备注</th>
+                    <td class="remark-content" colspan="5">&nbsp;</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 2：业务线下回款信息（v1.7.99.148 按 user 图 2） -->
+          <div class="info-section">
+            <h3 class="info-section-title no-bar">业务线下回款信息</h3>
+            <div class="receipt-summary">
+              <span class="item"><span class="label">下游企业累计已回款货款（元）：</span><span class="value">123,234.23 元</span></span>
+              <span class="item"><span class="label">累计已出库货值（元）：</span><span class="value">23,234.23</span></span>
+              <span class="item"><span class="label">剩余可出库货值（元）：</span><span class="value">100,000.00</span></span>
+            </div>
+            <div class="receipt-table-wrap">
+              <table class="receipt-table">
+                <thead>
+                  <tr>
+                    <th class="col-no">收款编号</th>
+                    <th class="col-date">回款时间</th>
+                    <th class="col-amount">回款金额（元）</th>
+                    <th class="col-claim">认领至本合同金额（元）</th>
+                    <th class="col-balance">可认领余额（元）</th>
+                    <th class="col-way">回款方式</th>
+                    <th class="col-status">认领状态</th>
+                    <th class="col-action" style="text-align: center;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td><span class="mono">SKJSD2021090911100001</span></td>
+                    <td>2020-09-21</td>
+                    <td class="col-amount">378</td>
+                    <td class="col-claim">37,828.00</td>
+                    <td class="col-balance">378</td>
+                    <td>电汇</td>
+                    <td><span class="status-tag">已认领</span></td>
+                    <td class="col-action" style="text-align: center;"><a href="#" onclick="Utils.toast('查看收款详情', 'info'); return false;">详情</a></td>
+                  </tr>
+                  <tr>
+                    <td><span class="mono">SKJSD2021090911100001</span></td>
+                    <td>2020-09-21</td>
+                    <td class="col-amount">378</td>
+                    <td class="col-claim">37,828.00</td>
+                    <td class="col-balance">378</td>
+                    <td>电汇</td>
+                    <td><span class="status-tag">已认领</span></td>
+                    <td class="col-action" style="text-align: center;"><a href="#" onclick="Utils.toast('查看收款详情', 'info'); return false;">详情</a></td>
+                  </tr>
+                  <tr>
+                    <td><span class="mono">SKJSD2021090911100001</span></td>
+                    <td>2020-09-21</td>
+                    <td class="col-amount">378</td>
+                    <td class="col-claim">37,828.00</td>
+                    <td class="col-balance">378</td>
+                    <td>电汇</td>
+                    <td><span class="status-tag">已认领</span></td>
+                    <td class="col-action" style="text-align: center;"><a href="#" onclick="Utils.toast('查看收款详情', 'info'); return false;">详情</a></td>
+                  </tr>
+                  <tr>
+                    <td><span class="mono">SKJSD2021090911100001</span></td>
+                    <td>2020-09-21</td>
+                    <td class="col-amount">378</td>
+                    <td class="col-claim">37,828.00</td>
+                    <td class="col-balance">378</td>
+                    <td>电汇</td>
+                    <td><span class="status-tag">已认领</span></td>
+                    <td class="col-action" style="text-align: center;"><a href="#" onclick="Utils.toast('查看收款详情', 'info'); return false;">详情</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 3：附件信息 -->
+          <div class="info-section">
+            <h3 class="info-section-title">附件信息</h3>
+            <div class="info-section-body no-pad">
+              <table class="attachment-table">
+                <thead>
+                  <tr>
+                    <th class="col-type">文件类型</th>
+                    <th class="col-name">文件名</th>
+                    <th class="col-action">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr>
+                    <td>付款回单</td>
+                    <td class="col-name"><a href="#" onclick="Utils.toast('查看文件', 'info'); return false;">确认到达.png</a></td>
+                    <td class="col-action"><a href="#" onclick="Utils.toast('开始下载文件', 'info'); return false;">下载</a></td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- /tab-info -->
+
+        <!-- tap1.5: 审批管理（v1.7.99.191 复用通用审批组件 + approval.css，跟 v1.7.99.176 货转详情页同款） -->
+        <div class="tab-content" id="tab-approval" style="display: none;">
+          <!-- 顶部状态卡 -->
+          <div class="approval-status-card" id="whApprovalStatusCard">
+            <div class="approval-status-icon" id="whApprovalStatusIcon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                <span id="whApprovalStatusLabel">审批进行中</span>
+                <div class="approval-status-chips">
+                  <span class="chip chip-yellow" id="whApprovalChipStatus">⏳ 待审批</span>
+                </div>
+              </div>
+              <div class="approval-status-desc" id="whApprovalStatusDesc">
+                <strong style="color: var(--text-primary);">HNCIEIEGTB24(放)H12-02-补-01</strong> 已提交至放货指令审批流程，当前在「<strong id="whApprovalCurrentNode">一级审批</strong>」阶段。
+              </div>
+            </div>
+          </div>
+
+          <!-- 摘要 -->
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">放货指令编号</div>
+              <div class="value" style="font-family: var(--font-mono);">FH-RHSY-SLKJ-202403-001</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2024-03-06 14:14:23</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交人</div>
+              <div class="value">杜慧杰</div>
+            </div>
+          </div>
+
+          <!-- 时间线 + 关键指标 -->
+          <div class="approval-grid">
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta" id="whApprovalHeaderMeta">共 5 个节点，当前进行中 ①</div>
+              </div>
+              <div class="timeline" id="whApprovalTimeline">
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">① 提交申请</div>
+                    <div class="timeline-meta">杜慧杰 · 2024-03-06 14:14</div>
+                    <div class="timeline-comment">放货指令已生成，提交审批</div>
+                  </div>
+                </div>
+                <div class="timeline-item current">
+                  <div class="timeline-dot current">②</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">② 一级审批（业务部）</div>
+                    <div class="timeline-meta">审批人：张爽（业务部负责人）</div>
+                    <div class="timeline-comment">需在提交后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">③</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">③ 二级审批（财务部）</div>
+                    <div class="timeline-meta">需在一级审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">④</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">④ 三级审批（风控部）</div>
+                    <div class="timeline-meta">需在二级审批通过后自动触发</div>
+                  </div>
+                </div>
+                <div class="timeline-item">
+                  <div class="timeline-dot">⑤</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">⑤ 终审（总经理）</div>
+                    <div class="timeline-meta">放货指令生效，需在三级审批通过后自动触发</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-aside-title">关键指标</div>
+                <div class="approval-aside-item">
+                  <span class="label">放货编号</span>
+                  <span class="value" style="font-family: var(--font-mono);">FH-RHSY-SLKJ-202403-001-2024-03-06-015</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">放货数量</span>
+                  <span class="value">111 吨</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">当前已用时</span>
+                  <span class="value">2 小时 35 分</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /tab-approval -->
+
+        <!-- tap2: 出库记录（v1.7.99.191 加表头 + 始终显示，无论有无数据）+ 放货数量/出库数量 summary -->
+        <div class="tab-content" id="tab-outbound" style="display: none;">
+          <table class="outbound-table">
+            <thead>
+              <tr>
+                <th>出库编号</th>
+                <th>关联下煤计划编号</th>
+                <th>出库日期</th>
+                <th>仓房&货位</th>
+                <th>出库数量(吨)</th>
+                <th>车数(辆)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+          <div class="info-section" style="margin-top: 16px;">
+            <div class="info-section-body no-pad" style="padding: 12px 20px; display: flex; gap: 32px;">
+              <span class="item" style="font-size: 13px;">放货数量：<span class="value" style="font-weight: 500; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;">111</span></span>
+              <span class="item" style="font-size: 13px;">出库数量：<span class="value" style="color: var(--text-tertiary); font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace;">-</span></span>
+            </div>
+          </div>
+        </div>
+        <!-- /tab-outbound -->
+
+        <!-- tap3: 操作记录（v1.7.99.191 加表头 + 始终显示，无论有无数据） -->
+        <div class="tab-content" id="tab-log" style="display: none;">
+          <table class="log-table">
+            <thead>
+              <tr>
+                <th>操作类型</th>
+                <th>操作人员</th>
+                <th>所属公司</th>
+                <th>操作内容</th>
+                <th>操作时间</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+        <!-- /tab-log -->
+
+        <div class="detail-footer">
+          <span style="font-size: 12px; color: var(--text-tertiary);">数据来源仓储管理系统</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <!-- v1.7.99.191 审批中固定底栏（status=审批中时显示，借鉴 v1.7.99.188 付款详情页 + v1.7.99.187 货转详情页 footer-actions 模式：右侧 2 按钮） -->
+  <div class="footer-actions" id="whApprovalFooter" style="display: none;">
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="alert('审批通过（mock，v1.7.99.191）\n放货指令编号：' + (document.getElementById('whContractNo')?.textContent || ''))">审批通过</button>
+    <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock，v1.7.99.191）\n放货指令编号：' + (document.getElementById('whContractNo')?.textContent || ''))">驳回审批</button>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // v1.7.99.191 4 tab 真正切换（不是只切 active class）+ status 决定 footer + tab 名
+    function switchDetailTab(el, key) {
+      document.querySelectorAll('.detail-tabs .tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      // 隐藏所有 tab-content，显示对应 panel
+      document.querySelectorAll('.tab-content').forEach(panel => { panel.style.display = 'none'; });
+      var target = document.getElementById('tab-' + key);
+      if (target) target.style.display = '';
+    }
+
+    // v1.7.99.191：按 status 决定审批管理 tab 名（审批中→"审批管理" / 其他→"审批记录"）+ 底部固定按钮
+    // URL ?status= 可覆盖默认状态（默认 status=审批中）
+    (function() {
+      var statusMap = {
+        '已生效':  { code: 'effective', text: '已生效' },
+        '审批中':  { code: 'approving', text: '审批中' },
+        '待上传已生效单据': { code: 'awaiting-effect-voucher', text: '待上传已生效单据' },
+        '驳回':    { code: 'rejected', text: '驳回' },
+        '已作废':  { code: 'voided', text: '已作废' }
+      };
+      // URL ?status= 解析（与列表页 data-gt-status 对齐）
+      var keyToText = {
+        'all': '已生效',
+        'approving': '审批中',
+        'awaiting-effect-voucher': '待上传已生效单据',
+        'effective': '已生效',
+        'rejected': '驳回',
+        'voided': '已作废'
+      };
+      var statusMatch = location.search.match(/[?&]status=([^&]+)/);
+      var statusKey = statusMatch ? decodeURIComponent(statusMatch[1]) : 'approving';
+      var status = keyToText[statusKey] || '审批中';
+      var info = statusMap[status] || statusMap['审批中'];
+
+      // 1. tab 名：审批中 → "审批管理"；其他 → "审批记录"
+      var tab = document.getElementById('approvalTab');
+      if (tab) {
+        tab.textContent = (info.code === 'approving') ? '审批管理' : '审批记录';
+      }
+
+      // 2. 底部固定按钮：仅 status=审批中 时显示
+      var footer = document.getElementById('whApprovalFooter');
+      if (footer) {
+        footer.style.display = (info.code === 'approving') ? 'flex' : 'none';
+      }
+    })();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

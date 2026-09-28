@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>采购结算 - 豫港通 v1.7.99.133</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* 9 列表格列宽（v1.7.99.70） */
+    .cp-table th.col-num, .cp-table td.col-num { font-family: var(--font-mono); }
+    /* 5 种结算单状态 badge 颜色（v1.7.99.70 + v1.7.99.133 审批驳回独立色 + 弃用驳回同色） */
+    .settle-status { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+    .settle-status.auditing { background: #FEF3C7; color: #A16207; }
+    .settle-status.uploading { background: #DBEAFE; color: #1E40AF; }
+    .settle-status.effective { background: #D1FAE5; color: #047857; }
+    /* v1.7.99.133：审批驳回独立色（橙红 #FEE2E2 + 深红 #B91C1C 区分于已作废的纯红 #DC2626） */
+    .settle-status.rejected { background: #FEE2E2; color: #B91C1C; }
+    .settle-status.voided { background: #F3F4F6; color: #6B7280; }
+    /* v1.7.99.133：操作列按状态映射（按 user 2026-08-04 反馈图2） */
+    .col-action a { margin-left: 8px; }
+    .col-action a:first-child { margin-left: 0; }
+    .col-action a.danger { color: #DC2626; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 v1.7.99.70 -->
+        <div class="breadcrumb-inline">
+          <a href="#">结算管理</a>
+          <span class="sep">/</span>
+          <span class="current">采购结算</span>
+        </div>
+
+        <!-- 标题 + 新增 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">采购结算</h1>
+          <a href="./settlement-purchase-new.html" class="btn btn-primary">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            新增采购结算单
+          </a>
+        </div>
+
+        <!-- 合并 panel -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：6 字段筛选区（v1.7.99.70 按图 1：编号/企业名称/品名/品类/结算日期） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">编号</span>
+                <input type="text" class="input" placeholder="请输入合同、结算单编号">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业名称</span>
+                <input type="text" class="input" placeholder="请输入企业名称">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">品名</span>
+                <input type="text" class="input" placeholder="请输入品名">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">品类</span>
+                <select class="select"><option>请选择</option><option>淀粉制品</option><option>糖粉</option><option>谷物</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">结算日期</span>
+                <input type="text" class="input" placeholder="请选择结算日期">
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：6 tab（v1.7.99.70 按图 1：全部/审批中/待上传已生效单据/已生效/审批驳回/已作废 + v1.7.99.133 "驳回"→"审批驳回"对齐 user 2026-08-04 反馈图2） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" data-tab="all" onclick="switchTab(this, 'all')">全部 <span class="count" data-count="all">0</span></div>
+                <div class="cp-tab" data-tab="auditing" onclick="switchTab(this, 'auditing')">审批中 <span class="count" data-count="auditing">0</span></div>
+                <div class="cp-tab" data-tab="uploading" onclick="switchTab(this, 'uploading')">待上传已生效单据 <span class="count" data-count="uploading">0</span></div>
+                <div class="cp-tab" data-tab="effective" onclick="switchTab(this, 'effective')">已生效 <span class="count" data-count="effective">0</span></div>
+                <div class="cp-tab" data-tab="rejected" onclick="switchTab(this, 'rejected')">审批驳回 <span class="count" data-count="rejected">0</span></div>
+                <div class="cp-tab" data-tab="voided" onclick="switchTab(this, 'voided')">已作废 <span class="count" data-count="voided">0</span></div>
+              </div>
+              <div class="cp-tab-bar-actions"></div>
+            </div>
+          </div>
+
+          <!-- 区块 3：9 列表格（v1.7.99.70 按图 1） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 13%;">结算单编号</th>
+                    <th style="width: 16%;">卖方企业</th>
+                    <th style="width: 9%;text-align: right;">结算金额(元)</th>
+                    <th style="width: 8%;text-align: right;">结算数量</th>
+                    <th style="width: 8%;text-align: right;">结算单价</th>
+                    <th style="width: 8%;">结算日期</th>
+                    <th style="width: 16%;">采购订单/单批次合同编号</th>
+                    <th class="col-status" style="width: 11%;">结算单状态</th>
+                    <th class="col-action" style="width: auto;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="settleTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 400 条记录 · 第 1 / 80 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">4</div>
+                  <div class="cp-pagination-page">5</div>
+                  <div class="cp-pagination-page">6</div>
+                  <div class="cp-pagination-page">7</div>
+                  <div class="cp-pagination-page">8</div>
+                  <div class="cp-pagination-page">9</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 5 种状态（v1.7.99.70 + v1.7.99.133 "审核驳回"→"审批驳回"对齐 user 2026-08-04 反馈图2）
+    const STATUS_CLASS = {
+      '审批中': 'auditing',
+      '审批驳回': 'rejected',
+      '已生效': 'effective',
+      '待上传已生效单据': 'uploading',
+      '已作废': 'voided',
+    };
+    // v1.7.99.133：操作按钮按状态映射（按 user 2026-08-04 反馈图2）
+    //   审批中=详情 / 审批驳回=详情+修改+作废 / 待上传已生效单据=详情+上传附件+作废 / 已生效=详情 / 已作废=详情
+    const STATUS_ACTIONS = {
+      '审批中':            [{ label: '详情', href: './settlement-purchase-detail.html' }],
+      '审批驳回':          [{ label: '详情', href: './settlement-purchase-detail.html' }, { label: '修改', href: './settlement-purchase-new.html?from=rejected' }, { label: '作废', href: 'javascript:void(0)', onclick: 'voidSettle(this)', danger: true }],
+      '待上传已生效单据':  [{ label: '详情', href: './settlement-purchase-detail.html' }, { label: '上传附件', href: 'javascript:void(0)', onclick: 'uploadAttach(this)' }, { label: '作废', href: 'javascript:void(0)', onclick: 'voidSettle(this)', danger: true }],
+      '已生效':            [{ label: '详情', href: './settlement-purchase-detail.html' }],
+      '已作废':            [{ label: '详情', href: './settlement-purchase-detail.html' }],
+    };
+    // v1.7.99.133：10 行 mock，5 状态 × 2 行均匀分布（按 user 2026-08-04 反馈"枚举数据需要根据切换对应过滤状态数据"）
+    const SETTLE_MOCK = [
+      { no: 'JSD202411120001', seller: '杞县广润贸易有限公司', amount: '1,000,000.22', qty: '100吨', price: '1,078.22元/吨', date: '2023-04-06', contract: 'DLXLC001、FFHH002', status: '审批中' },
+      { no: 'JSD202411120002', seller: '民权县冷链物流有限公司', amount: '2,580,000.00', qty: '300吨', price: '8,600.00元/吨', date: '2023-04-08', contract: 'MQLC20230408001', status: '审批中' },
+      { no: 'JSD202411120003', seller: '商丘市金禾粮油有限公司', amount: '3,860,500.50', qty: '500吨', price: '7,721.00元/吨', date: '2023-04-10', contract: 'SQJH20230410002、FFHH003', status: '审批驳回' },
+      { no: 'JSD202411120004', seller: '洛阳鑫源化工产品有限公司', amount: '1,650,000.00', qty: '200吨', price: '8,250.00元/吨', date: '2023-04-12', contract: 'LYXY20230412003', status: '审批驳回' },
+      { no: 'JSD202411120005', seller: '郑州东方粮油集团有限公司', amount: '5,200,000.00', qty: '650吨', price: '8,000.00元/吨', date: '2023-04-15', contract: 'ZZDF20230415001、ZJ20230415002', status: '已生效' },
+      { no: 'JSD202411120006', seller: '新乡市华昌农贸有限公司', amount: '2,800,000.00', qty: '350吨', price: '8,000.00元/吨', date: '2023-04-18', contract: 'XXHC20230418004', status: '已生效' },
+      { no: 'JSD202411120007', seller: '开封市祥符区冷链仓储公司', amount: '1,920,000.00', qty: '240吨', price: '8,000.00元/吨', date: '2023-04-20', contract: 'KFXF20230420005、KFXF20230420006', status: '待上传已生效单据' },
+      { no: 'JSD202411120008', seller: '焦作市温县小杂粮贸易有限公司', amount: '1,440,000.00', qty: '180吨', price: '8,000.00元/吨', date: '2023-04-22', contract: 'JZWX20230422007', status: '待上传已生效单据' },
+      { no: 'JSD202411120009', seller: '濮阳市清丰粮食购销有限公司', amount: '960,000.00', qty: '120吨', price: '8,000.00元/吨', date: '2023-04-25', contract: 'PYQF20230425008', status: '已作废' },
+      { no: 'JSD202411120010', seller: '安阳市内黄县果蔬贸易有限公司', amount: '720,000.00', qty: '90吨', price: '8,000.00元/吨', date: '2023-04-28', contract: 'AYNH20230428009', status: '已作废' },
+    ];
+    // v1.7.99.133：tab 计数动态计算（v1.7.99.123 经验沿用——从 mock 实时算，不要硬编码占位数字）
+    function updateStatusCounts() {
+      var counts = { all: SETTLE_MOCK.length };
+      SETTLE_MOCK.forEach(function(r) {
+        var key = STATUS_CLASS[r.status];
+        if (key) counts[key] = (counts[key] || 0) + 1;
+      });
+      Object.keys(counts).forEach(function(k) {
+        var span = document.querySelector('[data-count="' + k + '"]');
+        if (span) span.textContent = counts[k];
+      });
+    }
+    // v1.7.99.133：渲染操作列（按状态映射）
+    function renderActions(status) {
+      var actions = STATUS_ACTIONS[status] || [{ label: '详情', href: './settlement-purchase-detail.html' }];
+      return actions.map(function(a) {
+        var cls = a.danger ? 'danger' : '';
+        var onclick = a.onclick ? ' onclick="' + a.onclick + '"' : '';
+        return '<a class="' + cls + '" href="' + a.href + '"' + onclick + '>' + a.label + '</a>';
+      }).join('');
+    }
+    function renderSettleTable() {
+      const tbody = document.getElementById('settleTbody');
+      tbody.innerHTML = SETTLE_MOCK.map((r, i) => {
+        const cls = STATUS_CLASS[r.status] || '';
+        return `<tr data-status="${cls}">
+          <td class="col-num">${r.no}</td>
+          <td>${r.seller}</td>
+          <td style="text-align: right;" class="col-num">${r.amount}</td>
+          <td style="text-align: right;">${r.qty}</td>
+          <td style="text-align: right;">${r.price}</td>
+          <td>${r.date}</td>
+          <td class="col-num">${r.contract}</td>
+          <td><span class="settle-status ${cls}">${r.status}</span></td>
+          <td class="col-action" style="text-align: right;">${renderActions(r.status)}</td>
+        </tr>`;
+      }).join('');
+    }
+    // v1.7.99.133：tab 切换 + 行过滤（v1.7.99.131 经验沿用——切 tab 时按 data-status 过滤）
+    function switchTab(el, key) {
+      document.querySelectorAll('.cp-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.querySelectorAll('#settleTbody tr').forEach(function(tr) {
+        var rowStatus = tr.getAttribute('data-status') || '';
+        if (key === 'all' || rowStatus === key) {
+          tr.style.display = '';
+        } else {
+          tr.style.display = 'none';
+        }
+      });
+    }
+    // v1.7.99.133：作废按钮（占位 toast 提示，避免无 backend 报错）
+    function voidSettle(el) {
+      if (typeof Utils !== 'undefined' && Utils.toast) {
+        Utils.toast('作废功能待实现', 'info');
+      } else {
+        console.log('[toast] info 作废功能待实现');
+        try { alert('作废功能待实现'); } catch (e) {}
+      }
+    }
+    // v1.7.99.133：上传附件按钮（占位 toast 提示）
+    function uploadAttach(el) {
+      if (typeof Utils !== 'undefined' && Utils.toast) {
+        Utils.toast('上传附件功能待实现', 'info');
+      } else {
+        console.log('[toast] info 上传附件功能待实现');
+        try { alert('上传附件功能待实现'); } catch (e) {}
+      }
+    }
+    // v1.7.99.80 + v1.7.99.123 关键修复：inline Utils fallback 兜底
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { console.log('[toast]', type || 'info', msg); }
+    };
+    document.addEventListener('DOMContentLoaded', function() {
+      renderSettleTable();
+      updateStatusCounts();
+    });
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

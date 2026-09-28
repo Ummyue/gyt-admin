@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>指数看板 - 豫港通 v1.7.99.136</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    /* v1.7.99.136：盯市价格管理 → 指数看板（按 user 2026-08-05 反馈图1 1:1 重制） */
+    .page-body { padding: 16px 24px; }
+    /* 顶部 tab 切换（看板/列表/趋势对比） */
+    .board-mode-tabs { display: flex; gap: 0; }
+    .board-mode-tab {
+      padding: 6px 16px; font-size: 13px; color: var(--color-primary);
+      background: #fff; border: 1px solid var(--color-primary); cursor: pointer;
+      display: inline-flex; align-items: center; gap: 6px;
+    }
+    .board-mode-tab:first-child { border-radius: 4px 0 0 4px; }
+    .board-mode-tab:last-child { border-radius: 0 4px 4px 0; border-left: none; }
+    .board-mode-tab.active { background: var(--color-primary); color: #fff; }
+    .board-mode-tab:not(.active):hover { background: #EFF6FF; }
+    /* 已选筛选 chips（顶部右侧） */
+    .board-filter-chip {
+      display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px;
+      background: #F1F5F9; border-radius: 4px; font-size: 13px; color: var(--text-secondary);
+    }
+    .board-filter-chip .chip-label { color: var(--text-secondary); }
+    .board-filter-chip .chip-value { color: var(--text-primary); font-weight: 500; }
+    .board-filter-chip .chip-close {
+      cursor: pointer; color: var(--text-tertiary); font-size: 14px; line-height: 1;
+    }
+    .board-filter-chip .chip-close:hover { color: var(--text-primary); }
+    .board-clear-all { font-size: 13px; color: var(--color-primary); cursor: pointer; }
+    /* 主体布局：左 280 + 右 卡片网格 */
+    .board-layout { display: flex; gap: 16px; }
+    .board-filter-panel { width: 280px; flex-shrink: 0; }
+    .board-main { flex: 1; min-width: 0; }
+    /* 左侧筛选 section */
+    .filter-section {
+      background: #fff; border-radius: 8px; padding: 14px 16px; margin-bottom: 12px;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+    }
+    .filter-section-label { font-size: 13px; color: var(--text-primary); font-weight: 600; margin-bottom: 8px; }
+    .filter-section-search {
+      width: 100%; height: 30px; padding: 0 10px; font-size: 12px;
+      border: 1px solid var(--border-default); border-radius: 4px; margin-bottom: 10px;
+      background: #fff;
+    }
+    .filter-section-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+    .filter-section-tag {
+      padding: 4px 10px; font-size: 12px; color: var(--text-secondary);
+      background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 4px; cursor: pointer;
+      max-width: 110px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .filter-section-tag:hover { color: var(--color-primary); border-color: var(--color-primary); }
+    .filter-section-tag.active {
+      background: var(--color-primary); color: #fff; border-color: var(--color-primary);
+    }
+    .filter-section-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; }
+    .filter-section-row .filter-section-tag { flex-shrink: 0; }
+    .filter-section-toggle {
+      font-size: 12px; color: var(--text-tertiary); margin-left: auto; cursor: pointer;
+    }
+    .filter-section-toggle:hover { color: var(--color-primary); }
+    /* 右侧卡片网格 3×3 */
+    .board-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px;
+    }
+    .index-card {
+      background: #fff; border-radius: 8px; padding: 12px 16px;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.04); cursor: pointer;
+      transition: all 0.15s;
+    }
+    .index-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); transform: translateY(-1px); }
+    .index-card-title {
+      font-size: 13px; color: var(--text-primary); font-weight: 600; margin-bottom: 4px;
+      display: flex; align-items: center; gap: 6px;
+    }
+    .index-card-subtitle { font-size: 12px; color: var(--text-tertiary); margin-left: 4px; }
+    .index-card-price {
+      display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px;
+    }
+    .index-card-price-value {
+      font-size: 22px; font-weight: 600; color: #DC2626; font-family: var(--font-mono);
+    }
+    .index-card-price-unit { font-size: 12px; color: var(--text-tertiary); }
+    .index-card-change {
+      display: inline-flex; align-items: center; gap: 8px; font-size: 12px;
+      color: #DC2626; margin-bottom: 6px;
+    }
+    .index-card-change-pct {
+      background: #FEE2E2; color: #DC2626; padding: 2px 6px; border-radius: 3px;
+      font-weight: 500;
+    }
+    .index-card-chart { width: 100%; height: 80px; }
+    .index-card-xaxis {
+      display: flex; justify-content: space-between; padding: 0 2px;
+      font-size: 10px; color: var(--text-tertiary); margin-top: 2px;
+    }
+    /* 浮动操作按钮（右下） */
+    .floating-action-btn {
+      position: fixed; bottom: 32px; right: 32px; width: 48px; height: 48px;
+      background: var(--color-primary); border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: 0 4px 16px rgba(30,64,175,0.3); cursor: pointer; z-index: 100;
+      color: #fff;
+    }
+    .floating-action-btn:hover { background: #1E3A8A; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="#">盯市管理</a>
+          <span class="sep">/</span>
+          <span class="current">盯市价格管理</span>
+        </div>
+
+        <!-- 顶部：3 模式 tab + 已选筛选 chips（按 user 图1） -->
+        <div style="display: flex; align-items: center; gap: 16px; margin-bottom: 16px; flex-wrap: wrap;">
+          <div class="board-mode-tabs">
+            <div class="board-mode-tab active">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
+              看板模式
+            </div>
+            <div class="board-mode-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="8" y1="6" x2="21" y2="6"/><line x1="8" y1="12" x2="21" y2="12"/><line x1="8" y1="18" x2="21" y2="18"/><line x1="3" y1="6" x2="3.01" y2="6"/><line x1="3" y1="12" x2="3.01" y2="12"/><line x1="3" y1="18" x2="3.01" y2="18"/></svg>
+              列表模式
+            </div>
+            <div class="board-mode-tab">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 17 9 11 13 15 21 7"/><polyline points="14 7 21 7 21 14"/></svg>
+              趋势对比
+            </div>
+          </div>
+          <!-- 已选筛选 chips -->
+          <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1;">
+            <div class="board-filter-chip">
+              <span class="chip-label">动力煤:</span><span class="chip-value">动力煤</span>
+              <span class="chip-close">×</span>
+            </div>
+            <div class="board-filter-chip">
+              <span class="chip-label">更新频次:</span><span class="chip-value">日更新</span>
+              <span class="chip-close">×</span>
+            </div>
+            <div class="board-filter-chip">
+              <span class="chip-label">对应地点:</span><span class="chip-value">北方港</span>
+              <span class="chip-close">×</span>
+            </div>
+            <a class="board-clear-all">清除全部</a>
+          </div>
+        </div>
+
+        <!-- 主体：左筛选 + 右卡片网格 -->
+        <div class="board-layout">
+
+          <!-- 左侧筛选面板 -->
+          <div class="board-filter-panel">
+
+            <!-- 指数名称 -->
+            <div class="filter-section">
+              <div class="filter-section-label">指数名称</div>
+              <input type="text" class="filter-section-search" placeholder="🔍 请输入">
+              <div class="filter-section-row">
+                <div class="filter-section-tag active">全部</div>
+                <span class="filter-section-toggle">⇅ 展开筛选 ⌄</span>
+              </div>
+              <div class="filter-section-tags">
+                <div class="filter-section-tag">BSPI环渤海海...</div>
+                <div class="filter-section-tag">CCI北港动力...</div>
+                <div class="filter-section-tag">CCI动力煤产...</div>
+                <div class="filter-section-tag">CCI焦炭价格</div>
+                <div class="filter-section-tag">CCI冶金煤指...</div>
+                <div class="filter-section-tag">CCTD环渤海...</div>
+              </div>
+            </div>
+
+            <!-- 数据来源 -->
+            <div class="filter-section">
+              <div class="filter-section-label">数据来源</div>
+              <input type="text" class="filter-section-search" placeholder="🔍 请输入">
+              <div class="filter-section-row">
+                <div class="filter-section-tag active">全部</div>
+                <span class="filter-section-toggle">⇅ 展开筛选 ⌄</span>
+              </div>
+              <div class="filter-section-tags">
+                <div class="filter-section-tag">秦皇岛煤炭网</div>
+                <div class="filter-section-tag">中国煤炭...</div>
+                <div class="filter-section-tag">中国煤炭市场网</div>
+                <div class="filter-section-tag">中国电力企...</div>
+                <div class="filter-section-tag">我的钢铁网</div>
+                <div class="filter-section-tag">全国煤炭交...</div>
+              </div>
+            </div>
+
+            <!-- 商品种类 -->
+            <div class="filter-section">
+              <div class="filter-section-row">
+                <div class="filter-section-label" style="margin-bottom: 0;">商品种类</div>
+              </div>
+              <div class="filter-section-row">
+                <div class="filter-section-tag active">全部</div>
+                <span class="filter-section-toggle">⇅ 展开筛选 ⌄</span>
+              </div>
+              <div class="filter-section-tags">
+                <div class="filter-section-tag active">动力煤</div>
+                <div class="filter-section-tag">炼焦煤</div>
+                <div class="filter-section-tag">水泥煤</div>
+                <div class="filter-section-tag">铁矿石</div>
+                <div class="filter-section-tag">焦炭</div>
+                <div class="filter-section-tag">兰炭</div>
+              </div>
+            </div>
+
+            <!-- 对应地点 -->
+            <div class="filter-section">
+              <div class="filter-section-row">
+                <div class="filter-section-label" style="margin-bottom: 0;">对应地点</div>
+              </div>
+              <div class="filter-section-row">
+                <div class="filter-section-tag active">全部</div>
+                <span class="filter-section-toggle">⇅ 展开筛选 ⌄</span>
+              </div>
+              <div class="filter-section-tags">
+                <div class="filter-section-tag active">全国</div>
+                <div class="filter-section-tag">北方港</div>
+                <div class="filter-section-tag">华东</div>
+                <div class="filter-section-tag">华南</div>
+                <div class="filter-section-tag">巴图塔</div>
+                <div class="filter-section-tag">其他</div>
+              </div>
+            </div>
+
+            <!-- 更新频次（额外） -->
+            <div class="filter-section">
+              <div class="filter-section-label">更新频次</div>
+              <div class="filter-section-tags">
+                <div class="filter-section-tag active">日更新</div>
+                <div class="filter-section-tag">周更新</div>
+                <div class="filter-section-tag">月更新</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右侧 9 卡片网格 -->
+          <div class="board-main">
+            <div class="board-grid" id="boardGrid">
+              <!-- JS 渲染 9 张卡片 -->
+            </div>
+          </div>
+
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- 右下浮动按钮（3x3 网格图标） -->
+  <div class="floating-action-btn" title="操作菜单">
+    <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+      <circle cx="6" cy="6" r="1.5" fill="currentColor"/>
+      <circle cx="12" cy="6" r="1.5" fill="currentColor"/>
+      <circle cx="18" cy="6" r="1.5" fill="currentColor"/>
+      <circle cx="6" cy="12" r="1.5" fill="currentColor"/>
+      <circle cx="12" cy="12" r="1.5" fill="currentColor"/>
+      <circle cx="18" cy="12" r="1.5" fill="currentColor"/>
+      <circle cx="6" cy="18" r="1.5" fill="currentColor"/>
+      <circle cx="12" cy="18" r="1.5" fill="currentColor"/>
+      <circle cx="18" cy="18" r="1.5" fill="currentColor"/>
+    </svg>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // v1.7.99.80 + v1.7.99.123 关键修复：inline Utils fallback 兜底
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { console.log('[toast]', type || 'info', msg); }
+    };
+    // v1.7.99.136：9 张指数卡 mock 数据（按 user 2026-08-05 反馈图1）
+    //   Row 1: CCI 北港动力煤价格 4500/5000/5500
+    //   Row 2: CCTD 环渤海动力煤现货参考价 4500K/5000K/5500K
+    //   Row 3: CECI 曹妃甸指数 4500/5000/5500
+    const INDEX_MOCK = [
+      { id: 'CCI-4500',  series: 'CCI 北港动力煤价格',   subtitle: '4500卡', price: '616.00',  changeAmt: '+8.00',  changePct: '+1.31%', xLabels: ['08-11','08-21','09-02','09-12','09-24','10-11','10-22','11-03'] },
+      { id: 'CCI-5000',  series: 'CCI 北港动力煤价格',   subtitle: '5000卡', price: '709.00',  changeAmt: '+9.00',  changePct: '+1.28%', xLabels: ['08-11','08-21','09-02','09-12','09-24','10-11','10-22','11-03'] },
+      { id: 'CCI-5500',  series: 'CCI 北港动力煤价格',   subtitle: '5500卡', price: '804.00',  changeAmt: '+9.00',  changePct: '+1.13%', xLabels: ['08-11','08-21','09-02','09-12','09-24','10-11','10-22','11-03'] },
+      { id: 'CCTD-4500', series: 'CCTD 环渤海动力煤现货参考价', subtitle: '4500K', price: '642.00',  changeAmt: '+1.00',  changePct: '+0.15%', xLabels: ['04-22','05-07','05-18','05-29','06-11','06-24','07-07','07-16'] },
+      { id: 'CCTD-5000', series: 'CCTD 环渤海动力煤现货参考价', subtitle: '5000K', price: '734.00',  changeAmt: '+3.00',  changePct: '+0.41%', xLabels: ['04-22','05-07','05-18','05-29','06-11','06-24','07-07','07-16'] },
+      { id: 'CCTD-5500', series: 'CCTD 环渤海动力煤现货参考价', subtitle: '5500K', price: '824.00',  changeAmt: '+2.00',  changePct: '+0.24%', xLabels: ['04-22','05-07','05-18','05-29','06-11','06-24','07-07','07-16'] },
+      { id: 'CECI-4500', series: 'CECI 曹妃甸指数',       subtitle: '4500',   price: '641.00',  changeAmt: '+1.00',  changePct: '+0.15%', xLabels: ['04-24','05-09','05-20','06-01','06-11','06-24','07-06','07-16'] },
+      { id: 'CECI-5000', series: 'CECI 曹妃甸指数',       subtitle: '5000',   price: '733.00',  changeAmt: '+2.00',  changePct: '+0.27%', xLabels: ['04-24','05-09','05-20','06-01','06-11','06-24','07-06','07-16'] },
+      { id: 'CECI-5500', series: 'CECI 曹妃甸指数',       subtitle: '5500',   price: '823.00',  changeAmt: '+2.00',  changePct: '+0.24%', xLabels: ['04-24','05-09','05-20','06-01','06-11','06-24','07-06','07-16'] }
+    ];
+    // 9 张卡片的迷你趋势图数据（每个数组 12 个数据点，归一化到 0-1 用于 SVG y 坐标）
+    // 用相对涨幅来生成折线数据
+    const CHART_DATA = {
+      'CCI-4500':  [0.45, 0.42, 0.5, 0.48, 0.55, 0.6, 0.58, 0.65, 0.7, 0.68, 0.75, 0.78],
+      'CCI-5000':  [0.5,  0.48, 0.52, 0.55, 0.6, 0.62, 0.65, 0.7, 0.72, 0.78, 0.82, 0.85],
+      'CCI-5500':  [0.4,  0.42, 0.45, 0.5, 0.55, 0.6, 0.65, 0.7, 0.75, 0.78, 0.82, 0.85],
+      'CCTD-4500': [0.55, 0.58, 0.6, 0.62, 0.65, 0.68, 0.7, 0.72, 0.74, 0.76, 0.78, 0.8],
+      'CCTD-5000': [0.5,  0.52, 0.55, 0.6, 0.62, 0.65, 0.7, 0.72, 0.75, 0.78, 0.8, 0.82],
+      'CCTD-5500': [0.45, 0.5,  0.55, 0.6, 0.62, 0.65, 0.7, 0.72, 0.74, 0.76, 0.78, 0.8],
+      'CECI-4500': [0.5,  0.52, 0.55, 0.58, 0.62, 0.65, 0.7, 0.72, 0.74, 0.76, 0.78, 0.8],
+      'CECI-5000': [0.48, 0.5,  0.55, 0.6, 0.62, 0.65, 0.7, 0.72, 0.74, 0.78, 0.8, 0.82],
+      'CECI-5500': [0.45, 0.5,  0.55, 0.6, 0.62, 0.65, 0.7, 0.72, 0.74, 0.76, 0.78, 0.8]
+    };
+    // 渲染迷你趋势图（80px 高的折线 + 渐变填充）
+    function renderMiniChart(data) {
+      var w = 280, h = 80, padding = 4;
+      var max = Math.max.apply(null, data);
+      var min = Math.min.apply(null, data);
+      var range = max - min || 1;
+      var stepX = (w - padding * 2) / (data.length - 1);
+      var points = data.map(function(v, i) {
+        var x = padding + i * stepX;
+        var y = padding + (1 - (v - min) / range) * (h - padding * 2);
+        return [x, y];
+      });
+      // 折线 path
+      var linePath = points.map(function(p, i) {
+        return (i === 0 ? 'M' : 'L') + p[0].toFixed(1) + ' ' + p[1].toFixed(1);
+      }).join(' ');
+      // 填充区域 path
+      var fillPath = linePath + ' L' + points[points.length - 1][0].toFixed(1) + ' ' + h + ' L' + points[0][0].toFixed(1) + ' ' + h + ' Z';
+      return '<svg viewBox="0 0 ' + w + ' ' + h + '" preserveAspectRatio="none" class="index-card-chart" xmlns="http://www.w3.org/2000/svg">'
+        + '<defs><linearGradient id="grad-' + Math.random().toString(36).slice(2,8) + '" x1="0" y1="0" x2="0" y2="1">'
+        + '<stop offset="0%" stop-color="#DC2626" stop-opacity="0.25"/>'
+        + '<stop offset="100%" stop-color="#DC2626" stop-opacity="0.02"/>'
+        + '</linearGradient></defs>'
+        + '<path d="' + fillPath + '" fill="url(#grad-1)" stroke="none"/>'
+        + '<path d="' + linePath + '" stroke="#DC2626" stroke-width="1.5" fill="none" stroke-linejoin="round" stroke-linecap="round"/>'
+        + '</svg>';
+    }
+    function renderBoard() {
+      var grid = document.getElementById('boardGrid');
+      if (!grid) return;
+      grid.innerHTML = INDEX_MOCK.map(function(idx) {
+        var chart = renderMiniChart(CHART_DATA[idx.id]);
+        return '<div class="index-card" data-id="' + idx.id + '" onclick="openIndexDetail(\'' + idx.id + '\')">'
+          + '<div class="index-card-title">' + idx.series + ': <span class="index-card-subtitle">' + idx.subtitle + '</span></div>'
+          + '<div class="index-card-price">'
+          + '<span class="index-card-price-value">' + idx.price + '</span>'
+          + '<span class="index-card-price-unit">元/吨(日更新)</span>'
+          + '</div>'
+          + '<div class="index-card-change">'
+          + '<span>' + idx.changeAmt + '</span>'
+          + '<span class="index-card-change-pct">' + idx.changePct + '</span>'
+          + '</div>'
+          + chart
+          + '<div class="index-card-xaxis">'
+          + idx.xLabels.map(function(l) { return '<span>' + l + '</span>'; }).join('')
+          + '</div>'
+          + '</div>';
+      }).join('');
+    }
+    // 点击卡片跳转详情页
+    function openIndexDetail(id) {
+      window.location.href = './market-price-detail.html?id=' + encodeURIComponent(id);
+    }
+    // 模式切换（占位）
+    document.addEventListener('click', function(e) {
+      var modeTab = e.target.closest('.board-mode-tab');
+      if (modeTab) {
+        document.querySelectorAll('.board-mode-tab').forEach(function(t) { t.classList.remove('active'); });
+        modeTab.classList.add('active');
+        var mode = modeTab.textContent.trim();
+        if (mode.indexOf('列表') >= 0) {
+          Utils.toast('列表模式待实现（v1.7.99.136 占位）', 'info');
+        } else if (mode.indexOf('趋势对比') >= 0) {
+          Utils.toast('趋势对比模式待实现（v1.7.99.136 占位）', 'info');
+        }
+      }
+    });
+    renderBoard();
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

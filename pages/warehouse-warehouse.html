@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>仓房管理 - 豫港通 v1.7.99.91</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* 7 列：编号 / 仓库 / 仓房名称 / 所属货主 / 备注 / 巡库任务 / 操作 */
+    .cp-table th.col-num, .cp-table td.col-num { font-family: var(--font-mono); }
+    .cp-table .col-num { font-family: var(--font-mono); color: var(--text-secondary); }
+    /* 巡库任务 iOS 风格蓝开关（v1.7.99.91 新加） */
+    .ios-switch { position: relative; display: inline-block; width: 36px; height: 20px; vertical-align: middle; }
+    .ios-switch input { opacity: 0; width: 0; height: 0; }
+    .ios-switch .slider {
+      position: absolute; cursor: pointer; inset: 0;
+      background: #CBD5E1; transition: .2s; border-radius: 20px;
+    }
+    .ios-switch .slider:before {
+      position: absolute; content: ""; height: 16px; width: 16px;
+      left: 2px; bottom: 2px; background: #fff; transition: .2s; border-radius: 50%;
+      box-shadow: 0 1px 3px rgba(0,0,0,.15);
+    }
+    .ios-switch input:checked + .slider { background: var(--color-primary, #1E40AF); }
+    .ios-switch input:checked + .slider:before { transform: translateX(16px); }
+    /* 表格固定布局（v1.7.99.91 修复：table-layout auto 导致后几列被挤到 0 宽） */
+    .cp-table-wrap { overflow-x: auto; }
+    .cp-table { table-layout: fixed; width: 100%; min-width: 100%; }
+    .cp-table th, .cp-table td { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    /* 列头 (?) tooltip（v1.7.99.91 新加：巡库任务列） */
+    .th-with-hint { display: inline-flex; align-items: center; gap: 4px; }
+    .th-with-hint .hint-icon {
+      display: inline-block; width: 14px; height: 14px; border-radius: 50%;
+      background: #94A3B8; color: #fff; font-size: 10px; line-height: 14px;
+      text-align: center; cursor: help; font-weight: 600;
+    }
+    .th-with-hint .hint-icon:hover { background: var(--color-primary, #1E40AF); }
+    /* 模态弹窗（v1.7.99.91 新加：新增仓房） */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 999; display: none; }
+    .modal-overlay.open { display: block; }
+    .modal-panel {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 520px; max-width: 95vw; max-height: 92vh; background: #fff;
+      border-radius: 8px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      z-index: 1000; display: none; flex-direction: column;
+    }
+    .modal-panel.open { display: flex; }
+    .modal-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    /* 弹窗表单 1 列纵向（v1.7.99.91 新加） */
+    .form-stack { display: flex; flex-direction: column; gap: 16px; }
+    .form-stack .form-field { display: flex; flex-direction: column; gap: 6px; }
+    .form-stack .form-field .form-label { font-size: 13px; color: var(--text-secondary); }
+    .form-stack .form-field .form-label .required { color: var(--color-danger); margin-right: 2px; }
+    .form-stack .form-field .input,
+    .form-stack .form-field .select { padding: 8px 12px; font-size: 13px; }
+    .form-stack .form-field .textarea { padding: 8px 12px; font-size: 13px; min-height: 72px; resize: vertical; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">仓储管理</a>
+          <span class="sep">/</span>
+          <a href="#">系统管理</a>
+          <span class="sep">/</span>
+          <span class="current">仓房管理</span>
+        </div>
+
+        <!-- 标题 + 新增仓房（v1.7.99.91：「仓库管理」→「仓房管理」+「新增仓库管理」→「新增仓房」） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">仓房管理</h1>
+          <button class="btn btn-primary" onclick="openAddModal()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            新增仓房
+          </button>
+        </div>
+
+        <!-- 合并 panel：筛选 / 表格 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：1 字段筛选区（v1.7.99.120 按 user 2026-08-04 截图：仓房名称） -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">仓房名称</span>
+                <input type="text" class="input" placeholder="请输入仓房名称">
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：6 列表格（v1.7.99.120 按 user 2026-08-04 截图：编号/仓房名称/所属货主/备注/巡库任务/操作） -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 13%;" class="col-num">编号</th>
+                    <th style="width: 18%;">仓房名称</th>
+                    <th style="width: 25%;">所属货主</th>
+                    <th style="width: 12%;">备注</th>
+                    <th style="width: 15%;">
+                      <span class="th-with-hint">
+                        巡库任务
+                        <span class="hint-icon" title="开启后该仓房将自动纳入巡库计划">?</span>
+                      </span>
+                    </th>
+                    <th class="col-action" style="width: 17%;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr class="cp-row-clickable">
+                    <td class="col-num">CF202607050001</td>
+                    <td>中欧班列集结中心</td>
+                    <td>河南中豫港通供应链管理有限公司</td>
+                    <td style="color: var(--text-tertiary);">—</td>
+                    <td>
+                      <label class="ios-switch" onclick="event.stopPropagation();">
+                        <input type="checkbox" checked onchange="togglePatrolTask(this)">
+                        <span class="slider"></span>
+                      </label>
+                    </td>
+                    <td class="col-action" style="text-align: right;">
+                      <a href="javascript:;" class="link-primary" onclick="editWarehouse('CF202607050001', '中欧班列集结中心', ''); event.stopPropagation();">编辑</a>
+                      <a href="javascript:;" class="link-primary" style="margin-left: 8px;" onclick="goWarehousePositions('CF202607050001'); event.stopPropagation();">货位</a>
+                    </td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 模态弹窗：新增/编辑仓房（v1.7.99.91 + v1.7.99.120 备注改 input） ==================== -->
+  <div class="modal-overlay" id="addModalOverlay" onclick="closeModal('addModal')"></div>
+  <div class="modal-panel" id="addModal" role="dialog" aria-labelledby="addModalTitle">
+    <div class="modal-header">
+      <div class="modal-title" id="addModalTitle">新增</div>
+      <span class="modal-close" onclick="closeModal('addModal')" title="关闭">×</span>
+    </div>
+    <div class="modal-body">
+      <form class="form-stack" id="addWarehouseForm" onsubmit="event.preventDefault(); submitAddModal();">
+        <div class="form-field">
+          <label class="form-label"><span class="required">*</span>仓房名称：</label>
+          <input type="text" class="input" name="warehouseRoomName" placeholder="请输入仓房名称" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label">备注：</label>
+          <input type="text" class="input" name="remark" placeholder="请输入备注" maxlength="200">
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('addModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitAddModal()">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // v1.7.99.91 inline Utils fallback（沿用 v1.7.99.80 模式）
+    window.Utils = window.Utils || {
+      toast: function(msg, type) { try { console.log('[toast]', type || 'info', msg); } catch (e) {} },
+      nav: function(href) { try { window.location.href = href; } catch (e) {} }
+    };
+
+    // ==================== 模态弹窗：通用 open/close（v1.7.99.91）====================
+    function openAddModal() {
+      var modal = document.getElementById('addModal');
+      var overlay = document.getElementById('addModalOverlay');
+      if (modal) modal.classList.add('open');
+      if (overlay) overlay.classList.add('open');
+      // 重置表单（新增时）
+      var form = document.getElementById('addWarehouseForm');
+      if (form && form.reset) form.reset();
+      // 标题恢复为"新增"
+      var title = document.getElementById('addModalTitle');
+      if (title) title.textContent = '新增';
+    }
+
+    function closeModal(modalId) {
+      var modal = document.getElementById(modalId);
+      var overlayId = modalId + 'Overlay';
+      var overlay = document.getElementById(overlayId);
+      if (modal) modal.classList.remove('open');
+      if (overlay) overlay.classList.remove('open');
+    }
+
+    function submitAddModal() {
+      var form = document.getElementById('addWarehouseForm');
+      if (!form) return;
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      var name = form.warehouseRoomName.value.trim();
+      var remark = form.remark.value.trim();
+      if (!name) {
+        Utils.toast('请输入仓房名称', 'warning');
+        return;
+      }
+      Utils.toast('新增仓房成功：' + name + (remark ? '（备注：' + remark + '）' : ''), 'success');
+      closeModal('addModal');
+    }
+
+    // v1.7.99.91：编辑仓房（点击行内"编辑"链接，回填到弹窗，标题改"编辑"）
+    function editWarehouse(code, name, remark) {
+      var modal = document.getElementById('addModal');
+      var overlay = document.getElementById('addModalOverlay');
+      var title = document.getElementById('addModalTitle');
+      var form = document.getElementById('addWarehouseForm');
+      if (title) title.textContent = '编辑仓房';
+      if (form) {
+        form.warehouseRoomName.value = name || '';
+        form.remark.value = remark || '';
+      }
+      if (modal) modal.classList.add('open');
+      if (overlay) overlay.classList.add('open');
+    }
+
+    // v1.7.99.91：跳货位管理（v1.7.99.91 占位：用户后续提"仓房货位管理"再补页面）
+    function goWarehousePositions(code) {
+      Utils.toast('跳转账房货位管理页：' + code + '（待补）', 'info');
+    }
+
+    // v1.7.99.91：巡库任务开关 toggle
+    function togglePatrolTask(input) {
+      var status = input.checked ? '开启' : '关闭';
+      Utils.toast('巡库任务已' + status, 'success');
+    }
+
+    // v1.7.99.91：行点击提示（详情页等用户后续提再做）
+    document.querySelectorAll('.cp-row-clickable').forEach(function(row) {
+      row.addEventListener('click', function(e) {
+        if (e.target.closest('.col-action, button, a, .ios-switch')) return;
+        var code = row.querySelector('.col-num');
+        Utils.toast('查看仓房详情：' + (code ? code.textContent.trim() : ''), 'info');
+      });
+    });
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

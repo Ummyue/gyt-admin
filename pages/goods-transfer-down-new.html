@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>新增下游货转 - 填写货转信息 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    .info-section { background: #fff; border-radius: 6px; padding: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .info-section-title {
+      padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      border-left: 3px solid var(--color-primary); padding-left: 17px;
+    }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    .info-grid-3 { display: grid; grid-template-columns: 110px 1fr 110px 1fr 110px 1fr; }
+    .info-grid-3 .label,
+    .info-grid-3 .value { padding: 10px 14px; font-size: 13px; }
+    .info-grid-3 .label { background: #F8FAFC; color: var(--text-tertiary); border-right: 1px solid var(--border-color); }
+    .info-grid-3 .value { color: var(--text-primary); }
+    .info-grid-3 .col-divider { border-right: 1px solid var(--border-color); }
+    .info-grid-3 .row-divider { border-bottom: 1px solid var(--border-color); }
+
+    /* 货转证明区块（v1.7.99.61 按图 2：单选「线下货转」+ 货转开具日期 + 货转开具数量） */
+    .proof-grid { display: grid; grid-template-columns: 110px 1fr 110px 1fr 110px 1fr; }
+    .proof-grid .label,
+    .proof-grid .field { padding: 10px 14px; font-size: 13px; }
+    .proof-grid .label { background: #F8FAFC; color: var(--text-tertiary); border-right: 1px solid var(--border-color); }
+    .proof-grid .col-divider { border-right: 1px solid var(--border-color); }
+    .proof-grid .row-divider { border-bottom: 1px solid var(--border-color); }
+    .proof-grid .field input { width: 100%; padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; }
+    .proof-grid .field .required { color: #dc2626; margin-right: 4px; }
+    .proof-grid .field .radio-item { display: inline-flex; align-items: center; gap: 4px; margin-right: 16px; }
+
+    .receive-table { width: 100%; border-collapse: collapse; }
+    .receive-table th, .receive-table td { padding: 12px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .receive-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .receive-table tr:hover { background: #F8FAFC; cursor: pointer; }
+    .receive-table tr.selected { background: #F0F7FF; }
+
+    .upload-tip { background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 4px; padding: 8px 12px; font-size: 12px; color: #1E40AF; margin-bottom: 12px; }
+    .attach-row { display: grid; grid-template-columns: 120px 1fr 100px; padding: 10px 14px; font-size: 13px; border-bottom: 1px solid var(--border-color); align-items: center; }
+    .attach-row:last-child { border-bottom: none; }
+    .attach-label { color: var(--text-primary); font-weight: 500; }
+    .attach-label .required { color: #dc2626; margin-right: 4px; }
+    .attach-name { color: var(--color-primary); }
+    .attach-time { color: var(--text-tertiary); font-size: 12px; }
+    .upload-btn { display: inline-block; padding: 4px 14px; background: #fff; border: 1px solid var(--color-primary); color: var(--color-primary); border-radius: 4px; font-size: 12px; cursor: pointer; }
+    .upload-btn:hover { background: #EFF6FF; }
+
+    .form-footer { padding: 16px 24px; background: #fff; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 12px; }
+
+    .submit-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 1100; display: none; }
+    .submit-modal-overlay.open { display: block; }
+    .submit-modal { position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 480px; background: #fff; border-radius: 8px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); z-index: 1101; display: none; }
+    .submit-modal.open { display: block; }
+    .submit-modal-header { padding: 14px 20px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 600; }
+    .submit-modal-body { padding: 24px 20px; font-size: 13px; line-height: 1.7; display: flex; gap: 10px; }
+    .submit-modal-body .warn-icon { color: #D97706; flex-shrink: 0; font-size: 18px; }
+    .submit-modal-footer { padding: 12px 20px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: flex-end; gap: 8px; }
+
+    /* v1.7.99.68 选择下游合同 侧边抽屉 */
+    .drawer-mask { position: fixed; inset: 0; background: rgba(0,0,0,0.45); z-index: 998; display: none; }
+    .drawer-mask.show { display: block; }
+    .drawer { position: fixed; top: 0; right: 0; bottom: 0; width: 1440px; max-width: 90vw; background: #fff; z-index: 999; transform: translateX(100%); transition: transform 0.3s; display: flex; flex-direction: column; }
+    .drawer.open { transform: translateX(0); }
+    .drawer-header { padding: 16px 24px; border-bottom: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+    .drawer-header .title { font-size: 16px; font-weight: 600; }
+    .drawer-header .close { font-size: 22px; color: var(--text-tertiary); cursor: pointer; line-height: 1; }
+    .drawer-body { flex: 1; overflow-y: auto; padding: 20px 24px; }
+    .drawer-footer { padding: 12px 24px; border-top: 1px solid var(--border-color); display: flex; justify-content: flex-end; gap: 8px; }
+    .drawer-chips { display: flex; gap: 8px; margin-bottom: 12px; flex-wrap: wrap; }
+    .drawer-chips .chip { padding: 4px 12px; border: 1px solid #1E40AF; border-radius: 14px; color: #1E40AF; font-size: 12px; background: #EFF6FF; cursor: pointer; }
+    .drawer-chips .chip.add { background: #fff; }
+    .drawer-filter { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px 20px; margin-bottom: 16px; }
+    .drawer-filter .filter-item { display: flex; flex-direction: column; gap: 4px; }
+    .drawer-filter .filter-item .label { font-size: 12px; color: var(--text-tertiary); }
+    .drawer-filter .filter-item .input, .drawer-filter .filter-item .select { padding: 6px 10px; border: 1px solid var(--border-color); border-radius: 4px; font-size: 13px; }
+    .drawer-pagination { display: flex; align-items: center; justify-content: space-between; padding: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./goods-transfer.html">货转管理</a>
+          <span class="sep">/</span>
+          <span class="current">开具货转</span>
+        </div>
+
+        <h1 class="page-h1" style="margin: 0 0 16px 0;">填写货转信息</h1>
+
+        <!-- 区块 1：合同信息（v1.7.99.61 按图 2：下游货转视角） -->
+        <div class="info-section">
+          <h3 class="info-section-title">合同信息</h3>
+          <div class="info-section-body no-pad">
+            <div class="info-grid-3">
+              <div class="label row-divider">合同编号</div>
+              <div class="value row-divider col-divider">DMXY-DLM2025051401</div>
+              <div class="label row-divider">合同单价</div>
+              <div class="value row-divider col-divider">2,425,000元</div>
+              <div class="label row-divider">合同数量</div>
+              <div class="value row-divider">3,000吨</div>
+
+              <div class="label row-divider">合同总价</div>
+              <div class="value row-divider col-divider">-</div>
+              <div class="label row-divider">签订日期</div>
+              <div class="value row-divider col-divider">2025-05-14</div>
+              <div class="label row-divider">合同有效期</div>
+              <div class="value row-divider">2025-05-14~2025-05-20</div>
+
+              <div class="label row-divider">合同类型</div>
+              <div class="value row-divider col-divider">月度合同</div>
+              <div class="label row-divider">合同签章状态</div>
+              <div class="value row-divider col-divider">双签</div>
+              <div class="label row-divider">双签合同获得日期</div>
+              <div class="value row-divider">2025-05-14</div>
+
+              <div class="label row-divider">运输方式</div>
+              <div class="value row-divider col-divider">汽运</div>
+              <div class="label row-divider">收货人名称</div>
+              <div class="value row-divider col-divider">东阳旭阳化工有限公司</div>
+              <div class="label row-divider">业务类型</div>
+              <div class="value row-divider">应收</div>
+
+              <div class="label row-divider">发货地址</div>
+              <div class="value row-divider col-divider">中国民生银行郑州经济技术开发区...</div>
+              <div class="label row-divider">收货地址</div>
+              <div class="value row-divider col-divider">东阳旭阳化工有限公司货场</div>
+              <div class="label row-divider">回款账号</div>
+              <div class="value row-divider">菏泽穆物流有限公司货场</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：收货信息（v1.7.99.61 按图 2：1 行表格） -->
+        <div class="info-section">
+          <h3 class="info-section-title">收货信息</h3>
+          <div class="info-section-body no-pad">
+            <table class="receive-table">
+              <thead>
+                <tr>
+                  <th style="width: 40px;">&nbsp;</th>
+                  <th>收货编号</th>
+                  <th>关联发货批次</th>
+                  <th>品名</th>
+                  <th style="text-align: right;">收货数量</th>
+                  <th>收货日期</th>
+                  <th style="text-align: right;">车数</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr class="selected" onclick="selectReceiveRow(this)">
+                  <td><input type="radio" name="receive" checked onclick="event.stopPropagation()"></td>
+                  <td>SH202506160001</td>
+                  <td>BN202506160002</td>
+                  <td>动力煤（晋煤）</td>
+                  <td style="text-align: right;">4,632.03</td>
+                  <td>2025-05-19</td>
+                  <td style="text-align: right;">129</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：货转证明（v1.7.99.61 按图 2：单选「线下货转」+ 日期 + 数量） -->
+        <div class="info-section">
+          <h3 class="info-section-title">货转证明</h3>
+          <div class="info-section-body no-pad">
+            <div class="proof-grid">
+              <div class="label row-divider"><span class="required">*</span>货转开具方式</div>
+              <div class="field row-divider col-divider">
+                <label class="radio-item"><input type="radio" name="certType" value="offline" checked> <span>线下货转</span></label>
+              </div>
+              <div class="label row-divider"><span class="required">*</span>货转开具日期</div>
+              <div class="field row-divider col-divider">
+                <input type="text" placeholder="请选择货转开具日期" id="certDate">
+              </div>
+              <div class="label row-divider"><span class="required">*</span>货转开具数量</div>
+              <div class="field row-divider">
+                <input type="text" placeholder="请输入数量(吨)" id="certQty">
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 4：附件（v1.7.99.61 按图 2） -->
+        <div class="info-section">
+          <h3 class="info-section-title">附件</h3>
+          <div class="info-section-body" style="padding: 0;">
+            <div style="padding: 16px 20px 0 20px;">
+              <div class="upload-tip">附件上传要求：<br>可支持格式为 png、jpeg、jpg、gif、pdf、doc、docx、xlsx、xls 的附件，单个附件大小不得超过 100M 的文件。</div>
+            </div>
+            <div class="attach-row">
+              <div class="attach-label"><span class="required">*</span>待盖章单据</div>
+              <div class="attach-name">
+                <span style="color: var(--color-primary);">44354657687.pdf</span>
+                <span class="attach-time">2023-12-12 12:23:32</span>
+              </div>
+              <div style="text-align: right;"><a href="javascript:void(0)" class="upload-btn">↑ 上传</a></div>
+            </div>
+            <div class="attach-row">
+              <div class="attach-label">其他附件</div>
+              <div class="attach-name"></div>
+              <div style="text-align: right;"><a href="javascript:void(0)" class="upload-btn">↑ 上传</a></div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- 底部按钮（v1.7.99.166 加"保存草稿"按钮） -->
+      <div class="form-footer">
+        <button class="btn btn-default" onclick="history.back()">取消</button>
+        <button class="btn btn-secondary" onclick="saveDraft()">保存草稿</button>
+        <button class="btn btn-primary" onclick="confirmSubmit()">确定</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.68 选择下游合同 侧边抽屉（默认打开） -->
+  <div class="drawer-mask" id="downDrawerMask" onclick="closeDownDrawer()"></div>
+  <div class="drawer" id="downDrawer">
+    <div class="drawer-header">
+      <span class="title">选择下游销售订单/单批次合同</span>
+      <span class="close" onclick="closeDownDrawer()">×</span>
+    </div>
+    <div class="drawer-body">
+      <div class="drawer-chips">
+        <span class="chip">DMXY-DLM2025051401</span>
+        <span class="chip add">+ 添加条件</span>
+      </div>
+      <div class="drawer-filter">
+        <div class="filter-item"><span class="label">订单/单批次合同编号</span><input class="input" placeholder="请输入订单/单批次合同编号"></div>
+        <div class="filter-item"><span class="label">卖方企业</span><input class="input" placeholder="请输入卖方企业"></div>
+        <div class="filter-item"><span class="label">买方企业</span><input class="input" placeholder="请输入买方企业"></div>
+        <div class="filter-item"><span class="label">品名</span><input class="input" placeholder="请输入品名"></div>
+        <div class="filter-item"><span class="label">签订日期</span><input class="input" placeholder="请选择日期范围"></div>
+        <div class="filter-item"><span class="label">&nbsp;</span><div style="display:flex; gap:6px;"><button class="btn btn-primary" style="height:32px; padding: 0 12px;">查询</button><button class="btn btn-default" style="height:32px; padding: 0 12px;">重置</button></div></div>
+      </div>
+      <table class="cp-table" style="width: 100%;">
+        <thead>
+          <tr>
+            <th style="width: 6%;">&nbsp;</th>
+            <th>订单/单批次合同编号</th>
+            <th>买方企业</th>
+            <th>业务类型</th>
+            <th>品名</th>
+            <th>合同数量</th>
+            <th>合同金额(元)</th>
+            <th>签订日期</th>
+          </tr>
+        </thead>
+        <tbody id="downContractTbody"></tbody>
+      </table>
+      <div class="drawer-pagination">
+        <div id="downContractPaginationInfo">共 6 条记录 · 第 1 / 1 页</div>
+        <div style="display: flex; gap: 8px; align-items: center;">
+          <div class="cp-pagination-pages">
+            <div class="cp-pagination-page">‹</div>
+            <div class="cp-pagination-page active">1</div>
+            <div class="cp-pagination-page">›</div>
+          </div>
+          <select class="cp-pagination-size"><option>10 条/页</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="drawer-footer">
+      <button class="btn btn-default" style="height: 32px; padding: 0 16px;" onclick="closeDownDrawer()">取消</button>
+      <button class="btn btn-primary" style="height: 32px; padding: 0 16px;" onclick="confirmDownContract()">确定</button>
+    </div>
+  </div>
+
+  <!-- 提交确认弹窗（v1.7.99.61） -->
+  <div class="submit-modal-overlay" id="submitModalOverlay" onclick="closeSubmitModal()"></div>
+  <div class="submit-modal" id="submitModal">
+    <div class="submit-modal-header">
+      <span>提交确认</span>
+      <span style="cursor: pointer; color: var(--text-tertiary);" onclick="closeSubmitModal()">×</span>
+    </div>
+    <div class="submit-modal-body">
+      <span class="warn-icon">!</span>
+      <span id="submitModalText">请确认信息填写完成并提交？<br>提交后，货转信息将推送钉钉进行审核，审核通过后，将线下盖章的货转证明上传到系统。</span>
+    </div>
+    <div class="submit-modal-footer">
+      <button class="btn btn-default" onclick="closeSubmitModal()">取消</button>
+      <button class="btn btn-primary" onclick="doSubmit()">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    function selectReceiveRow(tr) {
+      tr.parentNode.querySelectorAll('tr').forEach(function(r) { r.classList.remove('selected'); });
+      tr.classList.add('selected');
+      var radio = tr.querySelector('input[type="radio"]');
+      if (radio) radio.checked = true;
+    }
+    // v1.7.99.166：保存草稿
+    function saveDraft() {
+      (window.Utils && window.Utils.toast ? window.Utils.toast : function(m){ alert(m); })('已保存草稿', 'success');
+    }
+    function confirmSubmit() {
+      var certDate = document.getElementById('certDate').value;
+      var certQty = document.getElementById('certQty').value;
+      if (!certDate) { alert('请选择货转开具日期'); return; }
+      if (!certQty) { alert('请输入货转开具数量'); return; }
+      document.getElementById('submitModalOverlay').style.display = 'block';
+      document.getElementById('submitModal').style.display = 'block';
+    }
+    function closeSubmitModal() {
+      document.getElementById('submitModalOverlay').style.display = 'none';
+      document.getElementById('submitModal').style.display = 'none';
+    }
+    function doSubmit() {
+      closeSubmitModal();
+      alert('已提交（mock）');
+      window.location.href = './goods-transfer.html';
+    }
+
+    /* ===== v1.7.99.68 选择下游合同 抽屉 ===== */
+    var DOWN_CONTRACTS_MOCK = [
+      { id: 1, no: 'DMXY-DLM2025051401', buyer: '东阳旭阳化工有限公司', type: '月度合同', product: '焦煤', qty: '3,000吨', amount: '72,750,000', date: '2025-05-14',
+        unitPrice: '2,425,000元', totalPrice: '72,750,000元', validity: '2025-05-14~2025-05-20', signStatus: '双签', doubleSignDate: '2025-05-14',
+        transport: '汽运', receiver: '东阳旭阳化工有限公司', bizType: '应收', shipFrom: '中国民生银行郑州经济技术开发区',
+        shipTo: '东阳旭阳化工有限公司货场', recAccount: '菏泽穆物流有限公司货场' },
+      { id: 2, no: 'YL-MSXS-20260101-001', buyer: '郑州信必达供应链管理有限公司', type: '存货类', product: '木薯淀粉', qty: '20,000吨', amount: '68,000,000', date: '2026-01-01',
+        unitPrice: '3,400元', totalPrice: '68,000,000元', validity: '2026-01-01~2026-12-31', signStatus: '双签', doubleSignDate: '2026-01-03',
+        transport: '火运', receiver: '郑州信必达供应链管理有限公司', bizType: '应收', shipFrom: '河南中豫港通郑州中心仓',
+        shipTo: '郑州信必达国际供应链有限公司郑州仓库', recAccount: '6228 XXXX XXXX XXXX XXXX' },
+      { id: 3, no: 'YL-MSXS-20260105-002', buyer: '河南诚泽运输有限公司', type: '订单类', product: '谷物', qty: '15,000吨', amount: '45,000,000', date: '2026-01-05',
+        unitPrice: '3,000元', totalPrice: '45,000,000元', validity: '2026-01-05~2026-12-31', signStatus: '单签', doubleSignDate: '-',
+        transport: '汽运', receiver: '河南诚泽运输有限公司', bizType: '应收', shipFrom: '河南中豫港通郑州中心仓',
+        shipTo: '河南诚泽运输有限公司郑州分拨中心', recAccount: '6228 XXXX XXXX XXXX XXXX' },
+      { id: 4, no: 'YL-MSXS-20260110-003', buyer: '国能濮阳热电有限公司', type: '预付款类', product: '玉米', qty: '20,000吨', amount: '56,000,000', date: '2026-01-10',
+        unitPrice: '2,800元', totalPrice: '56,000,000元', validity: '2026-01-10~2026-12-31', signStatus: '双签', doubleSignDate: '2026-01-12',
+        transport: '汽运', receiver: '国能濮阳热电有限公司', bizType: '应收', shipFrom: '河南中豫港通濮阳前置仓',
+        shipTo: '国能濮阳热电有限公司燃料仓', recAccount: '6228 XXXX XXXX XXXX XXXX' },
+      { id: 5, no: 'YL-MSXS-20260115-004', buyer: '国电投河南电力燃料有限公司', type: '订单类', product: '木薯淀粉', qty: '10,000吨', amount: '34,000,000', date: '2026-01-15',
+        unitPrice: '3,400元', totalPrice: '34,000,000元', validity: '2026-01-15~2026-12-31', signStatus: '双签', doubleSignDate: '2026-01-17',
+        transport: '火运', receiver: '国电投河南电力燃料有限公司', bizType: '应收', shipFrom: '河南中豫港通郑州中心仓',
+        shipTo: '国电投河南电力燃料有限公司燃料仓', recAccount: '6228 XXXX XXXX XXXX XXXX' },
+      { id: 6, no: 'YL-MSXS-20260120-005', buyer: '天宇豪国际贸易集团有限公司', type: '存货类', product: '糖粉', qty: '20,000吨', amount: '130,000,000', date: '2026-01-20',
+        unitPrice: '6,500元', totalPrice: '130,000,000元', validity: '2026-01-20~2026-12-31', signStatus: '双签', doubleSignDate: '2026-01-22',
+        transport: '火运', receiver: '天宇豪国际贸易集团有限公司', bizType: '应收', shipFrom: '河南中豫港通郑州中心仓',
+        shipTo: '天宇豪国际贸易集团有限公司上海港仓', recAccount: '6228 XXXX XXXX XXXX XXXX' }
+    ];
+    function renderDownContractTable() {
+      var tbody = document.getElementById('downContractTbody');
+      if (!tbody) return;
+      tbody.innerHTML = DOWN_CONTRACTS_MOCK.map(function(c) {
+        return '<tr>'
+          + '<td><input type="radio" name="downSelectContract" value="' + c.id + '"></td>'
+          + '<td class="col-num">' + c.no + '</td>'
+          + '<td>' + c.buyer + '</td>'
+          + '<td>' + c.type + '</td>'
+          + '<td>' + c.product + '</td>'
+          + '<td>' + c.qty + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + c.amount + '</td>'
+          + '<td>' + c.date + '</td>'
+          + '</tr>';
+      }).join('');
+    }
+    function openDownDrawer() {
+      document.getElementById('downDrawerMask').classList.add('show');
+      document.getElementById('downDrawer').classList.add('open');
+      renderDownContractTable();
+    }
+    function closeDownDrawer() {
+      if (confirm('不选择合同将无法继续填写货转信息，确定要返回吗？')) {
+        window.location.href = './goods-transfer.html';
+      }
+    }
+    function confirmDownContract() {
+      var radio = document.querySelector('input[name="downSelectContract"]:checked');
+      if (!radio) { alert('请选择一份合同'); return; }
+      var id = parseInt(radio.value);
+      var c = DOWN_CONTRACTS_MOCK.find(function(x) { return x.id === id; });
+      if (!c) return;
+      // 回填 15 字段（5 行 3 列 15 字段）
+      // 顺序：合同编号 / 合同单价 / 合同数量 / 合同总价 / 签订日期 / 合同有效期 / 合同类型 / 合同签章状态 / 双签合同获得日期 / 运输方式 / 收货人名称 / 业务类型 / 发货地址 / 收货地址 / 回款账号
+      var grid = document.querySelector('.info-grid-3');
+      if (grid) {
+        var values = grid.querySelectorAll('.value');
+        if (values[0]) values[0].textContent = c.no;
+        if (values[1]) values[1].textContent = c.unitPrice;
+        if (values[2]) values[2].textContent = c.qty;
+        if (values[3]) values[3].textContent = c.totalPrice;
+        if (values[4]) values[4].textContent = c.date;
+        if (values[5]) values[5].textContent = c.validity;
+        if (values[6]) values[6].textContent = c.type;
+        if (values[7]) values[7].textContent = c.signStatus;
+        if (values[8]) values[8].textContent = c.doubleSignDate;
+        if (values[9]) values[9].textContent = c.transport;
+        if (values[10]) values[10].textContent = c.receiver;
+        if (values[11]) values[11].textContent = c.bizType;
+        if (values[12]) values[12].textContent = c.shipFrom;
+        if (values[13]) values[13].textContent = c.shipTo;
+        if (values[14]) values[14].textContent = c.recAccount;
+      }
+      // 关闭抽屉
+      document.getElementById('downDrawerMask').classList.remove('show');
+      document.getElementById('downDrawer').classList.remove('open');
+    }
+    document.addEventListener('DOMContentLoaded', function() {
+      openDownDrawer();
+    });
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

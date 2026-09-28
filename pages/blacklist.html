@@ -1,0 +1,784 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>黑名单管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 复选框单元格 */
+    .cp-table th.col-checkbox, .cp-table td.col-checkbox {
+      width: 40px;
+      padding-left: 12px;
+      padding-right: 0;
+      text-align: center;
+    }
+    .cp-table .row-checkbox,
+    .cp-table #headerCheckbox {
+      width: 16px;
+      height: 16px;
+      cursor: pointer;
+      accent-color: var(--color-primary);
+    }
+
+    /* 顶部按钮区 */
+    .top-action-bar {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .top-action-bar .btn-batch-import {
+      padding: 6px 14px;
+      background: var(--color-primary);
+      color: #fff;
+      border: 1px solid var(--color-primary);
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .top-action-bar .btn-batch-import:hover { background: #1E3A8A; }
+    .top-action-bar .btn-batch-delete {
+      padding: 6px 14px;
+      background: #fff;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 4px;
+      font-size: 13px;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .top-action-bar .btn-batch-delete:hover { color: var(--color-danger); border-color: var(--color-danger); }
+    .top-action-bar .btn-batch-delete:disabled {
+      opacity: 0.5;
+      cursor: not-allowed;
+    }
+
+    /* 模态弹窗（v1.7.99.49 新增）：新增黑名单 / 批量导入 共用 */
+    .modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45); z-index: 999; display: none; }
+    .modal-overlay.open { display: block; }
+    .modal-panel {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 1080px; max-width: 95vw; max-height: 92vh; background: #fff;
+      border-radius: 8px; box-shadow: 0 20px 60px rgba(0, 0, 0, 0.2);
+      z-index: 1000; display: none; flex-direction: column;
+    }
+    .modal-panel.open { display: flex; }
+    .modal-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .modal-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .modal-close:hover { color: var(--text-primary); }
+    .modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .modal-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .modal-footer .spacer { flex: 1; }
+    /* 表单网格（4 列布局） */
+    .form-grid-modal { display: grid; grid-template-columns: repeat(4, 1fr); row-gap: 16px; column-gap: 24px; }
+    .form-grid-modal .form-field { display: flex; flex-direction: column; gap: 4px; }
+    .form-grid-modal .form-field.full-width { grid-column: 1 / -1; }
+    .form-grid-modal .form-field .form-label { font-size: 12px; color: var(--text-tertiary); }
+    .form-grid-modal .form-field .form-label .required { color: var(--color-danger); margin-right: 2px; }
+    .form-grid-modal .form-field .input,
+    .form-grid-modal .form-field .select { padding: 6px 10px; font-size: 13px; }
+    .form-grid-modal .form-field .textarea { padding: 6px 10px; font-size: 13px; min-height: 60px; resize: vertical; }
+
+    /* 批量导入弹窗：上传区 + 模板下载 */
+    .import-template-box {
+      background: #F0F7FF; border: 1px solid #DBEAFE; border-radius: 6px;
+      padding: 12px 16px; display: flex; align-items: center; gap: 12px; margin-bottom: 16px;
+    }
+    .import-template-box .import-template-icon {
+      width: 32px; height: 32px; border-radius: 6px; background: #1E40AF; color: #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0;
+    }
+    .import-template-box .import-template-text { flex: 1; font-size: 13px; color: var(--text-primary); }
+    .import-template-box .import-template-text .desc { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .import-upload-area {
+      border: 2px dashed #DBEAFE; border-radius: 6px; padding: 40px 20px;
+      text-align: center; background: #F8FAFC; cursor: pointer; transition: all 0.15s;
+    }
+    .import-upload-area:hover { border-color: #1E40AF; background: #EFF6FF; }
+    .import-upload-area .upload-icon { font-size: 32px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .import-upload-area .upload-text { font-size: 13px; color: var(--text-primary); margin-bottom: 4px; }
+    .import-upload-area .upload-hint { font-size: 12px; color: var(--text-tertiary); }
+    .import-result {
+      margin-top: 16px; padding: 12px 16px; border-radius: 6px;
+      background: #F0FDF4; border: 1px solid #BBF7D0; color: #15803D; font-size: 13px; display: none;
+    }
+    /* 选中数提示 */
+    .selected-count {
+      font-size: 12px;
+      color: var(--color-primary);
+      font-weight: 500;
+      padding: 0 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">预警中心</a>
+          <span class="sep">/</span>
+          <a href="#">预警管理</a>
+          <span class="sep">/</span>
+          <span class="current">黑名单管理</span>
+        </div>
+
+        <!-- 标题 + 顶部操作按钮区 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">黑名单管理</h1>
+          <div class="top-action-bar">
+            <span class="selected-count" id="selectedCount" style="display: none;">已选 0 条</span>
+            <button class="btn btn-primary" onclick="openAddModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+              新增黑名单企业
+            </button>
+            <button class="top-action-bar btn-batch-import" id="btnBatchImport" onclick="openImportModal()">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+              批量导入
+            </button>
+          </div>
+        </div>
+
+        <!-- 合并 panel：筛选 / 状态 tab / 表格 / 分页 -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选区 -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
+              <button class="btn btn-text btn-sm">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                数据导出
+              </button>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业信息</span>
+                <input type="text" class="input" placeholder="请输入企业名称、统一社会信用代码、法定代表人">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">黑名单等级</span>
+                <select class="select"><option>全部</option><option>高度关注</option><option>中度关注</option><option>一般关注</option><option>已解除</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">名单类型</span>
+                <select class="select"><option>全部</option><option>经营异常</option><option>失信被执行</option><option>重大税收违法</option><option>严重违法失信</option><option>假冒国企央企</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">企业类型</span>
+                <select class="select"><option>全部</option><option>其他</option><option>私营</option><option>国有</option><option>集体</option><option>外商独资</option><option>中外合资</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">列入黑名单原因</span>
+                <select class="select"><option>全部</option><option>资金紧张</option><option>重大违约</option><option>欺诈</option><option>失信被执行</option><option>经营异常</option><option>其他</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">是否有在途业务</span>
+                <select class="select"><option>全部</option><option>是</option><option>否</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">数据来源</span>
+                <select class="select"><option>全部</option><option>手动录入</option><option>系统接入</option><option>第三方数据</option><option>风险预警</option></select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">观察区间</span>
+                <input type="text" class="input" placeholder="开始时间 ~ 结束时间">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">录入方式</span>
+                <select class="select" id="filterEntryType">
+                  <option>全部</option>
+                  <option selected>手动录入</option>
+                  <option>批量导入</option>
+                  <option>系统同步</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 2：状态 tab（v1.7.99.50 简化：只有"全部"，没有企业/个人区分） -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs">
+                <div class="cp-tab active" style="">全部 <span class="count" style="">10841</span></div>
+              </div>
+              <div class="cp-tab-bar-actions">
+                <!-- v1.7.99.50：批量删除文字按钮移到 tab 行最右侧，仅勾选时显示 -->
+                <a href="javascript:void(0)" id="tabBatchDelete" style="display: none; color: var(--color-danger); font-size: 13px; cursor: pointer;" onclick="confirmBatchDelete()">批量删除</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：表格 -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th class="col-checkbox"><input type="checkbox" id="headerCheckbox" onclick="toggleSelectAll(this)"></th>
+                    <th>企业名称</th>
+                    <th>统一社会信用代码</th>
+                    <th>法定代表人</th>
+                    <th>企业类型</th>
+                    <th>所在地</th>
+                    <th>企业性质</th>
+                    <th>黑名单等级</th>
+                    <th>列入黑名单原因</th>
+                    <th>观察区间</th>
+                    <th>是否有在途业务</th>
+                    <th class="col-action" style="text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="blacklistTbody">
+                  <!-- v1.7.99.65：由 JS 渲染（见 BLACKLIST_MOCK + renderBlacklistTable） -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div>共 10841 条信息 · 第 1 / 1085 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages">
+                  <div class="cp-pagination-page">‹</div>
+                  <div class="cp-pagination-page active">1</div>
+                  <div class="cp-pagination-page">2</div>
+                  <div class="cp-pagination-page">3</div>
+                  <div class="cp-pagination-page">4</div>
+                  <div class="cp-pagination-page">5</div>
+                  <div class="cp-pagination-page">…</div>
+                  <div class="cp-pagination-page">1085</div>
+                  <div class="cp-pagination-page">›</div>
+                </div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 模态弹窗：新增黑（灰）名单信息（v1.7.99.49） ==================== -->
+  <div class="modal-overlay" id="addModalOverlay" onclick="closeModal('addModal')"></div>
+  <div class="modal-panel" id="addModal" role="dialog" aria-labelledby="addModalTitle">
+    <div class="modal-header">
+      <div class="modal-title" id="addModalTitle">新增黑（灰）名单信息</div>
+      <span class="modal-close" onclick="closeModal('addModal')" title="关闭">×</span>
+    </div>
+    <div class="modal-body">
+      <form class="form-grid-modal" id="addBlacklistForm" onsubmit="event.preventDefault(); submitAddModal();">
+        <!-- 行 1 -->
+        <div class="form-field">
+          <label class="form-label"><span class="required">*</span>企业名称</label>
+          <input type="text" class="input" name="companyName" placeholder="请输入企业名称" required>
+        </div>
+        <div class="form-field">
+          <label class="form-label"><span class="required">*</span>黑名单等级</label>
+          <select class="select" name="level" required>
+            <option value="">请选择黑名单等级</option>
+            <option value="high">高度关注</option>
+            <option value="mid">中度关注</option>
+            <option value="low">一般关注</option>
+          </select>
+        </div>
+        <!-- 行 2 -->
+        <div class="form-field">
+          <label class="form-label">法定代表人</label>
+          <input type="text" class="input" name="legalPerson" placeholder="请输入法定代表人">
+        </div>
+        <div class="form-field">
+          <label class="form-label"><span class="required">*</span>列入黑名单原因</label>
+          <select class="select" name="reason" required>
+            <option value="">请选择列入黑名单原因</option>
+            <option value="资金紧张">资金紧张</option>
+            <option value="重大违约">重大违约</option>
+            <option value="欺诈">欺诈</option>
+            <option value="失信被执行">失信被执行</option>
+            <option value="经营异常">经营异常</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <!-- 行 3 -->
+        <div class="form-field">
+          <label class="form-label">统一社会信用代码</label>
+          <input type="text" class="input" name="creditCode" placeholder="请输入统一社会信用代码" maxlength="18">
+        </div>
+        <div class="form-field">
+          <label class="form-label">名单类型</label>
+          <select class="select" name="listType">
+            <option value="">请选择名单类型</option>
+            <option value="经营异常">经营异常</option>
+            <option value="失信被执行">失信被执行</option>
+            <option value="重大税收违法">重大税收违法</option>
+            <option value="严重违法失信">严重违法失信</option>
+            <option value="假冒国企央企">假冒国企央企</option>
+          </select>
+        </div>
+        <!-- 行 4 -->
+        <div class="form-field">
+          <label class="form-label">所在地</label>
+          <input type="text" class="input" name="location" placeholder="如：河南省/郑州市/金水区">
+        </div>
+        <div class="form-field">
+          <label class="form-label"><span class="required">*</span>企业类型</label>
+          <select class="select" name="companyType" required>
+            <option value="">请选择企业类型</option>
+            <option value="其他">其他</option>
+            <option value="私营">私营</option>
+            <option value="国有">国有</option>
+            <option value="集体">集体</option>
+            <option value="外商独资">外商独资</option>
+            <option value="中外合资">中外合资</option>
+          </select>
+        </div>
+        <!-- 行 5 -->
+        <div class="form-field">
+          <label class="form-label">是否有在途业务</label>
+          <select class="select" name="hasOngoing">
+            <option value="">请选择是否有在途业务</option>
+            <option value="是">是</option>
+            <option value="否">否</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">数据来源</label>
+          <select class="select" name="dataSource">
+            <option value="">请选择数据来源</option>
+            <option value="手动录入">手动录入</option>
+            <option value="系统接入">系统接入</option>
+            <option value="第三方数据">第三方数据</option>
+            <option value="风险预警">风险预警</option>
+          </select>
+        </div>
+        <!-- 行 6 -->
+        <div class="form-field">
+          <label class="form-label">企业性质</label>
+          <select class="select" name="companyNature">
+            <option value="">请选择企业性质</option>
+            <option value="私营">私营</option>
+            <option value="国有">国有</option>
+            <option value="集体">集体</option>
+            <option value="外商独资">外商独资</option>
+            <option value="中外合资">中外合资</option>
+            <option value="其他">其他</option>
+          </select>
+        </div>
+        <div class="form-field">
+          <label class="form-label">观察区间</label>
+          <input type="text" class="input" name="observeRange" placeholder="开始日期 ~ 结束日期" onfocus="(this.type='date')" onblur="if(!this.value)this.type='text'">
+        </div>
+        <!-- 行 7 -->
+        <div class="form-field">
+          <label class="form-label">备注</label>
+          <textarea class="textarea" name="remark" placeholder="请填写备注信息"></textarea>
+        </div>
+        <div class="form-field">
+          <label class="form-label">是否为假央企国企</label>
+          <select class="select" name="isFakeSoe">
+            <option value="">请选择是否为假央企国企</option>
+            <option value="是">是</option>
+            <option value="否">否</option>
+            <option value="待核实">待核实</option>
+          </select>
+        </div>
+      </form>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-default" onclick="closeModal('addModal')">取消</button>
+      <button class="btn btn-primary" onclick="submitAddModal()">确定</button>
+    </div>
+  </div>
+
+  <!-- ==================== 模态弹窗：批量导入（v1.7.99.49） ==================== -->
+  <div class="modal-overlay" id="importModalOverlay" onclick="closeModal('importModal')"></div>
+  <div class="modal-panel" id="importModal" role="dialog" aria-labelledby="importModalTitle" style="width: 720px;">
+    <div class="modal-header">
+      <div class="modal-title" id="importModalTitle">批量导入黑名单企业</div>
+      <span class="modal-close" onclick="closeModal('importModal')" title="关闭">×</span>
+    </div>
+    <div class="modal-body">
+      <!-- 模板下载提示框 -->
+      <div class="import-template-box">
+        <div class="import-template-icon">📥</div>
+        <div class="import-template-text">
+          <div>请先下载「黑名单企业导入模板」，按模板格式填写后再上传</div>
+          <div class="desc">模板字段：企业名称(*)、黑名单等级(*)、法定代表人、列入黑名单原因(*)、统一社会信用代码、名单类型、所在地、企业类型(*)、是否有在途业务、数据来源、企业性质、观察区间、备注、是否为假央企国企</div>
+        </div>
+        <button class="btn btn-primary" onclick="downloadImportTemplate()" style="flex-shrink: 0;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+          下载模板
+        </button>
+      </div>
+      <!-- 文件上传区 -->
+      <div class="import-upload-area" id="importUploadArea" onclick="document.getElementById('importFileInput').click()">
+        <div class="upload-icon">📤</div>
+        <div class="upload-text">点击或拖拽文件到此处上传</div>
+        <div class="upload-hint">仅支持 .xlsx / .xls / .csv 格式，文件大小不超过 10MB</div>
+        <input type="file" id="importFileInput" accept=".xlsx,.xls,.csv" style="display: none;" onchange="onImportFileSelected(this)">
+      </div>
+      <!-- 上传结果提示 -->
+      <div class="import-result" id="importResult">
+        <span id="importResultText">上传成功！</span>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <span class="spacer"></span>
+      <button class="btn btn-default" onclick="closeModal('importModal')">取消</button>
+      <button class="btn btn-primary" id="btnImportSubmit" disabled onclick="submitImport()">开始导入</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script>
+    // 表头全选/反选
+    function toggleSelectAll(checkbox) {
+      var checked = checkbox.checked;
+      var rowCheckboxes = document.querySelectorAll('.row-checkbox');
+      rowCheckboxes.forEach(function(cb) { cb.checked = checked; });
+      updateBatchButtonState();
+    }
+
+    // 行复选框变化
+    function onRowCheck(checkbox) {
+      updateBatchButtonState();
+      // 检查是否所有行都选中，同步表头
+      var rowCheckboxes = document.querySelectorAll('.row-checkbox');
+      var allChecked = Array.prototype.every.call(rowCheckboxes, function(cb) { return cb.checked; });
+      var headerCb = document.getElementById('headerCheckbox');
+      if (headerCb) headerCb.checked = allChecked;
+    }
+
+    // 更新批量按钮状态 + 选中数提示（v1.7.99.50：批量删除移到 tab 行最右侧，文字按钮仅勾选时显示）
+    function updateBatchButtonState() {
+      var rowCheckboxes = document.querySelectorAll('.row-checkbox');
+      var selectedCount = Array.prototype.filter.call(rowCheckboxes, function(cb) { return cb.checked; }).length;
+      var tabDelete = document.getElementById('tabBatchDelete');
+      var countSpan = document.getElementById('selectedCount');
+      if (selectedCount > 0) {
+        // 勾选时：tab 右侧"批量删除"文字按钮显示 + 顶部"已选 X 条"提示
+        if (tabDelete) tabDelete.style.display = 'inline';
+        if (countSpan) {
+          countSpan.style.display = 'inline';
+          countSpan.textContent = '已选 ' + selectedCount + ' 条';
+        }
+      } else {
+        // 未勾选时：tab 右侧"批量删除"文字按钮隐藏 + 顶部"已选 X 条"提示隐藏
+        if (tabDelete) tabDelete.style.display = 'none';
+        if (countSpan) countSpan.style.display = 'none';
+      }
+    }
+
+    // ==================== 模态弹窗：通用 open/close（v1.7.99.49）====================
+    function openAddModal() {
+      document.getElementById('addModal').classList.add('open');
+      document.getElementById('addModalOverlay').classList.add('open');
+      // 重置表单
+      var form = document.getElementById('addBlacklistForm');
+      if (form && form.reset) form.reset();
+    }
+
+    function openImportModal() {
+      document.getElementById('importModal').classList.add('open');
+      document.getElementById('importModalOverlay').classList.add('open');
+      // 重置上传区
+      resetImportModal();
+    }
+
+    function closeModal(modalId) {
+      var modal = document.getElementById(modalId);
+      var overlayId = modalId + 'Overlay';
+      var overlay = document.getElementById(overlayId);
+      if (modal) modal.classList.remove('open');
+      if (overlay) overlay.classList.remove('open');
+      // 关闭后重置
+      if (modalId === 'importModal') resetImportModal();
+    }
+
+    function resetImportModal() {
+      var fileInput = document.getElementById('importFileInput');
+      if (fileInput) fileInput.value = '';
+      var result = document.getElementById('importResult');
+      if (result) result.style.display = 'none';
+      var submitBtn = document.getElementById('btnImportSubmit');
+      if (submitBtn) submitBtn.disabled = true;
+    }
+
+    // ==================== 提交新增黑名单（v1.7.99.49）====================
+    function submitAddModal() {
+      var form = document.getElementById('addBlacklistForm');
+      if (!form) return;
+      // 浏览器原生校验（必填字段）
+      if (!form.checkValidity()) {
+        form.reportValidity();
+        return;
+      }
+      // 收集表单数据
+      var data = {};
+      Array.prototype.forEach.call(form.elements, function(el) {
+        if (el.name) data[el.name] = el.value;
+      });
+      console.log('[v1.7.99.49] 新增黑名单企业 mock submit:', data);
+      alert('操作：新增黑名单企业成功（mock）\n\n企业名称：' + data.companyName + '\n黑名单等级：' + data.level + '\n法定代表人：' + (data.legalPerson || '—') + '\n列入黑名单原因：' + data.reason);
+      closeModal('addModal');
+    }
+
+    // ==================== 批量导入（v1.7.99.49）====================
+    function onImportFileSelected(input) {
+      var file = input.files && input.files[0];
+      var result = document.getElementById('importResult');
+      var resultText = document.getElementById('importResultText');
+      var submitBtn = document.getElementById('btnImportSubmit');
+      if (!file) {
+        resetImportModal();
+        return;
+      }
+      // 简单校验：扩展名
+      var validExts = ['.xlsx', '.xls', '.csv'];
+      var fileName = file.name.toLowerCase();
+      var extOk = validExts.some(function(ext) { return fileName.endsWith(ext); });
+      if (!extOk) {
+        result.style.display = 'block';
+        result.style.background = '#FEF2F2';
+        result.style.borderColor = '#FECACA';
+        result.style.color = '#B91C1C';
+        resultText.textContent = '文件格式不支持，仅支持 .xlsx / .xls / .csv 格式';
+        submitBtn.disabled = true;
+        return;
+      }
+      // 简单校验：大小
+      if (file.size > 10 * 1024 * 1024) {
+        result.style.display = 'block';
+        result.style.background = '#FEF2F2';
+        result.style.borderColor = '#FECACA';
+        result.style.color = '#B91C1C';
+        resultText.textContent = '文件大小超过 10MB 限制';
+        submitBtn.disabled = true;
+        return;
+      }
+      // 校验通过
+      result.style.display = 'block';
+      result.style.background = '#F0FDF4';
+      result.style.borderColor = '#BBF7D0';
+      result.style.color = '#15803D';
+      resultText.textContent = '已选择文件：' + file.name + '（' + (file.size / 1024).toFixed(1) + ' KB），请确认后点击"开始导入"';
+      submitBtn.disabled = false;
+    }
+
+    function submitImport() {
+      var fileInput = document.getElementById('importFileInput');
+      if (!fileInput || !fileInput.files || !fileInput.files[0]) return;
+      var fileName = fileInput.files[0].name;
+      console.log('[v1.7.99.49] 批量导入 mock submit:', fileName);
+      alert('操作：批量导入黑名单企业（mock：实际生产会上传到 /api/blacklist/import 并解析）\n\n文件：' + fileName);
+      closeModal('importModal');
+    }
+
+    // ==================== 下载导入模板（v1.7.99.49）====================
+    // 基于「新增黑名单企业」14 字段生成的 CSV 模板
+    function downloadImportTemplate() {
+      var headers = [
+        '企业名称(*)', '黑名单等级(*)', '法定代表人', '列入黑名单原因(*)',
+        '统一社会信用代码', '名单类型', '所在地', '企业类型(*)',
+        '是否有在途业务', '数据来源', '企业性质', '观察区间', '备注', '是否为假央企国企'
+      ];
+      // 1 行示例数据（脱敏 mock）
+      var sample = [
+        '某某失信有限公司', '高度关注', '张三', '失信被执行',
+        '91440300MA5HLXXXXX', '失信被执行', '广东省/深圳市/宝安区', '私营',
+        '否', '手动录入', '私营', '2026-08-01 ~ 2027-08-01', '示例数据，请删除本行后填写真实数据', '否'
+      ];
+      // CSV 转义
+      function csvEscape(v) {
+        var s = String(v == null ? '' : v);
+        if (s.indexOf(',') >= 0 || s.indexOf('"') >= 0 || s.indexOf('\n') >= 0) {
+          return '"' + s.replace(/"/g, '""') + '"';
+        }
+        return s;
+      }
+      var csv = '\uFEFF' + headers.map(csvEscape).join(',') + '\n' + sample.map(csvEscape).join(',') + '\n';
+      // 创建 Blob 并触发下载
+      var blob = new Blob([csv], { type: 'text/csv;charset=utf-8' });
+      var url = URL.createObjectURL(blob);
+      var a = document.createElement('a');
+      a.href = url;
+      a.download = '黑名单企业导入模板.csv';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function() { URL.revokeObjectURL(url); }, 100);
+    }
+
+    // 批量删除确认
+    function confirmBatchDelete() {
+      var rowCheckboxes = document.querySelectorAll('.row-checkbox');
+      var selectedCount = Array.prototype.filter.call(rowCheckboxes, function(cb) { return cb.checked; }).length;
+      if (selectedCount === 0) return;
+      if (confirm('确认删除选中的 ' + selectedCount + ' 条黑名单企业？此操作不可恢复。')) {
+        alert('操作：批量删除 ' + selectedCount + ' 条黑名单企业（mock：实际生产会调用 DELETE /api/blacklist/batch）');
+        // mock：从 DOM 中移除选中行
+        Array.prototype.forEach.call(rowCheckboxes, function(cb) {
+          if (cb.checked) {
+            var tr = cb.closest('tr');
+            if (tr) tr.parentNode.removeChild(tr);
+          }
+        });
+        // 重置表头全选
+        var headerCb = document.getElementById('headerCheckbox');
+        if (headerCb) headerCb.checked = false;
+        updateBatchButtonState();
+      }
+    }
+
+    // 单条删除确认
+    function confirmSingleDelete(anchor) {
+      if (confirm('确认删除该黑名单企业？此操作不可恢复。')) {
+        var tr = anchor.closest('tr');
+        if (tr) tr.parentNode.removeChild(tr);
+        updateBatchButtonState();
+        alert('操作：删除该黑名单企业（mock）');
+      }
+    }
+
+    // ========== v1.7.99.65 真实脱敏 mock 数据（12 行覆盖 5 种状态） ==========
+    var BLACKLIST_MOCK = [
+      { id: 1, name: '深圳宇云创投有限合伙（有限合伙）', code: '91440300MA5HL35J1Y', legal: '深圳土木清华基金管理有限公司', type: '其他', region: '广东省/深圳市/宝安区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 2, name: '苏州科逸住宅设备股份有限公司', code: '91320000792300473D', legal: '陈忠义', type: '其他', region: '江苏省/苏州市/姑苏区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 3, name: '北京乐码仕智能科技有限公司', code: '91110105061326995W', legal: '宋继峰', type: '其他', region: '北京市/北京市/丰台区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 4, name: '天津中科海高微波技术有限公司', code: '91120116073113751Y', legal: '周鹏', type: '其他', region: '天津市/天津市/滨海新区', nature: '私营', level: '中度关注', reason: '合同违约', releaseDate: '—', released: '否' },
+      { id: 5, name: '泉州建工集团有限公司', code: '913505001561035912', legal: '庄森阳', type: '其他', region: '福建省/泉州市/丰泽区', nature: '私营', level: '低度关注', reason: '历史合作记录异常', releaseDate: '—', released: '否' },
+      { id: 6, name: '山东信华发展有限公司', code: '913704811699070036', legal: '刘冈', type: '其他', region: '山东省/枣庄市/滕州市', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 7, name: '淄博富世工贸有限公司', code: '913703032671859130', legal: '李健', type: '其他', region: '山东省/淄博市/张店区', nature: '私营', level: '中度关注', reason: '工商异常', releaseDate: '2026-05-20', released: '是' },
+      { id: 8, name: '山东福源建设集团有限公司', code: '91370113306928389H', legal: '张士森', type: '其他', region: '山东省/济南市/长清区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 9, name: '玉环凯沃机械有限公司', code: '91331021350092566K', legal: '王丙芳', type: '其他', region: '浙江省/台州市/玉环市', nature: '私营', level: '低度关注', reason: '诉讼被执行', releaseDate: '—', released: '否' },
+      { id: 10, name: '常州禧聚科技实业集团有限公司', code: '91320400398276591A', legal: '徐金云', type: '其他', region: '江苏省/常州市/天宁区', nature: '私营', level: '已解除', reason: '已修复', releaseDate: '2026-04-15', released: '是' },
+      { id: 11, name: '菏泽德坤煤炭有限公司', code: '91371700MA0M1W7W2G', legal: '陈行', type: '上游企业', region: '山东省/菏泽市/牡丹区', nature: '私营', level: '中度关注', reason: '近 12 个月裁判文书', releaseDate: '—', released: '否' },
+      { id: 12, name: '郑州粮食批发市场', code: '91410100MA0M1W7W2G', legal: '李伟', type: '下游企业', region: '中国/河南/郑州/中原区', nature: '国有', level: '已解除', reason: '工商状态已修复', releaseDate: '2026-06-01', released: '是' }
+    ];
+
+    // ========== v1.7.99.65 关注级别 4 种 badge 颜色 ==========
+    var BLACKLIST_LEVEL_META = {
+      '高度关注': { cls: 'tag-red' },
+      '中度关注': { cls: 'tag-orange' },
+      '低度关注': { cls: 'tag-yellow' },
+      '已解除':   { cls: 'tag-green' }
+    };
+
+    // ========== v1.7.99.65 渲染黑名单表格 ==========
+    function renderBlacklistTable() {
+      var tbody = document.getElementById('blacklistTbody');
+      if (!tbody) return;
+      tbody.innerHTML = BLACKLIST_MOCK.map(function(b) {
+        var levelMeta = BLACKLIST_LEVEL_META[b.level] || { cls: 'tag-gray' };
+        return '<tr>'
+          + '<td class="col-checkbox"><input type="checkbox" class="row-checkbox" onclick="onRowCheck(this)"></td>'
+          + '<td>' + b.name + '</td>'
+          + '<td style="font-family: var(--font-mono);">' + b.code + '</td>'
+          + '<td>' + b.legal + '</td>'
+          + '<td>' + b.type + '</td>'
+          + '<td>' + b.region + '</td>'
+          + '<td>' + b.nature + '</td>'
+          + '<td><span class="tag ' + levelMeta.cls + '">' + b.level + '</span></td>'
+          + '<td>' + b.reason + '</td>'
+          + '<td>' + b.releaseDate + '</td>'
+          + '<td>' + b.released + '</td>'
+          + '<td class="col-action" style="text-align: right;">'
+          +   '<a href="javascript:void(0)" onclick="blAction(\'修改\', ' + b.id + ')">修改</a> '
+          +   '<a href="javascript:void(0)" onclick="blAction(\'解除\', ' + b.id + ')">解除</a> '
+          +   '<a href="javascript:void(0)" onclick="blAction(\'详情\', ' + b.id + ')">详情</a>'
+          + '</td></tr>';
+      }).join('');
+    }
+
+    // ========== v1.7.99.65 操作按钮 ==========
+    function blAction(act, id) {
+      var b = BLACKLIST_MOCK.find(function(x) { return x.id === id; });
+      if (!b) return;
+      if (act === '解除') {
+        if (!confirm('确定要解除【' + b.name + '】的黑名单吗？\n\n解除后将恢复合作资格，请确认已完成尽调复核。')) return;
+        b.level = '已解除';
+        b.releaseDate = new Date().toISOString().slice(0, 10);
+        b.released = '是';
+        Utils.toast('已解除黑名单：' + b.name, 'success');
+        renderBlacklistTable();
+      } else if (act === '修改') {
+        Utils.toast('修改黑名单：' + b.name + '（弹窗 mock）', 'info');
+      } else if (act === '详情') {
+        Utils.toast('查看详情：' + b.name, 'info');
+      }
+    }
+
+    // 初始化渲染
+    renderBlacklistTable();
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

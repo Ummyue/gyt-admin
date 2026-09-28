@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>业务线关联 - 采购合同关联销售合同 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 区块容器（v1.7.99.59） */
+    .info-section { background: #fff; border-radius: 6px; padding: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .info-section-title {
+      padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      border-left: 3px solid var(--color-primary); padding-left: 17px;
+    }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 合同信息 4 行 3 列（v1.7.99.59 按图 1：卖方/买方/品名 + 计量单位/单价/数量 + 税率/签订日期/交货期限 + 运输方式/负责人） */
+    .info-grid-3 { display: grid; grid-template-columns: 110px 1fr 110px 1fr 110px 1fr; }
+    .info-grid-3 .label,
+    .info-grid-3 .value { padding: 10px 14px; font-size: 13px; }
+    .info-grid-3 .label { background: #F8FAFC; color: var(--text-tertiary); border-right: 1px solid var(--border-color); }
+    .info-grid-3 .value { color: var(--text-primary); }
+    .info-grid-3 .col-divider { border-right: 1px solid var(--border-color); }
+    .info-grid-3 .row-divider { border-bottom: 1px solid var(--border-color); }
+
+    /* 抽屉（v1.7.99.59 复用 v1.7.99.54/58 模式） */
+    .cp-drawer-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 999; display: none;
+    }
+    .cp-drawer-overlay.open { display: block; }
+    .cp-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 1440px; max-width: 95vw;
+      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,0.12);
+      z-index: 1000; display: none; flex-direction: column;
+    }
+    .cp-drawer.open { display: flex; }
+    .cp-drawer-header {
+      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .cp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .cp-drawer-close { cursor: pointer; color: var(--text-tertiary); font-size: 20px; line-height: 1; padding: 4px 8px; }
+    .cp-drawer-close:hover { color: var(--text-primary); }
+    .cp-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
+    .cp-drawer-footer {
+      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px; flex-shrink: 0;
+    }
+    .cp-drawer-filter {
+      display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px 16px; margin-bottom: 16px;
+    }
+    .cp-drawer-filter-item { display: flex; align-items: center; gap: 8px; }
+    .cp-drawer-filter-item label { color: var(--text-tertiary); font-size: 12px; min-width: 64px; }
+    .cp-drawer-filter-buttons { display: flex; gap: 8px; align-items: flex-end; }
+    .cp-drawer-filter-buttons button { height: 30px; }
+
+    /* 顶部"选择销售订单"按钮 */
+    .select-relation-btn {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 7px 16px; background: #1E40AF; color: #fff;
+      border: none; border-radius: 4px; font-size: 13px; cursor: pointer;
+      margin: 16px 20px;
+    }
+    .select-relation-btn:hover { background: #1D4ED8; }
+    .select-relation-btn svg { width: 14px; height: 14px; }
+
+    /* 已选 chips 区域（v1.7.99.59 按图 3：中转页主体顶部 chips） */
+    .selected-chips {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 12px 20px; background: #F8FAFC; border-bottom: 1px solid var(--border-color);
+    }
+    .selected-chips:empty,
+    .selected-chips[style*="display: none"] { display: none !important; }
+
+    .selected-chip {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: #DBEAFE; color: #1E40AF; padding: 4px 10px;
+      border-radius: 4px; font-size: 12px;
+    }
+    .selected-chip-remove { cursor: pointer; opacity: 0.6; }
+    .selected-chip-remove:hover { opacity: 1; }
+
+    /* 已选合同信息卡（v1.7.99.59 按图 3/7：单条合同展示卡） */
+    .relation-card {
+      border-top: 1px solid var(--border-color);
+      padding: 16px 20px;
+    }
+    .relation-card:first-of-type { border-top: none; }
+    .relation-warning {
+      background: #FEF3C7; border: 1px solid #FDE68A; border-radius: 4px;
+      padding: 10px 14px; font-size: 12px; color: #92400E;
+      margin-top: 12px; line-height: 1.7;
+    }
+    .relation-warning .warn-title { font-weight: 600; color: #78350F; margin-bottom: 4px; }
+    .relation-warning .warn-item { display: flex; align-items: flex-start; gap: 6px; }
+    .relation-warning .warn-num { color: #D97706; font-weight: 600; flex-shrink: 0; }
+
+    /* 蓝底提示框（v1.7.99.59 按图 1：默认未选择时的关联说明） */
+    .relation-tip {
+      background: #EFF6FF; border: 1px solid #BFDBFE; border-radius: 4px;
+      padding: 10px 14px; font-size: 12px; color: #1E40AF;
+      line-height: 1.7; margin: 0 20px 16px 20px;
+    }
+
+    /* 提交弹窗 */
+    .submit-modal-overlay {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      z-index: 1100; display: none;
+    }
+    .submit-modal-overlay.open { display: block; }
+    .submit-modal {
+      position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 480px; background: #fff; border-radius: 8px;
+      box-shadow: 0 20px 50px rgba(0,0,0,0.2);
+      z-index: 1101; display: none;
+    }
+    .submit-modal.open { display: block; }
+    .submit-modal-header {
+      padding: 14px 20px; border-bottom: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 14px; font-weight: 600;
+    }
+    .submit-modal-body { padding: 24px 20px; font-size: 13px; line-height: 1.7; display: flex; gap: 10px; }
+    .submit-modal-body .warn-icon { color: #D97706; flex-shrink: 0; font-size: 18px; }
+    .submit-modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border-color);
+      display: flex; align-items: center; justify-content: flex-end; gap: 8px;
+    }
+
+    /* 抽屉 chips 区域 */
+    .drawer-chips {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      padding: 0 0 12px 0; font-size: 12px;
+    }
+    .drawer-chips .label { color: var(--text-tertiary); }
+    .drawer-chips .clear-all { color: var(--text-tertiary); cursor: pointer; margin-left: 8px; }
+    .drawer-chips .clear-all:hover { color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">业务线管理</a>
+          <span class="sep">/</span>
+          <span class="current">业务线关联</span>
+        </div>
+
+        <h1 class="page-h1" style="margin: 0 0 16px 0;">业务线关联</h1>
+
+        <!-- 区块 1：采购订单/单批次合同信息（v1.7.99.59 按图 1：4 行 3 列 readonly） -->
+        <div class="info-section">
+          <h3 class="info-section-title">采购订单/单批次合同信息</h3>
+          <div class="info-section-body no-pad">
+            <div class="info-grid-3">
+              <!-- Row 1：卖方/买方/品名 -->
+              <div class="label row-divider">卖方企业</div>
+              <div class="value row-divider col-divider">河南诚泽运输有限公司</div>
+              <div class="label row-divider">买方企业</div>
+              <div class="value row-divider col-divider">河南中豫港通供应链管理有限公司</div>
+              <div class="label row-divider">品名</div>
+              <div class="value row-divider">进口木薯淀粉</div>
+
+              <!-- Row 2：计量单位/单价/数量 -->
+              <div class="label row-divider">计量单位</div>
+              <div class="value row-divider col-divider">吨</div>
+              <div class="label row-divider">合同单价(元/吨)</div>
+              <div class="value row-divider col-divider">3,400</div>
+              <div class="label row-divider">合同数量(吨)</div>
+              <div class="value row-divider">20,000</div>
+
+              <!-- Row 3：税率/签订日期/交货期限 -->
+              <div class="label row-divider">税率(%)</div>
+              <div class="value row-divider col-divider">13</div>
+              <div class="label row-divider">签订日期</div>
+              <div class="value row-divider col-divider">2026-01-22</div>
+              <div class="label row-divider">合同交货期限</div>
+              <div class="value row-divider">2026-01-22~2026-12-31</div>
+
+              <!-- Row 4：运输方式/负责人/(空) -->
+              <div class="label">运输方式</div>
+              <div class="value col-divider">火运</div>
+              <div class="label">业务实际负责人</div>
+              <div class="value col-divider">张三-13328888888</div>
+              <div class="label">&nbsp;</div>
+              <div class="value">&nbsp;</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：关联销售订单(贸易)合同信息（v1.7.99.59 按图 1 + 图 3） -->
+        <div class="info-section" id="relationSection">
+          <h3 class="info-section-title">关联销售订单(贸易)合同信息</h3>
+
+          <!-- 已选销售订单 chips（v1.7.99.59 按图 3：仅选择后显示） -->
+          <div id="selectedChips" class="selected-chips" style="display: none;">
+            <!-- 动态生成 -->
+          </div>
+
+          <!-- 顶部"选择销售订单"按钮（v1.7.99.59 按图 1：默认显示；选择后隐藏） -->
+          <div id="selectBtnWrap" style="padding: 16px 20px;">
+            <button class="select-relation-btn" onclick="openSalesDrawer()">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              选择销售订单(贸易)合同
+            </button>
+          </div>
+
+          <!-- 默认未选择时的关联规则说明（v1.7.99.59 按图 1：蓝底提示框） -->
+          <div id="relationTip" class="relation-tip">
+            如果销售合同不存在，可能原因：<br>
+            1. 如果是电子销售合同，可能合同未完成双方签章。请双方签章后再进行操作<br>
+            2. 如果是线下销售合同，可能合同尚未上传到系统。您可点击"<b>新增线下销售合同</b>"进行上传
+          </div>
+
+          <!-- 已选销售订单详情卡（v1.7.99.59 按图 3：动态生成） -->
+          <div id="relationCards"></div>
+        </div>
+
+      </div>
+
+      <!-- 底部按钮（v1.7.99.59 按图 1：取消/提交） -->
+      <div style="padding: 16px 24px; background: #fff; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: center; gap: 12px; position: sticky; bottom: 0;">
+        <button class="btn btn-default" onclick="history.back()">取消</button>
+        <button class="btn btn-primary" onclick="confirmSubmit()">提交</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ==================== 抽屉：选择销售订单(贸易)合同（v1.7.99.59 按图 2） ==================== -->
+  <div class="cp-drawer-overlay" id="salesDrawerOverlay" onclick="closeSalesDrawer()"></div>
+  <div class="cp-drawer" id="salesDrawer" role="dialog">
+    <div class="cp-drawer-header">
+      <div class="cp-drawer-title">选择要关联的销售订单/单批次合同</div>
+      <span class="cp-drawer-close" onclick="closeSalesDrawer()" title="关闭">×</span>
+    </div>
+    <div class="cp-drawer-body">
+      <!-- 已选销售订单 chips（v1.7.99.59 按图 2：抽屉内顶部 chips） -->
+      <div id="drawerChips" class="drawer-chips">
+        <span class="label">已选销售订单：</span>
+        <span id="drawerChipsContent" style="color: var(--text-tertiary);">（无）</span>
+        <span class="clear-all" onclick="clearDrawerSelection()">清除全部</span>
+      </div>
+      <!-- 当前搜索条件 chips -->
+      <div class="drawer-chips">
+        <span class="label">当前搜索</span>
+        <span class="selected-chip">合同编号：LX20260122001 <span class="selected-chip-remove">×</span></span>
+        <span class="clear-all">清除全部</span>
+      </div>
+      <!-- 4 字段筛选 + 查询/重置 -->
+      <div class="cp-drawer-filter">
+        <div class="cp-drawer-filter-item"><label>合同编号</label><input type="text" class="input" placeholder="请输入合同编号"></div>
+        <div class="cp-drawer-filter-item"><label>企业名称</label><input type="text" class="input" placeholder="请输入企业名称"></div>
+        <div class="cp-drawer-filter-item"><label>品名</label><input type="text" class="input" placeholder="请输入品名"></div>
+        <div class="cp-drawer-filter-item"><label>签订日期</label><input type="text" class="input" placeholder="请选择日期范围"></div>
+        <div class="cp-drawer-filter-buttons">
+          <button class="btn btn-default btn-sm">重置</button>
+          <button class="btn btn-primary btn-sm">查询</button>
+        </div>
+      </div>
+      <!-- 11 列表格（v1.7.99.59 销售订单：复选框/订单单批次合同编号/卖方企业/业务类型/品类/合同数量/合同单价/合同总价/交货期限/签订日期/业务负责人） -->
+      <div class="cp-table-wrap">
+        <table class="cp-table">
+          <thead>
+            <tr>
+              <th style="width: 40px;"><input type="checkbox" id="headerCheckbox" onclick="toggleSelectAll(this)"></th>
+              <th>订单/单批次合同编号</th>
+              <th>卖方企业</th>
+              <th>业务类型</th>
+              <th>品类</th>
+              <th style="text-align: right;">合同数量</th>
+              <th style="text-align: right;">合同单价</th>
+              <th style="text-align: right;">合同总价</th>
+              <th>交货期限</th>
+              <th>签订日期</th>
+              <th>业务负责人</th>
+            </tr>
+          </thead>
+          <tbody id="drawerTableBody">
+            <!-- 10 行 mock 数据（v1.7.99.59 销售订单 DLXLC-DSRMT） -->
+          </tbody>
+        </table>
+      </div>
+      <!-- 分页 -->
+      <div class="cp-pagination" style="margin-top: 12px;">
+        <div>共 400 条记录 第 1 / 80 页</div>
+        <div style="display: flex; align-items: center; gap: 14px;">
+          <div class="cp-pagination-pages">
+            <div class="cp-pagination-page">‹</div>
+            <div class="cp-pagination-page active">1</div>
+            <div class="cp-pagination-page">2</div>
+            <div class="cp-pagination-page">3</div>
+            <div class="cp-pagination-page">4</div>
+            <div class="cp-pagination-page">5</div>
+            <div class="cp-pagination-page">6</div>
+            <div class="cp-pagination-page">7</div>
+            <div class="cp-pagination-page">8</div>
+            <div class="cp-pagination-page">9</div>
+            <div class="cp-pagination-page">›</div>
+          </div>
+          <select class="cp-pagination-size">
+            <option>10 条/页</option>
+          </select>
+          <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="5"> 页</span>
+        </div>
+      </div>
+    </div>
+    <div class="cp-drawer-footer">
+      <button class="btn btn-secondary" onclick="closeSalesDrawer()">取消</button>
+      <button class="btn btn-primary" onclick="confirmDrawerSelection()">确定</button>
+    </div>
+  </div>
+
+  <!-- ==================== 提交弹窗（v1.7.99.59 按图 8） ==================== -->
+  <div class="submit-modal-overlay" id="submitModalOverlay" onclick="closeSubmitModal()"></div>
+  <div class="submit-modal" id="submitModal">
+    <div class="submit-modal-header">
+      <span>提交</span>
+      <span style="cursor: pointer; color: var(--text-tertiary);" onclick="closeSubmitModal()">×</span>
+    </div>
+    <div class="submit-modal-body">
+      <span class="warn-icon">?</span>
+      <span id="submitModalText">提交后，该采购合同将生成业务线。确认提交吗？</span>
+    </div>
+    <div class="submit-modal-footer">
+      <button class="btn btn-default" onclick="closeSubmitModal()">取消</button>
+      <button class="btn btn-primary" onclick="doSubmit()">确定</button>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script>
+    // 主体合同类型：'purchase' = 采购合同进入 / 'sales' = 销售合同进入
+    // v1.7.99.59 决定提交弹窗的"主语"文案
+    var MAIN_TYPE = (function() {
+      var params = new URLSearchParams(window.location.search);
+      return params.get('from') === 'sales' ? 'sales' : 'purchase';
+    })();
+
+    // 抽屉内 10 行 mock 数据（v1.7.99.59 销售合同：DLXLC-DSRMT 系列；卖方=河南中豫港通供应链管理有限公司）
+    var SALES_MOCK = [
+      { no: 'DLXLC-DSRMT-202203-001', seller: '河南中豫港通供应链管理有限公司', bizType: '存货业务', category: '淀粉制品', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-002', seller: '河南中豫港通供应链管理有限公司', bizType: '预付业务', category: '糖粉', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-003', seller: '河南中豫港通供应链管理有限公司', bizType: '账期业务', category: '谷物', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-004', seller: '河南中豫港通供应链管理有限公司', bizType: '购销业务', category: '谷物', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-005', seller: '河南中豫港通供应链管理有限公司', bizType: '存货业务', category: '淀粉制品', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-006', seller: '河南中豫港通供应链管理有限公司', bizType: '预付业务', category: '糖粉', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-007', seller: '河南中豫港通供应链管理有限公司', bizType: '账期业务', category: '谷物', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-008', seller: '河南中豫港通供应链管理有限公司', bizType: '购销业务', category: '淀粉制品', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-009', seller: '河南中豫港通供应链管理有限公司', bizType: '存货业务', category: '淀粉制品', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' },
+      { no: 'DLXLC-DSRMT-202203-010', seller: '河南中豫港通供应链管理有限公司', bizType: '预付业务', category: '糖粉', qty: '20,000.00 吨', price: '3,400.00 元/吨', total: '68,000,000.00 元', deadline: '2026-01-01~2026-12-31', signDate: '2026-09-17', owner: '张三' }
+    ];
+
+    // 渲染抽屉表格（v1.7.99.59）
+    function renderDrawerTable(selectedNos) {
+      var html = '';
+      SALES_MOCK.forEach(function(row) {
+        var checked = selectedNos.indexOf(row.no) >= 0 ? 'checked' : '';
+        html += '<tr>'
+              + '  <td><input type="checkbox" class="row-checkbox" data-no="' + row.no + '" ' + checked + ' onclick="updateDrawerChips()"></td>'
+              + '  <td class="col-num">' + row.no + '</td>'
+              + '  <td>' + row.seller + '</td>'
+              + '  <td>' + row.bizType + '</td>'
+              + '  <td>' + row.category + '</td>'
+              + '  <td style="text-align: right;">' + row.qty + '</td>'
+              + '  <td style="text-align: right;">' + row.price + '</td>'
+              + '  <td style="text-align: right;">' + row.total + '</td>'
+              + '  <td>' + row.deadline + '</td>'
+              + '  <td>' + row.signDate + '</td>'
+              + '  <td>' + row.owner + '</td>'
+              + '</tr>';
+      });
+      document.getElementById('drawerTableBody').innerHTML = html;
+    }
+
+    // 抽屉 chips 更新（v1.7.99.59 按图 2：已选销售订单）
+    function updateDrawerChips() {
+      var selected = document.querySelectorAll('.row-checkbox:checked');
+      var chipsContent = document.getElementById('drawerChipsContent');
+      if (selected.length === 0) {
+        chipsContent.innerHTML = '（无）';
+        chipsContent.style.color = 'var(--text-tertiary)';
+        return;
+      }
+      var html = '';
+      selected.forEach(function(cb) {
+        var no = cb.getAttribute('data-no');
+        html += '<span class="selected-chip">' + no + ' <span class="selected-chip-remove" onclick="removeChip(this, \'' + no + '\')">×</span></span>';
+      });
+      chipsContent.innerHTML = html;
+      chipsContent.style.color = 'var(--text-primary)';
+    }
+
+    function removeChip(el, no) {
+      // 取消对应行的 checkbox
+      var cb = document.querySelector('.row-checkbox[data-no="' + no + '"]');
+      if (cb) cb.checked = false;
+      updateDrawerChips();
+    }
+
+    function clearDrawerSelection() {
+      document.querySelectorAll('.row-checkbox').forEach(function(cb) { cb.checked = false; });
+      document.getElementById('headerCheckbox').checked = false;
+      updateDrawerChips();
+    }
+
+    function toggleSelectAll(master) {
+      var checked = master.checked;
+      document.querySelectorAll('.row-checkbox').forEach(function(cb) {
+        cb.checked = checked;
+      });
+      updateDrawerChips();
+    }
+
+    // 打开/关闭抽屉（v1.7.99.59）
+    function openSalesDrawer() {
+      renderDrawerTable(getSelectedContractNos());
+      updateDrawerChips();
+      document.getElementById('salesDrawer').classList.add('open');
+      document.getElementById('salesDrawerOverlay').classList.add('open');
+    }
+    function closeSalesDrawer() {
+      document.getElementById('salesDrawer').classList.remove('open');
+      document.getElementById('salesDrawerOverlay').classList.remove('open');
+    }
+    function getSelectedContractNos() {
+      var cards = document.querySelectorAll('#relationCards .relation-card');
+      var nos = [];
+      cards.forEach(function(c) {
+        var n = c.getAttribute('data-no');
+        if (n) nos.push(n);
+      });
+      return nos;
+    }
+
+    // 确认抽屉选择（v1.7.99.59 按图 2/3：选择后更新中转页）
+    function confirmDrawerSelection() {
+      var selected = document.querySelectorAll('.row-checkbox:checked');
+      if (selected.length === 0) {
+        alert('请至少选择一个销售合同');
+        return;
+      }
+      // 收集选中的销售合同，按 mock 顺序匹配
+      var selectedContracts = [];
+      selected.forEach(function(cb) {
+        var no = cb.getAttribute('data-no');
+        var found = SALES_MOCK.find(function(x) { return x.no === no; });
+        if (found) {
+          selectedContracts.push({
+            no: found.no,
+            seller: '河南中豫港通供应链管理有限公司',
+            buyer: '郑州信必达国际供应链有限公司',
+            product: '进口木薯淀粉',
+            unit: '吨',
+            price: '3,400',
+            qty: '20,000',
+            taxRate: '13',
+            signDate: '2026-01-22',
+            deadline: '2026-01-22~2026-12-31',
+            transport: '火运',
+            owner: '张三-13328888888'
+          });
+        }
+      });
+      renderRelationCards(selectedContracts);
+      closeSalesDrawer();
+    }
+
+    // 渲染已选合同信息卡（v1.7.99.59 按图 3）
+    function renderRelationCards(contracts) {
+      // 隐藏"选择销售订单"按钮和默认提示
+      document.getElementById('selectBtnWrap').style.display = 'none';
+      var tip = document.getElementById('relationTip');
+      if (tip) tip.style.display = 'none';
+      // 显示已选 chips
+      var chipsWrap = document.getElementById('selectedChips');
+      chipsWrap.style.display = 'flex';
+      var chipsHtml = '<span style="color: var(--text-tertiary); font-size: 12px;">已选销售订单：</span>';
+      contracts.forEach(function(c) {
+        chipsHtml += '<span class="selected-chip">' + c.no + ' <span class="selected-chip-remove" onclick="removeRelationCard(\'' + c.no + '\')">×</span></span>';
+      });
+      chipsWrap.innerHTML = chipsHtml;
+      // 渲染合同信息卡
+      var cardsHtml = '';
+      contracts.forEach(function(c) {
+        cardsHtml += '<div class="relation-card" data-no="' + c.no + '">'
+                   + '  <div class="info-grid-3">'
+                   + '    <div class="label row-divider">卖方企业</div>'
+                   + '    <div class="value row-divider col-divider">' + c.seller + '</div>'
+                   + '    <div class="label row-divider">买方企业</div>'
+                   + '    <div class="value row-divider col-divider">' + c.buyer + '</div>'
+                   + '    <div class="label row-divider">品名</div>'
+                   + '    <div class="value row-divider">' + c.product + '</div>'
+                   + '    <div class="label row-divider">计量单位</div>'
+                   + '    <div class="value row-divider col-divider">' + c.unit + '</div>'
+                   + '    <div class="label row-divider">合同单价(元/吨)</div>'
+                   + '    <div class="value row-divider col-divider">' + c.price + '</div>'
+                   + '    <div class="label row-divider">合同数量(吨)</div>'
+                   + '    <div class="value row-divider">' + c.qty + '</div>'
+                   + '    <div class="label row-divider">税率(%)</div>'
+                   + '    <div class="value row-divider col-divider">' + c.taxRate + '</div>'
+                   + '    <div class="label row-divider">签订日期</div>'
+                   + '    <div class="value row-divider col-divider">' + c.signDate + '</div>'
+                   + '    <div class="label row-divider">合同交货期限</div>'
+                   + '    <div class="value row-divider">' + c.deadline + '</div>'
+                   + '    <div class="label">运输方式</div>'
+                   + '    <div class="value col-divider">' + c.transport + '</div>'
+                   + '    <div class="label">业务实际负责人</div>'
+                   + '    <div class="value col-divider">' + c.owner + '</div>'
+                   + '    <div class="label">&nbsp;</div>'
+                   + '    <div class="value">&nbsp;</div>'
+                   + '  </div>'
+                   + '  <div class="relation-warning">'
+                   + '    <div class="warn-title">所选的采购订单可能存在以下问题，如果你确定要继续关联，请忽略以下提示：</div>'
+                   + '    <div class="warn-item"><span class="warn-num">1.</span>采购订单与销售订单的品名不一致</div>'
+                   + '    <div class="warn-item"><span class="warn-num">2.</span>采购订单与销售订单的签订日期相隔超过3个月</div>'
+                   + '  </div>'
+                   + '</div>';
+      });
+      document.getElementById('relationCards').innerHTML = cardsHtml;
+    }
+
+    // 移除单个合同卡（v1.7.99.59 修复 chips 重渲染 bug：不用 :has-text，直接重渲染整组 chips）
+    function removeRelationCard(no) {
+      // 移除对应合同信息卡
+      var card = document.querySelector('.relation-card[data-no="' + no + '"]');
+      if (card) card.remove();
+      // 从 chips 区域移除对应 chip
+      var chip = document.querySelector('#selectedChips .selected-chip[data-no="' + no + '"]');
+      if (chip) chip.remove();
+      // 检查剩余合同
+      var remaining = [];
+      document.querySelectorAll('#relationCards .relation-card').forEach(function(c) {
+        var n = c.getAttribute('data-no');
+        if (n) remaining.push(n);
+      });
+      if (remaining.length === 0) {
+        // 全部移除：恢复默认状态
+        document.getElementById('selectBtnWrap').style.display = '';
+        var tip = document.getElementById('relationTip');
+        if (tip) tip.style.display = '';
+        document.getElementById('selectedChips').style.display = 'none';
+        document.getElementById('relationCards').innerHTML = '';
+      } else {
+        // 剩余合同，重新拼接 chips 区域前缀
+        var chipsWrap = document.getElementById('selectedChips');
+        var prefix = '<span style="color: var(--text-tertiary); font-size: 12px;">已选销售订单：</span>';
+        var newChips = '';
+        remaining.forEach(function(n) {
+          newChips += '<span class="selected-chip" data-no="' + n + '">' + n + ' <span class="selected-chip-remove" onclick="removeRelationCard(\'' + n + '\')">×</span></span>';
+        });
+        chipsWrap.innerHTML = prefix + newChips;
+      }
+    }
+
+    // 提交弹窗（v1.7.99.59 按图 8：1 个 vs 多个 + 主体合同类型决定文案）
+    function confirmSubmit() {
+      var cards = document.querySelectorAll('#relationCards .relation-card');
+      var count = cards.length;
+      var text = '';
+      if (count === 0) {
+        alert('请先选择销售合同');
+        return;
+      }
+      if (count === 1) {
+        // 1 个销售合同：弹"提交后，该[主体合同类型]将生成业务线。确认提交吗？"
+        var mainLabel = MAIN_TYPE === 'sales' ? '销售合同' : '采购合同';
+        text = '提交后，该' + mainLabel + '将生成业务线。确认提交吗？';
+      } else {
+        // 多个销售合同：弹"你选择的销售合同有 N 个，提交后，系统将生成 N 条业务线，确认提交吗？"
+        // （多个文案不受主体合同类型影响：始终是"你选择的销售合同有 N 个"）
+        text = '你选择的销售合同有 ' + count + ' 个，提交后，系统将生成 ' + count + ' 条业务线，确认提交吗？';
+      }
+      document.getElementById('submitModalText').textContent = text;
+      document.getElementById('submitModalOverlay').classList.add('open');
+      document.getElementById('submitModal').classList.add('open');
+    }
+    function closeSubmitModal() {
+      document.getElementById('submitModalOverlay').classList.remove('open');
+      document.getElementById('submitModal').classList.remove('open');
+    }
+    function doSubmit() {
+      closeSubmitModal();
+      alert('已生成业务线（mock）');
+      history.back();
+    }
+  </script>
+  </div>
+  <!-- /main-content -->
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

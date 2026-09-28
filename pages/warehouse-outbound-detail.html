@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>出库信息详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 详情区块（v1.7.99.145 沿用 v1.7.99.64/140/141 模式：白底卡片 + 浅灰边框 + 圆角 + info-section-title） */
+    .info-section { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 16px; overflow: hidden; }
+    .info-section-title { padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary); border-bottom: 1px solid var(--border-default); border-left: 3px solid var(--color-primary); padding-left: 17px; }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 顶部信息条（v1.7.99.145 按 user 图 1：📋 出库编号 + 复制图标 + 4 元信息 3 行） */
+    .outbound-header { background: #fff; border: 1px solid var(--border-default); border-radius: 6px; padding: 16px 24px; margin-bottom: 16px; }
+    .outbound-header-top { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
+    .outbound-header-top .outbound-icon { width: 18px; height: 18px; color: var(--color-primary); flex-shrink: 0; }
+    .outbound-header-top .label { font-size: 13px; color: var(--text-tertiary); }
+    .outbound-header-top .value { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .outbound-header-top .copy-btn { color: var(--text-tertiary); cursor: pointer; font-size: 12px; display: inline-flex; align-items: center; gap: 2px; }
+    .outbound-header-top .copy-btn:hover { color: var(--color-primary); }
+    .outbound-meta { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px 32px; }
+    .outbound-meta .item { display: flex; flex-direction: column; gap: 4px; }
+    .outbound-meta .label { font-size: 12px; color: var(--text-tertiary); }
+    .outbound-meta .value { font-size: 13px; color: var(--text-primary); }
+    .outbound-meta .value.mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+
+    /* 3 tab 切换（v1.7.99.145 沿用 v1.7.99.140 视觉） */
+    .detail-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-default); margin-bottom: 16px; background: #fff; border-radius: 6px 6px 0 0; padding: 0 20px; }
+    .detail-tabs .tab { padding: 14px 20px; font-size: 14px; color: var(--text-tertiary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; transition: all 0.15s; }
+    .detail-tabs .tab:hover { color: var(--text-primary); }
+    .detail-tabs .tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+
+    /* 出库信息表格（v1.7.99.145 按 user 图 1：3 行 6 列 + 备注行单独） */
+    .outbound-info-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .outbound-info-table th, .outbound-info-table td { padding: 12px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .outbound-info-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; width: 14%; }
+    .outbound-info-table th:last-child, .outbound-info-table td:last-child { border-right: 0; }
+    .outbound-info-table tr:last-child td { border-bottom: 0; }
+    .outbound-info-table tr.remark-row td { background: #F8FAFC; }
+
+    /* 附件表格（v1.7.99.145 按 user 图 1：3 列 = 文件类型/文件编号/操作 + 3 行） */
+    .attachment-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .attachment-table th, .attachment-table td { padding: 12px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .attachment-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .attachment-table th:last-child, .attachment-table td:last-child { border-right: 0; }
+    .attachment-table tr:last-child td { border-bottom: 0; }
+    .attachment-table .col-type { width: 18%; }
+    .attachment-table .col-no { width: 62%; }
+    .attachment-table .col-action { width: 20%; text-align: right; }
+    .attachment-table .col-action a { color: var(--color-primary); text-decoration: none; }
+    .attachment-table .col-action a:hover { text-decoration: underline; }
+
+    /* 放货指令表格（v1.7.99.146 按 user 图 2 实施：在出库信息与附件中间增加的区块） */
+    .release-table { width: 100%; border-collapse: separate; border-spacing: 0; border: 1px solid var(--border-default); border-radius: 6px; }
+    .release-table th, .release-table td { padding: 12px 16px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-light); border-right: 1px solid var(--border-light); }
+    .release-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; border-bottom: 2px solid var(--border-default); }
+    .release-table th:last-child, .release-table td:last-child { border-right: 0; }
+    .release-table tr:last-child td { border-bottom: 0; }
+    .release-table .col-check { width: 50px; text-align: center; }
+    .release-table input[type="checkbox"] { width: 14px; height: 14px; accent-color: var(--color-primary); }
+    .release-table .col-no { width: 22%; }
+    .release-table .col-date { width: 16%; }
+    .release-table .col-qty { width: 11%; text-align: right; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .release-table .col-shipped { width: 12%; text-align: right; font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; }
+    .release-table .col-contact { width: 12%; }
+    .release-table .col-phone { width: 12%; }
+    .release-table .mono { font-family: 'SF Mono', Menlo, Monaco, Consolas, monospace; color: var(--text-primary); }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item active" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑（v1.7.99.145 按 user 图 1：出库管理 / 出库记录 / 出库信息详情） -->
+        <div class="breadcrumb-inline">
+          <a href="#">出库管理</a>
+          <span class="sep">/</span>
+          <a href="./warehouse-outbound.html">出库记录</a>
+          <span class="sep">/</span>
+          <span class="current">出库信息详情</span>
+        </div>
+
+        <!-- 标题 + 返回（v1.7.99.145：出库信息详情 + 返回按钮） -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">出库信息详情</h1>
+          <button class="btn btn-secondary" onclick="history.back()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            返回
+          </button>
+        </div>
+
+        <!-- 顶部信息条（v1.7.99.145 按 user 图 1：📋 出库编号 + 复制图标 + 4 元信息 3 行 = 所属合同/卖方/买方/关联业务线/业务线名称/创建人员/创建时间/数据类型） -->
+        <div class="outbound-header">
+          <div class="outbound-header-top">
+            <svg class="outbound-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h18v13H3z"/><path d="M3 7l9-4 9 4"/><path d="M9 12h6"/></svg>
+            <span class="label">出库编号：</span>
+            <span class="value mono">OUT-20260710-001</span>
+            <span class="copy-btn" onclick="Utils.toast('已复制出库编号', 'info')" title="复制出库编号">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              复制
+            </span>
+          </div>
+          <div class="outbound-meta">
+            <span class="item"><span class="label">所属合同编号</span><span class="value mono" style="color: var(--color-primary);">YL-MSXS-20260127-s</span></span>
+            <span class="item"><span class="label">卖方企业</span><span class="value">河南中豫港通供应链管理有限公司</span></span>
+            <span class="item"><span class="label">买方企业</span><span class="value">郑州信必达国际供应链有限公司</span></span>
+            <span class="item"><span class="label">关联业务线号</span><span class="value mono">SKYWX202607050001</span></span>
+            <span class="item"><span class="label">业务线名称</span><span class="value">河南诚泽运输有限公司-河南中豫港通供应链管理有限公司-郑州信必达国际供应链有限公司</span></span>
+            <span class="item"><span class="label">创建人员</span><span class="value">张爽</span></span>
+            <span class="item"><span class="label">创建时间</span><span class="value">2026-07-10 17:26:40</span></span>
+            <span class="item"><span class="label">数据类型</span><span class="value">手动新增</span></span>
+          </div>
+        </div>
+
+        <!-- 3 tab 切换（v1.7.99.145 按 user 图 1：出库信息 active / 出库明细 / 操作记录） -->
+        <div class="detail-tabs">
+          <div class="tab active" onclick="switchDetailTab(this, 'info')">出库信息</div>
+          <div class="tab" onclick="switchDetailTab(this, 'detail')">出库明细</div>
+          <div class="tab" onclick="switchDetailTab(this, 'log')">操作记录</div>
+        </div>
+
+        <!-- 区块 1：出库信息（v1.7.99.145 按 user 图 1：3 行 6 列 = 出库数量/出库日期/品类/发货单位/收货单位/运输方式/出库车数/仓房&货位 + 备注行单独） -->
+        <div class="info-section">
+          <h3 class="info-section-title">出库信息</h3>
+          <div class="info-section-body no-pad">
+            <table class="outbound-info-table">
+              <tbody>
+                <tr>
+                  <th>出库数量(吨)</th>
+                  <td>60.05</td>
+                  <th>出库日期</th>
+                  <td>2026-07-10</td>
+                  <th>品类</th>
+                  <td>木薯淀粉</td>
+                </tr>
+                <tr>
+                  <th>发货单位</th>
+                  <td colspan="3">河南中豫港通供应链管理有限公司</td>
+                  <th>收货单位</th>
+                  <td>郑州信必达国际供应链有限公司</td>
+                </tr>
+                <tr>
+                  <th>出库车数</th>
+                  <td>2</td>
+                  <th>仓房&amp;货位</th>
+                  <td colspan="3">中欧班列集结中心&amp;国际邮件及电商分拨中心11#CD库区</td>
+                </tr>
+                <tr class="remark-row">
+                  <th>备注</th>
+                  <td colspan="5" style="color: var(--text-tertiary);">—</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 2：放货指令（v1.7.99.146 按 user 图 2：在出库信息与附件中间增加 - 7 列 + 5 行 mock：用户添加的放货指令信息，复选框展示已勾选） -->
+        <div class="info-section">
+          <h3 class="info-section-title">放货指令</h3>
+          <div class="info-section-body no-pad">
+            <table class="release-table">
+              <thead>
+                <tr>
+                  <th class="col-check">选择</th>
+                  <th class="col-no">放货指令编号</th>
+                  <th class="col-date">放货日期</th>
+                  <th class="col-qty">放货吨数（吨）</th>
+                  <th class="col-shipped">已出库吨数（吨）</th>
+                  <th class="col-contact">提货联系人姓名</th>
+                  <th class="col-phone">提货联系人电话号码</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="col-check"><input type="checkbox" checked disabled></td>
+                  <td><span class="mono">FH-DLXLC-DSRMT-202203-001</span></td>
+                  <td>2022-12-12~2022-12-12</td>
+                  <td class="col-qty">1000</td>
+                  <td class="col-shipped">900</td>
+                  <td>张三</td>
+                  <td>12345</td>
+                </tr>
+                <tr>
+                  <td class="col-check"><input type="checkbox" checked disabled></td>
+                  <td><span class="mono">FH-DLXLC-DSRMT-202203-001</span></td>
+                  <td>2022-12-12~2022-12-12</td>
+                  <td class="col-qty">1000</td>
+                  <td class="col-shipped">800</td>
+                  <td>张三</td>
+                  <td>12345</td>
+                </tr>
+                <tr>
+                  <td class="col-check"><input type="checkbox" disabled></td>
+                  <td><span class="mono">FH-DLXLC-DSRMT-202203-001</span></td>
+                  <td>2022-12-12~2022-12-12</td>
+                  <td class="col-qty">1000</td>
+                  <td class="col-shipped">600</td>
+                  <td>张三</td>
+                  <td>12345</td>
+                </tr>
+                <tr>
+                  <td class="col-check"><input type="checkbox" disabled></td>
+                  <td><span class="mono">FH-DLXLC-DSRMT-202203-001</span></td>
+                  <td>2022-12-12~2022-12-12</td>
+                  <td class="col-qty">1000</td>
+                  <td class="col-shipped">300</td>
+                  <td>张三</td>
+                  <td>12345</td>
+                </tr>
+                <tr>
+                  <td class="col-check"><input type="checkbox" disabled></td>
+                  <td><span class="mono">FH-DLXLC-DSRMT-202203-001</span></td>
+                  <td>2022-12-12~2022-12-12</td>
+                  <td class="col-qty">1000</td>
+                  <td class="col-shipped">800</td>
+                  <td>张三</td>
+                  <td>12345</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：附件（v1.7.99.145 按 user 图 1：3 列 = 文件类型/文件编号/操作 + 3 行：矿磅单/磅单明细/化验凭证） -->
+        <div class="info-section">
+          <h3 class="info-section-title">附件</h3>
+          <div class="info-section-body no-pad">
+            <table class="attachment-table">
+              <thead>
+                <tr>
+                  <th class="col-type">文件类型</th>
+                  <th class="col-no">文件编号</th>
+                  <th class="col-action">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>矿磅单</td>
+                  <td>6月11日60.05吨.png</td>
+                  <td class="col-action"><a href="#" onclick="Utils.toast('开始下载文件', 'info'); return false;">下载</a></td>
+                </tr>
+                <tr>
+                  <td>磅单明细</td>
+                  <td>6月11日60.05吨.png</td>
+                  <td class="col-action"><a href="#" onclick="Utils.toast('开始下载文件', 'info'); return false;">下载</a></td>
+                </tr>
+                <tr>
+                  <td>化验凭证</td>
+                  <td>6月11日60.05吨.png</td>
+                  <td class="col-action"><a href="#" onclick="Utils.toast('开始下载文件', 'info'); return false;">下载</a></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <div class="detail-footer">
+          <span style="font-size: 12px; color: var(--text-tertiary);">数据来源仓储管理系统</span>
+        </div>
+
+      </div>
+    </div>
+  </div>
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function switchDetailTab(el, key) {
+      document.querySelectorAll('.detail-tabs .tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      Utils.toast('已切换到' + el.textContent + '标签', 'info');
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

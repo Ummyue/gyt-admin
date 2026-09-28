@@ -1,0 +1,442 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>货转信息详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* 详情区块（v1.7.99.61 重制：合同信息 5 行 4 列 + 收发信息 7 列 + 货转证明 + 附件信息） */
+    .info-section { background: #fff; border-radius: 6px; padding: 0; margin-bottom: 16px; border: 1px solid var(--border-color); }
+    .info-section-title {
+      padding: 12px 20px; margin: 0; font-size: 14px; font-weight: 600; color: var(--text-primary);
+      border-bottom: 1px solid var(--border-color);
+      border-left: 3px solid var(--color-primary); padding-left: 17px;
+    }
+    .info-section-body { padding: 16px 20px; }
+    .info-section-body.no-pad { padding: 0; }
+
+    /* 合同信息 4 列 14 字段：合同编号/合同单价/合同数量 + 合同总价/签订日期/合同有效期 + 合同类型/合同签署状态/双签合同获得日期 + 回款账号/运输方式/发站 + 到站/托运人/业务类型 */
+    .info-grid-3 { display: grid; grid-template-columns: 140px 1fr 140px 1fr 160px 1fr; gap: 0; }
+    .info-grid-3 .label,
+    .info-grid-3 .value { padding: 10px 14px; font-size: 13px; }
+    .info-grid-3 .label { background: #F8FAFC; color: var(--text-tertiary); border-right: 1px solid var(--border-color); }
+    .info-grid-3 .value { color: var(--text-primary); }
+    .info-grid-3 .col-divider { border-right: 1px solid var(--border-color); }
+    .info-grid-3 .row-divider { border-bottom: 1px solid var(--border-color); }
+
+    /* 收发信息 7 列表格 */
+    .recv-table { width: 100%; border-collapse: collapse; }
+    .recv-table th, .recv-table td { padding: 10px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .recv-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .recv-table tr:last-child td { border-bottom: none; }
+
+    /* 货转证明 1 行 6 列 */
+    .cert-info-grid { display: grid; grid-template-columns: 140px 1fr 140px 1fr 160px 1fr; }
+    .cert-info-grid .label { background: #F8FAFC; color: var(--text-tertiary); padding: 10px 14px; font-size: 13px; border-right: 1px solid var(--border-color); }
+    .cert-info-grid .value { padding: 10px 14px; font-size: 13px; color: var(--text-primary); }
+    .cert-info-grid .col-divider { border-right: 1px solid var(--border-color); }
+
+    /* 附件信息表格 */
+    .attach-table { width: 100%; border-collapse: collapse; }
+    .attach-table th, .attach-table td { padding: 10px 14px; font-size: 13px; text-align: left; border-bottom: 1px solid var(--border-color); }
+    .attach-table th { background: #F8FAFC; color: var(--text-tertiary); font-weight: 500; }
+    .attach-table tr:last-child td { border-bottom: none; }
+    .attach-table .attach-name { color: var(--color-primary); }
+
+    /* v1.7.99.176：货转详情页 2 tab（货转信息 / 审批管理）+ 标签栏（参考 contract-purchase-order-detail.html .detail-tabs） */
+    .gt-tabs { display: flex; gap: 4px; border-bottom: 1px solid var(--border-color); margin-bottom: 16px; background: #fff; padding: 0 20px; border-radius: 6px 6px 0 0; }
+    .gt-tab { padding: 14px 20px; font-size: 14px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; font-weight: 500; transition: color 0.15s; }
+    .gt-tab:hover { color: var(--color-primary); }
+    .gt-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+    .gt-tab-panel { display: block; }
+    .gt-tab-panel[hidden] { display: none; }
+
+    /* v1.7.99.187：顶部 status badge（按 status 动态显示不同颜色） */
+    .status-badge { display: inline-block; padding: 2px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; margin-left: 12px; }
+    .status-badge.approved  { background: #ECFDF5; color: #059669; }
+    .status-badge.approving { background: #FEF3C7; color: #A16207; }
+    .status-badge.rejected  { background: #FEE2E2; color: #B91C1C; }
+    .status-badge.voided    { background: #F3F4F6; color: #6B7280; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./goods-transfer.html">货转管理</a>
+          <span class="sep">/</span>
+          <a href="./goods-transfer-down.html">下游货转</a>
+          <span class="sep">/</span>
+          <span class="current">货转信息详情</span>
+        </div>
+
+        <!-- 标题 + 返回 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">货转信息详情<span class="status-badge" id="gtStatusBadge">已生效</span></h1>
+          <button class="btn btn-secondary" onclick="history.back()">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+            返回
+          </button>
+        </div>
+
+        <!-- v1.7.99.176：2 tab 切换（货转信息 / 审批管理 + 名字动态切换为"审批记录"） -->
+        <div class="gt-tabs">
+          <div class="gt-tab active" data-gt-tap="info">货转信息</div>
+          <div class="gt-tab" data-gt-tap="approval" id="gtApprovalTab">审批管理</div>
+        </div>
+
+        <!-- Tab 1：货转信息（v1.7.99.61 按图 4：4 块 = 合同信息/收发信息/货转证明/附件信息） -->
+        <div class="gt-tab-panel" data-gt-tap-panel="info" id="gtInfoPanel">
+
+        <!-- 区块 1：合同信息（v1.7.99.61 按图 5：5 行 4 列 = 14 字段 - 火运合同版本） -->
+        <div class="info-section">
+          <h3 class="info-section-title">合同信息</h3>
+          <div class="info-section-body no-pad">
+            <div class="info-grid-3">
+              <!-- Row 1：合同编号 / 合同单价 / 合同数量 -->
+              <div class="label row-divider">合同编号</div>
+              <div class="value row-divider col-divider">HNCIEIEGYLB25(销)H10-04</div>
+              <div class="label row-divider">合同单价</div>
+              <div class="value row-divider col-divider">随行就市</div>
+              <div class="label row-divider">合同数量</div>
+              <div class="value row-divider">3,300吨</div>
+
+              <!-- Row 2：合同总价 / 签订日期 / 合同有效期 -->
+              <div class="label row-divider">合同总价</div>
+              <div class="value row-divider col-divider">2,904,000元</div>
+              <div class="label row-divider">签订日期</div>
+              <div class="value row-divider col-divider">2025-10-15</div>
+              <div class="label row-divider">合同有效期</div>
+              <div class="value row-divider">2025-10-15~2025-10-30</div>
+
+              <!-- Row 3：合同类型 / 合同签署状态 / 双签合同获得日期 -->
+              <div class="label row-divider">合同类型</div>
+              <div class="value row-divider col-divider">月度合同</div>
+              <div class="label row-divider">合同签署状态</div>
+              <div class="value row-divider col-divider">双签</div>
+              <div class="label row-divider">双签合同获得日期</div>
+              <div class="value row-divider">2025-10-15</div>
+
+              <!-- Row 4：回款账号 / 运输方式 / 发站 -->
+              <div class="label row-divider">回款账号</div>
+              <div class="value row-divider col-divider">中国民生银行郑州经济技术开发区...</div>
+              <div class="label row-divider">运输方式</div>
+              <div class="value row-divider col-divider">火运</div>
+              <div class="label row-divider">发站</div>
+              <div class="value row-divider">黄陵</div>
+
+              <!-- Row 5：到站 / 托运人 / 业务类型 -->
+              <div class="label">到站</div>
+              <div class="value col-divider">河市坝</div>
+              <div class="label">托运人</div>
+              <div class="value col-divider">-</div>
+              <div class="label">业务类型</div>
+              <div class="value">应收</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 2：收发信息（v1.7.99.61 按图 5：1 行 7 列：发货批次号/品名/发货数量/已收货数量/发货日期/铁路计划号/车数） -->
+        <div class="info-section">
+          <h3 class="info-section-title">收发信息</h3>
+          <div class="info-section-body no-pad">
+            <table class="recv-table">
+              <thead>
+                <tr>
+                  <th style="width: 16%;">发货批次号</th>
+                  <th style="width: 14%;">品名</th>
+                  <th style="width: 12%;">发货数量</th>
+                  <th style="width: 12%;">已收货数量</th>
+                  <th style="width: 16%;">发货日期</th>
+                  <th style="width: 16%;">铁路计划号</th>
+                  <th style="width: 14%;">车数</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>BN202601080001</td>
+                  <td>黄陵二号矿混煤</td>
+                  <td>70</td>
+                  <td>3,328</td>
+                  <td>2025-10-24</td>
+                  <td>1652765</td>
+                  <td>50</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 3：货转证明（v1.7.99.61 按图 5：1 行 3 列：货转开具方式/货转开具日期/货转开具数量(吨)） -->
+        <div class="info-section">
+          <h3 class="info-section-title">货转证明</h3>
+          <div class="info-section-body no-pad">
+            <div class="cert-info-grid">
+              <div class="label">货转开具方式</div>
+              <div class="value col-divider">线下货转</div>
+              <div class="label">货转开具日期</div>
+              <div class="value col-divider">2025-10-24</div>
+              <div class="label">货转开具数量(吨)</div>
+              <div class="value">3328</div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 区块 4：附件信息（v1.7.99.61 按图 5：附件类型/附件/操作） -->
+        <div class="info-section">
+          <h3 class="info-section-title">附件信息</h3>
+          <div class="info-section-body no-pad">
+            <table class="attach-table">
+              <thead>
+                <tr>
+                  <th style="width: 200px;">附件类型</th>
+                  <th>附件</th>
+                  <th style="width: 120px;text-align: right; padding-right: 24px;">操作</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>货转证明</td>
+                  <td class="attach-name">进项口-动力结算_货转（11.19红庙村-达州768吨）-双签.pdf</td>
+                  <td style="text-align: right; padding-right: 24px;">
+                    <a href="javascript:void(0);" onclick="downloadAttach(this)">下载</a>
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+        </div>
+        <!-- /gtInfoPanel -->
+
+        <!-- Tab 2：审批管理（v1.7.99.176 复用通用审批组件 + approval.css） -->
+        <div class="gt-tab-panel" data-gt-tap-panel="approval" id="gtApprovalPanel" hidden>
+          <div class="approval-status-card" id="gtApprovalStatusCard">
+            <div class="approval-status-icon" id="gtApprovalStatusIcon">✅</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title">
+                <span id="gtApprovalStatusLabel">审批已通过</span>
+                <div class="approval-status-chips">
+                  <span class="chip chip-green" id="gtApprovalChipStatus">✓ 全部通过</span>
+                </div>
+              </div>
+              <div class="approval-status-desc" id="gtApprovalStatusDesc">
+                <strong style="color: var(--text-primary);">HNCIEIEGYLB25(销)H10-04</strong> 已完成全部审批流程，5 个节点全部通过，货转单<strong style="color: var(--color-success);">已生效</strong>。
+              </div>
+            </div>
+          </div>
+
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请单号</div>
+              <div class="value" style="font-family: var(--font-mono);">HZHZ-2025-0451</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value">2025-10-26 14:32</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交人</div>
+              <div class="value">张爽</div>
+            </div>
+          </div>
+
+          <div class="approval-grid">
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta" id="gtApprovalHeaderMeta">共 5 个节点，全部通过</div>
+              </div>
+              <div class="timeline" id="gtApprovalTimeline">
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">业务部审批</div>
+                    <div class="timeline-meta">张爽 · 2025-10-26 14:35</div>
+                    <div class="timeline-comment">货转信息已核对，合同有效，同意开票</div>
+                  </div>
+                </div>
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">财务部审批</div>
+                    <div class="timeline-meta">李娜 · 2025-10-26 16:12</div>
+                    <div class="timeline-comment">收付款信息核实无误</div>
+                  </div>
+                </div>
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">风控部审批</div>
+                    <div class="timeline-meta">王伟 · 2025-10-27 09:08</div>
+                    <div class="timeline-comment">货权清晰，敞口符合授信，无风险</div>
+                  </div>
+                </div>
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">分管副总审批</div>
+                    <div class="timeline-meta">赵磊 · 2025-10-27 14:45</div>
+                    <div class="timeline-comment">同意</div>
+                  </div>
+                </div>
+                <div class="timeline-item done">
+                  <div class="timeline-dot done">✓</div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">总经理审批</div>
+                    <div class="timeline-meta">孙明 · 2025-10-28 10:00</div>
+                    <div class="timeline-comment">审批通过，货转单生效</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-aside-title">关键指标</div>
+                <div class="approval-aside-item">
+                  <span class="label">货转编号</span>
+                  <span class="value" style="font-family: var(--font-mono);">HZHZ-2025-11-0026</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">货转数量</span>
+                  <span class="value">768 吨</span>
+                </div>
+                <div class="approval-aside-item">
+                  <span class="label">审批总耗时</span>
+                  <span class="value">2 天 5 小时 12 分</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <!-- /gtApprovalPanel -->
+
+      </div>
+    </div>
+  </div>
+
+  <!-- v1.7.99.187 审批中固定底栏（status=审批中时显示，借鉴 v1.7.99.177 payment-detail.html 模式） -->
+  <div class="footer-actions" id="gtApprovalFooter" style="display: none;">
+    <div style="flex: 1;"></div>
+    <button class="btn btn-primary" onclick="alert('审批通过（mock，v1.7.99.187）\n货转单：' + (document.getElementById('gtContractNo')?.textContent || ''))">审批通过</button>
+    <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock，v1.7.99.187）\n货转单：' + (document.getElementById('gtContractNo')?.textContent || ''))">驳回审批</button>
+  </div>
+
+  <script src="../assets/js/mockData.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    // v1.7.99.176：货转详情页 2 tab 切换（货转信息 / 审批管理）
+    (function() {
+      var tabs = document.querySelectorAll('.gt-tab');
+      var panels = document.querySelectorAll('.gt-tab-panel');
+      function switchTap(target) {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        panels.forEach(function(p) { p.hidden = true; });
+        var activeTab = document.querySelector('.gt-tab[data-gt-tap="' + target + '"]');
+        if (activeTab) activeTab.classList.add('active');
+        var activePanel = document.querySelector('.gt-tab-panel[data-gt-tap-panel="' + target + '"]');
+        if (activePanel) activePanel.hidden = false;
+      }
+      tabs.forEach(function(tab) {
+        tab.addEventListener('click', function() {
+          switchTap(tab.getAttribute('data-gt-tap'));
+        });
+      });
+    })();
+
+    // v1.7.99.187：按 status 决定 status badge + tab 名 + 底部固定按钮（默认 status=审批中；URL ?status= 可覆盖）
+    // 状态枚举：approved(已生效) / approving(审批中) / rejected(驳回) / voided(已作废)
+    (function() {
+      var statusMap = {
+        '已生效':  { code: 'approved',  text: '已生效',  bg: '#ECFDF5', color: '#059669' },
+        '审批中':  { code: 'approving', text: '审批中',  bg: '#FEF3C7', color: '#A16207' },
+        '驳回':    { code: 'rejected',  text: '驳回',    bg: '#FEE2E2', color: '#B91C1C' },
+        '已作废':  { code: 'voided',    text: '已作废',  bg: '#F3F4F6', color: '#6B7280' }
+      };
+      // URL ?status= 解析（与列表页 data-gt-status 对齐）
+      var keyToText = {
+        'all': '已生效',
+        'approving': '审批中',
+        'awaiting-effect-voucher': '审批中',
+        'effective': '已生效',
+        'rejected': '驳回',
+        'voided': '已作废'
+      };
+      var statusMatch = location.search.match(/[?&]status=([^&]+)/);
+      var statusText = statusMatch ? (keyToText[decodeURIComponent(statusMatch[1])] || '审批中') : '审批中';
+      var info = statusMap[statusText] || statusMap['审批中'];
+
+      // 1. 顶部 status badge
+      var badge = document.getElementById('gtStatusBadge');
+      if (badge) {
+        badge.textContent = statusText;
+        badge.className = 'status-badge ' + info.code;
+        badge.style.background = info.bg;
+        badge.style.color = info.color;
+      }
+
+      // 2. tab 名：审批中 → "审批管理"；其他 → "审批记录"
+      var tab = document.getElementById('gtApprovalTab');
+      if (tab) {
+        tab.textContent = (info.code === 'approving') ? '审批管理' : '审批记录';
+      }
+
+      // 3. 底部固定按钮：仅 status=审批中 时显示
+      var footer = document.getElementById('gtApprovalFooter');
+      if (footer) {
+        footer.style.display = (info.code === 'approving') ? 'flex' : 'none';
+      }
+    })();
+
+    function downloadAttach(el) {
+      Utils.toast('附件下载：' + (el.parentElement.previousElementSibling.textContent.trim() || '附件'), 'info');
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>

@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>回款详情 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+    /* 顶部信息条（v1.7.99.66） */
+    .detail-header {
+      background: #fff; border: 1px solid var(--border-light); border-radius: 8px;
+      padding: 18px 24px; margin-bottom: 16px;
+    }
+    .detail-header-top {
+      display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;
+    }
+    .detail-title {
+      font-size: 16px; font-weight: 600; color: var(--text-primary);
+      display: flex; align-items: center; gap: 12px;
+      white-space: nowrap; flex-shrink: 0;
+    }
+    .detail-meta-row {
+      display: grid; grid-template-columns: repeat(4, 1fr);
+      gap: 16px 24px; font-size: 13px;
+    }
+    .detail-meta-item { display: flex; gap: 6px; }
+    .detail-meta-label { color: var(--text-tertiary); }
+    .detail-meta-value { color: var(--text-primary); font-weight: 500; }
+    .icon-copy {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 16px; height: 16px; cursor: pointer; color: var(--text-tertiary);
+    }
+    .icon-copy:hover { color: var(--color-primary); }
+    /* tab 切换 */
+    .detail-tab-bar { display: flex; gap: 24px; border-bottom: 1px solid var(--border-light); margin-bottom: 16px; }
+    .detail-tab {
+      padding: 10px 0; font-size: 14px; color: var(--text-tertiary);
+      cursor: pointer; border-bottom: 2px solid transparent;
+    }
+    .detail-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
+    /* 区块标题 */
+    .info-section { background: #fff; border: 1px solid var(--border-light); border-radius: 8px; margin-bottom: 16px; }
+    .info-section-head {
+      padding: 12px 20px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 600; color: var(--text-primary);
+    }
+    .info-section-head::before {
+      content: ''; display: inline-block; width: 3px; height: 14px; background: var(--color-primary); border-radius: 2px;
+    }
+    .info-section-body { padding: 20px; }
+    /* 信息表格（v1.7.99.66 3 列 2 行） */
+    .info-table { width: 100%; border-collapse: collapse; }
+    .info-table th, .info-table td {
+      border: 1px solid var(--border-light); padding: 10px 14px;
+      font-size: 13px; text-align: left; vertical-align: middle;
+    }
+    .info-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; width: 12%; white-space: nowrap; }
+    .info-table td { color: var(--text-primary); }
+    .info-table td.amount { color: #EA580C; font-weight: 600; font-family: var(--font-mono); }
+    /* 统计卡 3 张（v1.7.99.66） */
+    .stat-card-grid {
+      display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin-bottom: 16px;
+    }
+    .stat-card {
+      padding: 18px 20px; border-radius: 8px; border: 1px solid;
+    }
+    .stat-card .label { font-size: 13px; color: var(--text-tertiary); margin-bottom: 8px; }
+    .stat-card .value { font-size: 22px; font-weight: 600; font-family: var(--font-mono); }
+    .stat-card.total { background: #EFF6FF; border-color: #BFDBFE; }
+    .stat-card.total .value { color: #1E40AF; }
+    .stat-card.claimed { background: #FEF3C7; border-color: #FDE68A; }
+    .stat-card.claimed .value { color: #A16207; }
+    .stat-card.remain { background: #D1FAE5; border-color: #A7F3D0; }
+    .stat-card.remain .value { color: #047857; }
+    /* 认领明细表 */
+    .claim-table { width: 100%; border-collapse: collapse; }
+    .claim-table th, .claim-table td {
+      border: 1px solid var(--border-light); padding: 10px 14px;
+      font-size: 13px; text-align: left; vertical-align: top;
+    }
+    .claim-table th { background: var(--bg-page); color: var(--text-tertiary); font-weight: 400; }
+    .claim-table td { color: var(--text-primary); }
+    .claim-table .bizline-info { color: var(--text-secondary); font-size: 12px; line-height: 1.6; }
+    .bizline-link { color: var(--color-primary); font-weight: 500; }
+    /* 已认领 badge */
+    .badge-claimed { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; background: #D1FAE5; color: #047857; font-size: 12px; font-weight: 500; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="#">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./receipt-list.html">资金管理</a>
+          <span class="sep">/</span>
+          <a href="./receipt-list.html">回款管理</a>
+          <span class="sep">/</span>
+          <span class="current">回款详情</span>
+        </div>
+
+        <!-- 顶部信息条（v1.7.99.66） -->
+        <div class="detail-header">
+          <div class="detail-header-top">
+            <div class="detail-title">
+              <a href="./receipt-list.html" style="color: var(--text-tertiary); text-decoration: none; display: inline-flex; align-items: center;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+              </a>
+              <span>回款编号：<span id="receiptNo">961416</span></span>
+              <span class="icon-copy" onclick="copyNo('receiptNo')" title="复制">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+              </span>
+              <span class="badge-claimed">已认领</span>
+            </div>
+            <div style="display: flex; gap: 8px;">
+              <a href="./receipt-list.html" class="btn btn-default" style="height: 32px; padding: 0 14px;">‹ 返回列表</a>
+            </div>
+          </div>
+          <div class="detail-meta-row">
+            <div class="detail-meta-item"><span class="detail-meta-label">回款方：</span><span class="detail-meta-value">郑州信必达国际供应链有限公司</span></div>
+            <div class="detail-meta-item"><span class="detail-meta-label">收款方：</span><span class="detail-meta-value">河南中豫港通供应链管理有限公司</span></div>
+            <div class="detail-meta-item"><span class="detail-meta-label">数据来源：</span><span class="detail-meta-value">手工录入</span></div>
+            <div class="detail-meta-item"><span class="detail-meta-label">创建时间：</span><span class="detail-meta-value">2026-07-30 10:24:13</span></div>
+          </div>
+        </div>
+
+        <!-- tab 切换 -->
+        <div class="detail-tab-bar">
+          <div class="detail-tab active" onclick="switchDetailTab(this, 'info')">回款信息</div>
+          <div class="detail-tab" onclick="switchDetailTab(this, 'log')">操作记录</div>
+        </div>
+
+        <!-- 区块 1：回款信息（v1.7.99.66 6 字段 3 列 2 行） -->
+        <div class="info-section" id="section-info">
+          <div class="info-section-head">回款信息</div>
+          <div class="info-section-body">
+            <table class="info-table">
+              <tr>
+                <th>回款账号名称</th>
+                <td>郑州信必达国际供应链有限公司</td>
+                <th>回款账号开户行</th>
+                <td>中国银行郑州金水支行营业部</td>
+                <th>回款账号</th>
+                <td>2585 9178 1150</td>
+              </tr>
+              <tr>
+                <th>收款账号名称</th>
+                <td>河南中豫港通供应链管理有限公司</td>
+                <th>收款账号开户行</th>
+                <td>华夏银行股份有限公司郑州九如路支行</td>
+                <th>收款账号</th>
+                <td>1555 7000 0008 0278 8</td>
+              </tr>
+              <tr>
+                <th>回款方式</th>
+                <td>电汇</td>
+                <th>回款日期</th>
+                <td>2026-07-28</td>
+                <th>回款金额(元)</th>
+                <td class="amount">229,467.09</td>
+              </tr>
+            </table>
+          </div>
+        </div>
+
+        <!-- 区块 2：回款认领（v1.7.99.66 3 统计卡 + 5 列认领明细表） -->
+        <div class="info-section">
+          <div class="info-section-head">回款认领</div>
+          <div class="info-section-body">
+            <div class="stat-card-grid">
+              <div class="stat-card total">
+                <div class="label">回款金额(元)</div>
+                <div class="value">229,467.09</div>
+              </div>
+              <div class="stat-card claimed">
+                <div class="label">已认领金额(元)</div>
+                <div class="value">229,467.09</div>
+              </div>
+              <div class="stat-card remain">
+                <div class="label">可认领金额(元)</div>
+                <div class="value">0</div>
+              </div>
+            </div>
+
+            <table class="claim-table">
+              <thead>
+                <tr>
+                  <th style="width: 10%;">认领类型</th>
+                  <th style="width: 10%;">收款类型</th>
+                  <th>认领信息</th>
+                  <th style="width: 14%;text-align: right;">下游结算金额(元)</th>
+                  <th style="width: 14%;text-align: right;">已认领金额(元)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>业务线回款</td>
+                  <td>货款</td>
+                  <td>
+                    <div><a href="./business-line-detail.html?no=SKYWX202607050001" class="bizline-link">业务线号：SKYWX202607050001 <span style="font-size: 12px;">✎</span></a></div>
+                    <div class="bizline-info">业务线名称：河南诚泽运输有限公司 - 河南中豫港通供应链管理有限公司 - 郑州信必达国际供应链有限公司</div>
+                    <div class="bizline-info">采购合同：GTGYL-MSXS-20260127-s　签订日期：2026-01-27</div>
+                    <div class="bizline-info">销售合同：YL-MSXS-20260127-s　签订日期：2026-01-27</div>
+                  </td>
+                  <td style="text-align: right; font-family: var(--font-mono);">61,873,413.91</td>
+                  <td style="text-align: right; font-family: var(--font-mono);">229,467.09</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../assets/js/app.js"></script>
+  <script>
+    function copyNo(id) {
+      var el = document.getElementById(id);
+      if (!el) return;
+      var no = el.textContent.trim();
+      navigator.clipboard.writeText(no).then(function() { Utils.toast('已复制：' + no, 'success'); });
+    }
+    function switchDetailTab(el, key) {
+      document.querySelectorAll('.detail-tab').forEach(function(t) { t.classList.remove('active'); });
+      el.classList.add('active');
+      if (key === 'log') {
+        Utils.toast('操作记录（mock）', 'info');
+      }
+    }
+  </script>
+<script src="../assets/js/pin-annotation.js"></script>
+  <script src="../shared/js/prd-fab.js"></script>
+</body>
+</html>
