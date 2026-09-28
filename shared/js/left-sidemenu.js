@@ -109,8 +109,10 @@
     container.addEventListener('click', e => {
       const a = e.target.closest('a.sidemenu-item');
       if (!a) return;
-      const href = a.getAttribute('href');
-      if (!href || href.startsWith('#')) return;
+      const rawHref = a.getAttribute('href');
+      if (!rawHref || rawHref.startsWith('#')) return;
+      // v1.7.99.351.1：去掉 ./ 前缀（避免 app.html allPages.findIndex 不匹配）
+      const href = rawHref.replace(/^\.\//, '');
       try {
         if (window.parent && window.parent !== window) {
           window.parent.postMessage({ type: 'PROTOTYPE_NAV', file: href, source: 'sidemenu' }, '*');

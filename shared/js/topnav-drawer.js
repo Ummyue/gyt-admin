@@ -238,8 +238,10 @@
     drawerEl.addEventListener('click', e => {
       const a = e.target.closest('a.drawer-sub-item');
       if (!a) return;
-      const file = a.getAttribute('href');
-      if (!file || file.startsWith('#')) return;
+      const rawHref = a.getAttribute('href');
+      if (!rawHref || rawHref.startsWith('#')) return;
+      // v1.7.99.351.1：去掉 ./ 前缀（避免 app.html allPages.findIndex 不匹配）
+      const file = rawHref.replace(/^\.\//, '');
       // 通知父窗口（app.html）联动右侧 doc（不影响 iframe 内 navigate）
       try {
         if (window.parent && window.parent !== window) {

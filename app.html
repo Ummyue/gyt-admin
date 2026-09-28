@@ -723,8 +723,19 @@
       const targetSection = (opts && opts.section) || hashSection;
       const url = `./docs/${page.doc}.md`;
       fetch(url)
-        .then(r => r.ok ? r.text() : Promise.reject('404'))
+        .then(r => {
+          if (!r.ok) return Promise.reject(r.status);
+          const ct = r.headers.get('content-type') || '';
+          // 兜底：CF Pages 在 404 时可能返回 index.html（content-type text/html）
+          // 这种情况当失败处理，避免渲染 HTML 源码
+          if (!ct.includes('text/') && !ct.includes('octet-stream')) return Promise.reject('non-text');
+          return r.text();
+        })
         .then(md => {
+          // 二次校验：内容必须含 markdown 特征（## 或 - 或 **）
+          if (md.trim().startsWith('<') || md.trim().startsWith('{')) {
+            return Promise.reject('non-markdown');
+          }
           _currentDoc = { md, code: page.doc, name: page.name };
           dlBtn.disabled = false;
           body.innerHTML = `
