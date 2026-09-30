@@ -1,0 +1,215 @@
+/* ===== 合同详情页「审批管理 / 审批记录」tab 共享样式 =====
+   v1.7.99.159 抽出自 project-apply.html line 96-290
+   用于 6 个合同详情页（4 大页 + 2 补协小页），
+   状态为「执行中」「待上传双签合同时」时 tab 改名「审批记录」+ 只展示已通过节点 */
+
+/* ===== 顶部状态卡 ===== */
+.approval-status-card {
+  display: flex; align-items: center; gap: 16px;
+  padding: 20px 24px;
+  background: linear-gradient(180deg, #EFF6FF 0%, #F8FAFC 100%);
+  border: 1px solid #BFDBFE;
+  border-radius: var(--radius-default);
+  margin-bottom: 16px;
+}
+.approval-status-icon {
+  width: 56px; height: 56px; background: #fff; border-radius: 14px;
+  display: flex; align-items: center; justify-content: center;
+  box-shadow: 0 2px 8px rgba(30,64,175,0.1); flex-shrink: 0; font-size: 28px;
+}
+.approval-status-body { flex: 1; min-width: 0; }
+.approval-status-title {
+  display: flex; align-items: center; gap: 10px;
+  font-size: 18px; font-weight: 600; color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.approval-status-chips { display: flex; gap: 8px; }
+.chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 10px; font-size: 12px;
+  border-radius: 4px; font-weight: 500;
+}
+.chip-orange { background: #FED7AA; color: #9A3412; }
+.chip-blue   { background: #DBEAFE; color: #1E40AF; }
+.chip-green  { background: #DCFCE7; color: #166534; }
+.chip-red    { background: #FEE2E2; color: #991B1B; }
+.chip-gray   { background: #F1F5F9; color: #475569; }
+.approval-status-desc { font-size: 13px; color: var(--text-secondary); line-height: 1.6; }
+.approval-status-desc .link { color: var(--color-primary); cursor: pointer; font-weight: 500; }
+.approval-status-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.btn-cancel-approval {
+  padding: 7px 16px; background: #fff;
+  border: 1px solid #FCA5A5; color: #B91C1C;
+  border-radius: var(--radius-default); font-size: 13px; cursor: pointer;
+}
+.btn-cancel-approval:hover { background: #FEF2F2; }
+
+/* ===== 摘要信息 ===== */
+.approval-summary {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px;
+  padding: 16px 24px; background: var(--bg-page);
+  border-radius: var(--radius-default); margin-bottom: 16px;
+}
+.approval-summary-item .label { font-size: 12px; color: var(--text-tertiary); margin-bottom: 4px; }
+.approval-summary-item .value { font-size: 14px; color: var(--text-primary); font-weight: 500; }
+
+/* ===== 左右两栏 ===== */
+.approval-grid {
+  display: grid; grid-template-columns: 1fr 360px; gap: 16px;
+}
+@media (max-width: 1100px) { .approval-grid { grid-template-columns: 1fr; } }
+.approval-main-card {
+  background: #fff; border: 1px solid var(--border-light);
+  border-radius: var(--radius-default); padding: 20px 24px;
+}
+.approval-aside { display: flex; flex-direction: column; gap: 16px; }
+.approval-aside-card {
+  background: #fff; border: 1px solid var(--border-light);
+  border-radius: var(--radius-default); padding: 16px 20px;
+}
+.approval-header {
+  display: flex; align-items: center; justify-content: space-between;
+  margin-bottom: 20px;
+}
+.approval-header-title {
+  font-size: 15px; font-weight: 600; color: var(--text-primary);
+  display: flex; align-items: center; gap: 8px;
+}
+.approval-header-title::before {
+  content: ""; width: 3px; height: 14px;
+  background: var(--color-primary); border-radius: 2px;
+}
+.approval-header-meta { font-size: 12px; color: var(--text-tertiary); }
+
+/* ===== 时间线 ===== */
+.timeline { position: relative; padding-left: 32px; }
+.timeline::before {
+  content: ""; position: absolute;
+  left: 12px; top: 12px; bottom: 12px;
+  width: 2px; background: var(--border-light);
+}
+.timeline-item { position: relative; padding-bottom: 24px; }
+.timeline-item:last-child { padding-bottom: 0; }
+.timeline-dot {
+  position: absolute; left: -28px; top: 2px;
+  width: 24px; height: 24px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; font-weight: 600;
+  background: #fff; border: 2px solid var(--border-light); color: var(--text-tertiary);
+}
+.timeline-item.done .timeline-dot {
+  background: var(--color-success); border-color: var(--color-success); color: #fff;
+}
+.timeline-item.done .timeline-dot-num { display: none; }
+.timeline-item.done .timeline-dot::after { content: "✓"; font-size: 14px; }
+.timeline-item.current .timeline-dot {
+  background: var(--color-primary); border-color: var(--color-primary); color: #fff;
+}
+.timeline-item.pending .timeline-dot {
+  background: #F1F5F9; border-color: var(--border-default); color: var(--text-tertiary);
+}
+.timeline-content {
+  background: var(--bg-page); border-radius: var(--radius-default);
+  padding: 12px 16px; border: 1px solid var(--border-light);
+}
+.timeline-item.current .timeline-content { background: #EFF6FF; border-color: #BFDBFE; }
+.timeline-title {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 14px; font-weight: 500; color: var(--text-primary);
+  margin-bottom: 6px;
+}
+.timeline-meta { display: flex; gap: 16px; font-size: 12px; color: var(--text-tertiary); }
+.timeline-actor {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-secondary); margin-top: 8px;
+}
+.timeline-actor .avatar {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600;
+}
+.timeline-subitem {
+  background: #fff; border-radius: var(--radius-default);
+  padding: 10px 12px; margin-top: 8px; border: 1px solid var(--border-light);
+}
+.timeline-subitem-header {
+  display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;
+}
+.timeline-subitem-name {
+  display: flex; align-items: center; gap: 6px;
+  font-size: 13px; color: var(--text-primary); font-weight: 500;
+}
+.timeline-subitem-name .avatar {
+  width: 20px; height: 20px; border-radius: 50%;
+  background: var(--color-primary); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 10px; font-weight: 600;
+}
+.timeline-subitem-opinion {
+  font-size: 12px; color: var(--text-tertiary); margin-top: 4px; line-height: 1.5;
+}
+
+/* ===== 关键指标 / 实时活动 ===== */
+.metric-list { display: flex; flex-direction: column; gap: 12px; }
+.metric-row {
+  display: flex; justify-content: space-between; align-items: center; font-size: 13px;
+}
+.metric-label { color: var(--text-tertiary); }
+.metric-value { color: var(--text-primary); font-weight: 500; }
+.metric-tag {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 2px 8px; font-size: 12px;
+  background: rgba(30,64,175,0.08); color: var(--color-primary);
+  border-radius: 4px; font-weight: 500;
+}
+
+.activity-list { display: flex; flex-direction: column; }
+.activity-item {
+  display: flex; gap: 10px; padding: 8px 0;
+  border-bottom: 1px solid var(--border-light);
+}
+.activity-item:last-child { border-bottom: none; }
+.activity-avatar {
+  width: 28px; height: 28px; border-radius: 50%;
+  background: var(--color-primary-lighter); color: var(--color-primary);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 11px; font-weight: 600; flex-shrink: 0;
+}
+.activity-body { flex: 1; min-width: 0; }
+.activity-text { font-size: 12px; color: var(--text-secondary); line-height: 1.5; }
+.activity-text strong { color: var(--text-primary); }
+.activity-time { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+
+/* ===== 催办卡（仅审批进行中状态显示） ===== */
+.urge-card {
+  background: linear-gradient(180deg, #FFFBEB 0%, #FEF3C7 100%);
+  border: 1px solid #FCD34D;
+  border-radius: var(--radius-default);
+  padding: 12px 16px;
+  display: flex; align-items: center; gap: 10px;
+}
+.urge-icon {
+  width: 32px; height: 32px; background: #F59E0B; color: #fff;
+  border-radius: 8px;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 16px; flex-shrink: 0;
+}
+.urge-body { flex: 1; min-width: 0; }
+.urge-title { font-size: 13px; color: #92400E; font-weight: 600; margin-bottom: 2px; }
+.urge-desc { font-size: 12px; color: #B45309; line-height: 1.5; }
+.btn-urge {
+  padding: 4px 10px; background: #F59E0B; color: #fff;
+  border: none; border-radius: 4px; font-size: 12px; cursor: pointer; flex-shrink: 0;
+}
+
+/* ===== v1.7.99.159 状态机样式（执行中/待上传双签 紧凑模式） ===== */
+.approval-record-mode .approval-status-card {
+  background: linear-gradient(180deg, #F0FDF4 0%, #F8FAFC 100%);
+  border-color: #BBF7D0;
+}
+.approval-record-mode .approval-status-icon { background: #DCFCE7; box-shadow: 0 2px 8px rgba(22,163,74,0.12); }
+.approval-record-mode .approval-status-desc strong { color: var(--text-primary); }
+.approval-record-mode .approval-grid { grid-template-columns: 1fr; }
+.approval-record-mode .approval-aside { display: none; }
+.approval-record-mode .approval-header-meta { color: var(--text-secondary); font-weight: 500; }

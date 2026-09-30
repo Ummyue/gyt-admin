@@ -1,0 +1,463 @@
+/* ============================================
+ * 列表页 v1.7.99 规范
+ * 所有 30+ 列表页共用：合并布局 + cp-panel + cp-block + cp-block-tab + cp-tab + cp-table + cp-pagination
+ * 推全：2026-07-27 起，所有 30+ 列表页统一按此规范
+ * ============================================ */
+
+/* 合并 panel */
+.cp-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  overflow: hidden;
+  margin-top: 12px;
+}
+
+/* 内部区块 */
+.cp-block {
+  padding: 18px 24px;
+}
+.cp-block + .cp-block {
+  border-top: 1px solid var(--border-light);
+}
+
+/* 状态 tab 区块上方的实线改为虚线（与"当前搜索"虚线一致） */
+.cp-block.cp-block-tab {
+  border-top: 1px dashed var(--border-light);
+}
+
+/* 筛选区在 panel 内（去 card 化） */
+.cp-filter-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  padding-bottom: 12px;
+  border-bottom: 1px dashed var(--border-light);
+}
+.cp-filter-summary-left {
+  font-size: 13px;
+  color: var(--text-secondary);
+}
+.cp-filter-summary-left strong { color: var(--text-primary); font-weight: 500; }
+.cp-filter-summary .clear-btn {
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  margin-left: 8px;
+}
+.cp-filter-summary .clear-btn:hover { text-decoration: underline; }
+
+/* ===== 筛选 chip 标签（v1.7.99.16l：当前搜索处显示已录入筛选项） ===== */
+.filter-chips {
+  display: inline-flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0 4px;
+}
+.filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 4px 2px 8px;
+  background: #EFF6FF;
+  color: var(--color-primary);
+  border: 1px solid #BFDBFE;
+  border-radius: 12px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+}
+.filter-chip-key { color: var(--text-tertiary); font-weight: 400; }
+.filter-chip-val { color: var(--text-primary); }
+.filter-chip-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background: rgba(30, 64, 175, 0.1);
+  color: var(--color-primary);
+  font-size: 12px;
+  cursor: pointer;
+  margin-left: 2px;
+  line-height: 1;
+}
+.filter-chip-close:hover { background: var(--color-primary); color: #fff; }
+.filter-empty-hint { color: var(--text-tertiary); font-weight: 400; }
+.cp-filter-summary .clear-all-btn {
+  font-size: 12px;
+  color: var(--color-primary);
+  cursor: pointer;
+  margin-left: 8px;
+  background: none;
+  border: none;
+  padding: 0;
+}
+.cp-filter-summary .clear-all-btn:hover { text-decoration: underline; }
+.cp-filter {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 14px 20px;
+}
+.cp-filter-item {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+.cp-filter-label {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+/* 状态 tab 区块（视觉与顶部 tap 统一：白底 + 下划线） */
+.cp-block-tab {
+  background: #ffffff;
+  padding: 0 24px;
+}
+.cp-tab-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 44px;
+}
+.cp-tab-bar-tabs {
+  display: flex;
+  align-items: center;
+  gap: 0;
+  height: 100%;
+}
+.cp-tab {
+  position: relative;
+  padding: 0 16px;
+  height: 100%;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: color 0.15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  border-bottom: 2px solid transparent;
+}
+.cp-tab:hover { color: var(--color-primary); }
+.cp-tab.active {
+  color: var(--color-primary);
+  font-weight: 500;
+  border-bottom-color: var(--color-primary);
+}
+.cp-tab .count {
+  font-size: 12px;
+  color: var(--text-tertiary);
+  font-family: var(--font-mono);
+}
+.cp-tab.active .count { color: var(--color-primary); }
+
+/* 表格在 panel 内 */
+.cp-table-wrap { overflow-x: auto; }
+.cp-table {
+  width: 100%;
+  min-width: 1500px;
+  border-collapse: collapse;
+  font-size: 13px;
+}
+.cp-table thead th {
+  text-align: left;
+  padding: 12px 14px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-tertiary);
+  background: var(--bg-page);
+  white-space: nowrap;
+  border-bottom: 1px solid var(--border-light);
+  /* v1.7.99.154：统一表头行高（避免单行字段名和双行字段名+单位行高不一致） */
+  vertical-align: bottom;
+  min-height: 56px;
+  line-height: 1.3;
+}
+.cp-table tbody td {
+  padding: 14px;
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-light);
+  white-space: nowrap;
+}
+.cp-table tbody tr:last-child td { border-bottom: none; }
+.cp-table tbody tr:hover { background: var(--bg-page); }
+.cp-table .col-num { font-family: var(--font-mono); color: var(--text-secondary); }
+
+/* 操作列固定右侧（不受左右滚动影响）
+   ⚠️ v1.7.99.4 修复：sticky + box-shadow 会被 stacking context 覆盖
+   用 background-image linear-gradient 模拟阴影，避开该问题。
+   v1.7.99.16k：操作列去阴影，只保留流程状态列左侧 1 道，整体右固定面板视觉统一。
+   v1.7.99.154：修复行尾穿透 - thead 和 tbody 都强制 #fff 背景 + 加大 z-index 避免滚动数据透出 */
+.cp-table th.col-action,
+.cp-table td.col-action {
+  position: sticky;
+  right: 0;
+  z-index: 3;  /* v1.7.99.154：从 2 升到 3，避免被滚动数据穿透 */
+  background-color: #ffffff;
+  min-width: 80px;
+}
+.cp-table thead th.col-action {
+  background-color: var(--bg-page);
+  z-index: 4;  /* v1.7.99.154：thead 比 tbody 更高，避免与 tbody 行重叠 */
+}
+.cp-table tbody tr:hover td.col-action {
+  background-color: var(--bg-page);
+}
+.cp-table .col-action a {
+  color: var(--color-primary);
+  font-size: 12px;
+  margin: 0 4px;
+}
+.cp-table .col-action a:hover { text-decoration: underline; }
+
+/* 流程状态列 sticky 在操作列左侧（v1.7.99.14 新增，v1.7.99.16k 强化阴影）
+   当表格横向滚动时，流程状态列和操作列一起保留在视图右侧。
+   阴影只保留流程状态列左侧 1 道（与操作列形成整体右固定面板）。
+   v1.7.99.153：调整 min-width 匹配业务线台账表实际列宽
+   v1.7.99.154：修复行尾穿透 - 改用 box-shadow 阴影 + 加大 z-index，避免 background-image 遮挡 */
+.cp-table th.col-status,
+.cp-table td.col-status {
+  position: sticky;
+  right: 190px;  /* 等于 col-time min-width 110px + col-action min-width 80px */
+  z-index: 2;  /* v1.7.99.154：从 1 升到 2 */
+  background-color: #ffffff;  /* v1.7.99.154：强制不透明，避免穿透 */
+  box-shadow: -10px 0 10px -10px rgba(0, 0, 0, 0.18);  /* v1.7.99.154：阴影从 background-image 改为 box-shadow */
+  min-width: 90px;
+}
+.cp-table thead th.col-status {
+  background-color: var(--bg-page);
+  z-index: 3;
+  box-shadow: none;  /* v1.7.99.154：thead 不显示阴影，避免和下方 tr 重复 */
+}
+
+/* 创建时间列 sticky 在状态列左侧（v1.7.99.152 新增：3 列固定 - 状态/创建时间/操作）
+   状态列的阴影显示在 col-time 右侧的边界上
+   v1.7.99.153：调整 right 偏移到 80px（匹配 col-action min-width 80px）
+   v1.7.99.154：修复行尾穿透 - 加大 z-index + 强制 #fff 背景 */
+.cp-table th.col-time,
+.cp-table td.col-time {
+  position: sticky;
+  right: 80px;  /* 等于 col-action min-width */
+  z-index: 3;  /* v1.7.99.154：从 2 升到 3 */
+  background-color: #ffffff;  /* v1.7.99.154：强制不透明 */
+  min-width: 110px;
+}
+.cp-table thead th.col-time {
+  background-color: var(--bg-page);
+  z-index: 4;
+}
+.cp-table tbody tr:hover td.col-status {
+  background-color: var(--bg-page);
+}
+
+/* 进度条（紧凑版） */
+.progress {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.progress-bar {
+  width: 70px;
+  height: 6px;
+  background: var(--bg-disabled);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+.progress-fill {
+  height: 100%;
+  background: var(--color-primary);
+  border-radius: var(--radius-full);
+}
+.progress-fill.warning { background: var(--color-warning); }
+/* 货物进度 3 状态：0% 灰 / 0~100% 绿 / >100% 红 */
+.progress-fill.zero { background: var(--bg-disabled); }
+.progress-fill.normal { background: var(--color-success); }
+.progress-fill.over { background: var(--color-danger); }
+.progress-text { font-size: 12px; color: var(--text-tertiary); font-family: var(--font-mono); }
+.progress-text.over { color: var(--color-danger); font-weight: 600; }
+
+/* 合同编号复制 icon + 关联合同 icon */
+.contract-info-actions { display: inline-flex; align-items: center; gap: 4px; margin-left: 4px; }
+.contract-info-action {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 16px; height: 16px; border-radius: 3px;
+  font-size: 12px; cursor: pointer;
+  color: var(--color-primary); background: var(--bg-hover);
+  position: relative;
+}
+.contract-info-action:hover { background: var(--color-primary); color: #fff; }
+
+/* 简易 tooltip（hover 显示） */
+[data-tip] { position: relative; }
+[data-tip]:hover::after {
+  content: attr(data-tip);
+  position: absolute; bottom: calc(100% + 6px); left: 50%;
+  transform: translateX(-50%);
+  background: rgba(15, 23, 42, 0.95); color: #fff;
+  padding: 6px 10px; border-radius: 4px;
+  font-size: 12px; white-space: pre-line;
+  max-width: 280px; line-height: 1.5;
+  z-index: 1000; pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+[data-tip]:hover::before {
+  content: '';
+  position: absolute; bottom: 100%; left: 50%;
+  transform: translateX(-50%);
+  border: 4px solid transparent;
+  border-top-color: rgba(15, 23, 42, 0.95);
+  z-index: 1000;
+}
+/* 字段悬浮全量信息（truncate + hover） */
+.contract-info-val, .progress-block-val {
+  display: inline-block; max-width: 100%;
+  overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+  vertical-align: bottom;
+}
+
+/* 分页在 panel 内（去掉 card 化） */
+.cp-pagination {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  color: var(--text-tertiary);
+}
+.cp-pagination-pages {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+.cp-pagination-page {
+  min-width: 28px;
+  height: 28px;
+  padding: 0 6px;
+  border-radius: var(--radius-default);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--text-secondary);
+  transition: all 0.15s;
+}
+.cp-pagination-page:hover { background: var(--bg-page); color: var(--text-primary); }
+.cp-pagination-page.active { background: var(--color-primary); color: white; }
+.cp-pagination-size {
+  padding: 4px 10px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-default);
+  background: var(--bg-card);
+  color: var(--text-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+.cp-pagination-jump {
+  font-size: 12px;
+  color: var(--text-tertiary);
+}
+.cp-pagination-jump input {
+  width: 44px;
+  height: 24px;
+  margin: 0 4px;
+  padding: 0 6px;
+  border: 1px solid var(--border-default);
+  border-radius: var(--radius-sm);
+  font-size: 12px;
+  text-align: center;
+  font-family: var(--font-mono);
+}
+
+/* ============================================
+ * 按钮下拉（v1.7.99.7 起，采购/销售合同"新增"按钮点击下拉）
+ * ============================================ */
+.btn-dropdown {
+  position: relative;
+  display: inline-block;
+}
+.btn-dropdown .btn-dropdown-toggle .caret {
+  margin-left: 4px;
+  transition: transform 0.18s;
+  vertical-align: -2px;
+}
+.btn-dropdown.open .btn-dropdown-toggle .caret {
+  transform: rotate(180deg);
+}
+.btn-dropdown-menu {
+  display: none;
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  min-width: 220px;
+  background: #fff;
+  border: 1px solid var(--border-light);
+  border-radius: var(--radius-default);
+  box-shadow: 0 8px 24px rgba(15, 23, 42, 0.14);
+  z-index: 200;
+  padding: 6px 0;
+  animation: btnDropdownFadeIn 0.16s ease;
+}
+@keyframes btnDropdownFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.btn-dropdown.open .btn-dropdown-menu { display: block; }
+.btn-dropdown-menu a {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 16px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  text-decoration: none;
+  transition: background 0.12s, color 0.12s;
+  white-space: nowrap;
+}
+.btn-dropdown-menu a:hover {
+  background: var(--color-primary-lighter);
+  color: var(--color-primary);
+}
+.btn-dropdown-menu a .ico {
+  display: inline-flex;
+  width: 16px;
+  height: 16px;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-tertiary);
+}
+.btn-dropdown-menu a:hover .ico {
+  color: var(--color-primary);
+}
+.btn-dropdown-menu a .desc {
+  margin-left: auto;
+  padding-left: 12px;
+  font-size: 11px;
+  color: var(--text-tertiary);
+}
+
+/* ============================================
+ * 行点击进入详情（v1.7.99.11 起，project-list 等列表页用）
+ * 配合 JS：行点击（除操作区）跳详情页 + 状态传 query
+ * ============================================ */
+.cp-row-clickable {
+  cursor: pointer;
+  transition: background 0.12s;
+}
+.cp-row-clickable:hover {
+  background: var(--bg-hover, #f5f7fa);
+}
+.cp-row-clickable .col-action,
+.cp-row-clickable .col-action * {
+  cursor: default;
+}
+.cp-row-clickable .col-action:hover {
+  background: transparent;
+}
+.cp-row-clickable .col-action a {
+  cursor: pointer;
+}

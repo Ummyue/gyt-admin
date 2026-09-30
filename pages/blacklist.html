@@ -707,14 +707,14 @@
 
     // ========== v1.7.99.65 真实脱敏 mock 数据（12 行覆盖 5 种状态） ==========
     var BLACKLIST_MOCK = [
-      { id: 1, name: '深圳宇云创投有限合伙（有限合伙）', code: '91440300MA5HL35J1Y', legal: '深圳土木清华基金管理有限公司', type: '其他', region: '广东省/深圳市/宝安区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
-      { id: 2, name: '苏州科逸住宅设备股份有限公司', code: '91320000792300473D', legal: '陈忠义', type: '其他', region: '江苏省/苏州市/姑苏区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
-      { id: 3, name: '北京乐码仕智能科技有限公司', code: '91110105061326995W', legal: '宋继峰', type: '其他', region: '北京市/北京市/丰台区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
-      { id: 4, name: '天津中科海高微波技术有限公司', code: '91120116073113751Y', legal: '周鹏', type: '其他', region: '天津市/天津市/滨海新区', nature: '私营', level: '中度关注', reason: '合同违约', releaseDate: '—', released: '否' },
-      { id: 5, name: '泉州建工集团有限公司', code: '913505001561035912', legal: '庄森阳', type: '其他', region: '福建省/泉州市/丰泽区', nature: '私营', level: '低度关注', reason: '历史合作记录异常', releaseDate: '—', released: '否' },
-      { id: 6, name: '山东信华发展有限公司', code: '913704811699070036', legal: '刘冈', type: '其他', region: '山东省/枣庄市/滕州市', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
-      { id: 7, name: '淄博富世工贸有限公司', code: '913703032671859130', legal: '李健', type: '其他', region: '山东省/淄博市/张店区', nature: '私营', level: '中度关注', reason: '工商异常', releaseDate: '2026-05-20', released: '是' },
-      { id: 8, name: '山东福源建设集团有限公司', code: '91370113306928389H', legal: '张士森', type: '其他', region: '山东省/济南市/长清区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 1, name: '深圳宇云创投有限合伙（有限合伙）', code: '91XXXXXXMAXXXXXXXX', legal: '深圳土木清华基金管理有限公司', type: '其他', region: '广东省/深圳市/宝安区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 2, name: '苏州科逸住宅设备股份有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '陈忠义', type: '其他', region: '江苏省/苏州市/姑苏区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 3, name: '北京乐码仕智能科技有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '宋继峰', type: '其他', region: '北京市/北京市/丰台区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 4, name: '天津中科海高微波技术有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '周鹏', type: '其他', region: '天津市/天津市/滨海新区', nature: '私营', level: '中度关注', reason: '合同违约', releaseDate: '—', released: '否' },
+      { id: 5, name: '泉州建工集团有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '庄森阳', type: '其他', region: '福建省/泉州市/丰泽区', nature: '私营', level: '低度关注', reason: '历史合作记录异常', releaseDate: '—', released: '否' },
+      { id: 6, name: '山东信华发展有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '刘冈', type: '其他', region: '山东省/枣庄市/滕州市', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
+      { id: 7, name: '淄博富世工贸有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '李健', type: '其他', region: '山东省/淄博市/张店区', nature: '私营', level: '中度关注', reason: '工商异常', releaseDate: '2026-05-20', released: '是' },
+      { id: 8, name: '山东福源建设集团有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '张士森', type: '其他', region: '山东省/济南市/长清区', nature: '私营', level: '高度关注', reason: '资金紧张', releaseDate: '—', released: '否' },
       { id: 9, name: '玉环凯沃机械有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '王丙芳', type: '其他', region: '浙江省/台州市/玉环市', nature: '私营', level: '低度关注', reason: '诉讼被执行', releaseDate: '—', released: '否' },
       { id: 10, name: '常州禧聚科技实业集团有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '徐金云', type: '其他', region: '江苏省/常州市/天宁区', nature: '私营', level: '已解除', reason: '已修复', releaseDate: '2026-04-15', released: '是' },
       { id: 11, name: '菏泽德坤煤炭有限公司', code: '91XXXXXXMAXXXXXXXX', legal: '陈行', type: '上游企业', region: '山东省/菏泽市/牡丹区', nature: '私营', level: '中度关注', reason: '近 12 个月裁判文书', releaseDate: '—', released: '否' },

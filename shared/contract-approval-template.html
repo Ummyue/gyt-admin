@@ -1,0 +1,171 @@
+        <!-- Tap 7：审批管理（v1.7.99.159，状态机为执行中/待上传双签时改"审批记录" + 只展示已通过节点） -->
+        <div class="detail-tab-panel" data-tap-panel="approval" id="approvalPanel" hidden>
+          <!-- 顶部状态卡 -->
+          <div class="approval-status-card" id="approvalStatusCard">
+            <div class="approval-status-icon" id="approvalStatusIcon">⏳</div>
+            <div class="approval-status-body">
+              <div class="approval-status-title" id="approvalStatusTitle">
+                <span id="approvalStatusLabel">审批进行中</span>
+                <div class="approval-status-chips" id="approvalStatusChips">
+                  <span class="chip chip-orange" id="approvalChipStatus">⏸ 待审批</span>
+                  <span class="chip chip-blue">外部 OA 系统</span>
+                </div>
+              </div>
+              <div class="approval-status-desc" id="approvalStatusDesc">
+                <strong style="color: var(--text-primary);" id="approvalContractNo">DLXLC-DSRMT-202203-0011</strong> 已提交至外部审批系统，当前在「<span class="link" id="approvalCurrentNode">财务部审批</span>」阶段。
+              </div>
+            </div>
+            <div class="approval-status-actions" id="approvalActions">
+              <button class="btn-cancel-approval" onclick="alert('已撤回申请')">↩ 撤回申请</button>
+            </div>
+          </div>
+
+          <!-- 摘要信息 -->
+          <div class="approval-summary">
+            <div class="approval-summary-item">
+              <div class="label">申请编号</div>
+              <div class="value" style="font-family: var(--font-mono);" id="approvalApplyNo">ADM-2026-0451</div>
+            </div>
+            <div class="approval-summary-item">
+              <div class="label">提交时间</div>
+              <div class="value" id="approvalSubmitTime">2026-07-19 16:45</div>
+            </div>
+            <div class="approval-summary-item" id="approvalEstTimeWrap">
+              <div class="label">预计完成</div>
+              <div class="value" id="approvalEstTime">2026-07-21 18:00</div>
+            </div>
+          </div>
+
+          <!-- 左右两栏：审批进度 + 关键指标/活动 -->
+          <div class="approval-grid">
+            <!-- 左：审批进度时间线 -->
+            <div class="approval-main-card">
+              <div class="approval-header">
+                <div class="approval-header-title">审批进度</div>
+                <div class="approval-header-meta" id="approvalHeaderMeta">共 5 个节点，已通过 1 个</div>
+              </div>
+              <div class="timeline" id="approvalTimeline">
+                <!-- 节点 1：提交申请（已完成） -->
+                <div class="timeline-item done" data-node="submit">
+                  <div class="timeline-dot"><span class="timeline-dot-num">①</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ① 提交申请
+                      <span class="chip chip-green">已通过</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" id="submitAvatar">张</div>
+                      <span><strong id="submitActor">张爽</strong>（业务部负责人）提交准入申请</span>
+                    </div>
+                    <div class="timeline-meta">
+                      <span>🕐 <span class="node-time">2026-07-19 16:45:23</span></span>
+                      <span>📎 附件 4 份</span>
+                    </div>
+                  </div>
+                </div>
+
+                <!-- 节点 2：一级审批·风控部 -->
+                <div class="timeline-item done" data-node="level1">
+                  <div class="timeline-dot"><span class="timeline-dot-num">②</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ② 一级审批 · 风控部
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 1/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;" id="level1Avatar">王</div>
+                      <span>审批人：<strong>王浩</strong> · 风控部负责人</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" class="node-opinion">✓ 同意，背景调查材料齐全，企业基本面良好，符合准入条件。 · <span class="node-time">2026-07-20 09:15</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 3：二级审批·财务部 -->
+                <div class="timeline-item done" data-node="level2">
+                  <div class="timeline-dot"><span class="timeline-dot-num">③</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ③ 二级审批 · 财务部
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 2/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;" id="level2Avatar">宋</div>
+                      <span>审批人：<strong>宋美玲</strong> · 财务总监</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" class="node-opinion">✓ 同意，财务审计已通过，资金流评估良好。 · <span class="node-time">2026-07-21 14:30</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 4：三级审批·总经理 -->
+                <div class="timeline-item done" data-node="level3">
+                  <div class="timeline-dot"><span class="timeline-dot-num">④</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ④ 三级审批 · 总经理
+                      <span class="chip chip-green">已通过</span>
+                      <span class="chip chip-gray">串行 3/3</span>
+                    </div>
+                    <div class="timeline-actor">
+                      <div class="avatar" style="background: #10B981;" id="level3Avatar">李</div>
+                      <span>审批人：<strong>李娜</strong> · 平台总经理</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;" class="node-opinion">✓ 同意准入，合同可按计划推进。 · <span class="node-time">2026-07-22 10:15</span></div>
+                  </div>
+                </div>
+
+                <!-- 节点 5：准入完成 / 合同生效 -->
+                <div class="timeline-item done" data-node="finish">
+                  <div class="timeline-dot"><span class="timeline-dot-num">⑤</span></div>
+                  <div class="timeline-content">
+                    <div class="timeline-title">
+                      ⑤ 准入完成
+                      <span class="chip chip-green">已通过</span>
+                    </div>
+                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">三级审批通过后自动归档，合同已生效，<strong style="color: var(--color-success);" id="approvalFinishResult">合同生效</strong>。</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 右：关键指标 + 实时活动 + 催办 -->
+            <div class="approval-aside">
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">关键指标</div>
+                </div>
+                <div class="metric-list">
+                  <div class="metric-row"><span class="metric-label">当前节点</span><span class="metric-tag" id="metricCurrentNode">准入完成</span></div>
+                  <div class="metric-row"><span class="metric-label">剩余节点</span><span class="metric-value" id="metricRemain">0 个（全部完成）</span></div>
+                  <div class="metric-row"><span class="metric-label">已耗时</span><span class="metric-value" id="metricElapsed">2 天 18 小时</span></div>
+                </div>
+              </div>
+
+              <div class="approval-aside-card">
+                <div class="approval-header" style="margin-bottom: 12px;">
+                  <div class="approval-header-title">实时活动</div>
+                  <div class="approval-header-meta">最近 24h</div>
+                </div>
+                <div class="activity-list" id="activityList">
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">李</div><div class="activity-body"><div class="activity-text"><strong>李娜</strong>通过三级审批节点</div><div class="activity-time">2 小时前 · 10:15</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">宋</div><div class="activity-body"><div class="activity-text"><strong>宋美玲</strong>通过了「财务部审批节点 2/3」</div><div class="activity-time">昨天 14:30</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #10B981; color: #fff;">王</div><div class="activity-body"><div class="activity-text"><strong>王浩</strong>通过了「风控部审批节点 1/3」</div><div class="activity-time">3 天前 · 09:15</div></div></div>
+                  <div class="activity-item"><div class="activity-avatar" style="background: #1E40AF; color: #fff;">张</div><div class="activity-body"><div class="activity-text"><strong id="activitySubmitActor">张爽</strong>提交了准入申请</div><div class="activity-time">3 天前 · 16:45</div></div></div>
+                </div>
+              </div>
+
+              <!-- 催办卡（仅审批中显示） -->
+              <div class="urge-card" id="urgeCard" hidden>
+                <div class="urge-icon">🔔</div>
+                <div class="urge-body">
+                  <div class="urge-title" id="urgeTitle">宋美玲 已 2 小时未处理</div>
+                  <div class="urge-desc" id="urgeDesc">建议催办或 @该审批人 加速处理</div>
+                </div>
+                <button class="btn-urge" onclick="alert('已发送催办')">立即催办</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Tap 6：操作记录 -->
