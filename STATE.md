@@ -1,22 +1,42 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-09-30 v1.7.99.349.2
+最后更新: 2026-10-12 审批管理模块 v1.0.0
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `96d09594` (v1.7.99.349.2)
+- **最新 hash**: `fb6274c2` (审批管理模块 v1.0.0)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
   ```
   CLOUDFLARE_API_TOKEN=<token> npx wrangler pages deploy . \
-    --project-name=yugangtong-prototype --commit-dirty=true \
+    --project-name=yugangtong-prototype --skip-caching \
     --cwd=$(pwd)
   ```
+  （`--cwd` 必须带：父目录 workspace 下有别的项目的 wrangler.toml 含 `[assets]`，
+   wrangler 4.x 会向上递归搜到并导致 "Configuration file for Pages projects
+   does not support 'assets'"）
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `2b1d8c4` (v1.7.99.348 已推送)
+- 最新 commit: `26b3087` (feat(approval): 审批管理模块 + 14 页面接入，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
+
+## 审批管理模块（v1.0.0，2026-10-12 新增）
+- **引擎**: `shared/js/approval-engine.js` — 节点类型 start / serial /
+  parallel_all / branch；内置 standard / simple / highRisk 三套模板
+- **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
+- **持久化**: `localStorage['ygt_approval_flow_templates_v1']`（同一浏览器内联动）
+- **页面**: `pages/approval-flow-list.html`（配置）、`pages/approval-monitor.html`（监控）
+- **已接入 14 个业务页**: 合同详情 ×6、付款、退款、追保函详情、客户准入、项目立项、
+  货转上/下、仓储放货详情
+- **PRD**: `docs/p-approval-flow-list.md`、`docs/p-approval-monitor.md`
+- **⚠️ 接入约束（改引擎时必读）**:
+  1. 引擎**不得**在 IIFE 执行时快照 `window.APPROVAL_CONFIG_BY_PAGE`，
+     必须在 `mount()` 时动态读取（否则 script 顺序会让所有页面回退 standard）
+  2. 业务页挂载容器本身带 `class="timeline"` 时，引擎走 bare 渲染不再套第二层
+  3. 条件分支必须读 `evalBranch()` 返回的 `res.rules`（含 `matched`），
+     不能读 `node.condition`（原始配置无该字段）
+
 
 ## 最近 12 版改动 (v1.7.99.337 ~ 348)
 | 版本 | 模块 | 核心改动 |
