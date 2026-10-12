@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>审批流程配置 - 豫港通 v1.0.0</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/approval.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* ===== 流程链预览（配置页专用）===== */
+    .afc-chain {
+      display: flex; align-items: stretch; gap: 0; flex-wrap: wrap;
+      padding: 16px; background: #F8FAFC; border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+    .afc-node {
+      min-width: 132px; padding: 12px 14px; background: #fff;
+      border: 1px solid var(--border-color); border-left: 3px solid var(--node-color, #64748B);
+      border-radius: 6px; text-align: center;
+    }
+    .afc-node.is-skipped { opacity: .5; background: #F1F5F9; border-style: dashed; }
+    .afc-node-no {
+      width: 22px; height: 22px; margin: 0 auto 6px; border-radius: 50%;
+      background: var(--node-color, #64748B); color: #fff;
+      font-size: 12px; line-height: 22px; font-weight: 600;
+    }
+    .afc-node-name { font-size: 13px; font-weight: 600; color: var(--text-primary); margin-bottom: 3px; }
+    .afc-node-role { font-size: 11px; color: var(--text-tertiary); }
+    .afc-node-tag {
+      display: inline-block; margin-top: 6px; padding: 1px 6px;
+      font-size: 10px; border-radius: 3px;
+      background: #F1F5F9; color: var(--text-tertiary);
+    }
+    .afc-node-tag.is-blue { background: #EFF6FF; color: #1E40AF; }
+    .afc-node-tag.is-gray { background: #E2E8F0; color: #64748B; }
+    .afc-arrow { display: flex; align-items: center; padding: 0 6px; color: var(--text-tertiary); }
+
+    /* ===== 节点编排器 ===== */
+    .ap-editor { display: grid; grid-template-columns: 1fr 340px; gap: 16px; }
+    .ap-node-list { display: flex; flex-direction: column; gap: 8px; }
+    .ap-node-row {
+      display: flex; align-items: center; gap: 12px; padding: 12px 14px;
+      background: #fff; border: 1px solid var(--border-color);
+      border-left: 3px solid var(--node-color, #64748B); border-radius: 6px;
+      cursor: pointer; transition: all .15s;
+    }
+    .ap-node-row:hover { border-color: var(--color-primary); box-shadow: var(--shadow-sm); }
+    .ap-node-row.active { background: #EFF6FF; border-color: var(--color-primary); }
+    .ap-node-row.is-branch { background: #FFFBEB; border-left-color: #F59E0B; border-style: dashed; }
+    .ap-node-no {
+      width: 26px; height: 26px; flex-shrink: 0; border-radius: 50%;
+      background: var(--node-color, #64748B); color: #fff;
+      font-size: 12px; line-height: 26px; text-align: center; font-weight: 600;
+    }
+    .ap-node-main { flex: 1; min-width: 0; }
+    .ap-node-name { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .ap-node-meta { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; }
+    .ap-node-actions { display: flex; gap: 4px; flex-shrink: 0; }
+    .ap-icon-btn {
+      width: 26px; height: 26px; border: 1px solid var(--border-color);
+      background: #fff; border-radius: 4px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      color: var(--text-tertiary); font-size: 13px;
+    }
+    .ap-icon-btn:hover { color: var(--color-primary); border-color: var(--color-primary); }
+    .ap-icon-btn.danger:hover { color: var(--color-danger, #DC2626); border-color: var(--color-danger, #DC2626); }
+
+    /* 属性面板 */
+    .ap-props { background: #fff; border: 1px solid var(--border-color); border-radius: 8px; }
+    .ap-props-header {
+      padding: 12px 16px; border-bottom: 1px solid var(--border-color);
+      font-size: 13px; font-weight: 600; color: var(--text-primary);
+    }
+    .ap-props-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+    .ap-field { display: flex; flex-direction: column; gap: 6px; }
+    .ap-field label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
+    .ap-field .input, .ap-field .select { width: 100%; }
+    .ap-field-help { font-size: 11px; color: var(--text-tertiary); line-height: 1.6; }
+
+    /* 会签审批人子项 */
+    .ap-approver-row {
+      display: flex; align-items: center; gap: 8px; margin-bottom: 6px;
+    }
+    .ap-approver-row .input, .ap-approver-row .select { flex: 1; }
+
+    /* 条件规则子项 */
+    .ap-rule-row {
+      display: grid; grid-template-columns: 1fr 54px 1fr; gap: 6px;
+      align-items: center; margin-bottom: 8px;
+    }
+    .ap-rule-row .select, .ap-rule-row .input { width: 100%; }
+
+    .ap-add-node-bar {
+      display: flex; gap: 8px; padding: 12px 14px; margin-top: 4px;
+      background: #F8FAFC; border: 1px dashed var(--border-color); border-radius: 6px;
+    }
+
+    .ap-info-banner {
+      padding: 10px 14px; background: #EFF6FF; border: 1px solid #BFDBFE;
+      border-radius: 6px; font-size: 12px; color: #1E40AF; line-height: 1.7;
+      margin-bottom: 16px;
+    }
+    .ap-info-banner strong { font-weight: 600; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item active" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-config.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item" href="./account-company.html" data-menu-key="账户中心">账户中心</a>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0;">
+      <div class="page-header" style="padding: 14px 24px;">
+        <div class="breadcrumb">数字供应链 / 审批管理 / 审批流程配置</div>
+        <h1 class="page-title">审批流程配置</h1>
+      </div>
+
+      <div class="page-body">
+        <div class="ap-info-banner">
+          <strong>通用审批引擎</strong>：本模块提供自定义审批流程的创建与维护能力，支持
+          <strong>串行审批</strong>（逐级依次审批）、<strong>并行会签</strong>（多人同时收到、全部通过才算过）、
+          <strong>条件分支</strong>（按金额等字段阈值自动增减节点）三类节点。配置保存后，
+          各业务模块可引用对应流程模板渲染审批节点，无需重复开发。
+        </div>
+
+        <!-- ========== 流程列表 ========== -->
+        <div class="card" style="margin-bottom: 16px;">
+          <div class="card-header">
+            <div class="card-title">流程模板</div>
+            <div style="display: flex; gap: 8px;">
+              <input type="text" class="input" id="searchKeyword" placeholder="搜索流程名称" style="width: 200px;" oninput="renderList()">
+              <select class="select" id="filterStatus" style="width: 110px;" onchange="renderList()">
+                <option value="">全部状态</option>
+                <option value="enabled">已启用</option>
+                <option value="draft">草稿</option>
+                <option value="disabled">已停用</option>
+              </select>
+              <button class="btn btn-primary" onclick="openCreateFlow()">+ 新建流程</button>
+            </div>
+          </div>
+          <div class="card-body" style="padding: 0;">
+            <table class="data-table" style="width: 100%;">
+              <thead>
+                <tr>
+                  <th style="width: 200px;">流程名称</th>
+                  <th style="width: 100px;">状态</th>
+                  <th style="width: 90px;">节点数</th>
+                  <th>流程说明</th>
+                  <th style="width: 200px;">适用模块</th>
+                  <th style="width: 130px;">最后修改</th>
+                  <th style="width: 190px;">操作</th>
+                </tr>
+              </thead>
+              <tbody id="flowTableBody"></tbody>
+            </table>
+          </div>
+        </div>
+
+        <!-- ========== 流程编辑器 ========== -->
+        <div class="card" id="editorCard" style="display: none;">
+          <div class="card-header">
+            <div class="card-title">
+              <input type="text" class="input" id="edFlowName"
+                     style="width: 280px; font-size: 14px; font-weight: 600;"
+                     oninput="draft.name = this.value;">
+            </div>
+            <div style="display: flex; gap: 8px; align-items: center;">
+              <select class="select" id="edFlowStatus" style="width: 110px;" onchange="draft.status = this.value;">
+                <option value="draft">草稿</option>
+                <option value="enabled">已启用</option>
+                <option value="disabled">已停用</option>
+              </select>
+              <button class="btn btn-default" onclick="previewFlow()">预览流程图</button>
+              <button class="btn btn-primary" onclick="saveDraft()">保存</button>
+              <button class="btn btn-default" onclick="closeEditor()">关闭</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="ap-editor">
+              <!-- 左：节点编排 -->
+              <div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500;">
+                  节点编排（点击节点编辑属性 · ↑↓ 调整顺序 · × 删除）
+                </div>
+                <div class="ap-node-list" id="nodeList"></div>
+
+                <div class="ap-add-node-bar">
+                  <button class="btn btn-default btn-sm" onclick="addNode('serial')">+ 串行审批</button>
+                  <button class="btn btn-default btn-sm" onclick="addNode('parallel_all')">+ 并行会签</button>
+                  <button class="btn btn-default btn-sm" onclick="addNode('branch')">+ 条件分支</button>
+                  <div style="flex:1;"></div>
+                  <span style="font-size: 11px; color: var(--text-tertiary); align-self: center;">
+                    至少保留「提交申请」与「归档完成」
+                  </span>
+                </div>
+
+                <div style="margin-top: 16px;">
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 8px; font-weight: 500;">
+                    流程说明
+                  </div>
+                  <textarea class="textarea" id="edFlowDesc" rows="2" style="width: 100%;"
+                            placeholder="用一句话描述这个流程的适用场景"
+                            oninput="draft.desc = this.value;"></textarea>
+                </div>
+              </div>
+
+              <!-- 右：属性面板 -->
+              <div>
+                <div class="ap-props">
+                  <div class="ap-props-header" id="propsTitle">节点属性</div>
+                  <div class="ap-props-body" id="propsBody">
+                    <div style="font-size: 12px; color: var(--text-tertiary); line-height: 1.8;">
+                      ← 点击左侧节点<br>查看并编辑节点属性
+                    </div>
+                  </div>
+                </div>
+
+                <div class="ap-props" style="margin-top: 12px;">
+                  <div class="ap-props-header">适用模块</div>
+                  <div class="ap-props-body">
+                    <div class="ap-field">
+                      <label>选择该流程适用的业务模块</label>
+                      <div id="modulePicker" style="display:flex;flex-wrap:wrap;gap:6px;"></div>
+                      <div class="ap-field-help">勾选后，对应业务模块的审批节点将引用此流程模板</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <!-- 预览区 -->
+            <div id="previewBox" style="display:none; margin-top:16px; padding-top:16px; border-top:1px solid var(--border-color);">
+              <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 10px; font-weight: 500;">
+                流程图预览
+                <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">
+                  调整下方单据金额可实时看到条件分支的命中效果
+                </span>
+              </div>
+              <div style="display:flex; align-items:center; gap:10px; margin-bottom:12px;">
+                <span style="font-size:12px; color: var(--text-secondary);">模拟单据金额</span>
+                <input type="number" class="input" id="previewAmount" value="500000" style="width: 160px;" oninput="renderPreview()">
+                <span style="font-size:11px; color: var(--text-tertiary);">元（&gt; 100 万将追加总经理节点）</span>
+              </div>
+              <div id="previewChain"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <!-- /main-content -->
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/approval-engine.js"></script>
+  <script>
+    const AE = window.ApprovalEngine;
+    const ALL_MODULES = ['合同管理','收发货管理','业务线管理','货转管理','资金管理','结算单管理',
+                         '发票管理','追保函管理','保证金管理','准入管理','仓储管理','数据中心'];
+
+    let draft = null;       // 当前编辑中的流程
+    let activeNodeIdx = -1; // 选中的节点下标
+
+    // ================================================================
+    // 列表渲染
+    // ================================================================
+    function renderList() {
+      const kw = (document.getElementById('searchKeyword').value || '').trim();
+      const st = document.getElementById('filterStatus').value;
+      const rows = AE.listFlows().filter(f => {
+        if (kw && f.name.indexOf(kw) < 0 && (f.desc || '').indexOf(kw) < 0) return false;
+        if (st && f.status !== st) return false;
+        return true;
+      });
+
+      const statusMeta = {
+        enabled:  { label: '已启用', cls: 'tag-green' },
+        draft:    { label: '草稿',   cls: 'tag-orange' },
+        disabled: { label: '已停用', cls: 'tag-gray' }
+      };
+
+      document.getElementById('flowTableBody').innerHTML = rows.map(f => {
+        const sm = statusMeta[f.status] || statusMeta.draft;
+        const nodeCount = (f.nodes || []).filter(n => n.type !== 'start').length;
+        const mods = (f.applicableModules || []).join('、') || '—';
+        return `<tr>
+          <td><span style="font-weight:600; color:var(--color-primary);">${AE.esc(f.name)}</span></td>
+          <td><span class="tag ${sm.cls}">${sm.label}</span></td>
+          <td>${nodeCount}</td>
+          <td style="color: var(--text-secondary); font-size: 12px;">${AE.esc(f.desc || '—')}</td>
+          <td style="font-size: 12px; color: var(--text-tertiary);">${AE.esc(mods)}</td>
+          <td style="font-size: 12px; color: var(--text-tertiary);">
+            ${AE.esc(f.updatedBy || '—')}<br>${AE.esc(f.updatedAt || '—')}
+          </td>
+          <td>
+            <a class="link" onclick="openEditor('${f.id}')">编辑</a>
+            <a class="link" onclick="copyFlow('${f.id}')">复制</a>
+            <a class="link" onclick="toggleStatus('${f.id}')">${f.status === 'enabled' ? '停用' : '启用'}</a>
+            <a class="link" style="color:#DC2626;" onclick="removeFlow('${f.id}')">删除</a>
+          </td>
+        </tr>`;
+      }).join('') || '<tr><td colspan="7" style="text-align:center; padding:32px; color:var(--text-tertiary);">暂无匹配的流程模板</td></tr>';
+    }
+
+    // ================================================================
+    // 编辑器
+    // ================================================================
+    function openCreateFlow() {
+      draft = {
+        id: 'flow_' + Date.now(),
+        name: '新建审批流程',
+        desc: '',
+        status: 'draft',
+        applicableModules: [],
+        nodes: [
+          { id: 'n1', type: 'start', name: '提交申请', role: 'submitter' },
+          { id: 'n2', type: 'serial', name: '业务审批', role: 'biz_manager', slaHours: 24 },
+          { id: 'n3', type: 'serial', name: '归档完成', role: 'system', auto: true }
+        ]
+      };
+      activeNodeIdx = -1;
+      document.getElementById('editorCard').style.display = '';
+      document.getElementById('previewBox').style.display = 'none';
+      bindDraftToUI();
+      renderNodes();
+      renderModulePicker();
+      document.getElementById('editorCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function openEditor(id) {
+      const f = AE.getFlow(id);
+      if (!f) return;
+      draft = JSON.parse(JSON.stringify(f));
+      activeNodeIdx = -1;
+      document.getElementById('editorCard').style.display = '';
+      document.getElementById('previewBox').style.display = 'none';
+      bindDraftToUI();
+      renderNodes();
+      renderModulePicker();
+      document.getElementById('editorCard').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function bindDraftToUI() {
+      document.getElementById('edFlowName').value = draft.name;
+      document.getElementById('edFlowStatus').value = draft.status;
+      document.getElementById('edFlowDesc').value = draft.desc || '';
+    }
+
+    function closeEditor() {
+      document.getElementById('editorCard').style.display = 'none';
+      draft = null;
+      activeNodeIdx = -1;
+    }
+
+    // ================================================================
+    // 节点渲染
+    // ================================================================
+    function nodeColor(n) {
+      if (n.type === 'start') return '#64748B';
+      if (n.type === 'branch') return '#F59E0B';
+      if (n.type === 'parallel_all') return '#7C3AED';
+      const meta = AE.ROLES[n.role];
+      return meta ? meta.color : '#64748B';
+    }
+
+    function nodeTypeLabel(t) {
+      return { start: '发起节点', serial: '串行审批', parallel_all: '并行会签', branch: '条件分支' }[t] || t;
+    }
+
+    function renderNodes() {
+      const box = document.getElementById('nodeList');
+      box.innerHTML = draft.nodes.map((n, i) => {
+        const meta = AE.ROLES[n.role];
+        let metaText;
+        if (n.type === 'branch') {
+          const cnt = (n.condition || []).length;
+          metaText = `${cnt} 条条件规则 · 不满足则跳过本节点`;
+        } else if (n.type === 'parallel_all') {
+          metaText = `${(n.approvers || []).length} 人会签 · 全部通过才算过` +
+                     (n.slaHours ? ` · 时限 ${n.slaHours}h` : '');
+        } else if (n.type === 'start') {
+          metaText = '发起人提交，系统自动记录';
+        } else {
+          metaText = (meta ? meta.dept : '—') + (n.slaHours ? ` · 时限 ${n.slaHours}h` : '');
+        }
+        return `<div class="ap-node-row ${activeNodeIdx === i ? 'active' : ''} ${n.type === 'branch' ? 'is-branch' : ''}"
+                     style="--node-color:${nodeColor(n)}" onclick="selectNode(${i})">
+          <div class="ap-node-no">${AE.CIRCLED[i] || (i+1)}</div>
+          <div class="ap-node-main">
+            <div class="ap-node-name">${AE.esc(n.name)}</div>
+            <div class="ap-node-meta">${nodeTypeLabel(n.type)} · ${AE.esc(metaText)}</div>
+          </div>
+          <div class="ap-node-actions">
+            <button class="ap-icon-btn" title="上移" onclick="event.stopPropagation();moveNode(${i},-1)">↑</button>
+            <button class="ap-icon-btn" title="下移" onclick="event.stopPropagation();moveNode(${i},1)">↓</button>
+            <button class="ap-icon-btn danger" title="删除" onclick="event.stopPropagation();delNode(${i})">×</button>
+          </div>
+        </div>`;
+      }).join('');
+    }
+
+    function selectNode(i) {
+      activeNodeIdx = i;
+      renderNodes();
+      renderProps();
+    }
+
+    function moveNode(i, dir) {
+      const j = i + dir;
+      if (j < 0 || j >= draft.nodes.length) return;
+      const t = draft.nodes[i];
+      draft.nodes[i] = draft.nodes[j];
+      draft.nodes[j] = t;
+      activeNodeIdx = j;
+      renderNodes();
+      renderProps();
+    }
+
+    function delNode(i) {
+      const n = draft.nodes[i];
+      if (n.type === 'start') { alert('发起节点不可删除'); return; }
+      if (n.auto) { alert('归档节点不可删除'); return; }
+      draft.nodes.splice(i, 1);
+      activeNodeIdx = -1;
+      renderNodes();
+      renderProps();
+    }
+
+    function addNode(type) {
+      const labels = { serial: '新审批节点', parallel_all: '新会签节点', branch: '新条件分支' };
+      const node = { id: 'n_' + Date.now(), type: type, name: labels[type] || '新节点' };
+      if (type === 'serial') { node.role = 'biz_manager'; node.slaHours = 24; }
+      if (type === 'parallel_all') {
+        node.role = 'risk_manager'; node.slaHours = 48;
+        node.approvers = [
+          { role: 'risk_manager', dept: '风控部' },
+          { role: 'finance_manager', dept: '财务部' }
+        ];
+      }
+      if (type === 'branch') {
+        node.name = '金额分支';
+        node.condition = [{ field: 'amount', operator: 'gt', value: 1000000, then: ['gm'] }];
+      }
+      // 插到归档节点之前
+      const autoIdx = draft.nodes.findIndex(n => n.auto);
+      if (autoIdx >= 0) draft.nodes.splice(autoIdx, 0, node);
+      else draft.nodes.push(node);
+      activeNodeIdx = draft.nodes.indexOf(node);
+      renderNodes();
+      renderProps();
+    }
+
+    // ================================================================
+    // 属性面板
+    // ================================================================
+    function renderProps() {
+      const box = document.getElementById('propsBody');
+      const title = document.getElementById('propsTitle');
+      if (activeNodeIdx < 0 || !draft.nodes[activeNodeIdx]) {
+        title.textContent = '节点属性';
+        box.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);line-height:1.8;">← 点击左侧节点<br>查看并编辑节点属性</div>';
+        return;
+      }
+      const n = draft.nodes[activeNodeIdx];
+      title.textContent = `节点属性 · ${AE.CIRCLED[activeNodeIdx] || (activeNodeIdx+1)} ${AE.esc(n.name)}`;
+
+      let html = '';
+
+      // 节点名称（start / auto 不可改）
+      const nameDisabled = (n.type === 'start' || n.auto);
+      html += `<div class="ap-field">
+        <label>节点名称</label>
+        <input type="text" class="input" value="${AE.esc(n.name)}" ${nameDisabled ? 'disabled' : ''}
+               oninput="updateNodeProp('name', this.value)">
+      </div>`;
+
+      // 角色（start / branch / auto 无角色选择）
+      if (n.type === 'serial' || n.type === 'parallel_all') {
+        const roleOpts = Object.keys(AE.ROLES)
+          .filter(k => k !== 'submitter')
+          .map(k => {
+            const r = AE.ROLES[k];
+            return `<option value="${k}" ${n.role === k ? 'selected' : ''}>${AE.esc(r.label)}（${AE.esc(r.dept)}）</option>`;
+          }).join('');
+        html += `<div class="ap-field">
+          <label>${n.type === 'parallel_all' ? '主审批角色' : '审批角色'}</label>
+          <select class="select" onchange="updateNodeProp('role', this.value)">${roleOpts}</select>
+        </div>`;
+      }
+
+      // SLA
+      if (!nameDisabled) {
+        html += `<div class="ap-field">
+          <label>审批时限（小时）</label>
+          <input type="number" class="input" value="${n.slaHours || 24}" min="1" max="720"
+                 oninput="updateNodeProp('slaHours', Number(this.value))">
+          <div class="ap-field-help">超时后在「流程监控」中标记为超时，可配置提醒策略</div>
+        </div>`;
+      }
+
+      // 会签成员
+      if (n.type === 'parallel_all') {
+        html += `<div class="ap-field">
+          <label>会签成员（全部通过才算通过）</label>
+          <div id="approverBox"></div>
+          <button class="btn btn-default btn-sm" onclick="addApprover()" style="margin-top:4px;">+ 添加会签人</button>
+          <div class="ap-field-help">
+            会签节点：所有成员同时收到待办，<strong>全部通过</strong>才流转到下一节点；任一人驳回则整个流程驳回。
+          </div>
+        </div>`;
+      }
+
+      // 条件规则
+      if (n.type === 'branch') {
+        html += `<div class="ap-field">
+          <label>条件规则（满足任一条即命中）</label>
+          <div id="ruleBox"></div>
+          <button class="btn btn-default btn-sm" onclick="addRule()" style="margin-top:4px;">+ 添加条件</button>
+          <div class="ap-field-help">
+            条件分支：命中时追加右侧所列审批角色节点；<strong>不命中则跳过本节点</strong>，流程继续向下走。
+          </div>
+        </div>`;
+      }
+
+      // 节点说明
+      if (!nameDisabled) {
+        html += `<div class="ap-field">
+          <label>节点说明</label>
+          <textarea class="textarea" rows="2" style="width:100%;" placeholder="给审批人的提示语"
+                    oninput="updateNodeProp('desc', this.value)">${AE.esc(n.desc || '')}</textarea>
+        </div>`;
+      }
+
+      box.innerHTML = html;
+
+      if (n.type === 'parallel_all') renderApprovers(n);
+      if (n.type === 'branch') renderRules(n);
+    }
+
+    function updateNodeProp(key, val) {
+      if (activeNodeIdx < 0) return;
+      draft.nodes[activeNodeIdx][key] = val;
+      renderNodes();
+    }
+
+    // ---- 会签成员 ----
+    function renderApprovers(n) {
+      const box = document.getElementById('approverBox');
+      if (!box) return;
+      const roleOpts = Object.keys(AE.ROLES).filter(k => k !== 'submitter');
+      box.innerHTML = (n.approvers || []).map((a, i) => {
+        const opts = roleOpts.map(k => {
+          const r = AE.ROLES[k];
+          return `<option value="${k}" ${a.role === k ? 'selected' : ''}>${AE.esc(r.label)}（${AE.esc(r.dept)}）</option>`;
+        }).join('');
+        return `<div class="ap-approver-row">
+          <select class="select" onchange="updateApprover(${i}, 'role', this.value)">${opts}</select>
+          <input type="text" class="input" value="${AE.esc(a.dept || '')}" placeholder="部门"
+                 oninput="updateApprover(${i}, 'dept', this.value)">
+          <button class="ap-icon-btn danger" onclick="removeApprover(${i})">×</button>
+        </div>`;
+      }).join('') || '<div style="font-size:12px;color:var(--text-tertiary);padding:6px 0;">暂无会签成员，请添加</div>';
+    }
+
+    function addApprover() {
+      const n = draft.nodes[activeNodeIdx];
+      if (!n.approvers) n.approvers = [];
+      n.approvers.push({ role: 'risk_manager', dept: '风控部' });
+      renderApprovers(n);
+      renderNodes();
+    }
+
+    function updateApprover(i, key, val) {
+      const n = draft.nodes[activeNodeIdx];
+      n.approvers[i][key] = val;
+      if (key === 'role') n.approvers[i].dept = AE.ROLES[val].dept;
+      renderNodes();
+    }
+
+    function removeApprover(i) {
+      const n = draft.nodes[activeNodeIdx];
+      n.approvers.splice(i, 1);
+      renderApprovers(n);
+      renderNodes();
+    }
+
+    // ---- 条件规则 ----
+    function renderRules(n) {
+      const box = document.getElementById('ruleBox');
+      if (!box) return;
+      const fieldOpts = Object.keys(AE.FIELD_LABELS)
+        .map(k => `<option value="${k}" ${(n.condition[i]||{}).field === k ? 'selected' : ''}>${AE.FIELD_LABELS[k]}</option>`).join('');
+      const opOpts = Object.keys(AE.OP_LABELS)
+        .map(k => `<option value="${k}">${AE.OP_LABELS[k]}</option>`).join('');
+      box.innerHTML = (n.condition || []).map((r, i) => `
+        <div class="ap-rule-row">
+          <select class="select" onchange="updateRule(${i},'field',this.value)">${fieldOpts}</select>
+          <select class="select" onchange="updateRule(${i},'operator',this.value)">
+            ${Object.keys(AE.OP_LABELS).map(k => `<option value="${k}" ${r.operator===k?'selected':''}>${AE.OP_LABELS[k]}</option>`).join('')}
+          </select>
+          <input type="number" class="input" value="${r.value}" oninput="updateRule(${i},'value',Number(this.value))">
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin:-2px 0 8px 0;">
+          <span style="font-size:11px;color:var(--text-tertiary);">命中时追加节点：</span>
+          <select class="select" style="flex:1;" onchange="updateRule(${i},'thenRole',this.value)">
+            ${Object.keys(AE.ROLES).filter(k=>k!=='submitter').map(k =>
+              `<option value="${k}" ${(r.then||[])[0]===k?'selected':''}>${AE.esc(AE.ROLES[k].label)}</option>`).join('')}
+          </select>
+          <button class="ap-icon-btn danger" onclick="removeRule(${i})">×</button>
+        </div>`).join('') || '<div style="font-size:12px;color:var(--text-tertiary);padding:6px 0;">暂无条件规则</div>';
+    }
+
+    function addRule() {
+      const n = draft.nodes[activeNodeIdx];
+      if (!n.condition) n.condition = [];
+      n.condition.push({ field: 'amount', operator: 'gt', value: 1000000, then: ['gm'] });
+      renderRules(n);
+    }
+
+    function updateRule(i, key, val) {
+      const n = draft.nodes[activeNodeIdx];
+      if (key === 'thenRole') n.condition[i].then = [val];
+      else n.condition[i][key] = val;
+      renderNodes();
+    }
+
+    function removeRule(i) {
+      draft.nodes[activeNodeIdx].condition.splice(i, 1);
+      renderRules(draft.nodes[activeNodeIdx]);
+      renderNodes();
+    }
+
+    // ================================================================
+    // 适用模块
+    // ================================================================
+    function renderModulePicker() {
+      const box = document.getElementById('modulePicker');
+      box.innerHTML = ALL_MODULES.map(m => {
+        const on = (draft.applicableModules || []).indexOf(m) >= 0;
+        return `<label style="display:inline-flex;align-items:center;gap:4px;font-size:12px;
+                        padding:3px 8px;border:1px solid var(--border-color);border-radius:4px;
+                        cursor:pointer;background:${on ? '#EFF6FF' : '#fff'};
+                        color:${on ? '#1E40AF' : 'var(--text-secondary)'};">
+          <input type="checkbox" ${on ? 'checked' : ''} style="margin:0;"
+                 onchange="toggleModule('${m}', this.checked)"> ${AE.esc(m)}
+        </label>`;
+      }).join('');
+    }
+
+    function toggleModule(m, on) {
+      if (!draft.applicableModules) draft.applicableModules = [];
+      const i = draft.applicableModules.indexOf(m);
+      if (on && i < 0) draft.applicableModules.push(m);
+      if (!on && i >= 0) draft.applicableModules.splice(i, 1);
+      renderModulePicker();
+    }
+
+    // ================================================================
+    // 预览
+    // ================================================================
+    function previewFlow() {
+      document.getElementById('previewBox').style.display = '';
+      renderPreview();
+      document.getElementById('previewBox').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderPreview() {
+      const amt = Number(document.getElementById('previewAmount').value || 0);
+      document.getElementById('previewChain').innerHTML =
+        AE.renderFlowChain(draft, { amount: amt });
+    }
+
+    // ================================================================
+    // 保存 / 操作
+    // ================================================================
+    function saveDraft() {
+      draft.name = document.getElementById('edFlowName').value || '未命名流程';
+      draft.desc = document.getElementById('edFlowDesc').value || '';
+      draft.status = document.getElementById('edFlowStatus').value;
+
+      // 校验：必须保留发起 + 归档
+      if (!draft.nodes.some(n => n.type === 'start')) { alert('必须保留「提交申请」发起节点'); return; }
+      if (!draft.nodes.some(n => n.auto)) { alert('必须保留「归档完成」节点'); return; }
+      if (!draft.name.trim()) { alert('请填写流程名称'); return; }
+      // 校验：会签必须有成员
+      for (const n of draft.nodes) {
+        if (n.type === 'parallel_all' && (!n.approvers || !n.approvers.length)) {
+          alert(`会签节点「${n.name}」至少需要 1 名会签人`); return;
+        }
+      }
+
+      AE.saveFlow(draft);
+      renderList();
+      toast('流程已保存');
+    }
+
+    function copyFlow(id) {
+      const f = AE.getFlow(id);
+      AE.duplicateFlow(id, f.name + ' - 副本');
+      renderList();
+      toast('已复制流程');
+    }
+
+    function toggleStatus(id) {
+      const f = AE.getFlow(id);
+      f.status = f.status === 'enabled' ? 'disabled' : 'enabled';
+      AE.saveFlow(f);
+      renderList();
+    }
+
+    function removeFlow(id) {
+      const f = AE.getFlow(id);
+      if (!confirm(`确定删除流程「${f.name}」？\n\n删除后引用该流程的业务模块需重新配置。`)) return;
+      AE.deleteFlow(id);
+      renderList();
+      toast('流程已删除');
+    }
+
+    function toast(msg) {
+      const t = document.createElement('div');
+      t.textContent = msg;
+      t.style.cssText = 'position:fixed;top:20px;left:50%;transform:translateX(-50%);' +
+        'background:var(--color-primary);color:#fff;padding:8px 18px;border-radius:6px;' +
+        'font-size:13px;z-index:9999;box-shadow:0 4px 12px rgba(0,0,0,.2);';
+      document.body.appendChild(t);
+      setTimeout(() => t.remove(), 2000);
+    }
+
+    // ================================================================
+    // 初始化
+    // ================================================================
+    renderList();
+  </script>
+</body>
+</html>

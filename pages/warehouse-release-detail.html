@@ -381,45 +381,9 @@
                 <div class="approval-header-title">审批进度</div>
                 <div class="approval-header-meta" id="whApprovalHeaderMeta">共 5 个节点，当前进行中 ①</div>
               </div>
-              <div class="timeline" id="whApprovalTimeline">
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">① 提交申请</div>
-                    <div class="timeline-meta">杜慧杰 · 2024-03-06 14:14</div>
-                    <div class="timeline-comment">放货指令已生成，提交审批</div>
-                  </div>
-                </div>
-                <div class="timeline-item current">
-                  <div class="timeline-dot current">②</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">② 一级审批（业务部）</div>
-                    <div class="timeline-meta">审批人：张爽（业务部负责人）</div>
-                    <div class="timeline-comment">需在提交后自动触发</div>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">③</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">③ 二级审批（财务部）</div>
-                    <div class="timeline-meta">需在一级审批通过后自动触发</div>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">④</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">④ 三级审批（风控部）</div>
-                    <div class="timeline-meta">需在二级审批通过后自动触发</div>
-                  </div>
-                </div>
-                <div class="timeline-item">
-                  <div class="timeline-dot">⑤</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">⑤ 终审（总经理）</div>
-                    <div class="timeline-meta">放货指令生效，需在三级审批通过后自动触发</div>
-                  </div>
-                </div>
-              </div>
+              <div class="timeline" id="whApprovalTimeline" data-approval-engine="1" data-approval-migrated="5">
+              <!-- 审批节点由通用审批引擎渲染（v1.0.0 · shared/js/approval-engine.js） -->
+            </div>
             </div>
             <div class="approval-aside">
               <div class="approval-aside-card">
@@ -497,6 +461,9 @@
     <button class="btn btn-danger-outline" onclick="alert('驳回审批（mock，v1.7.99.191）\n放货指令编号：' + (document.getElementById('whContractNo')?.textContent || ''))">驳回审批</button>
   </div>
 
+  <!-- 通用审批引擎 v1.0.0 -->
+  <script src="../shared/js/approval-engine.js"></script>
+  <script src="../shared/js/approval-config.js"></script>
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
   <script src="../shared/js/filter-chips.js"></script>
@@ -550,5 +517,44 @@
     })();
   </script>
 <script src="../assets/js/pin-annotation.js"></script>
+
+
+  <!-- ===== 通用审批引擎挂载（v1.0.0）===== -->
+  <script>
+  (function () {
+    function bootApproval() {
+      var el = document.getElementById('whApprovalTimeline');
+      if (!el || !window.ApprovalEngine) return;
+
+      // 审批进度：优先读 URL 参数 ?step=N（0-based），缺省读当前业务单据状态
+      var q = new URLSearchParams(location.search);
+      var step = q.get('step');
+      var status = q.get('status') || '';
+      var opts = {};
+
+      if (step !== null && step !== '') {
+        opts.currentIdx = parseInt(step, 10);
+      } else if (/待提交|草稿|未提交|暂存/.test(status)) {
+        // 尚未发起：停在发起节点
+        opts.currentIdx = 0;
+      } else if (/已通过|已完成|已完结|执行中|审批中|待审批/.test(status)) {
+        // 已流转/审批中：默认展示到会签节点进行中
+        opts.currentIdx = 2;
+      } else {
+        // 未传状态参数：停在业务审批
+        opts.currentIdx = 1;
+      }
+      // 单据金额（条件分支用）
+      var amt = q.get('amount');
+      if (amt) opts.formData = { amount: Number(amt) };
+
+      window.ApprovalEngine.mount(el, opts);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootApproval);
+    } else { bootApproval(); }
+    window.addEventListener('load', bootApproval);
+  })();
+  </script>
 </body>
 </html>

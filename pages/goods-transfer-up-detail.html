@@ -292,48 +292,9 @@
                 <div class="approval-header-title">审批进度</div>
                 <div class="approval-header-meta" id="gtApprovalHeaderMeta">共 5 个节点，全部通过</div>
               </div>
-              <div class="timeline" id="gtApprovalTimeline">
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">业务部审批</div>
-                    <div class="timeline-meta">张爽 · 2025-10-26 14:35</div>
-                    <div class="timeline-comment">货转信息已核对，合同有效，同意开票</div>
-                  </div>
-                </div>
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">财务部审批</div>
-                    <div class="timeline-meta">李娜 · 2025-10-26 16:12</div>
-                    <div class="timeline-comment">收付款信息核实无误</div>
-                  </div>
-                </div>
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">风控部审批</div>
-                    <div class="timeline-meta">王伟 · 2025-10-27 09:08</div>
-                    <div class="timeline-comment">货权清晰，敞口符合授信，无风险</div>
-                  </div>
-                </div>
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">分管副总审批</div>
-                    <div class="timeline-meta">赵磊 · 2025-10-27 14:45</div>
-                    <div class="timeline-comment">同意</div>
-                  </div>
-                </div>
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">总经理审批</div>
-                    <div class="timeline-meta">孙明 · 2025-10-28 10:00</div>
-                    <div class="timeline-comment">审批通过，货转单生效</div>
-                  </div>
-                </div>
-              </div>
+              <div class="timeline" id="gtApprovalTimeline" data-approval-engine="1" data-approval-migrated="5">
+              <!-- 审批节点由通用审批引擎渲染（v1.0.0 · shared/js/approval-engine.js） -->
+            </div>
             </div>
 
             <div class="approval-aside">
@@ -370,7 +331,9 @@
 
   <script src="../assets/js/mockData.js"></script>
   <script src="../assets/js/app.js"></script>
-  <script>
+    <script src="../shared/js/approval-engine.js"></script>
+  <script src="../shared/js/approval-config.js"></script>
+<script>
     // v1.7.99.176：货转详情页 2 tab 切换（货转信息 / 审批管理）
     (function() {
       var tabs = document.querySelectorAll('.gt-tab');
@@ -440,5 +403,44 @@
     }
   </script>
 <script src="../assets/js/pin-annotation.js"></script>
+
+
+  <!-- ===== 通用审批引擎挂载（v1.0.0）===== -->
+  <script>
+  (function () {
+    function bootApproval() {
+      var el = document.getElementById('gtApprovalTimeline');
+      if (!el || !window.ApprovalEngine) return;
+
+      // 审批进度：优先读 URL 参数 ?step=N（0-based），缺省读当前业务单据状态
+      var q = new URLSearchParams(location.search);
+      var step = q.get('step');
+      var status = q.get('status') || '';
+      var opts = {};
+
+      if (step !== null && step !== '') {
+        opts.currentIdx = parseInt(step, 10);
+      } else if (/待提交|草稿|未提交|暂存/.test(status)) {
+        // 尚未发起：停在发起节点
+        opts.currentIdx = 0;
+      } else if (/已通过|已完成|已完结|执行中|审批中|待审批/.test(status)) {
+        // 已流转/审批中：默认展示到会签节点进行中
+        opts.currentIdx = 2;
+      } else {
+        // 未传状态参数：停在业务审批
+        opts.currentIdx = 1;
+      }
+      // 单据金额（条件分支用）
+      var amt = q.get('amount');
+      if (amt) opts.formData = { amount: Number(amt) };
+
+      window.ApprovalEngine.mount(el, opts);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootApproval);
+    } else { bootApproval(); }
+    window.addEventListener('load', bootApproval);
+  })();
+  </script>
 </body>
 </html>

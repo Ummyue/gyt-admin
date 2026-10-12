@@ -99,7 +99,14 @@
             { label: '盯市价格管理', file: 'market-price.html' }
           ]
         },
-        { label: '追保函管理', file: 'bond-letter.html' }
+        { label: '追保函管理', file: 'bond-letter.html' },
+        {
+          label: '审批管理', file: 'approval-flow-list.html',
+          children: [
+            { label: '审批流程配置', file: 'approval-flow-list.html' },
+            { label: '审批流程监控', file: 'approval-monitor.html' }
+          ]
+        }
       ]
     },
     '仓储管理': {

@@ -681,104 +681,9 @@
                 <div class="approval-header-title">审批进度</div>
                 <div class="approval-header-meta">共 5 个节点，当前进行中 ②</div>
               </div>
-              <div class="timeline">
-                <!-- 节点 1：提交申请（已完成）-->
-                <div class="timeline-item done">
-                  <div class="timeline-dot"><span class="timeline-dot-num">①</span></div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">
-                      ① 提交申请
-                      <span class="chip chip-green">已通过</span>
-                    </div>
-                    <div class="timeline-actor">
-                      <div class="avatar">张</div>
-                      <span><strong>张磊</strong>（运营方）提交准入申请</span>
-                    </div>
-                    <div class="timeline-meta">
-                      <span>🕐 2026-07-19 16:45:23</span>
-                      <span>📎 附件 4 份</span>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 节点 2：二级会签（进行中 1/2）-->
-                <div class="timeline-item current">
-                  <div class="timeline-dot"><span class="timeline-dot-num">②</span></div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">
-                      ① 二级会签 · 风控部 + 财务部
-                      <span class="chip chip-blue">进行中 1/2</span>
-                      <span class="chip chip-gray">会签 OR</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
-                      会签规则：任一人通过即通过（风控 OR 财务）；全部驳回则驳回
-                    </div>
-                    <!-- 子项：王浩·风控部负责人（已通过）-->
-                    <div class="timeline-subitem">
-                      <div class="timeline-subitem-header">
-                        <div class="timeline-subitem-name">
-                          <div class="avatar" style="background: #10B981;">王</div>
-                          <span><strong>王浩</strong> · 风控部负责人</span>
-                        </div>
-                        <div style="display: flex; gap: 6px; align-items: center;">
-                          <span class="chip chip-green">已通过</span>
-                          <span style="font-size: 11px; color: var(--text-tertiary);">2026-07-20 09:15</span>
-                        </div>
-                      </div>
-                      <div class="timeline-subitem-opinion">
-                        ✓ 可该风险可控（180 万贷款纠纷已结），财务健康度良好，同意准入。
-                      </div>
-                    </div>
-                    <!-- 子项：宋美玲·财务总监（审批中 已读）-->
-                    <div class="timeline-subitem">
-                      <div class="timeline-subitem-header">
-                        <div class="timeline-subitem-name">
-                          <div class="avatar" style="background: #F59E0B;">宋</div>
-                          <span><strong>宋美玲</strong> · 财务总监</span>
-                        </div>
-                        <div style="display: flex; gap: 6px; align-items: center;">
-                          <span class="chip chip-orange">审批中 · 已读</span>
-                        </div>
-                      </div>
-                      <div class="timeline-subitem-opinion">
-                        等待审批人处理，预计 2 小时内回复
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 节点 3：三级审批·总经理（待开始）-->
-                <div class="timeline-item pending">
-                  <div class="timeline-dot"><span class="timeline-dot-num">③</span></div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">
-                      ③ 三级审批 · 总经理
-                      <span class="chip chip-gray">待开始</span>
-                    </div>
-                    <div class="timeline-actor">
-                      <div class="avatar" style="background: #94A3B8;">李</div>
-                      <span>审批人：<strong>李娜</strong> · 平台总经理</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
-                      需在二级会签通过后自动触发
-                    </div>
-                  </div>
-                </div>
-
-                <!-- 节点 4：准入完成（待开始）-->
-                <div class="timeline-item pending">
-                  <div class="timeline-dot"><span class="timeline-dot-num">④</span></div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">
-                      ④ 准入完成
-                      <span class="chip chip-gray">待开始</span>
-                    </div>
-                    <div style="font-size: 12px; color: var(--text-tertiary); margin-top: 4px;">
-                      三级审批通过后自动归档，企业获得准入凭证
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <div class="timeline" id="approvalTimeline_customer-apply" data-approval-engine="1" data-approval-migrated="4">
+              <!-- 审批节点由通用审批引擎渲染（v1.0.0 · shared/js/approval-engine.js） -->
+            </div>
             </div>
 
             <!-- 右：关键指标 + 实时活动 + 催办 -->
@@ -895,6 +800,9 @@
     </div>
   </div>
 
+  <!-- 通用审批引擎 v1.0.0 -->
+  <script src="../shared/js/approval-engine.js"></script>
+  <script src="../shared/js/approval-config.js"></script>
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
   <script>
@@ -1288,5 +1196,44 @@
   </div>
   <!-- /main-content -->
 <script src="../assets/js/pin-annotation.js"></script>
+
+
+  <!-- ===== 通用审批引擎挂载（v1.0.0）===== -->
+  <script>
+  (function () {
+    function bootApproval() {
+      var el = document.getElementById('approvalTimeline_customer-apply');
+      if (!el || !window.ApprovalEngine) return;
+
+      // 审批进度：优先读 URL 参数 ?step=N（0-based），缺省读当前业务单据状态
+      var q = new URLSearchParams(location.search);
+      var step = q.get('step');
+      var status = q.get('status') || '';
+      var opts = {};
+
+      if (step !== null && step !== '') {
+        opts.currentIdx = parseInt(step, 10);
+      } else if (/待提交|草稿|未提交|暂存/.test(status)) {
+        // 尚未发起：停在发起节点
+        opts.currentIdx = 0;
+      } else if (/已通过|已完成|已完结|执行中|审批中|待审批/.test(status)) {
+        // 已流转/审批中：默认展示到会签节点进行中
+        opts.currentIdx = 2;
+      } else {
+        // 未传状态参数：停在业务审批
+        opts.currentIdx = 1;
+      }
+      // 单据金额（条件分支用）
+      var amt = q.get('amount');
+      if (amt) opts.formData = { amount: Number(amt) };
+
+      window.ApprovalEngine.mount(el, opts);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootApproval);
+    } else { bootApproval(); }
+    window.addEventListener('load', bootApproval);
+  })();
+  </script>
 </body>
 </html>

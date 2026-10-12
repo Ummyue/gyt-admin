@@ -283,45 +283,9 @@
                 <div class="approval-header-title">审批进度</div>
                 <div class="approval-header-meta">共 5 个节点，已通过 1 个</div>
               </div>
-              <div class="timeline">
-                <div class="timeline-item done">
-                  <div class="timeline-dot done">✓</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">业务部审批</div>
-                    <div class="timeline-meta">李娜 · 2026-12-15 10:35</div>
-                    <div class="timeline-comment">退款单已核对，原付款凭证齐全</div>
-                  </div>
-                </div>
-                <div class="timeline-item current">
-                  <div class="timeline-dot current">2</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">财务部审批</div>
-                    <div class="timeline-meta">王强 · 进行中</div>
-                    <div class="timeline-comment">等待审批人处理，已等待 2 小时 10 分钟</div>
-                  </div>
-                </div>
-                <div class="timeline-item pending">
-                  <div class="timeline-dot pending">③</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">风控部审批</div>
-                    <div class="timeline-meta">需在财务部审批通过后自动触发</div>
-                  </div>
-                </div>
-                <div class="timeline-item pending">
-                  <div class="timeline-dot pending">④</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">分管副总审批</div>
-                    <div class="timeline-meta">需在风控部审批通过后自动触发</div>
-                  </div>
-                </div>
-                <div class="timeline-item pending">
-                  <div class="timeline-dot pending">⑤</div>
-                  <div class="timeline-content">
-                    <div class="timeline-title">总经理审批</div>
-                    <div class="timeline-meta">需在分管副总审批通过后自动触发</div>
-                  </div>
-                </div>
-              </div>
+              <div class="timeline" id="approvalTimeline_refund-detail" data-approval-engine="1" data-approval-migrated="5">
+              <!-- 审批节点由通用审批引擎渲染（v1.0.0 · shared/js/approval-engine.js） -->
+            </div>
             </div>
 
             <div class="approval-aside">
@@ -371,7 +335,9 @@
   <script src="../assets/js/mockData.js"></script>
   <script src="../assets/js/app.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
-  <script>
+    <script src="../shared/js/approval-engine.js"></script>
+  <script src="../shared/js/approval-config.js"></script>
+<script>
     function copyRefundNo() {
       var text = document.getElementById('refundNo').textContent.trim();
       if (navigator.clipboard) {
@@ -448,5 +414,44 @@
     })();
   </script>
 <script src="../assets/js/pin-annotation.js"></script>
+
+
+  <!-- ===== 通用审批引擎挂载（v1.0.0）===== -->
+  <script>
+  (function () {
+    function bootApproval() {
+      var el = document.getElementById('approvalTimeline_refund-detail');
+      if (!el || !window.ApprovalEngine) return;
+
+      // 审批进度：优先读 URL 参数 ?step=N（0-based），缺省读当前业务单据状态
+      var q = new URLSearchParams(location.search);
+      var step = q.get('step');
+      var status = q.get('status') || '';
+      var opts = {};
+
+      if (step !== null && step !== '') {
+        opts.currentIdx = parseInt(step, 10);
+      } else if (/待提交|草稿|未提交|暂存/.test(status)) {
+        // 尚未发起：停在发起节点
+        opts.currentIdx = 0;
+      } else if (/已通过|已完成|已完结|执行中|审批中|待审批/.test(status)) {
+        // 已流转/审批中：默认展示到会签节点进行中
+        opts.currentIdx = 2;
+      } else {
+        // 未传状态参数：停在业务审批
+        opts.currentIdx = 1;
+      }
+      // 单据金额（条件分支用）
+      var amt = q.get('amount');
+      if (amt) opts.formData = { amount: Number(amt) };
+
+      window.ApprovalEngine.mount(el, opts);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', bootApproval);
+    } else { bootApproval(); }
+    window.addEventListener('load', bootApproval);
+  })();
+  </script>
 </body>
 </html>
