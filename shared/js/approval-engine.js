@@ -1,11 +1,17 @@
-// ===== 通用审批流程引擎 v1.0.0 =====
+// ===== 通用审批流程引擎 v1.1.0 =====
 // 目标：把各业务模块硬编码的审批节点，抽象为「配置驱动 + 统一渲染」
 // 能力：串行审批 / 并行会签（全部通过）/ 条件分支（金额阈值）
 // 设计原则：
-//   1. 配置与渲染分离 —— 配置是纯数据（FLOW_TEMPLATES），渲染是纯函数
+//   1. 配置与渲染分离 —— 配置是纯数据，渲染是纯函数
 //   2. 零依赖 —— 不引第三方库，复用 assets/css/approval.css 的 timeline 样式
 //   3. 可降级 —— 业务页面可通过 window.APPROVAL_CONFIG_BY_PAGE 覆盖默认配置
-//   4. 无侵入 —— 业务页面只需 1 行 <script> + 1 个容器 div
+//   4. 无侵入 —— 业务页面只需 1 个容器 div + 1 行 mount()
+//
+// v1.1.0 变更（2026-10-15）：
+//   · 节点 slaHours（审批时限）下线，改为 remind { enabled, afterHours } 提醒规则
+//   · 节点 approvers 由「角色」改为「人员」（PEOPLE 目录，姓名 + 脱敏手机号）
+//   · flow.applicableModules 改为 flow.applyModules，支持子模块级联
+//   · 持久化 key 升到 v2（v1 结构不兼容，不做迁移）
 
 (function (global) {
   'use strict';
@@ -14,117 +20,244 @@
   // 一、审批节点类型
   // ================================================================
   const NODE_TYPE = {
-    START: 'start',        // 发起（系统自动）
-    SERIAL: 'serial',      // 串行审批：单人依次审批
+    START: 'start',              // 发起（系统自动）
+    SERIAL: 'serial',            // 串行审批：单人依次审批
     PARALLEL_ALL: 'parallel_all', // 并行会签：全部通过才过
-    BRANCH: 'branch'       // 条件分支：按条件走不同路径
+    BRANCH: 'branch'             // 条件分支：按条件走不同路径
   };
 
   const NODE_STATUS = {
-    DONE: 'done',          // 已通过
-    REJECTED: 'rejected',  // 已驳回
-    CURRENT: 'current',    // 进行中
-    PENDING: 'pending',    // 待开始
-    SKIPPED: 'skipped'     // 已跳过（条件不满足）
+    DONE: 'done',
+    REJECTED: 'rejected',
+    CURRENT: 'current',
+    PENDING: 'pending',
+    SKIPPED: 'skipped'
   };
 
   // ================================================================
-  // 二、审批角色字典（可扩展）
+  // 二、平台人员目录（原型 Mock）
+  // 说明：接入真实组织架构后，只需替换本表的数据来源
+  // 隐私：手机号一律脱敏为「138 0000 XXXX」形式，不含真实号码
+  // ================================================================
+  const PEOPLE = {
+    // 业务部
+    u_biz_01: { id: 'u_biz_01', name: '张磊',   phone: '138 0000 XXXX', dept: '业务部',     post: '业务经理'   },
+    u_biz_02: { id: 'u_biz_02', name: '李娜',   phone: '139 0000 XXXX', dept: '业务部',     post: '高级业务经理' },
+    u_biz_03: { id: 'u_biz_03', name: '王浩',   phone: '137 0000 XXXX', dept: '业务部',     post: '业务专员'   },
+    u_biz_04: { id: 'u_biz_04', name: '陈晨',   phone: '136 0000 XXXX', dept: '业务部',     post: '业务专员'   },
+    // 风控部
+    u_risk_01: { id: 'u_risk_01', name: '赵敏',   phone: '135 0000 XXXX', dept: '风控部',     post: '风控经理'   },
+    u_risk_02: { id: 'u_risk_02', name: '孙丽',   phone: '134 0000 XXXX', dept: '风控部',     post: '风控专员'   },
+    u_risk_03: { id: 'u_risk_03', name: '郑浩',   phone: '133 0000 XXXX', dept: '风控部',     post: '风控专员'   },
+    // 财务部
+    u_fin_01: { id: 'u_fin_01', name: '周涛',   phone: '138 0001 XXXX', dept: '财务部',     post: '财务经理'   },
+    u_fin_02: { id: 'u_fin_02', name: '吴静',   phone: '139 0001 XXXX', dept: '财务部',     post: '财务主管'   },
+    u_fin_03: { id: 'u_fin_03', name: '冯雪',   phone: '137 0001 XXXX', dept: '财务部',     post: '会计'       },
+    // 法务部
+    u_legal_01: { id: 'u_legal_01', name: '许文静', phone: '136 0001 XXXX', dept: '法务部',   post: '法务经理'   },
+    u_legal_02: { id: 'u_legal_02', name: '何俊',   phone: '135 0001 XXXX', dept: '法务部',   post: '法务专员'   },
+    // 仓储部
+    u_wh_01: { id: 'u_wh_01', name: '马强',   phone: '134 0001 XXXX', dept: '仓储部',     post: '仓储经理'   },
+    u_wh_02: { id: 'u_wh_02', name: '高倩',   phone: '133 0001 XXXX', dept: '仓储部',     post: '放货专员'   },
+    // 总经理
+    u_gm_01: { id: 'u_gm_01', name: '秦建国', phone: '138 0002 XXXX', dept: '总经理',     post: '总经理'     },
+    // 运营管理部
+    u_admin_01: { id: 'u_admin_01', name: '张爽', phone: '139 0002 XXXX', dept: '运营管理部', post: '系统管理员' }
+  };
+
+  function getPerson(id) {
+    return (id && PEOPLE[id]) || null;
+  }
+
+  function listPeople(dept) {
+    return Object.keys(PEOPLE)
+      .map(k => PEOPLE[k])
+      .filter(p => !dept || p.dept === dept);
+  }
+
+  /** 下拉展示文案：完整姓名 + 脱敏手机号 */
+  function personLabel(id) {
+    const p = getPerson(id);
+    return p ? (p.name + '  ' + p.phone) : '—';
+  }
+
+  // ================================================================
+  // 三、审批环节（roleKey）
+  // 说明：环节只用于「条件分支指向」和「默认配色/默认人员」，
+  //       实际审批人一律以节点上的 approver / approvers 为准
   // ================================================================
   const ROLES = {
-    submitter:      { label: '提交申请',   dept: '发起人',   color: '#64748B' },
-    biz_manager:    { label: '业务审批',   dept: '业务部',   color: '#2563EB' },
-    risk_manager:   { label: '风控审批',   dept: '风控部',   color: '#7C3AED' },
-    finance_manager:{ label: '财务审批',   dept: '财务部',   color: '#059669' },
-    legal_review:   { label: '合规审查',   dept: '法务部',   color: '#0891B2' },
-    gm:             { label: '总经理审批', dept: '总经理',   color: '#DC2626' }
+    submitter:       { label: '提交申请', dept: '发起人',   color: '#64748B' },
+    biz_manager:     { label: '业务审批', dept: '业务部',   color: '#2563EB', defaultPerson: 'u_biz_01'   },
+    risk_manager:    { label: '风控审批', dept: '风控部',   color: '#7C3AED', defaultPerson: 'u_risk_01'  },
+    finance_manager: { label: '财务审批', dept: '财务部',   color: '#059669', defaultPerson: 'u_fin_01'   },
+    legal_review:    { label: '合规审查', dept: '法务部',   color: '#0891B2', defaultPerson: 'u_legal_01' },
+    warehouse:       { label: '放货审批', dept: '仓储部',   color: '#EA580C', defaultPerson: 'u_wh_01'    },
+    gm:              { label: '总经理审批', dept: '总经理', color: '#DC2626', defaultPerson: 'u_gm_01'    }
+  };
+
+  /** 取节点展示色：优先人员部门色 → 环节色 → 灰 */
+  function nodeColorOf(node) {
+    const p = node && node.approver ? getPerson(node.approver) : null;
+    if (p && DEPT_COLORS[p.dept]) return DEPT_COLORS[p.dept];
+    if (node && node.roleKey && ROLES[node.roleKey]) return ROLES[node.roleKey].color;
+    if (node && node.role && ROLES[node.role]) return ROLES[node.role].color;
+    return '#64748B';
+  }
+
+  const DEPT_COLORS = {
+    '业务部': '#2563EB',
+    '风控部': '#7C3AED',
+    '财务部': '#059669',
+    '法务部': '#0891B2',
+    '仓储部': '#EA580C',
+    '总经理': '#DC2626',
+    '运营管理部': '#64748B',
+    '发起人': '#64748B'
   };
 
   // ================================================================
-  // 三、内置流程模板（从现有业务页面反推的审批规则）
+  // 四、应用模块（含子模块级联）
   // ================================================================
-  // 条件分支示例：金额 > 100 万增加总经理节点
+  const APPLY_MODULES = [
+    { key: 'project',        label: '项目准入' },
+    { key: 'contract',       label: '合同管理',   children: [
+      { key: 'contract_purchase', label: '采购合同' },
+      { key: 'contract_sales',    label: '销售合同' }
+    ]},
+    { key: 'goods_transfer', label: '货转管理',   children: [
+      { key: 'transfer_up',   label: '上游货转' },
+      { key: 'transfer_down', label: '下游货转' }
+    ]},
+    { key: 'payment',        label: '付款管理' },
+    { key: 'refund',         label: '退款管理' },
+    { key: 'settlement',     label: '结算单管理', children: [
+      { key: 'settlement_up',   label: '上游结算单' },
+      { key: 'settlement_down', label: '下游结算单' }
+    ]},
+    { key: 'bond_letter',    label: '追保函管理' },
+    { key: 'release',        label: '放货管理' }
+  ];
+
+  function getModule(key) {
+    for (var i = 0; i < APPLY_MODULES.length; i++) {
+      const m = APPLY_MODULES[i];
+      if (m.key === key) return m;
+      if (m.children) {
+        for (var j = 0; j < m.children.length; j++) {
+          if (m.children[j].key === key) return { key: key, label: m.children[j].label, parent: m.key, parentLabel: m.label };
+        }
+      }
+    }
+    return null;
+  }
+
+  /** applyModules 数组 → 展示文案 */
+  function applyModulesText(list) {
+    if (!list || !list.length) return '—';
+    return list.map(function (entry) {
+      var key = typeof entry === 'string' ? entry : entry.key;
+      var kids = (typeof entry === 'string') ? null : entry.children;
+      var mod = getModule(key);
+      if (!mod) return key;
+      if (kids && kids.length) {
+        var kidLabels = kids.map(function (k) {
+          var c = getModule(k);
+          return c ? c.label : k;
+        });
+        return mod.label + '（' + kidLabels.join(' / ') + '）';
+      }
+      return mod.label;
+    }).join('、');
+  }
+
+  // ================================================================
+  // 五、内置流程模板
+  // ================================================================
   const DEFAULT_BRANCH_RULES = [
     { field: 'amount', operator: 'gt', value: 1000000, then: ['gm'] }
   ];
 
   const FLOW_TEMPLATES = {
-    // 通用默认流程（金额条件分支）
     standard: {
       id: 'standard',
       name: '标准审批流程',
       desc: '发起 → 业务审批 → 风控+财务会签 →（金额 > 100 万加总经理）→ 完成',
       status: 'enabled',
-      applicableModules: ['通用'],
+      applyModules: [{ key: 'project' }],
       updatedAt: '2026-10-12 10:30',
       updatedBy: '张爽',
       nodes: [
-        { id: 'n1', type: NODE_TYPE.START, name: '提交申请', role: 'submitter' },
-        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', role: 'biz_manager', slaHours: 24 },
+        { id: 'n1', type: NODE_TYPE.START, name: '提交申请', roleKey: 'submitter' },
+        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
+          approver: 'u_biz_01', remind: { enabled: true, afterHours: 24 } },
         {
-          id: 'n3', type: NODE_TYPE.PARALLEL_ALL, name: '风控财务会签',
-          role: 'risk_manager',
-          approvers: [
-            { role: 'risk_manager',    dept: '风控部' },
-            { role: 'finance_manager', dept: '财务部' }
-          ],
-          slaHours: 48,
+          id: 'n3', type: NODE_TYPE.PARALLEL_ALL, name: '风控财务会签', roleKey: 'risk_manager',
+          approvers: ['u_risk_01', 'u_fin_01'],
+          remind: { enabled: true, afterHours: 48 },
           desc: '风控、财务全部通过才算通过'
         },
         { id: 'n4', type: NODE_TYPE.BRANCH, name: '金额分支', condition: DEFAULT_BRANCH_RULES },
-        { id: 'n5', type: NODE_TYPE.SERIAL, name: '归档完成', role: 'system', auto: true }
+        { id: 'n5', type: NODE_TYPE.SERIAL, name: '归档完成', roleKey: 'system', auto: true }
       ]
     },
 
-    // 简化流程（小额免风控）
     simple: {
       id: 'simple',
       name: '简易审批流程',
       desc: '发起 → 业务审批 → 财务审批 → 完成（适用小额单据）',
       status: 'enabled',
-      applicableModules: ['合同管理', '收发货管理'],
+      applyModules: [
+        { key: 'goods_transfer', children: ['transfer_up', 'transfer_down'] },
+        { key: 'release' }
+      ],
       updatedAt: '2026-10-12 09:15',
       updatedBy: '李娜',
       nodes: [
-        { id: 'n1', type: NODE_TYPE.START, name: '提交申请', role: 'submitter' },
-        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', role: 'biz_manager', slaHours: 24 },
-        { id: 'n3', type: NODE_TYPE.SERIAL, name: '财务审批', role: 'finance_manager', slaHours: 48 },
-        { id: 'n4', type: NODE_TYPE.SERIAL, name: '归档完成', role: 'system', auto: true }
+        { id: 'n1', type: NODE_TYPE.START, name: '提交申请', roleKey: 'submitter' },
+        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
+          approver: 'u_biz_03', remind: { enabled: true, afterHours: 24 } },
+        { id: 'n3', type: NODE_TYPE.SERIAL, name: '财务审批', roleKey: 'finance_manager',
+          approver: 'u_fin_02', remind: { enabled: true, afterHours: 48 } },
+        { id: 'n4', type: NODE_TYPE.SERIAL, name: '归档完成', roleKey: 'system', auto: true }
       ]
     },
 
-    // 高风险流程（追保函 / 保证金调整，金额大 + 合规）
     highRisk: {
       id: 'highRisk',
       name: '高风险审批流程',
       desc: '发起 → 业务审批 → 风控+财务会签 → 合规审查 → 总经理审批 → 完成',
       status: 'enabled',
-      applicableModules: ['追保函管理', '资金管理'],
+      applyModules: [
+        { key: 'contract', children: ['contract_purchase', 'contract_sales'] },
+        { key: 'payment' },
+        { key: 'refund' },
+        { key: 'bond_letter' }
+      ],
       updatedAt: '2026-10-11 17:40',
       updatedBy: '王浩',
       nodes: [
-        { id: 'n1', type: NODE_TYPE.START, name: '提交申请', role: 'submitter' },
-        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', role: 'biz_manager', slaHours: 12 },
+        { id: 'n1', type: NODE_TYPE.START, name: '提交申请', roleKey: 'submitter' },
+        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
+          approver: 'u_biz_02', remind: { enabled: true, afterHours: 12 } },
         {
-          id: 'n3', type: NODE_TYPE.PARALLEL_ALL, name: '风控财务会签',
-          role: 'risk_manager',
-          approvers: [
-            { role: 'risk_manager',    dept: '风控部' },
-            { role: 'finance_manager', dept: '财务部' }
-          ],
-          slaHours: 24
+          id: 'n3', type: NODE_TYPE.PARALLEL_ALL, name: '风控财务会签', roleKey: 'risk_manager',
+          approvers: ['u_risk_01', 'u_fin_01'],
+          remind: { enabled: true, afterHours: 24 }
         },
-        { id: 'n4', type: NODE_TYPE.SERIAL, name: '合规审查', role: 'legal_review', slaHours: 48 },
-        { id: 'n5', type: NODE_TYPE.SERIAL, name: '总经理审批', role: 'gm', slaHours: 24 },
-        { id: 'n6', type: NODE_TYPE.SERIAL, name: '归档完成', role: 'system', auto: true }
+        { id: 'n4', type: NODE_TYPE.SERIAL, name: '合规审查', roleKey: 'legal_review',
+          approver: 'u_legal_01', remind: { enabled: true, afterHours: 48 } },
+        { id: 'n5', type: NODE_TYPE.SERIAL, name: '总经理审批', roleKey: 'gm',
+          approver: 'u_gm_01', remind: { enabled: true, afterHours: 24 } },
+        { id: 'n6', type: NODE_TYPE.SERIAL, name: '归档完成', roleKey: 'system', auto: true }
       ]
     }
   };
 
   // ================================================================
-  // 四、流程模板 CRUD（localStorage 持久化）
+  // 六、流程模板 CRUD（localStorage 持久化）
   // ================================================================
-  const STORAGE_KEY = 'ygt_approval_flow_templates_v1';
+  const STORAGE_KEY = 'ygt_approval_flow_templates_v2';
 
   function loadAll() {
     try {
@@ -134,7 +267,6 @@
         if (parsed && typeof parsed === 'object') return parsed;
       }
     } catch (e) { /* 忽略：降级到内置模板 */ }
-    // 深拷贝内置模板，避免污染常量
     return JSON.parse(JSON.stringify(FLOW_TEMPLATES));
   }
 
@@ -179,11 +311,13 @@
     const src = getFlow(id);
     if (!src) return null;
     const newId = 'flow_' + Date.now();
+    const suffix = Date.now().toString().slice(-4);
     return saveFlow(Object.assign({}, JSON.parse(JSON.stringify(src)), {
       id: newId,
       name: newName || (src.name + ' - 副本'),
       status: 'draft',
-      nodes: src.nodes.map(n => Object.assign({}, n, { id: n.id + '_' + Date.now().toString().slice(-4) }))
+      applyModules: JSON.parse(JSON.stringify(src.applyModules || [])),
+      nodes: src.nodes.map(n => Object.assign({}, n, { id: n.id + '_' + suffix }))
     }));
   }
 
@@ -195,7 +329,7 @@
   }
 
   // ================================================================
-  // 五、条件分支求值
+  // 七、条件分支求值
   // ================================================================
   const OPERATORS = {
     gt:  (a, b) => Number(a) >  Number(b),
@@ -213,9 +347,6 @@
     customerLevel: '客户等级', riskLevel: '风险等级'
   };
 
-  /**
-   * 求值条件分支节点：返回 true 时走 then 分支（追加节点），false 时跳过
-   */
   function evalBranch(node, formData) {
     if (!node.condition || !node.condition.length) return { matched: false, rules: [] };
     const rules = node.condition.map(r => {
@@ -232,7 +363,7 @@
         value: r.value,
         actual: actual === undefined ? '—' : actual,
         matched: matched,
-        then: thenList,                              // 命中时追加的角色 key 列表
+        then: thenList,
         thenLabels: thenLabels,
         text: (FIELD_LABELS[r.field] || r.field) + ' ' + (OP_LABELS[r.operator] || r.operator) + ' ' + r.value
       };
@@ -249,13 +380,11 @@
       if (node.type === NODE_TYPE.BRANCH) {
         const res = evalBranch(node, formData);
         if (res.matched) {
-          // 命中的分支：把每条命中规则的 then 角色去重后展开为串行节点
-          // 注意：必须用 res.rules（已求值，含 matched/then/text），不能用 node.condition（原始配置）
+          // 必须用 res.rules（已求值，含 matched/then/text），不能用 node.condition（原始配置）
           const seen = {};
-          const branches = res.rules.filter(r => r.matched);
-          branches.forEach(r => {
+          res.rules.filter(r => r.matched).forEach(r => {
             (r.then || []).forEach(roleKey => {
-              if (seen[roleKey]) return;          // 同一次展开内按 roleKey 去重
+              if (seen[roleKey]) return;
               seen[roleKey] = true;
               const meta = ROLES[roleKey] || { label: roleKey, dept: '—', color: '#64748B' };
               out.push({
@@ -264,9 +393,10 @@
                 name: meta.label,
                 roleKey: roleKey,
                 role: meta.label,
+                approver: meta.defaultPerson || null,
                 dept: meta.dept,
                 color: meta.color,
-                slaHours: 24,
+                remind: { enabled: true, afterHours: 24 },
                 fromBranch: true,
                 branchRule: r.text,
                 status: NODE_STATUS.PENDING
@@ -290,8 +420,21 @@
     return out;
   }
 
+  /** 取节点当前审批人（串行 → 单人；会签 → 多人） */
+  function nodeApprovers(node) {
+    if (!node) return [];
+    if (node.type === NODE_TYPE.PARALLEL_ALL) {
+      return (node.approvers || []).map(getPerson).filter(Boolean);
+    }
+    if (node.type === NODE_TYPE.SERIAL && node.approver) {
+      const p = getPerson(node.approver);
+      return p ? [p] : [];
+    }
+    return [];
+  }
+
   // ================================================================
-  // 六、渲染器
+  // 八、渲染器
   // ================================================================
   const CIRCLED = ['①','②','③','④','⑤','⑥','⑦','⑧','⑨','⑩'];
 
@@ -307,21 +450,16 @@
     return n.toLocaleString('zh-CN');
   }
 
-  /**
-   * 渲染审批时间线（纯 HTML 字符串）
-   * @param {Object} opts
-   *   flow       流程模板
-   *   formData   表单数据（用于条件分支求值）
-   *   currentIdx 当前进行中的节点序号（-1 = 全部待开始）
-   *   compact    精简模式（只显示节点名 + 状态）
-   */
+  function maskPhone(phone) {
+    return phone || '—';
+  }
+
   function renderTimeline(opts, bare) {
     const o = opts || {};
     const flow = o.flow || getFlow('standard');
     const nodes = resolveFlow(flow, o.formData || {});
     const currentIdx = o.currentIdx == null ? -1 : o.currentIdx;
 
-    // bare=true 时不输出外层 .timeline 包裹（供容器自身已带 timeline 类的场景使用）
     let html = bare ? '' : '<div class="timeline">';
 
     nodes.forEach((node, i) => {
@@ -333,7 +471,8 @@
         else if (i === currentIdx) status = NODE_STATUS.CURRENT;
         else status = NODE_STATUS.PENDING;
       }
-      const meta = ROLES[node.role] || { label: node.role || '—', dept: node.dept || '—', color: '#64748B' };
+      const meta = ROLES[node.roleKey || node.role] ||
+                   { label: node.role || '—', dept: node.dept || '—', color: '#64748B' };
       const idx = CIRCLED[i] || (i + 1);
 
       html += '<div class="timeline-item ' + status + '" data-node-id="' + esc(node.id) + '">';
@@ -351,25 +490,41 @@
       }
 
       // 状态 chip
-      if (status === NODE_STATUS.DONE)        html += ' <span class="chip chip-green">已通过</span>';
-      else if (status === NODE_STATUS.CURRENT)html += ' <span class="chip chip-orange">进行中</span>';
-      else if (status === NODE_STATUS.PENDING)html += ' <span class="chip chip-gray">待开始</span>';
-      else if (status === NODE_STATUS.SKIPPED)html += ' <span class="chip chip-gray">已跳过</span>';
+      if (status === NODE_STATUS.DONE)          html += ' <span class="chip chip-green">已通过</span>';
+      else if (status === NODE_STATUS.CURRENT)  html += ' <span class="chip chip-orange">进行中</span>';
+      else if (status === NODE_STATUS.PENDING)  html += ' <span class="chip chip-gray">待开始</span>';
+      else if (status === NODE_STATUS.SKIPPED)  html += ' <span class="chip chip-gray">已跳过</span>';
 
       html += '  </div>';
 
+      // 串行节点：审批人员（姓名 + 脱敏手机号）
+      if (node.type === NODE_TYPE.SERIAL && !node.auto) {
+        const p = getPerson(node.approver);
+        if (p) {
+          html += '    <div class="timeline-subitem">';
+          html += '      <div class="timeline-subitem-header">';
+          html += '        <div class="timeline-subitem-name">';
+          html += '          <div class="avatar" style="background:' + (DEPT_COLORS[p.dept] || '#64748B') + ';">' + esc(p.name.charAt(0)) + '</div>';
+          html += '          <span><strong>' + esc(p.name) + '</strong> · ' + esc(maskPhone(p.phone)) + ' · ' + esc(p.dept) + '</span>';
+          html += '        </div>';
+          html += '        <span class="chip ' + (status === NODE_STATUS.DONE ? 'chip-green' : (status === NODE_STATUS.CURRENT ? 'chip-orange' : 'chip-gray')) + '">' +
+                  (status === NODE_STATUS.DONE ? '已通过' : (status === NODE_STATUS.CURRENT ? '审批中' : '待审批')) + '</span>';
+          html += '      </div>';
+          html += '    </div>';
+        }
+      }
+
       // 会签子审批人
-      if (node.type === NODE_TYPE.PARALLEL_ALL && node.approvers && node.approvers.length) {
-        node.approvers.forEach((a, ai) => {
-          const aMeta = ROLES[a.role] || { label: a.role, dept: a.dept || '—' };
+      if (node.type === NODE_TYPE.PARALLEL_ALL) {
+        nodeApprovers(node).forEach(p => {
           const aStatus = status === NODE_STATUS.DONE ? '已通过' : (status === NODE_STATUS.CURRENT ? '审批中' : '待审批');
           const aCls = status === NODE_STATUS.DONE ? 'chip-green'
                      : (status === NODE_STATUS.CURRENT ? 'chip-orange' : 'chip-gray');
           html += '    <div class="timeline-subitem">';
           html += '      <div class="timeline-subitem-header">';
           html += '        <div class="timeline-subitem-name">';
-          html += '          <div class="avatar" style="background:' + aMeta.color + ';">' + esc(aMeta.label.charAt(0)) + '</div>';
-          html += '          <span><strong>' + esc(aMeta.label) + '</strong> · ' + esc(a.dept || aMeta.dept) + '</span>';
+          html += '          <div class="avatar" style="background:' + (DEPT_COLORS[p.dept] || '#64748B') + ';">' + esc(p.name.charAt(0)) + '</div>';
+          html += '          <span><strong>' + esc(p.name) + '</strong> · ' + esc(maskPhone(p.phone)) + ' · ' + esc(p.dept) + '</span>';
           html += '        </div>';
           html += '        <span class="chip ' + aCls + '">' + aStatus + '</span>';
           html += '      </div>';
@@ -386,9 +541,9 @@
                 esc(node.branchRules.map(r => r.text + ' → 实际 ' + r.actual).join('；')) + '）</span></div>';
       }
 
-      // SLA
-      if (node.slaHours && status !== NODE_STATUS.SKIPPED) {
-        html += '    <div class="timeline-meta"><span>⏱ 审批时限 ' + node.slaHours + ' 小时</span></div>';
+      // 提醒规则（v1.1.0：替代原「审批时限」）
+      if (node.remind && node.remind.enabled && node.remind.afterHours && status !== NODE_STATUS.SKIPPED) {
+        html += '    <div class="timeline-meta"><span>⏰ 未处理满 ' + node.remind.afterHours + ' 小时将发送审批提醒</span></div>';
       }
 
       html += '  </div>';
@@ -399,21 +554,21 @@
     return html;
   }
 
-  /**
-   * 渲染流程图（横向节点链，用于流程配置页预览）
-   */
   function renderFlowChain(flow, formData) {
     const nodes = resolveFlow(flow, formData || {});
     let html = '<div class="afc-chain">';
     nodes.forEach((n, i) => {
-      const meta = ROLES[n.role] || { label: n.role || '—', color: '#64748B' };
       const isSkip = n.skipped;
-      html += '<div class="afc-node' + (isSkip ? ' is-skipped' : '') + '" style="--node-color:' + meta.color + '">';
+      const color = nodeColorOf(n);
+      html += '<div class="afc-node' + (isSkip ? ' is-skipped' : '') + '" style="--node-color:' + color + '">';
       html += '  <div class="afc-node-no">' + (CIRCLED[i] || (i + 1)) + '</div>';
-      html += '  <div class="afc-node-name">' + esc(n.name || meta.label) + '</div>';
-      html += '  <div class="afc-node-role">' + esc(meta.dept || '—') + '</div>';
+      html += '  <div class="afc-node-name">' + esc(n.name || '—') + '</div>';
+      const ps = nodeApprovers(n);
+      html += '  <div class="afc-node-role">' +
+              (ps.length ? esc(ps.map(p => p.name).join('、')) : esc(ROLES[n.roleKey] ? ROLES[n.roleKey].dept : '—')) +
+              '</div>';
       if (n.type === NODE_TYPE.PARALLEL_ALL) {
-        html += '  <div class="afc-node-tag">会签 ' + (n.approvers ? n.approvers.length : 0) + ' 人</div>';
+        html += '  <div class="afc-node-tag">会签 ' + ps.length + ' 人</div>';
       }
       if (n.fromBranch) html += '  <div class="afc-node-tag is-blue">条件命中</div>';
       if (isSkip)        html += '  <div class="afc-node-tag is-gray">已跳过</div>';
@@ -427,15 +582,12 @@
   }
 
   // ================================================================
-  // 七、业务页面接入 API（一行代码接入）
+  // 九、业务页面接入 API
   // ================================================================
   /**
    * 页面级配置覆盖表：pageName -> flowId
-   * 业务页面可在引入引擎后设置，覆盖该页使用的默认流程
-   *
-   * 注意：必须动态读取 global，而不是在 IIFE 执行时快照。
-   * 页面 <script> 顺序可能把 approval-engine.js 排在 approval-config.js 之前，
-   * 快照会永久捕获空对象，导致所有页面静默回退到 standard 流程。
+   * 必须动态读取 global，而不是在 IIFE 执行时快照 —— 页面 script 顺序
+   * 可能把引擎排在映射表之前，快照会永久捕获空对象。
    */
   function configByPage(pageName) {
     var map = global.APPROVAL_CONFIG_BY_PAGE;
@@ -445,23 +597,16 @@
     return global.APPROVAL_AMOUNT_CONFIG || {};
   }
 
-  /**
-   * 自动提取当前页面的单据金额（条件分支求值用）
-   * 优先级：显式 opts.formData.amount > DOM 选择器 > URL 参数 > undefined
-   */
   function detectAmount(pageName) {
-    // 1. 页面显式标注
     const explicit = document.querySelector('[data-approval-amount]');
     if (explicit) {
       const v = Number(String(explicit.getAttribute('data-approval-amount') || '').replace(/[^\d.]/g, ''));
       if (!isNaN(v) && v > 0) return v;
     }
-    // 2. URL 参数 ?amount=
     try {
       const q = new URLSearchParams(location.search).get('amount');
       if (q && !isNaN(Number(q))) return Number(q);
     } catch (e) { /* ignore */ }
-    // 3. 配置的通用选择器
     var AMOUNT_CFG = amountConfig();
     const sels = AMOUNT_CFG.defaultSelectors || [];
     for (let i = 0; i < sels.length; i++) {
@@ -477,9 +622,6 @@
     return undefined;
   }
 
-  /**
-   * 便捷挂载：在指定容器渲染当前页面的审批时间线
-   */
   function mount(selector, opts) {
     const el = typeof selector === 'string' ? document.querySelector(selector) : selector;
     if (!el) { console.warn('[approval-engine] 容器未找到:', selector); return; }
@@ -489,20 +631,16 @@
       const flowId = o.flowId || configByPage(pageName) || 'standard';
       o.flow = getFlow(flowId) || getFlow('standard');
     }
-    // 自动补 formData.amount（条件分支需要）
     if (!o.formData) o.formData = {};
     if (o.formData.amount == null) {
       const amt = detectAmount(pageName);
       if (amt != null) o.formData.amount = amt;
     }
     if (!o.currentIdx && o.currentIdx !== 0) o.currentIdx = detectCurrentIdx(el, o);
-    // 业务页面的挂载点原本就是 <div class="timeline" id="approvalTimeline_xxx">，
-    // 若再套一层 .timeline 会产生嵌套同名容器（重复边框/内边距），此处按容器类名自适应。
     const bare = el.classList && el.classList.contains('timeline');
     el.innerHTML = renderTimeline(o, bare);
   }
 
-  /** 从页面已有的 timeline DOM 反推当前节点（兼容未改造的老页面） */
   function detectCurrentIdx(container, opts) {
     const items = container.querySelectorAll('.timeline-item');
     for (let i = 0; i < items.length; i++) {
@@ -513,11 +651,16 @@
   }
 
   // ================================================================
-  // 八、导出
+  // 十、导出
   // ================================================================
   global.ApprovalEngine = {
     // 常量
     NODE_TYPE, NODE_STATUS, ROLES, OPERATORS, OP_LABELS, FIELD_LABELS,
+    DEPT_COLORS, APPLY_MODULES, PEOPLE,
+    // 人员
+    getPerson, listPeople, personLabel, nodeApprovers,
+    // 模块
+    getModule, applyModulesText,
     // 流程 CRUD
     listFlows, getFlow, saveFlow, deleteFlow, duplicateFlow,
     // 求值
@@ -527,7 +670,7 @@
     // 接入
     mount, detectAmount,
     // 工具
-    nowStr, esc, fmtAmount, CIRCLED
+    nowStr, esc, fmtAmount, maskPhone, CIRCLED, nodeColorOf
   };
 
 })(window);

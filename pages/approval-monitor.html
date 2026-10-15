@@ -3,38 +3,25 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>审批流程监控 - 豫港通 v1.0.0</title>
+  <title>审批流程监控 - 豫港通 v1.1.0</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/list-page.css">
   <link rel="stylesheet" href="../assets/css/approval.css">
   <link rel="stylesheet" href="../assets/css/pin-annotation.css">
   <style>
-    .page-body { padding: 20px 24px; }
-
-    /* KPI */
+    /* ===== KPI ===== */
     .ap-kpi-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 16px; }
     .ap-kpi {
-      background: #fff; border: 1px solid var(--border-color);
+      background: var(--bg-card); border: 1px solid var(--border-default);
       border-radius: 8px; padding: 14px 16px;
     }
     .ap-kpi-value { font-size: 26px; font-weight: 700; color: var(--text-primary); line-height: 1.2; }
     .ap-kpi-label { font-size: 12px; color: var(--text-tertiary); margin-top: 4px; }
-    .ap-kpi.is-danger .ap-kpi-value { color: #DC2626; }
-    .ap-kpi.is-warn   .ap-kpi-value { color: #D97706; }
-    .ap-kpi.is-ok     .ap-kpi-value { color: #059669; }
+    .ap-kpi.is-info  .ap-kpi-value { color: #2563EB; }
+    .ap-kpi.is-ok    .ap-kpi-value { color: #059669; }
+    .ap-kpi.is-warn  .ap-kpi-value { color: #D97706; }
 
-    /* 状态 tab */
-    .ap-status-tabs { display: flex; gap: 2px; border-bottom: 1px solid var(--border-color); margin-bottom: 0; }
-    .ap-status-tab {
-      padding: 9px 16px; font-size: 13px; color: var(--text-secondary);
-      cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px;
-      user-select: none;
-    }
-    .ap-status-tab:hover { color: var(--color-primary); }
-    .ap-status-tab.active { color: var(--color-primary); border-bottom-color: var(--color-primary); font-weight: 500; }
-    .ap-status-tab .cnt { font-size: 11px; color: var(--text-tertiary); margin-left: 4px; }
-
-    /* 详情抽屉 */
+    /* ===== 详情抽屉 ===== */
     .ap-drawer-overlay {
       position: fixed; inset: 0; background: rgba(15,23,42,.45);
       z-index: 999; display: none;
@@ -42,25 +29,25 @@
     .ap-drawer-overlay.open { display: block; }
     .ap-drawer {
       position: fixed; top: 0; right: 0; bottom: 0; width: 880px; max-width: 92vw;
-      background: #fff; box-shadow: -4px 0 20px rgba(0,0,0,.12);
+      background: var(--bg-card); box-shadow: -4px 0 20px rgba(0,0,0,.12);
       z-index: 1000; display: none; flex-direction: column;
     }
     .ap-drawer.open { display: flex; }
     .ap-drawer-header {
-      padding: 16px 24px; border-bottom: 1px solid var(--border-color);
+      padding: 16px 24px; border-bottom: 1px solid var(--border-default);
       display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
     }
-    .ap-drawer-title { font-size: 16px; font-weight: 600; }
+    .ap-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
     .ap-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
     .ap-drawer-footer {
-      padding: 12px 24px; border-top: 1px solid var(--border-color);
+      padding: 12px 24px; border-top: 1px solid var(--border-default);
       display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
     }
 
     .ap-meta-grid {
       display: grid; grid-template-columns: 120px 1fr 120px 1fr;
-      gap: 10px 12px; padding: 14px 16px; background: #F8FAFC;
-      border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 18px;
+      gap: 10px 12px; padding: 14px 16px; background: var(--bg-hover);
+      border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 18px;
     }
     .ap-meta-grid .k { font-size: 12px; color: var(--text-tertiary); }
     .ap-meta-grid .v { font-size: 13px; color: var(--text-primary); font-weight: 500; }
@@ -70,12 +57,21 @@
       margin: 18px 0 10px; padding-left: 8px; border-left: 3px solid var(--color-primary);
     }
 
-    /* 超时高亮 */
-    .ap-overdue-row { background: #FEF2F2 !important; }
-    .ap-overdue-badge {
-      display: inline-block; padding: 1px 6px; border-radius: 3px;
-      background: #FEE2E2; color: #B91C1C; font-size: 11px; font-weight: 500;
+    /* 抽屉内嵌表格：去掉宽表 min-width，用紧凑版 */
+    .cp-table.is-compact { min-width: 0; }
+    .cp-table.is-compact thead th,
+    .cp-table.is-compact tbody td { padding: 8px 10px; font-size: 12px; white-space: normal; }
+
+    /* 空状态 */
+    .ap-empty { padding: 40px 16px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+
+    /* 操作列 */
+    .col-action-row {
+      display: flex; align-items: center; justify-content: flex-end;
+      gap: 8px; white-space: nowrap;
     }
+    .col-action-row a { color: var(--color-primary); text-decoration: none; font-size: 12px; }
+    .col-action-row a:hover { text-decoration: underline; }
   </style>
 </head>
 <body>
@@ -98,68 +94,160 @@
   <div style="display: flex;">
     <div class="sidemenu" id="leftSidemenu"></div>
 
-    <div class="main-content" style="flex: 1; min-width: 0;">
-      <div class="page-header" style="padding: 14px 24px;">
-        <div class="breadcrumb">数字供应链 / 审批管理 / 审批流程监控</div>
-        <h1 class="page-title">审批流程监控</h1>
-      </div>
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
 
-      <div class="page-body">
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./contract-purchase.html">数字供应链</a>
+          <span class="sep">/</span>
+          <a href="./approval-flow-list.html">审批管理</a>
+          <span class="sep">/</span>
+          <span class="current">审批流程监控</span>
+        </div>
+
+        <!-- 标题 + 右侧按钮 -->
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
+          <h1 class="page-h1" style="margin: 0;">审批流程监控</h1>
+          <div style="display: flex; gap: 10px;">
+            <button class="btn btn-default" onclick="exportReminds()">数据导出</button>
+          </div>
+        </div>
+
         <!-- KPI -->
         <div class="ap-kpi-row">
           <div class="ap-kpi">
             <div class="ap-kpi-value" id="kpiTotal">0</div>
             <div class="ap-kpi-label">审批实例总数</div>
           </div>
-          <div class="ap-kpi is-warn">
+          <div class="ap-kpi is-info">
             <div class="ap-kpi-value" id="kpiDoing">0</div>
-            <div class="ap-kpi-label">进行中</div>
-          </div>
-          <div class="ap-kpi is-danger">
-            <div class="ap-kpi-value" id="kpiOverdue">0</div>
-            <div class="ap-kpi-label">超时未处理</div>
+            <div class="ap-kpi-label">审批中</div>
           </div>
           <div class="ap-kpi is-ok">
-            <div class="ap-kpi-value" id="kpiAvg">—</div>
-            <div class="ap-kpi-label">平均审批时长（小时）</div>
+            <div class="ap-kpi-value" id="kpiDone">0</div>
+            <div class="ap-kpi-label">已通过</div>
+          </div>
+          <div class="ap-kpi is-warn">
+            <div class="ap-kpi-value" id="kpiRemind">0</div>
+            <div class="ap-kpi-label">已触发审批提醒</div>
           </div>
         </div>
 
-        <!-- 筛选 + tab -->
-        <div class="card">
-          <div class="card-header" style="display:flex;flex-direction:column;gap:12px;">
-            <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;">
-              <input type="text" class="input" id="fltKw" placeholder="搜索单据编号 / 发起人" style="width: 200px;" oninput="renderTable()">
-              <select class="select" id="fltModule" style="width: 130px;" onchange="renderTable()">
-                <option value="">全部模块</option>
-              </select>
-              <select class="select" id="fltFlow" style="width: 160px;" onchange="renderTable()">
-                <option value="">全部流程</option>
-              </select>
-              <div style="flex:1;"></div>
-              <span style="font-size:12px;color:var(--text-tertiary);">数据截止 2026-10-12 11:00</span>
+        <!-- ========== 审批实例 ========== -->
+        <div class="cp-panel">
+
+          <!-- 区块 1：筛选 -->
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
+              </div>
             </div>
-            <div class="ap-status-tabs" id="statusTabs"></div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">单据编号</span>
+                <input type="text" class="input" id="fltKw" placeholder="单据编号或发起人" oninput="renderTable()">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">应用模块</span>
+                <select class="select" id="fltModule" onchange="renderTable()">
+                  <option value="">全部模块</option>
+                </select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">引用流程</span>
+                <select class="select" id="fltFlow" onchange="renderTable()">
+                  <option value="">全部流程</option>
+                </select>
+              </div>
+            </div>
           </div>
-          <div class="card-body" style="padding: 0;">
-            <table class="data-table" style="width: 100%;">
-              <thead>
-                <tr>
-                  <th style="width: 150px;">单据编号</th>
-                  <th style="width: 100px;">业务模块</th>
-                  <th style="width: 140px;">引用流程</th>
-                  <th style="width: 130px;">单据金额</th>
-                  <th style="width: 100px;">发起人</th>
-                  <th>当前节点</th>
-                  <th style="width: 100px;">状态</th>
-                  <th style="width: 130px;">提交时间</th>
-                  <th style="width: 80px;">操作</th>
-                </tr>
-              </thead>
-              <tbody id="tblBody"></tbody>
-            </table>
+
+          <!-- 区块 2：状态 tab -->
+          <div class="cp-block cp-block-tab">
+            <div class="cp-tab-bar">
+              <div class="cp-tab-bar-tabs" id="statusTabs"></div>
+              <div class="cp-tab-bar-actions">
+                <span style="font-size: 12px; color: var(--text-tertiary);">数据截止 2026-10-15 11:00</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- 区块 3：实例表格 -->
+          <div class="cp-block" style="padding: 0;">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 16%;">单据编号</th>
+                    <th style="width: 9%;">应用模块</th>
+                    <th style="width: 12%;">引用流程</th>
+                    <th style="width: 9%;text-align: right;">单据金额</th>
+                    <th style="width: 7%;">发起人</th>
+                    <th style="width: 11%;">当前节点</th>
+                    <th style="width: 13%;">当前审批人</th>
+                    <th style="width: 7%;">状态</th>
+                    <th style="width: 10%;">提交时间</th>
+                    <th class="col-action" style="width: 8%;text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="tblBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- 区块 4：分页 -->
+          <div class="cp-block">
+            <div class="cp-pagination">
+              <div id="pageInfo">共 0 条记录 · 第 1 / 1 页</div>
+              <div style="display: flex; align-items: center; gap: 14px;">
+                <div class="cp-pagination-pages" id="pageBtns"></div>
+                <select class="cp-pagination-size">
+                  <option>10 条/页</option>
+                  <option>20 条/页</option>
+                  <option>50 条/页</option>
+                </select>
+                <span class="cp-pagination-jump">跳至 <input type="number" min="1" value="1"> 页</span>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        <!-- /cp-panel -->
+
+        <!-- ========== 审批提醒记录 ========== -->
+        <div class="cp-panel" style="margin-top: 16px;">
+          <div class="cp-block">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
+                审批提醒记录
+                <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">
+                  节点「提醒规则」触发后自动发送，记录推送对象与时间
+                </span>
+              </div>
+            </div>
+            <div style="overflow-x: auto;">
+              <table class="cp-table is-compact" style="width:100%;">
+                <thead>
+                  <tr>
+                    <th style="width: 16%;">单据编号</th>
+                    <th style="width: 10%;">应用模块</th>
+                    <th style="width: 12%;">卡在节点</th>
+                    <th style="width: 11%;">提醒对象</th>
+                    <th style="width: 11%;">提醒阈值</th>
+                    <th style="width: 9%;">推送渠道</th>
+                    <th style="width: 11%;">触发时间</th>
+                    <th style="width: 8%;">状态</th>
+                  </tr>
+                </thead>
+                <tbody id="remindBody"></tbody>
+              </table>
+            </div>
           </div>
         </div>
+
       </div>
     </div>
   </div>
@@ -178,80 +266,97 @@
     <div class="ap-drawer-body" id="dwBody"></div>
     <div class="ap-drawer-footer">
       <button class="btn btn-default" onclick="closeDrawer()">关闭</button>
-      <button class="btn btn-default" onclick="dwRemind()">催办</button>
+      <button class="btn btn-default" onclick="dwRemind()">立即催办</button>
       <button class="btn btn-primary" onclick="dwWithdraw()">撤回申请</button>
     </div>
   </div>
 
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/filter-chips.js"></script>
   <script src="../shared/js/approval-engine.js"></script>
   <script>
     const AE = window.ApprovalEngine;
 
     // ================================================================
-    // Mock 审批实例数据（引用配置中的流程模板）
+    // Mock 审批实例（引用配置中的流程模板）
     // ================================================================
     const INSTANCES = [
-      { id:'INS-2026-1001', docNo:'DLXLC-DSRMT-20261010-001', module:'合同管理', flowId:'standard',
-        amount: 850000, submitter:'张磊', submitTime:'2026-10-10 09:15', currentNode:1,
-        status:'doing', overdue:false, elapsedH: 48 },
+      { id:'INS-2026-1001', docNo:'DLXLC-DSRMT-20261015-001', module:'contract', flowId:'standard',
+        amount: 850000, submitter:'张磊', submitTime:'2026-10-15 09:15', currentNode:1,
+        status:'doing', elapsedH: 6 },
 
-      { id:'INS-2026-1002', docNo:'GTGYL-MSXS-20261010-s', module:'合同管理', flowId:'highRisk',
-        amount: 3200000, submitter:'王芳', submitTime:'2026-10-10 14:30', currentNode:3,
-        status:'doing', overdue:true, elapsedH: 72 },
+      { id:'INS-2026-1002', docNo:'HT-XSCG-20261015-002', module:'contract', flowId:'highRisk',
+        amount: 3200000, submitter:'王芳', submitTime:'2026-10-15 08:30', currentNode:3,
+        status:'doing', elapsedH: 3 },
 
-      { id:'INS-2026-1003', docNo:'HTLS-20261008-023', module:'资金管理', flowId:'highRisk',
-        amount: 1500000, submitter:'李强', submitTime:'2026-10-08 11:20', currentNode:4,
-        status:'doing', overdue:true, elapsedH: 96 },
+      { id:'INS-2026-1003', docNo:'FK-20261014-003', module:'payment', flowId:'highRisk',
+        amount: 1500000, submitter:'李强', submitTime:'2026-10-14 11:20', currentNode:4,
+        status:'doing', elapsedH: 22 },
 
-      { id:'INS-2026-1004', docNo:'JSDJ-20261011-008', module:'收发货管理', flowId:'simple',
-        amount: 320000, submitter:'赵敏', submitTime:'2026-10-11 10:05', currentNode:1,
-        status:'doing', overdue:false, elapsedH: 25 },
+      { id:'INS-2026-1004', docNo:'SYH-XY-20261015-004', module:'settlement', flowId:'standard',
+        amount: 320000, submitter:'赵敏', submitTime:'2026-10-15 10:05', currentNode:1,
+        status:'doing', elapsedH: 1 },
 
-      { id:'INS-2026-1005', docNo:'LX20261010001', module:'准入管理', flowId:'standard',
-        amount: 680000, submitter:'陈晨', submitTime:'2026-10-10 16:42', currentNode:2,
-        status:'doing', overdue:false, elapsedH: 42 },
+      { id:'INS-2026-1005', docNo:'XM-20261015-005', module:'project', flowId:'standard',
+        amount: 680000, submitter:'陈晨', submitTime:'2026-10-15 09:50', currentNode:2,
+        status:'doing', elapsedH: 2 },
 
-      { id:'INS-2026-1006', docNo:'FPZS-20261005-016', module:'发票管理', flowId:'simple',
-        amount: 180000, submitter:'周涛', submitTime:'2026-10-05 09:00', currentNode:3,
-        status:'approved', overdue:false, elapsedH: 30 },
+      { id:'INS-2026-1006', docNo:'FK-20261012-006', module:'refund', flowId:'highRisk',
+        amount: 180000, submitter:'周涛', submitTime:'2026-10-12 09:00', currentNode:5,
+        status:'approved', elapsedH: 30 },
 
-      { id:'INS-2026-1007', docNo:'BZJ-20261003-004', module:'资金管理', flowId:'highRisk',
-        amount: 2200000, submitter:'孙丽', submitTime:'2026-10-03 15:22', currentNode:2,
-        status:'rejected', overdue:false, elapsedH: 12 },
+      { id:'INS-2026-1007', docNo:'HT-XSCG-20261010-007', module:'contract', flowId:'highRisk',
+        amount: 2200000, submitter:'孙丽', submitTime:'2026-10-10 15:22', currentNode:2,
+        status:'rejected', elapsedH: 12 },
 
-      { id:'INS-2026-1008', docNo:'ZBF-20261009-011', module:'追保函管理', flowId:'highRisk',
-        amount: 5000000, submitter:'吴静', submitTime:'2026-10-09 08:50', currentNode:4,
-        status:'approved', overdue:false, elapsedH: 55 },
+      { id:'INS-2026-1008', docNo:'ZBF-20261011-008', module:'bond_letter', flowId:'highRisk',
+        amount: 5000000, submitter:'吴静', submitTime:'2026-10-11 08:50', currentNode:5,
+        status:'approved', elapsedH: 55 },
 
-      { id:'INS-2026-1009', docNo:'JSJ-20261011-021', module:'结算单管理', flowId:'standard',
-        amount: 950000, submitter:'郑浩', submitTime:'2026-10-11 14:10', currentNode:2,
-        status:'doing', overdue:false, elapsedH: 21 },
+      { id:'INS-2026-1009', docNo:'SYH-XY-20261013-009', module:'settlement', flowId:'standard',
+        amount: 950000, submitter:'郑浩', submitTime:'2026-10-13 14:10', currentNode:2,
+        status:'doing', elapsedH: 26 },
 
-      { id:'INS-2026-1010', docNo:'HZ-20261010-035', module:'货转管理', flowId:'simple',
-        amount: 260000, submitter:'冯雪', submitTime:'2026-10-10 10:30', currentNode:1,
-        status:'withdrawn', overdue:false, elapsedH: 8 }
+      { id:'INS-2026-1010', docNo:'FH-20261014-010', module:'release', flowId:'simple',
+        amount: 260000, submitter:'冯雪', submitTime:'2026-10-14 10:30', currentNode:1,
+        status:'withdrawn', elapsedH: 8 }
+    ];
+
+    // Mock 审批提醒记录（由节点提醒规则触发）
+    const REMINDS = [
+      { docNo:'FK-20261014-003',  module:'payment',    node:'合规审查',   to:'许文静',
+        phone:'136 0001 XXXX', threshold: 48, channel:'站内消息 + 短信', at:'2026-10-15 10:20', status:'已送达' },
+      { docNo:'FK-20261014-003',  module:'payment',    node:'合规审查',   to:'许文静',
+        phone:'136 0001 XXXX', threshold: 48, channel:'站内消息 + 短信', at:'2026-10-14 11:20', status:'已送达' },
+      { docNo:'SYH-XY-20261013-009', module:'settlement', node:'业务审批', to:'王浩',
+        phone:'137 0000 XXXX', threshold: 24, channel:'站内消息 + 短信', at:'2026-10-14 14:10', status:'已送达' },
+      { docNo:'HT-XSCG-20261010-007', module:'contract', node:'业务审批', to:'李娜',
+        phone:'139 0000 XXXX', threshold: 12, channel:'站内消息 + 短信', at:'2026-10-10 15:22', status:'已送达' },
+      { docNo:'DLXLC-DSRMT-20261015-001', module:'contract', node:'业务审批', to:'张磊',
+        phone:'138 0000 XXXX', threshold: 24, channel:'站内消息', at:'2026-10-15 09:15', status:'待送达' }
     ];
 
     const STATUS_META = {
-      doing:     { label:'审批中',   cls:'tag-orange' },
-      approved:  { label:'已通过',   cls:'tag-green' },
-      rejected:  { label:'已驳回',   cls:'tag-red' },
-      withdrawn: { label:'已撤回',   cls:'tag-gray' }
+      doing:     { label:'审批中', cls:'tag-yellow' },
+      approved:  { label:'已通过', cls:'tag-green'  },
+      rejected:  { label:'已驳回', cls:'tag-red'    },
+      withdrawn: { label:'已撤回', cls:'tag-gray'   }
     };
 
     let curTab = '';
     let curInstance = null;
+    let currentPage = 1;
+    const PAGE_SIZE = 10;
 
     // ================================================================
     // 初始化筛选下拉
     // ================================================================
     (function initFilters() {
-      const mods = [...new Set(INSTANCES.map(i => i.module))].sort();
-      document.getElementById('fltModule').innerHTML += mods.map(m => `<option value="${m}">${m}</option>`).join('');
-      const flows = AE.listFlows();
-      document.getElementById('fltFlow').innerHTML += flows.map(f => `<option value="${f.id}">${AE.esc(f.name)}</option>`).join('');
+      document.getElementById('fltModule').innerHTML +=
+        AE.APPLY_MODULES.map(m => `<option value="${m.key}">${AE.esc(m.label)}</option>`).join('');
+      document.getElementById('fltFlow').innerHTML +=
+        AE.listFlows().map(f => `<option value="${f.id}">${AE.esc(f.name)}</option>`).join('');
     })();
 
     // ================================================================
@@ -259,15 +364,11 @@
     // ================================================================
     function renderKPI() {
       const doing = INSTANCES.filter(i => i.status === 'doing');
-      const overdue = doing.filter(i => i.overdue);
-      const finished = INSTANCES.filter(i => i.status === 'approved');
-      const avg = finished.length
-        ? (finished.reduce((s,i) => s + i.elapsedH, 0) / finished.length).toFixed(1)
-        : '—';
+      const done = INSTANCES.filter(i => i.status === 'approved');
       document.getElementById('kpiTotal').textContent = INSTANCES.length;
       document.getElementById('kpiDoing').textContent = doing.length;
-      document.getElementById('kpiOverdue').textContent = overdue.length;
-      document.getElementById('kpiAvg').textContent = avg;
+      document.getElementById('kpiDone').textContent = done.length;
+      document.getElementById('kpiRemind').textContent = REMINDS.length;
     }
 
     // ================================================================
@@ -275,63 +376,106 @@
     // ================================================================
     function renderTabs() {
       const tabs = [
-        { key:'',              label:'全部',   count: INSTANCES.length },
-        { key:'doing',         label:'审批中', count: INSTANCES.filter(i=>i.status==='doing').length },
-        { key:'overdue',       label:'超时',   count: INSTANCES.filter(i=>i.overdue).length },
-        { key:'approved',      label:'已通过', count: INSTANCES.filter(i=>i.status==='approved').length },
-        { key:'rejected',      label:'已驳回', count: INSTANCES.filter(i=>i.status==='rejected').length },
-        { key:'withdrawn',     label:'已撤回', count: INSTANCES.filter(i=>i.status==='withdrawn').length }
+        { key:'',          label:'全部',   count: INSTANCES.length },
+        { key:'doing',     label:'审批中', count: INSTANCES.filter(i=>i.status==='doing').length },
+        { key:'approved',  label:'已通过', count: INSTANCES.filter(i=>i.status==='approved').length },
+        { key:'rejected',  label:'已驳回', count: INSTANCES.filter(i=>i.status==='rejected').length },
+        { key:'withdrawn', label:'已撤回', count: INSTANCES.filter(i=>i.status==='withdrawn').length }
       ];
       document.getElementById('statusTabs').innerHTML = tabs.map(t =>
-        `<div class="ap-status-tab ${curTab===t.key?'active':''}" onclick="switchTab('${t.key}')">
-          ${t.label}<span class="cnt">${t.count}</span>
+        `<div class="cp-tab ${curTab===t.key?'active':''}" onclick="switchTab('${t.key}')">
+          ${t.label}<span class="count">${t.count}</span>
         </div>`).join('');
     }
 
-    function switchTab(k) {
-      curTab = k;
-      renderTabs();
-      renderTable();
-    }
+    function switchTab(k) { curTab = k; currentPage = 1; renderTabs(); renderTable(); }
 
     // ================================================================
     // 表格
     // ================================================================
-    function renderTable() {
+    function moduleLabel(key) {
+      const m = AE.getModule(key);
+      return m ? m.label : key;
+    }
+
+    function getFiltered() {
       const kw = (document.getElementById('fltKw').value || '').trim();
       const mod = document.getElementById('fltModule').value;
       const fid = document.getElementById('fltFlow').value;
-
-      const rows = INSTANCES.filter(i => {
-        if (curTab === 'overdue' && !i.overdue) return false;
-        if (curTab && curTab !== 'overdue' && i.status !== curTab) return false;
+      return INSTANCES.filter(i => {
+        if (curTab && i.status !== curTab) return false;
         if (mod && i.module !== mod) return false;
         if (fid && i.flowId !== fid) return false;
         if (kw && i.docNo.indexOf(kw) < 0 && i.submitter.indexOf(kw) < 0) return false;
         return true;
       });
+    }
+
+    function renderTable() {
+      const all = getFiltered();
+      const totalPages = Math.max(1, Math.ceil(all.length / PAGE_SIZE));
+      if (currentPage > totalPages) currentPage = totalPages;
+      const rows = all.slice((currentPage - 1) * PAGE_SIZE, currentPage * PAGE_SIZE);
 
       document.getElementById('tblBody').innerHTML = rows.map(i => {
         const sm = STATUS_META[i.status];
         const flow = AE.getFlow(i.flowId);
         const nodes = AE.resolveFlow(flow, { amount: i.amount });
-        const curNodeName = nodes[i.currentNode]
-          ? nodes[i.currentNode].name : '—';
-        return `<tr class="${i.overdue ? 'ap-overdue-row' : ''}" style="cursor:pointer;" onclick="openDrawer('${i.id}')">
-          <td style="font-family:var(--font-mono);font-size:12px;">${AE.esc(i.docNo)}</td>
-          <td><span class="tag tag-blue">${AE.esc(i.module)}</span></td>
-          <td style="font-size:12px;color:var(--text-secondary);">${AE.esc(flow ? flow.name : '—')}</td>
-          <td style="text-align:right;font-variant-numeric:tabular-nums;">¥ ${AE.fmtAmount(i.amount)}</td>
+        const node = nodes[i.currentNode];
+        const people = AE.nodeApprovers(node);
+        const peopleText = people.length
+          ? people.map(p => p.name).join('、')
+          : (node && node.name === '归档完成' ? '—' : '—');
+        return `<tr style="cursor:pointer;" onclick="openDrawer('${i.id}')">
+          <td style="font-family: var(--font-mono); font-size: 12px;">${AE.esc(i.docNo)}</td>
+          <td><span class="tag tag-blue">${AE.esc(moduleLabel(i.module))}</span></td>
+          <td style="font-size: 12px; color: var(--text-secondary);">${AE.esc(flow ? flow.name : '—')}</td>
+          <td style="text-align: right; font-variant-numeric: tabular-nums;">¥ ${AE.fmtAmount(i.amount)}</td>
           <td>${AE.esc(i.submitter)}</td>
-          <td style="font-size:12px;">
-            ${AE.esc(curNodeName)}
-            ${i.overdue ? '<span class="ap-overdue-badge">超时 '+i.elapsedH+'h</span>' : ''}
-          </td>
+          <td style="font-size: 12px;">${AE.esc(node ? node.name : '—')}</td>
+          <td style="font-size: 12px; color: var(--text-secondary);">${AE.esc(peopleText)}</td>
           <td><span class="tag ${sm.cls}">${sm.label}</span></td>
-          <td style="font-size:12px;color:var(--text-tertiary);">${AE.esc(i.submitTime)}</td>
-          <td><span class="link">详情</span></td>
+          <td style="font-size: 12px; color: var(--text-tertiary);">${AE.esc(i.submitTime)}</td>
+          <td class="col-action" style="text-align: right;">
+            <div class="col-action-row"><a class="link">详情</a></div>
+          </td>
         </tr>`;
-      }).join('') || '<tr><td colspan="9" style="text-align:center;padding:32px;color:var(--text-tertiary);">暂无匹配记录</td></tr>';
+      }).join('') || `<tr><td colspan="10"><div class="ap-empty">暂无匹配记录</div></td></tr>`;
+
+      renderPagination(all.length, totalPages);
+      renderReminds();
+    }
+
+    function renderPagination(total, totalPages) {
+      document.getElementById('pageInfo').textContent =
+        `共 ${total} 条记录 · 第 ${currentPage} / ${totalPages} 页`;
+      const btns = [`<div class="cp-pagination-page${currentPage===1?' disabled':''}" onclick="gotoPage(${currentPage-1})">‹</div>`];
+      for (let i = 1; i <= totalPages; i++) {
+        btns.push(`<div class="cp-pagination-page${i===currentPage?' active':''}" onclick="gotoPage(${i})">${i}</div>`);
+      }
+      btns.push(`<div class="cp-pagination-page${currentPage===totalPages?' disabled':''}" onclick="gotoPage(${currentPage+1})">›</div>`);
+      document.getElementById('pageBtns').innerHTML = btns.join('');
+    }
+
+    function gotoPage(p) {
+      const totalPages = Math.max(1, Math.ceil(getFiltered().length / PAGE_SIZE));
+      if (p < 1 || p > totalPages) return;
+      currentPage = p;
+      renderTable();
+    }
+
+    function renderReminds() {
+      document.getElementById('remindBody').innerHTML = REMINDS.map(r => `
+        <tr>
+          <td style="font-family: var(--font-mono); font-size: 12px;">${AE.esc(r.docNo)}</td>
+          <td>${AE.esc(moduleLabel(r.module))}</td>
+          <td style="font-size:12px;">${AE.esc(r.node)}</td>
+          <td style="font-size:12px;">${AE.esc(r.to)}<br><span style="color:var(--text-tertiary);">${AE.esc(r.phone)}</span></td>
+          <td style="font-size:12px;">未处理满 ${r.threshold}h</td>
+          <td style="font-size:12px; color: var(--text-secondary);">${AE.esc(r.channel)}</td>
+          <td style="font-size:12px; color: var(--text-tertiary);">${AE.esc(r.at)}</td>
+          <td><span class="tag ${r.status === '已送达' ? 'tag-green' : 'tag-gray'}">${AE.esc(r.status)}</span></td>
+        </tr>`).join('') || '<tr><td colspan="8"><div class="ap-empty">暂无提醒记录</div></td></tr>';
     }
 
     // ================================================================
@@ -343,23 +487,30 @@
 
       const flow = AE.getFlow(curInstance.flowId);
       const nodes = AE.resolveFlow(flow, { amount: curInstance.amount });
+      const node = nodes[curInstance.currentNode];
+      const people = AE.nodeApprovers(node);
       const sm = STATUS_META[curInstance.status];
 
       document.getElementById('dwTitle').textContent = curInstance.docNo;
       document.getElementById('dwSubtitle').innerHTML =
-        `${AE.esc(curInstance.module)} · ${AE.esc(flow.name)} · <span class="tag ${sm.cls}">${sm.label}</span>`;
+        `${AE.esc(moduleLabel(curInstance.module))} · ${AE.esc(flow.name)} · <span class="tag ${sm.cls}">${sm.label}</span>`;
 
-      let html = `
+      const remind = (node && node.remind && node.remind.enabled)
+        ? `未处理满 ${node.remind.afterHours} 小时将向「${people.map(p=>p.name).join('、') || '—'}」发送提醒`
+        : '该节点未开启审批提醒';
+
+      document.getElementById('dwBody').innerHTML = `
         <div class="ap-meta-grid">
-          <div class="k">业务模块</div><div class="v">${AE.esc(curInstance.module)}</div>
+          <div class="k">应用模块</div><div class="v">${AE.esc(moduleLabel(curInstance.module))}</div>
           <div class="k">单据金额</div><div class="v">¥ ${AE.fmtAmount(curInstance.amount)}</div>
           <div class="k">引用流程</div><div class="v">${AE.esc(flow.name)}</div>
           <div class="k">发起人</div><div class="v">${AE.esc(curInstance.submitter)}</div>
           <div class="k">提交时间</div><div class="v">${AE.esc(curInstance.submitTime)}</div>
-          <div class="k">已耗时</div>
-          <div class="v" style="${curInstance.overdue?'color:#DC2626;font-weight:600;':''}">
-            ${curInstance.elapsedH} 小时 ${curInstance.overdue?'（已超时）':''}
-          </div>
+          <div class="k">当前节点</div><div class="v">${AE.esc(node ? node.name : '—')}</div>
+          <div class="k">当前审批人</div>
+          <div class="v">${people.length ? AE.esc(people.map(p => p.name + ' ' + p.phone).join('、')) : '—'}</div>
+          <div class="k">已耗时</div><div class="v">${curInstance.elapsedH} 小时</div>
+          <div class="k">提醒规则</div><div class="v" style="font-weight:400; font-size:12px;">${AE.esc(remind)}</div>
         </div>
 
         <div class="ap-section-title">审批节点流转</div>
@@ -369,24 +520,19 @@
         <div id="dwBranch"></div>
       `;
 
-      document.getElementById('dwBody').innerHTML = html;
-
-      // 时间线（按实例状态决定 currentIdx）
       let curIdx = curInstance.currentNode;
       if (curInstance.status === 'approved') curIdx = nodes.length;
-      if (curInstance.status === 'withdrawn') curIdx = curInstance.currentNode;
       document.getElementById('dwTimeline').innerHTML =
         AE.renderTimeline({ flow: flow, formData: { amount: curInstance.amount }, currentIdx: curIdx });
 
-      // 分支明细
       const branchNodes = nodes.filter(n => n.fromBranch || n.skipped);
       document.getElementById('dwBranch').innerHTML = branchNodes.length ? `
-        <table class="data-table" style="width:100%;font-size:12px;">
+        <div style="overflow-x:auto;">
+        <table class="cp-table is-compact" style="width:100%;">
           <thead><tr>
             <th>条件</th><th>操作符</th><th>阈值</th><th>实际值</th><th>结果</th><th>命中节点</th>
           </tr></thead>
           <tbody>${branchNodes.map(n => {
-            const r = (n.branchRule) ? null : (n.branchRules || [])[0];
             if (n.fromBranch) {
               return `<tr>
                 <td>单据金额</td><td>&gt;</td><td>1,000,000</td>
@@ -395,6 +541,7 @@
                 <td>${AE.esc(n.name)}</td>
               </tr>`;
             }
+            const r = (n.branchRules || [])[0];
             return `<tr>
               <td>${AE.esc(r ? r.fieldLabel : '—')}</td>
               <td>${AE.esc(r ? r.opLabel : '—')}</td>
@@ -404,7 +551,7 @@
               <td>—</td>
             </tr>`;
           }).join('')}</tbody>
-        </table>` : '<div style="font-size:12px;color:var(--text-tertiary);">该流程未配置条件分支</div>';
+        </table></div>` : '<div style="font-size:12px;color:var(--text-tertiary);">该流程未配置条件分支</div>';
 
       document.getElementById('drawerOverlay').classList.add('open');
       document.getElementById('drawer').classList.add('open');
@@ -416,13 +563,21 @@
       curInstance = null;
     }
 
-    function dwRemind() { toast('已发送催办通知'); }
+    function dwRemind() {
+      toast('已向当前审批人发送催办通知');
+    }
+
     function dwWithdraw() {
+      if (!curInstance) return;
       if (!confirm(`确定撤回审批申请「${curInstance.docNo}」？`)) return;
       curInstance.status = 'withdrawn';
       closeDrawer();
       renderKPI(); renderTabs(); renderTable();
       toast('申请已撤回');
+    }
+
+    function exportReminds() {
+      toast('已导出 ' + REMINDS.length + ' 条审批提醒记录');
     }
 
     function toast(msg) {
