@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `a9801707` (审批管理模块 v1.2.0)
+- **最新 hash**: `91b1422c` (审批管理模块 v1.3.0 页面外壳对齐)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,10 +18,10 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `941b06c` (refactor(approval): 编排页 v1.2.0 两步向导，已推送)
+- 最新 commit: `7f9cd7e` (fix(approval): v1.3.0 页面外壳对齐标准列表页，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.2.0，2026-10-16）
+## 审批管理模块（v1.3.0，2026-10-16）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -49,6 +49,18 @@
 - 流程图预览为弹窗，用引擎渲染时间线（与业务单据「审批详情」同一视觉）
 - 平台统一右侧抽屉：`.ap-drawer*` 定义在 `assets/css/approval.css`，
   监控页审批详情 / 画布节点属性 / 预览弹窗三处共用
+
+### ⚠️ 测试脚本坑（线上回归）
+- `verify_v11_pages.py` 里「画布 · 8 个应用模块」用 `.cv-mod`，但 v1.2.0 已把
+  应用模块移到步骤 1，类名改成 `.wz-mod` —— 断言过时会一直 FAIL，别误判成页面回归
+- 测「无列被 sticky 操作列遮挡」时，**只能取第一张 `.cp-table`** 的表头。
+  用 `querySelectorAll('.cp-table thead th')` 会把抽屉里第二张表（提醒记录）
+  一起算进去，产生假 FAIL
+- 测 `wz-topbar` 对齐要量**内容区**（`rect.left + paddingLeft`），
+  border-box 起点是 220，看起来像没对齐其实是对的
+- pages.dev 国内偶发 `ERR_TIMED_OUT` / 30s `Page.goto` 超时，属网络抖动，
+  回归脚本要带重试，别当页面缺陷
+
 
 ### ⚠️ 新增页面必须登记 topnav-drawer.js
 `left-sidemenu.js` 靠 `window.TOPNAV_MENU` 反查页面所属模块。
