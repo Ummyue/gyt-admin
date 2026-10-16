@@ -1,7 +1,7 @@
 # 02.18 审批管理 · 通用审批流程监控
 
 > **页面**：`approval-monitor.html`
-> **版本**：v1.1.0（2026-10-15）
+> **版本**：v1.3.0（2026-10-16，页面外壳对齐标准列表页）
 > **模块归属**：数字供应链 → 审批管理 → 审批流程监控
 > **引擎**：`shared/js/approval-engine.js` v1.1.0（与编排画布共用同一份配置）
 
@@ -34,6 +34,24 @@
 ---
 
 ## 3. 页面结构
+
+### 3.0 页面外壳规范（v1.3.0 对齐，勿回退）
+
+本页外壳与 `approval-flow-list.html` 共用同一套标准列表页外壳（详见 `p-approval-flow-list.md` §3.0）：
+
+| 层 | 要求 | 实测基准（viewport 1600×950） |
+|---|---|---|
+| `topbar` | 「📋 版本变更记录」+ `topbar-right`（通知 / 张爽·港通供应链） | 三段齐全 |
+| `.page-body` | `.page-body { padding: 20px 24px; }` | 面包屑 `L=244` |
+| KPI 区 | `ap-kpi-row` 四张卡，与 `cp-panel` 同宽内缩 | `L=244 / R=1576` |
+| `cp-panel` | 左右各内缩 24px | `L=244 / R=1576 / W=1332` |
+| `cp-filter-summary` | 右侧放「数据导出」文本按钮 | `L=269 / R=1551` |
+| 标题行 | 只留 `page-h1`「审批流程监控」，无右侧按钮组 | — |
+| `cp-table` | `style="min-width: 0"` + 百分比列宽（和为 100） | `table W=1330 = wrap W` |
+
+> **v1.3.0 修复**：本页此前缺 `.page-body` padding、缺 `topbar-right`、
+> 「数据导出」错放标题行、表格沿用全局 `min-width:1500px` 导致「提交时间」列
+> 被 sticky 操作列遮挡。四项均已修复。
 
 ### 3.1 KPI 卡片区（4 张）
 

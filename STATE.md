@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-16 审批管理模块 v1.2.0
+最后更新: 2026-10-16 审批管理模块 v1.3.0（页面外壳对齐标准列表页）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -61,7 +61,7 @@
 3. 条件分支必须读 `evalBranch()` 返回的 `res.rules`（含 `matched`），
    不能读 `node.condition`（原始配置无该字段）
 
-### ⚠️ 列表页组件规范（v1.1.0 统一，勿回退）
+### ⚠️ 列表页组件规范（v1.1.0 统一，v1.3.0 补外壳，勿回退）
 全站标准列表页必须用：`page-body`(bg-page) > `cp-panel` > `cp-block` >
 `cp-table` / `cp-filter` + `cp-filter-summary` / `cp-pagination`，
 标题用 `page-h1`(22px)，面包屑用 `breadcrumb-inline`，
@@ -69,6 +69,25 @@
 状态标签只用 `tag-blue/yellow/green/red/gray`（**没有 tag-orange**），
 表格类用 `cp-table`（**没有 data-table**），
 边框 token 用 `--border-default`（**没有 --border-color，全站未定义，用了 border 整条失效**）。
+
+### ⚠️ 页面外壳三件套（v1.3.0 补齐，审批三页曾集体缺失）
+1. **`.page-body { padding: 20px 24px; }`** 必须写在页面自己的 `<style>` 首行。
+   漏了 → `cp-panel` 直接贴内容区左右边缘（l=容器左边界），左右无 24px 留白。
+   判定：viewport 1600 下 `cp-panel` 应 `L=244 R=1576`，
+   `cp-table-wrap` 应 `L=245 R=1575 W=1330`。
+2. **topbar 必须写全**：菜单后跟 `topbar-changelog-btn`（📋 版本变更记录），
+   再跟 `topbar-right`（通知铃铛 + 用户头像/姓名/部门）。117 页里 113 页有 `topbar-right`。
+   topbar 菜单链接也必须归一：`预警中心→./warning-list.html`、`账户中心→./account-personal.html`。
+3. **「数据导出」只放 `cp-filter-summary` 右侧**（`btn-text btn-sm` + 下载图标），
+   标题行只留主操作按钮（`btn-primary`）。别在标题行堆第二个 default 按钮。
+
+### ⚠️ 表格列宽（v1.3.0）
+`.cp-table` 全局 `min-width: 1500px`，在 1330px 容器里必然横向溢出，
+sticky 操作列会盖住倒数第二列（表现为表头只剩一个字竖排）。两种合规解法：
+- 列少（≤7 列）：`<table class="cp-table" style="min-width: 0;">` + 百分比列宽（和为 100）
+- 长文本列必须 `.cp-table tbody td.ap-wrap-cell { white-space: normal; }`
+  —— 选择器要写 `.cp-table tbody td.x`（0,2,2）才压得住 `.cp-table tbody td`（0,1,2），
+  只写 `.ap-wrap-cell` 不生效
 
 ### ⚠️ wrangler 部署坑
 父目录 `workspace/` 下有别的项目的 wrangler.toml 含 `[assets]`，
