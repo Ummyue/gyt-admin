@@ -21,41 +21,7 @@
     .ap-kpi.is-ok    .ap-kpi-value { color: #059669; }
     .ap-kpi.is-warn  .ap-kpi-value { color: #D97706; }
 
-    /* ===== 详情抽屉 ===== */
-    .ap-drawer-overlay {
-      position: fixed; inset: 0; background: rgba(15,23,42,.45);
-      z-index: 999; display: none;
-    }
-    .ap-drawer-overlay.open { display: block; }
-    .ap-drawer {
-      position: fixed; top: 0; right: 0; bottom: 0; width: 880px; max-width: 92vw;
-      background: var(--bg-card); box-shadow: -4px 0 20px rgba(0,0,0,.12);
-      z-index: 1000; display: none; flex-direction: column;
-    }
-    .ap-drawer.open { display: flex; }
-    .ap-drawer-header {
-      padding: 16px 24px; border-bottom: 1px solid var(--border-default);
-      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
-    }
-    .ap-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
-    .ap-drawer-body { flex: 1; padding: 20px 24px; overflow-y: auto; }
-    .ap-drawer-footer {
-      padding: 12px 24px; border-top: 1px solid var(--border-default);
-      display: flex; justify-content: flex-end; gap: 8px; flex-shrink: 0;
-    }
-
-    .ap-meta-grid {
-      display: grid; grid-template-columns: 120px 1fr 120px 1fr;
-      gap: 10px 12px; padding: 14px 16px; background: var(--bg-hover);
-      border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 18px;
-    }
-    .ap-meta-grid .k { font-size: 12px; color: var(--text-tertiary); }
-    .ap-meta-grid .v { font-size: 13px; color: var(--text-primary); font-weight: 500; }
-
-    .ap-section-title {
-      font-size: 13px; font-weight: 600; color: var(--text-primary);
-      margin: 18px 0 10px; padding-left: 8px; border-left: 3px solid var(--color-primary);
-    }
+    /* 详情抽屉样式已抽到 assets/css/approval.css（.ap-drawer* 平台统一右侧抽屉） */
 
     /* 抽屉内嵌表格：去掉宽表 min-width，用紧凑版 */
     .cp-table.is-compact { min-width: 0; }
@@ -261,7 +227,7 @@
         <div class="ap-drawer-title" id="dwTitle">审批详情</div>
         <div style="font-size:12px;color:var(--text-tertiary);margin-top:2px;" id="dwSubtitle"></div>
       </div>
-      <span class="ap-drawer-close" onclick="closeDrawer()" style="cursor:pointer;color:var(--text-tertiary);font-size:20px;line-height:1;padding:4px 8px;">×</span>
+      <span class="ap-drawer-close" onclick="closeDrawer()">×</span>
     </div>
     <div class="ap-drawer-body" id="dwBody"></div>
     <div class="ap-drawer-footer">

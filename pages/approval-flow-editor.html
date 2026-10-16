@@ -3,31 +3,110 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>流程编排画布 - 豫港通 v1.1.0</title>
+  <title>流程编排 - 豫港通 v1.2.0</title>
   <link rel="stylesheet" href="../assets/css/design-system.css">
   <link rel="stylesheet" href="../assets/css/list-page.css">
   <link rel="stylesheet" href="../assets/css/approval.css">
   <link rel="stylesheet" href="../assets/css/pin-annotation.css">
   <style>
-    /* ===== 编排画布 ===== */
-    .cv-canvas {
-      display: flex; align-items: stretch; flex-wrap: wrap; gap: 0;
-      padding: 24px 20px; background: var(--bg-hover);
-      border: 1px solid var(--border-default); border-radius: 8px;
-      min-height: 200px;
+    /* ===== 顶部：返回 + 流程名 + 步骤条 + 保存 ===== */
+    .wz-topbar {
+      position: sticky; top: 0; z-index: 60;
+      display: flex; align-items: center; gap: 16px;
+      padding: 14px 24px; background: var(--bg-card);
+      border-bottom: 1px solid var(--border-default);
     }
+    .wz-back {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 13px; color: var(--text-secondary); cursor: pointer;
+      padding: 4px 8px; border-radius: 4px; text-decoration: none;
+    }
+    .wz-back:hover { background: var(--bg-hover); color: var(--color-primary); }
 
-    /* 节点卡片 */
+    .wz-title { display: flex; align-items: center; gap: 8px; min-width: 0; }
+    .wz-title-name {
+      font-size: 16px; font-weight: 600; color: var(--text-primary);
+      max-width: 220px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap;
+    }
+    .wz-dirty {
+      display: none; align-items: center; gap: 5px;
+      font-size: 12px; color: #B45309; background: #FFFBEB;
+      border: 1px solid #FDE68A; border-radius: 4px; padding: 2px 8px;
+      white-space: nowrap;
+    }
+    .wz-dirty.show { display: inline-flex; }
+
+    /* 步骤条 */
+    .wz-steps { display: flex; align-items: center; gap: 0; margin: 0 auto; }
+    .wz-step {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      padding: 4px 14px; border-radius: 999px;
+      font-size: 13px; color: var(--text-secondary); white-space: nowrap;
+    }
+    .wz-step:hover { background: var(--bg-hover); }
+    .wz-step-no {
+      width: 20px; height: 20px; border-radius: 50%;
+      border: 1px solid var(--border-strong); color: var(--text-tertiary);
+      font-size: 11px; line-height: 18px; text-align: center; flex-shrink: 0;
+    }
+    .wz-step.active { color: var(--color-primary); font-weight: 500; background: #EFF6FF; }
+    .wz-step.active .wz-step-no {
+      background: var(--color-primary); border-color: var(--color-primary);
+      color: var(--text-inverse); font-weight: 600;
+    }
+    .wz-step.done .wz-step-no {
+      background: #DCFCE7; border-color: #86EFAC; color: #15803D; font-weight: 600;
+    }
+    .wz-step-sep { width: 36px; height: 1px; background: var(--border-default); }
+
+    .wz-actions { display: flex; align-items: center; gap: 10px; }
+
+    /* ===== 步骤内容 ===== */
+    .wz-step-pane { display: none; }
+    .wz-step-pane.active { display: block; }
+
+    /* ===== 基础信息 ===== */
+    .wz-form { max-width: 760px; margin: 0 auto; padding: 28px 0 40px; }
+    .wz-field { margin-bottom: 22px; }
+    .wz-field-label {
+      display: block; font-size: 13px; color: var(--text-primary);
+      margin-bottom: 8px; font-weight: 500;
+    }
+    .wz-field-label .req { color: #DC2626; margin-right: 3px; }
+    .wz-field-label .opt { color: var(--text-tertiary); font-weight: 400; font-size: 12px; margin-left: 6px; }
+    .wz-field-help { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.6; }
+
+    .wz-mods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px; }
+    .wz-mod { display: flex; align-items: flex-start; gap: 8px; }
+    .wz-mod-main { display: flex; align-items: center; gap: 6px; }
+    .wz-mod-main label { font-size: 13px; color: var(--text-primary); cursor: pointer; }
+    .wz-mod-kids {
+      margin: 6px 0 0 22px; padding: 8px 10px;
+      border-left: 2px solid var(--border-light); display: none;
+    }
+    .wz-mod.has-kids .wz-mod-kids { display: block; }
+    .wz-mod-kids label {
+      display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--text-secondary); cursor: pointer; margin-bottom: 4px;
+    }
+    .wz-mod-kids label:last-child { margin-bottom: 0; }
+
+    /* ===== 编排画布（满宽） ===== */
+    .cv-canvas {
+      display: flex; align-items: stretch; flex-wrap: wrap;
+      padding: 28px 24px; background: var(--bg-hover);
+      border: 1px solid var(--border-default); border-radius: 8px;
+      min-height: 260px;
+    }
     .cv-node {
-      width: 190px; flex-shrink: 0; background: var(--bg-card);
+      width: 200px; flex-shrink: 0; background: var(--bg-card);
       border: 1px solid var(--border-default); border-radius: 8px;
       border-top: 3px solid var(--node-color, #64748B);
-      cursor: pointer; transition: all .15s; position: relative;
+      cursor: pointer; transition: all .15s;
     }
     .cv-node:hover { box-shadow: var(--shadow-sm); border-color: var(--border-strong); }
     .cv-node.active { box-shadow: 0 0 0 2px rgba(30,64,175,.18); border-color: var(--color-primary); }
     .cv-node.is-branch { background: #FFFBEB; border-style: dashed; }
-
     .cv-node-head {
       display: flex; align-items: center; gap: 8px;
       padding: 10px 12px 8px; border-bottom: 1px solid var(--border-light);
@@ -51,40 +130,13 @@
     .cv-node-type.t-parallel { background: #F5F3FF; color: #6D28D9; }
     .cv-node-type.t-branch   { background: #FFFBEB; color: #B45309; }
     .cv-node-type.t-start    { background: var(--bg-disabled); color: var(--text-secondary); }
-
-    .cv-line { display: flex; align-items: center; gap: 4px; font-size: 11px; color: var(--text-secondary); margin-top: 4px; }
+    .cv-line {
+      display: flex; align-items: center; gap: 4px;
+      font-size: 11px; color: var(--text-secondary); margin-top: 4px;
+    }
     .cv-line .ico { width: 13px; color: var(--text-tertiary); flex-shrink: 0; }
     .cv-line .txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
-    /* 连接线 + 插入按钮 */
-    .cv-conn {
-      display: flex; flex-direction: column; align-items: center; justify-content: center;
-      width: 56px; flex-shrink: 0; position: relative;
-    }
-    .cv-conn-line {
-      width: 100%; height: 1px; background: var(--border-strong); position: relative;
-    }
-    .cv-conn-line::after {
-      content: ''; position: absolute; right: -1px; top: -3px;
-      border-left: 6px solid var(--border-strong);
-      border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent;
-    }
-    .cv-conn-add {
-      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-      width: 20px; height: 20px; border-radius: 50%;
-      background: var(--bg-card); border: 1px solid var(--border-strong);
-      color: var(--text-tertiary); font-size: 13px; line-height: 18px; text-align: center;
-      cursor: pointer; z-index: 2; padding: 0;
-    }
-    .cv-conn-add:hover { border-color: var(--color-primary); color: var(--color-primary); }
-
-    /* 画布底部 */
-    .cv-footbar {
-      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
-      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light);
-    }
-
-    /* 节点操作按钮 */
     .cv-node-ops { display: flex; gap: 2px; flex-shrink: 0; }
     .cv-op {
       width: 20px; height: 20px; border: 1px solid transparent; background: transparent;
@@ -95,20 +147,70 @@
     .cv-op:hover { border-color: var(--border-strong); color: var(--color-primary); background: var(--bg-hover); }
     .cv-op.danger:hover { color: #DC2626; border-color: #FCA5A5; }
 
-    /* 属性面板 */
-    .cv-props { background: var(--bg-card); border: 1px solid var(--border-default); border-radius: 8px; }
-    .cv-props-head {
-      padding: 12px 16px; border-bottom: 1px solid var(--border-default);
-      font-size: 13px; font-weight: 600; color: var(--text-primary);
-      display: flex; align-items: center; justify-content: space-between;
+    /* 连接线 + 加号（点击弹出选项卡片，从上到下） */
+    .cv-conn {
+      display: flex; align-items: center; justify-content: center;
+      width: 60px; flex-shrink: 0; position: relative;
     }
-    .cv-props-body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-    .cv-field { display: flex; flex-direction: column; gap: 6px; }
+    .cv-conn-line { width: 100%; height: 1px; background: var(--border-strong); position: relative; }
+    .cv-conn-line::after {
+      content: ''; position: absolute; right: -1px; top: -3px;
+      border-left: 6px solid var(--border-strong);
+      border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent;
+    }
+    .cv-conn-add {
+      position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--bg-card); border: 1px solid var(--border-strong);
+      color: var(--text-tertiary); font-size: 14px; line-height: 20px; text-align: center;
+      cursor: pointer; z-index: 3; padding: 0;
+    }
+    .cv-conn-add:hover { border-color: var(--color-primary); color: var(--color-primary); }
+
+    /* 加号选项卡片：往下展开 */
+    .cv-picker {
+      position: absolute; top: calc(50% + 16px); left: 50%; transform: translateX(-50%);
+      width: 220px; background: var(--bg-card);
+      border: 1px solid var(--border-default); border-radius: 8px;
+      box-shadow: 0 8px 24px rgba(15, 23, 42, .14);
+      z-index: 40; padding: 4px; display: none;
+    }
+    .cv-picker.open { display: block; }
+    .cv-picker-title {
+      font-size: 11px; color: var(--text-tertiary);
+      padding: 6px 10px 4px; border-bottom: 1px solid var(--border-light); margin-bottom: 4px;
+    }
+    .cv-picker-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 8px 10px; border-radius: 6px; cursor: pointer;
+    }
+    .cv-picker-item:hover { background: var(--bg-hover); }
+    .cv-picker-ico {
+      width: 24px; height: 24px; border-radius: 6px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 12px; font-weight: 600; color: var(--text-inverse);
+    }
+    .cv-picker-ico.s    { background: #2563EB; }
+    .cv-picker-ico.p    { background: #7C3AED; }
+    .cv-picker-ico.b    { background: #F59E0B; }
+    .cv-picker-name { font-size: 13px; color: var(--text-primary); }
+    .cv-picker-desc { font-size: 11px; color: var(--text-tertiary); margin-top: 2px; line-height: 1.5; }
+
+    .cv-footbar {
+      display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+      margin-top: 14px; padding-top: 14px; border-top: 1px solid var(--border-light);
+    }
+
+    /* ===== 节点属性抽屉（字段） ===== */
+    .cv-field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    .cv-field:last-child { margin-bottom: 0; }
     .cv-field > label { font-size: 12px; color: var(--text-secondary); font-weight: 500; }
     .cv-field .input, .cv-field .select { width: 100%; }
     .cv-field-help { font-size: 11px; color: var(--text-tertiary); line-height: 1.6; }
-
-    /* 提醒规则 */
+    .cv-field-title {
+      font-size: 12px; color: var(--text-primary); font-weight: 600;
+      padding-bottom: 8px; margin-bottom: 16px; border-bottom: 1px solid var(--border-light);
+    }
     .cv-remind-box {
       border: 1px solid var(--border-default); border-radius: 6px; padding: 12px;
       background: var(--bg-hover);
@@ -116,50 +218,58 @@
     .cv-remind-row { display: flex; align-items: center; gap: 8px; }
     .cv-remind-row .input { width: 84px; }
     .cv-remind-row .unit { font-size: 12px; color: var(--text-secondary); }
-
-    /* 会签人员 */
     .cv-sign-row { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
     .cv-sign-row .select { flex: 1; min-width: 0; }
-
-    /* 条件规则 */
     .cv-rule {
       border: 1px solid var(--border-default); border-radius: 6px;
-      padding: 10px; margin-bottom: 8px; background: var(--bg-card);
+      padding: 10px; margin-bottom: 8px; background: var(--bg-hover);
     }
-    .cv-rule-grid { display: grid; grid-template-columns: 1fr 58px 1fr; gap: 6px; align-items: center; }
+    .cv-rule-grid { display: grid; grid-template-columns: 1fr 64px 1fr; gap: 6px; align-items: center; }
     .cv-rule-grid .select, .cv-rule-grid .input { width: 100%; min-width: 0; }
     .cv-rule-foot { display: flex; align-items: center; gap: 6px; margin-top: 8px; }
     .cv-rule-foot .label { font-size: 11px; color: var(--text-tertiary); flex-shrink: 0; }
 
-    /* 应用模块 */
-    .cv-mods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px 20px; }
-    .cv-mod { display: flex; align-items: flex-start; gap: 8px; }
-    .cv-mod-main { display: flex; align-items: center; gap: 6px; }
-    .cv-mod-main label { font-size: 13px; color: var(--text-primary); cursor: pointer; }
-    .cv-mod-kids {
-      margin: 6px 0 0 22px; padding: 8px 10px;
-      border-left: 2px solid var(--border-light); display: none;
+    /* ===== 流程图预览弹窗 ===== */
+    .ap-modal-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, .45);
+      z-index: 1100; display: none; align-items: center; justify-content: center;
     }
-    .cv-mod.has-kids .cv-mod-kids { display: block; }
-    .cv-mod-kids label {
-      display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--text-secondary); cursor: pointer; margin-bottom: 4px;
+    .ap-modal-mask.open { display: flex; }
+    .ap-modal {
+      width: 720px; max-width: 92vw; max-height: 84vh;
+      background: var(--bg-card); border-radius: 10px;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, .22);
+      display: flex; flex-direction: column; overflow: hidden;
     }
-    .cv-mod-kids label:last-child { margin-bottom: 0; }
+    .ap-modal-header {
+      padding: 16px 20px; border-bottom: 1px solid var(--border-default);
+      display: flex; align-items: center; justify-content: space-between; flex-shrink: 0;
+    }
+    .ap-modal-title { font-size: 15px; font-weight: 600; color: var(--text-primary); }
+    .ap-modal-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .ap-modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
+    .ap-modal-footer {
+      padding: 12px 20px; border-top: 1px solid var(--border-default);
+      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0;
+    }
 
-    /* 未保存标记 */
-    .cv-dirty {
-      display: none; align-items: center; gap: 5px;
-      font-size: 12px; color: #B45309; background: #FFFBEB;
-      border: 1px solid #FDE68A; border-radius: 4px; padding: 2px 8px;
+    /* 预览内的节点摘要条 */
+    .pv-summary {
+      display: grid; grid-template-columns: 120px 1fr; gap: 8px 12px;
+      padding: 14px 16px; background: var(--bg-hover);
+      border: 1px solid var(--border-default); border-radius: 6px; margin-bottom: 18px;
     }
-    .cv-dirty.show { display: inline-flex; }
+    .pv-summary .k { font-size: 12px; color: var(--text-tertiary); }
+    .pv-summary .v { font-size: 13px; color: var(--text-primary); font-weight: 500; }
+    .pv-amount { display: flex; align-items: center; gap: 10px; }
+    .pv-amount .input { width: 150px; }
 
-    .cv-tip {
-      display: flex; align-items: flex-start; gap: 8px;
-      padding: 10px 14px; background: #EFF6FF; border: 1px solid #BFDBFE;
-      border-radius: 6px; font-size: 12px; color: #1E40AF; line-height: 1.7;
-    }
+    /* 抽屉内嵌表格 */
+    .cp-table.is-compact { min-width: 0; }
+    .cp-table.is-compact thead th,
+    .cp-table.is-compact tbody td { padding: 8px 10px; font-size: 12px; white-space: normal; }
+
+    .ap-empty { padding: 40px 16px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
   </style>
 </head>
 <body>
@@ -183,6 +293,35 @@
     <div class="sidemenu" id="leftSidemenu"></div>
 
     <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+
+      <!-- ===== 顶部：返回 + 流程名 + 步骤条 + 保存 ===== -->
+      <div class="wz-topbar">
+        <a class="wz-back" href="javascript:void(0)" onclick="goBack()">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+          返回
+        </a>
+        <div class="wz-title">
+          <span class="wz-title-name" id="topFlowName">新建审批流程</span>
+          <span class="tag tag-gray" id="topFlowStatus">草稿</span>
+          <span class="wz-dirty" id="dirtyFlag">● 有未保存的修改</span>
+        </div>
+
+        <div class="wz-steps">
+          <div class="wz-step active" id="step1Btn" onclick="gotoStep(1)">
+            <span class="wz-step-no">1</span>基础信息
+          </div>
+          <div class="wz-step-sep"></div>
+          <div class="wz-step" id="step2Btn" onclick="gotoStep(2)">
+            <span class="wz-step-no">2</span>流程设计
+          </div>
+        </div>
+
+        <div class="wz-actions">
+          <button class="btn btn-default" onclick="openPreview()">流程图预览</button>
+          <button class="btn btn-primary" onclick="saveDraft()">保存</button>
+        </div>
+      </div>
+
       <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
 
         <!-- 面包屑 -->
@@ -193,126 +332,85 @@
           <span class="sep">/</span>
           <a href="./approval-flow-list.html">审批流程配置</a>
           <span class="sep">/</span>
-          <span class="current">流程编排画布</span>
+          <span class="current">流程编排</span>
         </div>
 
-        <!-- 标题 + 操作 -->
-        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; gap: 10px;">
-            <h1 class="page-h1" style="margin: 0;">流程编排画布</h1>
-            <span class="cv-dirty" id="dirtyFlag">● 有未保存的修改</span>
-          </div>
-          <div style="display: flex; gap: 10px;">
-            <button class="btn btn-default" onclick="goBack()">返回列表</button>
-            <button class="btn btn-primary" onclick="saveDraft()">保存流程</button>
-          </div>
-        </div>
+        <!-- ===== 步骤 1：基础信息 ===== -->
+        <div class="wz-step-pane active" id="pane1">
+          <div class="wz-form">
 
-        <!-- ========== 区块 1：流程基本信息 ========== -->
-        <div class="cp-panel">
-          <div class="cp-block">
-            <div class="cp-filter">
-              <div class="cp-filter-item" style="flex: 2;">
-                <span class="cp-filter-label">流程名称</span>
-                <input type="text" class="input" id="edFlowName" placeholder="请输入流程名称" oninput="onEdit('name')">
-              </div>
-              <div class="cp-filter-item">
-                <span class="cp-filter-label">流程状态</span>
-                <select class="select" id="edFlowStatus" onchange="onEdit('status')">
-                  <option value="draft">草稿</option>
-                  <option value="enabled">已启用</option>
-                  <option value="disabled">已停用</option>
-                </select>
-              </div>
-              <div class="cp-filter-item" style="flex: 2;">
-                <span class="cp-filter-label">流程说明</span>
-                <input type="text" class="input" id="edFlowDesc" placeholder="用一句话描述适用场景" oninput="onEdit('desc')">
-              </div>
+            <div class="wz-field">
+              <label class="wz-field-label"><span class="req">*</span>流程名称</label>
+              <input type="text" class="input" id="edFlowName" placeholder="请输入流程名称"
+                     maxlength="40" oninput="onEdit()">
+              <div class="wz-field-help">建议体现适用场景，例如「采购合同高风险审批流程」</div>
             </div>
-          </div>
-        </div>
 
-        <!-- ========== 区块 2：编排画布 ========== -->
-        <div class="cp-panel" style="margin-top: 16px;">
-          <div class="cp-block">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
-                节点编排画布
-                <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">
-                  点击节点编辑属性 · 连接线上的 + 可插入节点 · 卡片右上角 ↑↓× 调序与删除
-                </span>
+            <div class="wz-field">
+              <label class="wz-field-label">流程说明</label>
+              <textarea class="textarea" id="edFlowDesc" rows="2"
+                        placeholder="用一句话描述这个流程的适用场景"
+                        oninput="onEdit()"></textarea>
+            </div>
+
+            <div class="wz-field">
+              <label class="wz-field-label">流程状态</label>
+              <div style="display: flex; gap: 20px; align-items: center;">
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                  <input type="radio" name="flowStatus" value="draft" onchange="onEdit()">草稿
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                  <input type="radio" name="flowStatus" value="enabled" onchange="onEdit()">已启用
+                </label>
+                <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
+                  <input type="radio" name="flowStatus" value="disabled" onchange="onEdit()">已停用
+                </label>
               </div>
-              <div style="display: flex; gap: 8px;">
-                <button class="btn btn-default btn-sm" onclick="addNode('serial')">+ 串行审批</button>
-                <button class="btn btn-default btn-sm" onclick="addNode('parallel_all')">+ 并行会签</button>
-                <button class="btn btn-default btn-sm" onclick="addNode('branch')">+ 条件分支</button>
-                <button class="btn btn-default btn-sm" onclick="togglePreview()">流程图预览</button>
+              <div class="wz-field-help">草稿仅自己可见；已启用的流程才会被应用模块的业务单据引用</div>
+            </div>
+
+            <div class="wz-field">
+              <label class="wz-field-label">
+                <span class="req">*</span>应用模块
+                <span class="opt">至少选择一个</span>
+              </label>
+              <div class="wz-mods" id="modPicker"></div>
+              <div class="wz-field-help">
+                勾选后，对应业务模块的单据将引用此流程模板。带子项的模块需进一步确认应用到哪些子项；
+                子项未全选时，流程仅对已勾选的子项生效。
               </div>
             </div>
 
-            <div style="display: grid; grid-template-columns: 1fr 340px; gap: 16px; align-items: start;">
-              <!-- 左：画布 -->
-              <div>
-                <div class="cv-canvas" id="canvas"></div>
-                <div class="cv-footbar">
-                  <span style="font-size: 12px; color: var(--text-tertiary);">
-                    至少保留「提交申请」发起节点与「归档完成」节点，二者不可删除
-                  </span>
-                </div>
-                <div id="previewBox" style="display: none; margin-top: 16px;">
-                  <div style="font-size: 12px; font-weight: 600; color: var(--text-secondary); margin-bottom: 8px;">
-                    流程图预览
-                    <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 6px;">
-                      调整单据金额可实时看到条件分支命中效果
-                    </span>
-                  </div>
-                  <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
-                    <span style="font-size: 12px; color: var(--text-secondary);">模拟单据金额</span>
-                    <input type="number" class="input" id="previewAmount" value="500000"
-                           style="width: 150px;" oninput="renderPreview()">
-                    <span style="font-size: 11px; color: var(--text-tertiary);">元</span>
-                  </div>
-                  <div id="previewChain"></div>
-                </div>
-              </div>
-
-              <!-- 右：节点属性 -->
-              <div>
-                <div class="cv-props">
-                  <div class="cv-props-head">
-                    <span id="propsTitle">节点属性</span>
-                  </div>
-                  <div class="cv-props-body" id="propsBody">
-                    <div style="font-size: 12px; color: var(--text-tertiary); line-height: 1.8;">
-                      ← 点击左侧节点<br>查看并编辑节点属性
-                    </div>
-                  </div>
-                </div>
-              </div>
+            <div style="display: flex; justify-content: center; padding-top: 8px;">
+              <button class="btn btn-primary" style="min-width:120px;" onclick="gotoStep(2)">下一步：流程设计</button>
             </div>
+
           </div>
         </div>
 
-        <!-- ========== 区块 3：应用模块 ========== -->
-        <div class="cp-panel" style="margin-top: 16px;">
-          <div class="cp-block">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
-              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">应用模块</div>
-              <span style="font-size: 12px; color: var(--text-tertiary);">
-                勾选后，对应业务模块的单据将引用此流程模板
+        <!-- ===== 步骤 2：流程设计 ===== -->
+        <div class="wz-step-pane" id="pane2">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+            <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
+              节点编排画布
+              <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">
+                点击连接线上的 + 插入节点 · 点击节点卡片在右侧抽屉编辑属性
               </span>
             </div>
-            <div class="cv-mods" id="modPicker"></div>
+            <span style="font-size: 12px; color: var(--text-tertiary);" id="nodeCountHint"></span>
           </div>
-        </div>
 
-        <div style="margin-top: 16px;">
-          <div class="cv-tip">
-            <span>说明</span>
-            <span>
-              勾选带子项的模块（合同管理 / 货转管理 / 结算单管理）后，需进一步确认应用到哪些子项；
-              子项未全选时，流程仅对已勾选的子项生效。
-            </span>
+          <div class="cp-panel">
+            <div class="cp-block">
+              <div class="cv-canvas" id="canvas"></div>
+              <div class="cv-footbar">
+                <button class="btn btn-default btn-sm" onclick="gotoStep(1)">上一步：基础信息</button>
+                <div style="flex:1;"></div>
+                <span style="font-size: 12px; color: var(--text-tertiary);">
+                  至少保留「提交申请」发起节点与「归档完成」节点，二者不可删除
+                </span>
+              </div>
+            </div>
           </div>
         </div>
 
@@ -321,6 +419,45 @@
   </div>
   <!-- /main-content -->
 
+  <!-- ===== 节点属性抽屉（平台统一右侧抽屉） ===== -->
+  <div class="ap-drawer-overlay" id="propsOverlay" onclick="closePropsDrawer()"></div>
+  <div class="ap-drawer" id="propsDrawer" style="width: 520px;">
+    <div class="ap-drawer-header">
+      <div>
+        <div class="ap-drawer-title" id="propsTitle">节点属性</div>
+        <div class="ap-drawer-subtitle" id="propsSubtitle"></div>
+      </div>
+      <span class="ap-drawer-close" onclick="closePropsDrawer()">×</span>
+    </div>
+    <div class="ap-drawer-body" id="propsBody"></div>
+    <div class="ap-drawer-footer">
+      <button class="btn btn-default" onclick="closePropsDrawer()">关闭</button>
+      <button class="btn btn-primary" onclick="closePropsDrawer()">完成</button>
+    </div>
+  </div>
+
+  <!-- ===== 流程图预览弹窗 ===== -->
+  <div class="ap-modal-mask" id="previewMask" onclick="if(event.target===this) closePreview()">
+    <div class="ap-modal">
+      <div class="ap-modal-header">
+        <div>
+          <div class="ap-modal-title" id="pvTitle">流程图预览</div>
+          <div class="ap-modal-sub" id="pvSubtitle"></div>
+        </div>
+        <span class="ap-drawer-close" onclick="closePreview()">×</span>
+      </div>
+      <div class="ap-modal-body" id="pvBody"></div>
+      <div class="ap-modal-footer">
+        <div class="pv-amount">
+          <span style="font-size: 12px; color: var(--text-secondary);">模拟单据金额</span>
+          <input type="number" class="input" id="previewAmount" value="500000" oninput="renderPreview()">
+          <span style="font-size: 11px; color: var(--text-tertiary);">元</span>
+        </div>
+        <button class="btn btn-default" onclick="closePreview()">关闭</button>
+      </div>
+    </div>
+  </div>
+
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
   <script src="../shared/js/approval-engine.js"></script>
@@ -328,9 +465,16 @@
     const AE = window.ApprovalEngine;
     const ALL_PEOPLE = AE.listPeople();
 
-    let draft = null;        // 当前编辑中的流程
-    let selNodeIdx = -1;     // 选中节点下标
-    let isCreate = false;
+    const STATUS_META = {
+      draft:    { label: '草稿',   cls: 'tag-gray'   },
+      enabled:  { label: '已启用', cls: 'tag-green'  },
+      disabled: { label: '已停用', cls: 'tag-yellow' }
+    };
+
+    let draft = null;       // 当前编辑中的流程
+    let step = 1;           // 当前步骤
+    let selNodeIdx = -1;    // 选中节点下标
+    let openPickerPos = -1; // 当前展开选项卡片的连接线位置
 
     // ================================================================
     // 初始化
@@ -338,7 +482,7 @@
     (function init() {
       const q = new URLSearchParams(location.search);
       const flowId = q.get('flowId');
-      isCreate = !flowId || flowId === 'new';
+      const isCreate = !flowId || flowId === 'new';
 
       if (isCreate) {
         draft = {
@@ -366,22 +510,38 @@
         if (!draft.nodes) draft.nodes = [];
       }
 
-      document.getElementById('edFlowName').value = draft.name || '';
-      document.getElementById('edFlowStatus').value = draft.status || 'draft';
-      document.getElementById('edFlowDesc').value = draft.desc || '';
-      renderCanvas();
-      renderProps();
+      bindBasicInfo();
       renderModules();
+      renderCanvas();
     })();
+
+    function bindBasicInfo() {
+      document.getElementById('edFlowName').value = draft.name || '';
+      document.getElementById('edFlowDesc').value = draft.desc || '';
+      const radio = document.querySelector(`input[name="flowStatus"][value="${draft.status || 'draft'}"]`);
+      if (radio) radio.checked = true;
+      updateTopTitle();
+    }
+
+    function updateTopTitle() {
+      const nm = document.getElementById('edFlowName').value || '未命名流程';
+      document.getElementById('topFlowName').textContent = nm;
+      const st = draft.status || 'draft';
+      const sm = STATUS_META[st] || STATUS_META.draft;
+      const tag = document.getElementById('topFlowStatus');
+      tag.className = 'tag ' + sm.cls;
+      tag.textContent = sm.label;
+    }
 
     function markDirty() {
       document.getElementById('dirtyFlag').classList.add('show');
     }
 
-    function onEdit(field) {
+    function onEdit() {
       draft.name = document.getElementById('edFlowName').value;
-      draft.status = document.getElementById('edFlowStatus').value;
       draft.desc = document.getElementById('edFlowDesc').value;
+      draft.status = (document.querySelector('input[name="flowStatus"]:checked') || {}).value || 'draft';
+      updateTopTitle();
       markDirty();
     }
 
@@ -390,6 +550,58 @@
         if (!confirm('有未保存的修改，确定返回列表？')) return;
       }
       location.href = './approval-flow-list.html';
+    }
+
+    // ================================================================
+    // 步骤切换
+    // ================================================================
+    function gotoStep(n) {
+      if (n === 2) {
+        onEdit();                       // 先把基础信息同步进 draft
+        if (!validateBasic()) return;
+      }
+      closePicker();
+      step = n;
+      document.getElementById('pane1').classList.toggle('active', n === 1);
+      document.getElementById('pane2').classList.toggle('active', n === 2);
+      const b1 = document.getElementById('step1Btn');
+      const b2 = document.getElementById('step2Btn');
+      b1.classList.toggle('active', n === 1);
+      b1.classList.toggle('done', n === 2);
+      b2.classList.toggle('active', n === 2);
+      b2.classList.remove('done');
+      if (n === 2) renderCanvas();
+    }
+
+    function validateBasic() {
+      if (!(document.getElementById('edFlowName').value || '').trim()) {
+        alert('请填写流程名称');
+        gotoStepForce(1);
+        return false;
+      }
+      if (!(draft.applyModules || []).length) {
+        alert('请至少选择一个应用模块');
+        gotoStepForce(1);
+        return false;
+      }
+      for (const m of AE.APPLY_MODULES) {
+        if (!m.children) continue;
+        const e = (draft.applyModules || []).find(x => x.key === m.key);
+        if (e && (!e.children || !e.children.length)) {
+          alert(`「${m.label}」已勾选，请至少选择一个应用子项`);
+          gotoStepForce(1);
+          return false;
+        }
+      }
+      return true;
+    }
+
+    function gotoStepForce(n) {
+      step = n;
+      document.getElementById('pane1').classList.toggle('active', n === 1);
+      document.getElementById('pane2').classList.toggle('active', n === 2);
+      document.getElementById('step1Btn').classList.toggle('active', n === 1);
+      document.getElementById('step2Btn').classList.toggle('active', n === 2);
     }
 
     // ================================================================
@@ -406,37 +618,29 @@
 
     function renderCanvas() {
       const box = document.getElementById('canvas');
+      document.getElementById('nodeCountHint').textContent =
+        '共 ' + draft.nodes.length + ' 个节点';
+
       const cards = draft.nodes.map((n, i) => {
         const color = AE.nodeColorOf(n);
         const people = AE.nodeApprovers(n);
-        const peopleText = people.length
-          ? people.map(p => p.name + ' ' + p.phone).join('、')
-          : '—';
+        const peopleText = people.length ? people.map(p => p.name + ' ' + p.phone).join('、') : '—';
         const disabled = (n.type === 'start' || n.auto);
-        // 发起 / 归档节点不展示审批人行
+
         let bodyLine;
         if (n.type === 'branch') {
-          bodyLine = `<div class="cv-line">
-            <span class="ico">⚙</span>
-            <span class="txt">${(n.condition || []).length} 条条件规则</span>
-          </div>`;
+          bodyLine = `<div class="cv-line"><span class="ico">⚙</span><span class="txt">${(n.condition || []).length} 条条件规则</span></div>`;
         } else if (n.type === 'start') {
-          bodyLine = `<div class="cv-line">
-            <span class="ico">👤</span><span class="txt">发起人提交，系统自动记录</span>
-          </div>`;
+          bodyLine = `<div class="cv-line"><span class="ico">👤</span><span class="txt">发起人提交，系统自动记录</span></div>`;
         } else if (n.auto) {
-          bodyLine = `<div class="cv-line">
-            <span class="ico">✔</span><span class="txt">系统自动归档</span>
-          </div>`;
+          bodyLine = `<div class="cv-line"><span class="ico">✔</span><span class="txt">系统自动归档</span></div>`;
         } else {
-          bodyLine = `<div class="cv-line">
-            <span class="ico">👤</span>
-            <span class="txt" title="${AE.esc(peopleText)}">${AE.esc(peopleText)}</span>
-          </div>`;
+          bodyLine = `<div class="cv-line"><span class="ico">👤</span><span class="txt" title="${AE.esc(peopleText)}">${AE.esc(peopleText)}</span></div>`;
         }
+
         return `
         <div class="cv-node ${selNodeIdx === i ? 'active' : ''} ${n.type === 'branch' ? 'is-branch' : ''}"
-             style="--node-color:${color}" onclick="selectNode(${i})">
+             style="--node-color:${color}" onclick="openProps(${i})">
           <div class="cv-node-head">
             <div class="cv-node-no">${AE.CIRCLED[i] || (i + 1)}</div>
             <div class="cv-node-title" title="${AE.esc(n.name)}">${AE.esc(n.name)}</div>
@@ -451,24 +655,44 @@
             <span class="cv-node-type ${nodeTypeClass(n.type, n)}">${nodeTypeLabel(n.type, n)}</span>
             ${bodyLine}
             ${n.remind && n.remind.enabled ? `
-              <div class="cv-line">
-                <span class="ico">⏰</span>
-                <span class="txt">未处理满 ${n.remind.afterHours}h 提醒</span>
-              </div>` : ''}
+              <div class="cv-line"><span class="ico">⏰</span><span class="txt">未处理满 ${n.remind.afterHours}h 提醒</span></div>` : ''}
           </div>
         </div>`;
       });
 
-      // 用连接线串起来，并在每两个节点之间提供插入按钮
       const withConn = [];
       cards.forEach((c, i) => {
         withConn.push(c);
         if (i < cards.length - 1) {
-          const insertAt = i + 1;
+          const pos = i + 1;   // 插入位置 = 第 i 与 i+1 之间
           withConn.push(`
             <div class="cv-conn">
               <div class="cv-conn-line"></div>
-              <button class="cv-conn-add" title="在此处插入节点" onclick="insertNodeAt(${insertAt})">+</button>
+              <button class="cv-conn-add" title="插入节点" onclick="event.stopPropagation();togglePicker(${pos}, this)">+</button>
+              <div class="cv-picker ${openPickerPos === pos ? 'open' : ''}" data-picker="${pos}" onclick="event.stopPropagation()">
+                <div class="cv-picker-title">插入节点</div>
+                <div class="cv-picker-item" onclick="insertNodeAt(${pos},'serial')">
+                  <div class="cv-picker-ico s">序</div>
+                  <div>
+                    <div class="cv-picker-name">串行审批</div>
+                    <div class="cv-picker-desc">单人依次审批，逐级通过</div>
+                  </div>
+                </div>
+                <div class="cv-picker-item" onclick="insertNodeAt(${pos},'parallel_all')">
+                  <div class="cv-picker-ico p">签</div>
+                  <div>
+                    <div class="cv-picker-name">并行会签</div>
+                    <div class="cv-picker-desc">多人同时收到，全部通过才算过</div>
+                  </div>
+                </div>
+                <div class="cv-picker-item" onclick="insertNodeAt(${pos},'branch')">
+                  <div class="cv-picker-ico b">分</div>
+                  <div>
+                    <div class="cv-picker-name">条件分支</div>
+                    <div class="cv-picker-desc">按字段阈值自动增减节点</div>
+                  </div>
+                </div>
+              </div>
             </div>`);
         }
       });
@@ -476,38 +700,29 @@
       box.innerHTML = withConn.join('');
     }
 
-    function selectNode(i) {
-      selNodeIdx = i;
-      renderCanvas();
-      renderProps();
+    function togglePicker(pos, btn) {
+      const next = (openPickerPos === pos) ? -1 : pos;
+      document.querySelectorAll('.cv-picker').forEach(p => p.classList.remove('open'));
+      openPickerPos = next;
+      if (next >= 0) {
+        const el = document.querySelector(`.cv-picker[data-picker="${next}"]`);
+        if (el) el.classList.add('open');
+      }
     }
 
-    function moveNode(i, dir) {
-      const j = i + dir;
-      // 归档节点固定在最后：不允许越过
-      if (j < 0 || j >= draft.nodes.length) return;
-      if (draft.nodes[i].auto || draft.nodes[j].auto) return;
-      const t = draft.nodes[i];
-      draft.nodes[i] = draft.nodes[j];
-      draft.nodes[j] = t;
-      selNodeIdx = j;
-      markDirty();
-      renderCanvas();
-      renderProps();
+    function closePicker() {
+      document.querySelectorAll('.cv-picker').forEach(p => p.classList.remove('open'));
+      openPickerPos = -1;
     }
 
-    function delNode(i) {
-      const n = draft.nodes[i];
-      if (n.type === 'start') { alert('发起节点不可删除'); return; }
-      if (n.auto) { alert('归档节点不可删除'); return; }
-      if (!confirm(`确定删除节点「${n.name}」？`)) return;
-      draft.nodes.splice(i, 1);
-      selNodeIdx = -1;
-      markDirty();
-      renderCanvas();
-      renderProps();
-    }
+    // 点击画布空白处收起选项卡片
+    document.addEventListener('click', (e) => {
+      if (openPickerPos >= 0 && !e.target.closest('.cv-conn')) closePicker();
+    });
 
+    // ================================================================
+    // 节点增删改序
+    // ================================================================
     function newNode(type) {
       if (type === 'serial') {
         return { id: 'n_' + Date.now(), type: 'serial', name: '新审批节点',
@@ -523,90 +738,121 @@
                condition: [{ field: 'amount', operator: 'gt', value: 1000000, then: ['gm'] }] };
     }
 
-    function addNode(type) {
-      const autoIdx = draft.nodes.findIndex(n => n.auto);
+    function insertNodeAt(pos, type) {
       const node = newNode(type);
-      if (autoIdx >= 0) draft.nodes.splice(autoIdx, 0, node);
-      else draft.nodes.push(node);
-      selNodeIdx = draft.nodes.indexOf(node);
-      markDirty();
-      renderCanvas();
-      renderProps();
-    }
-
-    function insertNodeAt(pos) {
-      const node = newNode('serial');
       draft.nodes.splice(pos, 0, node);
       selNodeIdx = pos;
+      closePicker();
       markDirty();
       renderCanvas();
-      renderProps();
+      openProps(pos);     // 插入后直接打开属性抽屉
+    }
+
+    function moveNode(i, dir) {
+      const j = i + dir;
+      if (j < 0 || j >= draft.nodes.length) return;
+      if (draft.nodes[i].auto || draft.nodes[j].auto) return;
+      const t = draft.nodes[i];
+      draft.nodes[i] = draft.nodes[j];
+      draft.nodes[j] = t;
+      if (selNodeIdx === i) selNodeIdx = j;
+      else if (selNodeIdx === j) selNodeIdx = i;
+      markDirty();
+      renderCanvas();
+      if (selNodeIdx >= 0) refreshPropsBody();
+    }
+
+    function delNode(i) {
+      const n = draft.nodes[i];
+      if (n.type === 'start') { alert('发起节点不可删除'); return; }
+      if (n.auto) { alert('归档节点不可删除'); return; }
+      if (!confirm(`确定删除节点「${n.name}」？`)) return;
+      draft.nodes.splice(i, 1);
+      if (selNodeIdx === i) closePropsDrawer();
+      selNodeIdx = -1;
+      markDirty();
+      renderCanvas();
     }
 
     // ================================================================
-    // 属性面板
+    // 节点属性抽屉
     // ================================================================
-    function peopleOptions(selectedId, excludeDept) {
-      return ALL_PEOPLE.map(p => {
-        const dis = (excludeDept && p.dept === excludeDept && p.id !== selectedId) ? 'disabled' : '';
-        return `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''} ${dis}>${AE.esc(p.name)}  ${AE.esc(p.phone)}</option>`;
-      }).join('');
+    function openProps(i) {
+      selNodeIdx = i;
+      renderCanvas();
+      refreshPropsBody();
+      document.getElementById('propsOverlay').classList.add('open');
+      document.getElementById('propsDrawer').classList.add('open');
     }
 
-    function renderProps() {
-      const box = document.getElementById('propsBody');
-      const title = document.getElementById('propsTitle');
+    function closePropsDrawer() {
+      document.getElementById('propsOverlay').classList.remove('open');
+      document.getElementById('propsDrawer').classList.remove('open');
+      selNodeIdx = -1;
+      renderCanvas();
+    }
+
+    function peopleOptions(selectedId) {
+      return ALL_PEOPLE.map(p =>
+        `<option value="${p.id}" ${p.id === selectedId ? 'selected' : ''}>${AE.esc(p.name)}  ${AE.esc(p.phone)}</option>`
+      ).join('');
+    }
+
+    function refreshPropsBody() {
       const n = draft.nodes[selNodeIdx];
-      if (!n) {
-        title.textContent = '节点属性';
-        box.innerHTML = '<div style="font-size:12px;color:var(--text-tertiary);line-height:1.8;">← 点击左侧节点<br>查看并编辑节点属性</div>';
-        return;
-      }
-      title.textContent = `节点属性 · ${AE.CIRCLED[selNodeIdx] || (selNodeIdx + 1)} ${AE.esc(n.name)}`;
+      if (!n) return;
+      const idx = selNodeIdx;
+      document.getElementById('propsTitle').textContent = '节点属性';
+      document.getElementById('propsSubtitle').textContent =
+        `${AE.CIRCLED[idx] || (idx + 1)} · ${n.name} · ${nodeTypeLabel(n.type, n)}`;
 
       const locked = (n.type === 'start' || n.auto);
       let html = '';
 
-      // 节点名称
+      if (locked) {
+        html += `<div class="cv-field-title">${AE.esc(n.name)}</div>`;
+        html += `<div class="ap-meta-grid" style="grid-template-columns:96px 1fr;">
+          <div class="k">节点类型</div><div class="v">${nodeTypeLabel(n.type, n)}</div>
+          <div class="k">可编辑</div><div class="v">否（系统节点）</div>
+        </div>`;
+        html += `<div class="cv-field-help">发起与归档为系统节点，属性不可编辑。</div>`;
+        document.getElementById('propsBody').innerHTML = html;
+        return;
+      }
+
       html += `<div class="cv-field">
         <label>节点名称</label>
-        <input type="text" class="input" value="${AE.esc(n.name)}" ${locked ? 'disabled' : ''}
+        <input type="text" class="input" value="${AE.esc(n.name)}" maxlength="20"
                oninput="setNodeProp('name', this.value)">
       </div>`;
 
-      // 串行：审批人员
-      if (n.type === 'serial' && !n.auto) {
+      if (n.type === 'serial') {
         html += `<div class="cv-field">
           <label>审批人员</label>
-          <select class="select" onchange="setNodeProp('approver', this.value)">
-            ${peopleOptions(n.approver)}
-          </select>
+          <select class="select" onchange="setNodeProp('approver', this.value)">${peopleOptions(n.approver)}</select>
           <div class="cv-field-help">从平台人员目录中选择实际审批人，展示完整姓名 + 脱敏手机号</div>
         </div>`;
       }
 
-      // 并行会签：会签人员
       if (n.type === 'parallel_all') {
         html += `<div class="cv-field">
-          <label>会签人员（全部通过才算通过）</label>
+          <label>会签人员<span class="cv-field-help" style="display:inline;margin-left:6px;">全部通过才算通过</span></label>
           <div id="signBox"></div>
           <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addSign()">+ 添加会签人</button>
-          <div class="cv-field-help">会签节点：所有会签人同时收到待办，<strong>全部通过</strong>才流转到下一节点；任一人驳回则整个流程驳回。</div>
+          <div class="cv-field-help">所有会签人同时收到待办，任一人驳回则整个流程驳回。</div>
         </div>`;
       }
 
-      // 条件分支：条件规则
       if (n.type === 'branch') {
         html += `<div class="cv-field">
-          <label>条件规则（满足任一条即命中）</label>
+          <label>条件规则<span class="cv-field-help" style="display:inline;margin-left:6px;">满足任一条即命中</span></label>
           <div id="ruleBox"></div>
           <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addRule()">+ 添加条件</button>
-          <div class="cv-field-help">命中时追加右侧所列审批环节的节点（自动带出该环节默认审批人）；<strong>不命中则跳过本节点</strong>，流程继续向下走。</div>
+          <div class="cv-field-help">命中时追加右侧所列审批环节的节点（自动带出该环节默认审批人）；不命中则跳过本节点。</div>
         </div>`;
       }
 
-      // 提醒规则（串行 / 会签，非发起非归档）
-      if (!locked && n.type !== 'branch') {
+      if (n.type !== 'branch') {
         const r = n.remind || { enabled: false, afterHours: 24 };
         html += `<div class="cv-field">
           <label>提醒规则</label>
@@ -622,20 +868,17 @@
               <span class="unit">小时未处理后，向当前审批人发送提醒</span>
             </div>
           </div>
-          <div class="cv-field-help">提醒消息将推送至该节点审批人的站内消息与短信</div>
+          <div class="cv-field-help">提醒将推送至该节点审批人的站内消息与短信</div>
         </div>`;
       }
 
-      // 节点说明
-      if (!locked) {
-        html += `<div class="cv-field">
-          <label>节点说明</label>
-          <textarea class="textarea" rows="2" style="width:100%;" placeholder="给审批人的提示语"
-                    oninput="setNodeProp('desc', this.value)">${AE.esc(n.desc || '')}</textarea>
-        </div>`;
-      }
+      html += `<div class="cv-field">
+        <label>节点说明</label>
+        <textarea class="textarea" rows="2" style="width:100%;" placeholder="给审批人的提示语"
+                  oninput="setNodeProp('desc', this.value)">${AE.esc(n.desc || '')}</textarea>
+      </div>`;
 
-      box.innerHTML = html;
+      document.getElementById('propsBody').innerHTML = html;
       if (n.type === 'parallel_all') renderSign(n);
       if (n.type === 'branch') renderRules(n);
     }
@@ -646,8 +889,10 @@
       n[key] = val;
       markDirty();
       renderCanvas();
-      if (key === 'name') document.getElementById('propsTitle').textContent =
-        `节点属性 · ${AE.CIRCLED[selNodeIdx] || (selNodeIdx + 1)} ${val}`;
+      if (key === 'name') {
+        document.getElementById('propsSubtitle').textContent =
+          `${AE.CIRCLED[selNodeIdx] || (selNodeIdx + 1)} · ${val} · ${nodeTypeLabel(n.type, n)}`;
+      }
     }
 
     function setRemind(key, val) {
@@ -657,7 +902,7 @@
       n.remind[key] = val;
       markDirty();
       renderCanvas();
-      if (key === 'enabled') renderProps();   // 开关变化要重绘以禁用输入框
+      if (key === 'enabled') refreshPropsBody();
     }
 
     // ---- 会签人员 ----
@@ -676,7 +921,6 @@
     function setSign(i, pid) {
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
-      // 同一人不能重复会签
       const dupAt = n.approvers.indexOf(pid);
       if (dupAt >= 0 && dupAt !== i) { alert('该人员已在会签名单中'); renderSign(n); return; }
       n.approvers[i] = pid;
@@ -688,8 +932,7 @@
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
       if (!n.approvers) n.approvers = [];
-      const used = n.approvers;
-      const free = ALL_PEOPLE.find(p => !used.includes(p.id));
+      const free = ALL_PEOPLE.find(p => !n.approvers.includes(p.id));
       if (!free) { alert('平台人员已全部加入会签名单'); return; }
       n.approvers.push(free.id);
       markDirty();
@@ -781,15 +1024,15 @@
           </label>`;
         }).join('');
         return `
-        <div class="cv-mod ${m.children ? 'has-kids' : ''}" id="mod-${m.key}">
+        <div class="wz-mod ${m.children ? 'has-kids' : ''}">
           <div style="flex:1;">
-            <div class="cv-mod-main">
+            <div class="wz-mod-main">
               <input type="checkbox" id="chk-${m.key}" ${on ? 'checked' : ''}
                      onchange="toggleModule('${m.key}',this.checked)">
               <label for="chk-${m.key}">${AE.esc(m.label)}</label>
               ${m.children ? `<span style="font-size:11px;color:var(--text-tertiary);">（${m.children.length} 个子项）</span>` : ''}
             </div>
-            ${m.children ? `<div class="cv-mod-kids">${kids}</div>` : ''}
+            ${m.children ? `<div class="wz-mod-kids">${kids}</div>` : ''}
           </div>
         </div>`;
       }).join('');
@@ -806,7 +1049,6 @@
       const mod = AE.APPLY_MODULES.find(m => m.key === key);
       if (on) {
         const e = ensureEntry(key);
-        // 带子项的模块：勾选父级时默认全选子项，避免出现「勾了父级但没子项生效」的空配置
         if (mod && mod.children) e.children = mod.children.map(c => c.key);
       } else {
         draft.applyModules = draft.applyModules.filter(x => x.key !== key);
@@ -820,61 +1062,89 @@
       const i = e.children.indexOf(childKey);
       if (on && i < 0) e.children.push(childKey);
       if (!on && i >= 0) e.children.splice(i, 1);
-      // 子项全取消 → 取消父级，避免空挂载
       if (!e.children.length) draft.applyModules = draft.applyModules.filter(x => x.key !== parentKey);
       markDirty();
       renderModules();
     }
 
     // ================================================================
-    // 预览
+    // 流程图预览（弹窗 · 审批详情视觉）
     // ================================================================
-    function togglePreview() {
-      const box = document.getElementById('previewBox');
-      const show = box.style.display === 'none';
-      box.style.display = show ? '' : 'none';
-      if (show) {
-        renderPreview();
-        box.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
-      }
+    function openPreview() {
+      onEdit();
+      document.getElementById('pvTitle').textContent = draft.name || '未命名流程';
+      const sm = STATUS_META[draft.status] || STATUS_META.draft;
+      document.getElementById('pvSubtitle').innerHTML =
+        `${AE.esc(AE.applyModulesText(draft.applyModules || []))} · <span class="tag ${sm.cls}">${sm.label}</span>`;
+      renderPreview();
+      document.getElementById('previewMask').classList.add('open');
+    }
+
+    function closePreview() {
+      document.getElementById('previewMask').classList.remove('open');
     }
 
     function renderPreview() {
       const amt = Number(document.getElementById('previewAmount').value || 0);
-      document.getElementById('previewChain').innerHTML =
-        AE.renderFlowChain(draft, { amount: amt });
+      const nodes = AE.resolveFlow(draft, { amount: amt });
+      const branchNodes = nodes.filter(n => n.fromBranch || n.skipped);
+
+      document.getElementById('pvBody').innerHTML = `
+        <div class="pv-summary">
+          <div class="k">流程名称</div><div class="v">${AE.esc(draft.name || '未命名流程')}</div>
+          <div class="k">节点总数</div><div class="v">${nodes.length} 个</div>
+          <div class="k">模拟金额</div><div class="v">¥ ${AE.fmtAmount(amt)}</div>
+          <div class="k">分支结果</div>
+          <div class="v">${branchNodes.length
+            ? (branchNodes.some(n => n.skipped) ? '条件未命中，相关节点已跳过' : '条件命中，已追加节点')
+            : '该流程无条件分支'}</div>
+        </div>
+
+        <div class="ap-section-title">审批节点流转</div>
+        <div id="pvTimeline"></div>
+
+        ${branchNodes.length ? `
+        <div class="ap-section-title">条件分支求值明细</div>
+        <div style="overflow-x:auto;">
+        <table class="cp-table is-compact" style="width:100%;">
+          <thead><tr><th>条件</th><th>操作符</th><th>阈值</th><th>实际值</th><th>结果</th><th>命中节点</th></tr></thead>
+          <tbody>${branchNodes.map(n => {
+            if (n.fromBranch) {
+              return `<tr>
+                <td>单据金额</td><td>&gt;</td><td>1,000,000</td><td>${AE.fmtAmount(amt)}</td>
+                <td><span class="tag tag-green">命中</span></td><td>${AE.esc(n.name)}</td>
+              </tr>`;
+            }
+            const r = (n.branchRules || [])[0];
+            return `<tr>
+              <td>${AE.esc(r ? r.fieldLabel : '—')}</td><td>${AE.esc(r ? r.opLabel : '—')}</td>
+              <td>${AE.fmtAmount(r ? r.value : 0)}</td><td>${AE.fmtAmount(r ? r.actual : 0)}</td>
+              <td><span class="tag tag-gray">未命中 → 跳过</span></td><td>—</td>
+            </tr>`;
+          }).join('')}</tbody>
+        </table></div>` : ''}
+      `;
+
+      // 时间线：复用引擎渲染，与业务单据「审批详情」完全一致
+      document.getElementById('pvTimeline').innerHTML =
+        AE.renderTimeline({ flow: draft, formData: { amount: amt }, currentIdx: -1 });
     }
 
     // ================================================================
     // 保存
     // ================================================================
     function saveDraft() {
-      draft.name = document.getElementById('edFlowName').value || '';
-      draft.desc = document.getElementById('edFlowDesc').value || '';
-      draft.status = document.getElementById('edFlowStatus').value;
+      onEdit();
+      if (!validateBasic()) return;
 
-      if (!draft.name.trim()) { alert('请填写流程名称'); return; }
-      if (!draft.nodes.some(n => n.type === 'start')) { alert('必须保留「提交申请」发起节点'); return; }
-      if (!draft.nodes.some(n => n.auto)) { alert('必须保留「归档完成」节点'); return; }
-
-      // 会签节点必须有会签人
+      if (!draft.nodes.some(n => n.type === 'start')) { alert('必须保留「提交申请」发起节点'); gotoStepForce(2); return; }
+      if (!draft.nodes.some(n => n.auto)) { alert('必须保留「归档完成」节点'); gotoStepForce(2); return; }
       for (const n of draft.nodes) {
         if (n.type === 'parallel_all' && (!n.approvers || !n.approvers.length)) {
-          alert(`会签节点「${n.name}」至少需要 1 名会签人`); return;
+          alert(`会签节点「${n.name}」至少需要 1 名会签人`); gotoStepForce(2); openProps(draft.nodes.indexOf(n)); return;
         }
         if (n.type === 'serial' && !n.auto && !n.approver) {
-          alert(`串行节点「${n.name}」请选择审批人员`); return;
-        }
-      }
-
-      // 带子项的模块必须至少选一个子项
-      for (const m of AE.APPLY_MODULES) {
-        if (!m.children) continue;
-        const e = (draft.applyModules || []).find(x => x.key === m.key);
-        if (e && (!e.children || !e.children.length)) {
-          alert(`「${m.label}」已勾选，请至少选择一个应用子项`);
-          renderModules();
-          return;
+          alert(`串行节点「${n.name}」请选择审批人员`); gotoStepForce(2); openProps(draft.nodes.indexOf(n)); return;
         }
       }
 

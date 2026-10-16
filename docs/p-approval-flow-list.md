@@ -28,7 +28,7 @@
 数字供应链（📦）
 └── 审批管理
     ├── 审批流程配置   ← 本文档（模板列表）
-    ├── 流程编排画布   ← 见 p-approval-flow-editor.md
+    ├── 流程编排画布   ← 见 p-approval-flow-editor.md（两步向导）
     └── 审批流程监控   ← 见 p-approval-monitor.md
 ```
 
@@ -62,8 +62,8 @@
 | 新建流程 | `approval-flow-editor.html?flowId=new` |
 | 编排 | `approval-flow-editor.html?flowId={flowId}` |
 
-编排画布的节点编排、应用模块级联、审批人员、提醒规则等全部在画布页维护，
-详见 `p-approval-flow-editor.md`。
+编排页为**两步向导**：① 基础信息（流程名称/说明/状态/应用模块）② 流程设计（节点画布）。
+新建与编辑共用同一套向导，详见 `p-approval-flow-editor.md`。
 
 ### 3.3 筛选与分页
 
@@ -244,7 +244,7 @@
 |---|---|---|
 | 数据导出 | 标题行右上 | Toast「已导出 N 条流程配置」（演示态） |
 | 新建流程 | 标题行右上 | 跳 `approval-flow-editor.html?flowId=new` |
-| 编排 | 列表行 | 跳 `approval-flow-editor.html?flowId={id}` |
+| 编排 | 列表行 | 跳 `approval-flow-editor.html?flowId={id}`（两步向导） |
 | 复制 | 列表行 | 复制为 `xxx - 副本`，状态置 `draft`，节点 id 重映射 |
 | 停用 / 启用 | 列表行 | 切换 `status` |
 | 删除 | 列表行 | 二次确认，提示「引用该流程的业务模块需重新配置」 |

@@ -104,6 +104,7 @@
           label: '审批管理', file: 'approval-flow-list.html',
           children: [
             { label: '审批流程配置', file: 'approval-flow-list.html' },
+            { label: '流程编排画布', file: 'approval-flow-editor.html' },
             { label: '审批流程监控', file: 'approval-monitor.html' }
           ]
         }
