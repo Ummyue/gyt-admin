@@ -1,9 +1,9 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-15 审批管理模块 v1.1.0
+最后更新: 2026-10-16 审批管理模块 v1.2.0
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `c39dfd7b` (审批管理模块 v1.1.0)
+- **最新 hash**: `a9801707` (审批管理模块 v1.2.0)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,16 +18,16 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `154480b` (refactor(approval): 审批模块 v1.1.0 独立编排画布，已推送)
+- 最新 commit: `941b06c` (refactor(approval): 编排页 v1.2.0 两步向导，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.1.0，2026-10-15）
+## 审批管理模块（v1.2.0，2026-10-16）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
 - **页面（三页）**:
   - `pages/approval-flow-list.html`   审批流程配置（模板列表）
-  - `pages/approval-flow-editor.html` 流程编排画布（独立画布，新建/编辑都进这里）
+  - `pages/approval-flow-editor.html` 流程编排（**两步向导**：① 基础信息 ② 流程设计）
   - `pages/approval-monitor.html`     审批流程监控
 - **已接入 14 个业务页**: 合同详情 ×6、付款、退款、追保函详情、客户准入、项目立项、
   货转上/下、仓储放货详情
@@ -41,6 +41,18 @@
 ### 应用模块（8 项，3 项带子项级联）
 项目准入 / 合同管理（采购合同·销售合同）/ 货转管理（上游货转·下游货转）/
 付款管理 / 退款管理 / 结算单管理（上游结算单·下游结算单）/ 追保函管理 / 放货管理
+
+### 编排向导（v1.2.0）
+- 两步：① 基础信息（名称/说明/状态/应用模块）② 流程设计（画布），新建与编辑共用
+- 顶部常驻保存，保存后回列表；步骤间可点击切换，切步骤 2 前校验基础信息
+- 画布：连接线 `+` 向下弹出选项卡片插入节点；点节点弹右侧抽屉改属性；画布满宽
+- 流程图预览为弹窗，用引擎渲染时间线（与业务单据「审批详情」同一视觉）
+- 平台统一右侧抽屉：`.ap-drawer*` 定义在 `assets/css/approval.css`，
+  监控页审批详情 / 画布节点属性 / 预览弹窗三处共用
+
+### ⚠️ 新增页面必须登记 topnav-drawer.js
+`left-sidemenu.js` 靠 `window.TOPNAV_MENU` 反查页面所属模块。
+新增页面若不登记进去，左侧菜单会**静默渲染 0 项**（画布页曾长期如此）。
 
 ### ⚠️ 接入约束（改引擎时必读）
 1. 引擎**不得**在 IIFE 执行时快照 `window.APPROVAL_CONFIG_BY_PAGE`，
