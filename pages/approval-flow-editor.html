@@ -324,7 +324,7 @@
     .ap-modal-body { padding: 20px 24px; overflow-y: auto; flex: 1; }
     .ap-modal-footer {
       padding: 12px 20px; border-top: 1px solid var(--border-default);
-      display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px; flex-shrink: 0;
     }
 
     /* 预览内的节点摘要条 */
@@ -335,8 +335,7 @@
     }
     .pv-summary .k { font-size: 12px; color: var(--text-tertiary); }
     .pv-summary .v { font-size: 13px; color: var(--text-primary); font-weight: 500; }
-    .pv-amount { display: flex; align-items: center; gap: 10px; }
-    .pv-amount .input { width: 150px; }
+    .pv-summary .v .hint { margin-left: 6px; font-size: 11px; color: var(--text-tertiary); font-weight: 400; }
 
     /* 抽屉内嵌表格 */
     .cp-table.is-compact { min-width: 0; }
@@ -537,11 +536,6 @@
       </div>
       <div class="ap-modal-body" id="pvBody"></div>
       <div class="ap-modal-footer">
-        <div class="pv-amount">
-          <span style="font-size: 12px; color: var(--text-secondary);">模拟单据金额</span>
-          <input type="number" class="input" id="previewAmount" value="500000" oninput="renderPreview()">
-          <span style="font-size: 11px; color: var(--text-tertiary);">元</span>
-        </div>
         <button class="btn btn-default" onclick="closePreview()">关闭</button>
       </div>
     </div>
@@ -1259,6 +1253,9 @@
     // ================================================================
     // 流程图预览（弹窗 · 审批详情视觉）
     // ================================================================
+    // 预览金额基准：仅用于演示「触发条件求值」，不作为真实业务输入
+    const PREVIEW_AMOUNT = 500000;
+
     function openPreview() {
       onEdit();
       document.getElementById('pvTitle').textContent = draft.name || '未命名流程';
@@ -1274,7 +1271,7 @@
     }
 
     function renderPreview() {
-      const amt = Number(document.getElementById('previewAmount').value || 0);
+      const amt = PREVIEW_AMOUNT;
       const nodes = AE.resolveFlow(draft, { amount: amt });
       // 带触发条件的审批节点（含被跳过的）
       const condNodes = nodes.filter(n => n.branchRules && n.branchRules.length);
@@ -1284,7 +1281,8 @@
         <div class="pv-summary">
           <div class="k">流程名称</div><div class="v">${AE.esc(draft.name || '未命名流程')}</div>
           <div class="k">节点总数</div><div class="v">${nodes.length} 个</div>
-          <div class="k">模拟金额</div><div class="v">¥ ${AE.fmtAmount(amt)}</div>
+          <div class="k">条件评估金额</div>
+          <div class="v">¥ ${AE.fmtAmount(amt)}<span class="hint">演示基准值</span></div>
           <div class="k">条件结果</div>
           <div class="v">${condNodes.length
             ? (skipped.length

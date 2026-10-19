@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-19 审批管理模块 v1.8.0（触发条件收敛 + 审批通知）
+最后更新: 2026-10-19 审批管理模块 v1.9.0（删除预览弹窗模拟金额输入框）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `f6d9f36` (feat(approval): v1.8.0 触发条件收敛为单条金额条件 + 新增「审批通知」，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.8.0，2026-10-19）
+## 审批管理模块（v1.9.0，2026-10-19）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -69,6 +69,20 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.9.0 变更（2026-10-19，user 指出「预览审批流下方的金额没有实际意义，删除」）
+- **删除流程图预览弹窗 footer 的「模拟单据金额」输入框**：配置态没有真实单据，
+  让人手输一个假金额去驱动条件求值没有意义。改动 4 处：
+  ① footer 的 `.pv-amount` 容器删除；② `.pv-amount` CSS 删除，
+  `.pv-summary .v .hint` 替代；③ `renderPreview()` 的 `amt` 改取模块级常量
+  `PREVIEW_AMOUNT = 500000`，不再读 DOM；④ `.ap-modal-footer` 的
+  `justify-content` 由 `space-between` 改 `flex-end`（只剩一个按钮，
+  否则会贴到左边）。
+- **摘要区「模拟金额」→「条件评估金额 ¥ 500,000.00（演示基准值）」**：
+  求值明细表的「实际值」列仍要有数可看，所以保留展示，但改名为
+  「条件评估金额」并加灰色小字「演示基准值」，避免被误读成可编辑的真实业务输入。
+- ⚠️ **别把这个输入框加回来**。求值基准是**演示常量**不是业务参数；
+  真实金额只在业务单据提交时由单据自身带入。
 
 ### v1.8.0 变更（2026-10-19，user 指定「条件只留一条金额 + 会签无条件 + 加审批通知」）
 - **触发条件收敛为单条金额条件**：`condition` 长度恒 ≤ 1、`field` 恒为 `'amount'`；
