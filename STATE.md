@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `21680c75` (审批管理模块 v1.4.0 状态文案统一 + 子项复选下拉)
+- **最新 hash**: `bde075aa` (审批管理模块 v1.5.0 去掉应用模块子项)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `4fe30d9` (feat(approval): v1.4.0 流程状态文案统一 + 应用模块子项改复选下拉，已推送)
+- 最新 commit: `547430b` (refactor(approval): v1.5.0 去掉应用模块子项，8 模块全部平级，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.5.0，2026-10-19）
