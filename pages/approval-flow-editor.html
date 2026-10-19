@@ -66,8 +66,10 @@
     .wz-step-pane { display: none; }
     .wz-step-pane.active { display: block; }
 
-    /* ===== 基础信息 ===== */
-    .wz-form { max-width: 760px; margin: 0 auto; padding: 28px 0 40px; }
+    /* ===== 基础信息（v1.7.0：白色底板 + 表单居中） ===== */
+    .wz-panel { max-width: 860px; margin: 20px auto 0; }
+    .wz-panel-foot { display: flex; justify-content: center; }
+    .wz-form { max-width: 760px; margin: 0 auto; padding: 0; }
     .wz-field { margin-bottom: 22px; }
     .wz-field-label {
       display: block; font-size: 13px; color: var(--text-primary);
@@ -370,6 +372,9 @@
 
         <!-- ===== 步骤 1：基础信息 ===== -->
         <div class="wz-step-pane active" id="pane1">
+          <!-- v1.7.0：补白色底板（cp-panel + cp-block），与图2 标准页 / 全站表单页一致 -->
+          <div class="cp-panel wz-panel">
+            <div class="cp-block">
           <div class="wz-form">
 
             <div class="wz-field">
@@ -413,10 +418,11 @@
               </div>
             </div>
 
-            <div style="display: flex; justify-content: center; padding-top: 8px;">
+          </div>
+            </div>
+            <div class="cp-block wz-panel-foot">
               <button class="btn btn-primary" style="min-width:120px;" onclick="gotoStep(2)">下一步：流程设计</button>
             </div>
-
           </div>
         </div>
 

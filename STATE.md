@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-19 审批管理模块 v1.6.0（节点类型聚合为单一审批节点 + 画布整页纵向）
+最后更新: 2026-10-19 审批管理模块 v1.7.0（步骤 1 补白色底板）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `adb3fe6` (refactor(approval): v1.6.0 节点类型聚合为单一「审批节点」+ 画布整页纵向，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.6.0，2026-10-19）
+## 审批管理模块（v1.7.0，2026-10-19）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -69,6 +69,15 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.7.0 变更（2026-10-19，user 指出步骤 1 底板丢了）
+`.page-body` 的 `--bg-page` 底色**没丢**（与标准页实测同为 `rgb(248,250,252)`），
+丢的是「白色内容底板」这一层 —— 步骤 1 表单直接浮在灰底上。
+改为 `cp-panel.wz-panel`（`#FFF` / 12px 圆角 / `--border-default` 1px / `overflow:hidden`，
+与列表页 `cp-panel` 逐项一致）+ 两个 `cp-block`（表单块 / 按钮块）。
+面板取 `max-width: 860px` 居中，表单仍 760px。
+⚠️ 表单页的惯例是 `.info-section`（6px 圆角 + 蓝色左标题条），列表页是 `.cp-panel`（12px 圆角）。
+编排页步骤 1 走 `cp-panel`，因为它是向导里的配置表单、不是单据录入页。
 
 ### v1.6.0 变更（2026-10-19，user 指定「节点聚合 + 画布整页纵向」）
 1. **业务节点类型收敛为单一「审批节点」**
