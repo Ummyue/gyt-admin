@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `c13e114a` (审批管理模块 v1.8.0 触发条件收敛 + 审批通知)
+- **最新 hash**: `60ddac65` (审批管理模块 v1.9.0 删除预览弹窗模拟金额输入框)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `f6d9f36` (feat(approval): v1.8.0 触发条件收敛为单条金额条件 + 新增「审批通知」，已推送)
+- 最新 commit: `33202a5` (feat(approval): v1.9.0 删除流程图预览弹窗的「模拟单据金额」输入框，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.9.0，2026-10-19）
