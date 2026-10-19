@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-19 审批管理模块 v1.7.0（步骤 1 补白色底板）
+最后更新: 2026-10-19 审批管理模块 v1.8.0（触发条件收敛 + 审批通知）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `ebd9ed0` (fix(approval): v1.7.0 步骤 1「基础信息」补白色底板，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.7.0，2026-10-19）
+## 审批管理模块（v1.8.0，2026-10-19）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -69,6 +69,21 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.8.0 变更（2026-10-19，user 指定「条件只留一条金额 + 会签无条件 + 加审批通知」）
+- **触发条件收敛为单条金额条件**：`condition` 长度恒 ≤ 1、`field` 恒为 `'amount'`；
+  抽屉里「字段」下拉换成固定灰底标签「单据金额」，「+ 添加条件」按钮删除，
+  `renderRules`/`addRule`/`removeRule` 三个函数删掉，换成 `setCondEnabled`/`setCondRule`。
+- **并行会签不提供触发条件**：`refreshPropsBody` 里整段包 `if (!isPar)`；
+  `setApproveMode('parallel_all')` 清空 `n.condition`；引擎 `normNode` 对 `parallel_all`
+  强制 `condition = []`（前端绕过也会被这层兜住）。
+- **新增「审批通知」**：提醒规则下方一个复选下拉，按部门分组 16 人 + 全选/清空，
+  存储 `node.notify: [人员id]`；画布卡片加 `🔔 通过后通知 N 人`，引擎时间线加
+  「🔔 审批通过后通知：xxx」（被跳过节点不显示）。
+- ⚠️ **抽屉里的绝对定位下拉，`.ap-drawer-body` 是 `overflow:auto`，向下弹会被裁**。
+  必须：① 空间不够时加 `.up` 翻到上方；② **先 `add('open')` 再量 `scrollHeight`** ——
+  `display:none` 时 `scrollHeight` 恒为 0，量了也不翻；③ 基准用 `.ap-drawer-body` 的
+  可视底边而不是 `window.innerHeight`（抽屉有 sticky header/footer，可视区更矮）。
 
 ### v1.7.0 变更（2026-10-19，user 指出步骤 1 底板丢了）
 `.page-body` 的 `--bg-page` 底色**没丢**（与标准页实测同为 `rgb(248,250,252)`），

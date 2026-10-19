@@ -411,12 +411,16 @@
       n.type = NODE_TYPE.APPROVAL;
       n.approveMode = APPROVE_MODE.PARALLEL_ALL;
       if (!n.approvers) n.approvers = [];
+      n.condition = [];        // 并行会签不支持触发条件（v1.8.0）
     } else if (n.type === NODE_TYPE.START || n.type === 'start') {
       n.type = NODE_TYPE.START;
     } else {
       n.type = NODE_TYPE.APPROVAL;
       n.approveMode = APPROVE_MODE.SERIAL;
     }
+
+    if (Array.isArray(n.notify)) n.notify = n.notify.filter(Boolean);
+    else if (n.notify == null) n.notify = [];
 
     if (Array.isArray(n.condition)) {
       n.condition = n.condition.map(r => ({ field: r.field, operator: r.operator, value: r.value }));
@@ -613,6 +617,12 @@
       if (isBranchSkipped && node.branchRules && node.branchRules.length) {
         html += '    <div class="timeline-meta"><span>条件未命中，已跳过（' +
                 esc(node.branchRules.map(r => r.text + ' → 实际 ' + r.actual).join('；')) + '）</span></div>';
+      }
+
+      // 审批通知（v1.8.0）：本节点通过后通知的人员
+      if (node.type === NODE_TYPE.APPROVAL && node.notify && node.notify.length && status !== NODE_STATUS.SKIPPED) {
+        const names = node.notify.map(id => { const p = getPerson(id); return p ? p.name : id; });
+        html += '    <div class="timeline-meta"><span>🔔 审批通过后通知：' + esc(names.join('、')) + '</span></div>';
       }
 
       // 提醒规则（v1.1.0：替代原「审批时限」）

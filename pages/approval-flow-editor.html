@@ -84,6 +84,59 @@
     .wz-mod-main { display: flex; align-items: center; gap: 6px; flex: none; }
     .wz-mod-main label { font-size: 13px; color: var(--text-primary); cursor: pointer; }
 
+    /* ===== 抽屉：审批通知复选下拉 + 金额条件行（v1.8.0） ===== */
+    .wz-dd { position: relative; }
+    .wz-dd-trigger {
+      display: flex; align-items: center; gap: 6px;
+      width: 100%; min-height: 30px; padding: 5px 8px;
+      font-size: 12px; color: var(--text-secondary); text-align: left;
+      background: var(--bg-card); border: 1px solid var(--border-default);
+      border-radius: 4px; cursor: pointer;
+    }
+    .wz-dd-trigger:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .wz-dd-text { flex: 1; line-height: 1.6; }
+    .wz-dd-text.is-empty { color: var(--text-tertiary); }
+    .wz-dd-trigger svg { flex: none; }
+    .wz-dd-panel {
+      position: absolute; z-index: 90; top: calc(100% + 4px); left: 0;
+      max-height: 260px; overflow-y: auto;
+      min-width: 100%; padding: 5px;
+      background: var(--bg-card); border: 1px solid var(--border-default);
+      border-radius: 6px; box-shadow: 0 6px 18px rgba(15, 23, 42, .14);
+      display: none;
+    }
+    .wz-dd.open .wz-dd-panel { display: block; }
+    /* .ap-drawer-body 是 overflow:auto，靠近底部时向下弹会被裁 → 空间不够就向上弹 */
+    .wz-dd.open.up .wz-dd-panel { top: auto; bottom: calc(100% + 4px); }
+    .wz-dd-bar {
+      display: flex; gap: 12px; padding: 3px 6px 6px; margin-bottom: 4px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 11px; color: var(--color-primary);
+    }
+    .wz-dd-bar span { cursor: pointer; }
+    .wz-dd-bar span:hover { text-decoration: underline; }
+    .wz-dd-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 6px; border-radius: 4px;
+      font-size: 12px; color: var(--text-primary); cursor: pointer; white-space: nowrap;
+    }
+    .wz-dd-opt:hover { background: var(--bg-hover); }
+    .wz-dd-opt .ph { margin-left: auto; font-size: 11px; color: var(--text-tertiary); }
+
+    /* 通知面板按部门分组 */
+    .notify-grp + .notify-grp { margin-top: 4px; padding-top: 4px; border-top: 1px solid var(--border-light); }
+    .notify-grp-title {
+      padding: 4px 6px 2px; font-size: 11px; color: var(--text-tertiary); font-weight: 500;
+    }
+
+    /* 触发条件：固定金额条件行 */
+    .cv-cond-row { display: flex; align-items: center; gap: 8px; }
+    .cv-cond-field {
+      flex: none; padding: 0 9px; height: 30px; line-height: 30px;
+      font-size: 12px; color: var(--text-secondary);
+      background: var(--bg-disabled); border-radius: 4px;
+    }
+
     /* ===== 编排画布（v1.6.0：整页铺满 + 节点自上而下） ===== */
     /* 进入步骤 2 时 page-body 不再整体滚动，改由画布自身滚动 */
     /* 注意：.page-body 上有内联 style="overflow-y:auto"，优先级高于样式表，
@@ -657,6 +710,14 @@
                          (AE.OP_LABELS[r.operator] || r.operator) + ' ' + r.value).join(' 或 ');
     }
 
+    /** 审批通知人员姓名文案 */
+    function notifyNamesText(n) {
+      return (n.notify || []).map(id => {
+        const p = AE.getPerson(id);
+        return p ? p.name : id;
+      }).join('、');
+    }
+
     function isSystemNode(n) {
       return n.type === 'start' || n.type === 'archive';
     }
@@ -708,6 +769,8 @@
             ${bodyLine}
             ${n.remind && n.remind.enabled ? `
               <div class="cv-line"><span class="ico">⏰</span><span class="txt">未处理满 ${n.remind.afterHours}h 提醒</span></div>` : ''}
+            ${(n.notify || []).length ? `
+              <div class="cv-line"><span class="ico">🔔</span><span class="txt" title="${AE.esc(notifyNamesText(n))}">通过后通知 ${(n.notify || []).length} 人：${AE.esc(notifyNamesText(n))}</span></div>` : ''}
           </div>
         </div>`;
       });
@@ -756,6 +819,7 @@
     // 点击画布空白处收起选项卡片
     document.addEventListener('click', (e) => {
       if (openPickerPos >= 0 && !e.target.closest('.cv-conn')) closePicker();
+      if (!e.target.closest('.wz-dd')) document.querySelectorAll('.wz-dd.open').forEach(x => x.classList.remove('open'));
     });
 
     // ================================================================
@@ -898,23 +962,36 @@
         </div>`;
       }
 
-      // ---------- 4. 触发条件（可选） ----------
-      const condOn = (n.condition || []).length > 0;
-      html += `<div class="cv-field">
-        <label>触发条件<span class="cv-field-help" style="display:inline;margin-left:6px;">可选，满足任一条才执行本节点</span></label>
-        <div class="cv-remind-box">
-          <div class="cv-remind-row">
-            <input type="checkbox" id="condEnabled" ${condOn ? 'checked' : ''}
-                   style="margin:0;" onchange="setCondEnabled(this.checked)">
-            <span style="font-size:12px;color:var(--text-secondary);">按条件触发（不勾选则每单都执行）</span>
+      // ---------- 4. 触发条件（可选 · v1.8.0：固定金额条件、最多 1 条） ----------
+      // 并行会签不设触发条件（整段不渲染）
+      if (!isPar) {
+        const condOn = (n.condition || []).length > 0;
+        const rule = condOn ? n.condition[0] : null;
+        html += `<div class="cv-field">
+          <label>触发条件<span class="cv-field-help" style="display:inline;margin-left:6px;">可选，满足该条件才执行本节点</span></label>
+          <div class="cv-remind-box">
+            <div class="cv-remind-row">
+              <input type="checkbox" id="condEnabled" ${condOn ? 'checked' : ''}
+                     style="margin:0;" onchange="setCondEnabled(this.checked)">
+              <span style="font-size:12px;color:var(--text-secondary);">按金额条件触发（不勾选则每单都执行）</span>
+            </div>
           </div>
-        </div>
-        <div id="condWrap" style="${condOn ? '' : 'display:none;'}">
-          <div id="ruleBox" style="margin-top:8px;"></div>
-          <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addRule()">+ 添加条件</button>
-        </div>
-        <div class="cv-field-help">不满足全部条件时，本节点自动跳过，流程继续往下走。</div>
-      </div>`;
+          <div id="condWrap" style="${condOn ? '' : 'display:none;'}">
+            <div class="cv-cond-row" style="margin-top:8px;">
+              <span class="cv-cond-field">单据金额</span>
+              <select class="select" style="width:96px;" onchange="setCondRule('operator', this.value)">
+                ${Object.keys(AE.OP_LABELS).map(k =>
+                  `<option value="${k}" ${rule && rule.operator === k ? 'selected' : ''}>${AE.esc(AE.OP_LABELS[k])}</option>`).join('')}
+              </select>
+              <input type="number" class="input" style="flex:1;" min="0"
+                     value="${rule ? rule.value : ''}"
+                     oninput="setCondRule('value', Number(this.value))">
+              <button class="cv-op danger" title="清除条件" onclick="setCondEnabled(false)">×</button>
+            </div>
+            <div class="cv-field-help">仅支持 1 个单据金额条件；不满足时本节点自动跳过，流程继续往下走。</div>
+          </div>
+        </div>`;
+      }
 
       // ---------- 5. 提醒规则 ----------
       const r = n.remind || { enabled: false, afterHours: 24 };
@@ -935,7 +1012,33 @@
         <div class="cv-field-help">提醒将推送至该节点审批人的站内消息与短信</div>
       </div>`;
 
-      // ---------- 6. 节点说明 ----------
+      // ---------- 6. 审批通知（v1.8.0 新增，审批通过后通知，可多选） ----------
+      const notify = n.notify || [];
+      html += `<div class="cv-field">
+        <label>审批通知<span class="cv-field-help" style="display:inline;margin-left:6px;">可多选</span></label>
+        <div class="wz-dd" id="dd-notify" onclick="event.stopPropagation()">
+          <button type="button" class="wz-dd-trigger" onclick="toggleNotifyDD(event)">
+            <span class="wz-dd-text ${notify.length ? '' : 'is-empty'}">${notify.length
+              ? '已选 ' + notify.length + ' 人：' + notify.map(id => {
+                  const p = AE.getPerson(id); return p ? p.name : id;
+                }).join('、')
+              : '请选择接收通知的人员'}</span>
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
+          <div class="wz-dd-panel" style="min-width: 100%;">
+            <div class="wz-dd-bar">
+              <span onclick="setNotifyAll(true)">全选</span>
+              <span onclick="setNotifyAll(false)">清空</span>
+            </div>
+            <div class="notify-groups">
+              ${notifyGroupHtml(notify)}
+            </div>
+          </div>
+        </div>
+        <div class="cv-field-help">本节点审批通过后，向所选人员推送站内消息与短信；不选则不通知。</div>
+      </div>`;
+
+      // ---------- 7. 节点说明 ----------
       html += `<div class="cv-field">
         <label>节点说明</label>
         <textarea class="textarea" rows="2" style="width:100%;" placeholder="给审批人的提示语"
@@ -944,7 +1047,6 @@
 
       document.getElementById('propsBody').innerHTML = html;
       if (isPar) renderSign(n);
-      renderRules(n);
     }
 
     /** 切换审批方式：串行 ⇄ 并行会签，人员字段随之切换 */
@@ -952,7 +1054,9 @@
       const n = draft.nodes[selNodeIdx];
       if (!n || n.type !== 'approval') return;
       n.approveMode = mode;
+      // 并行会签不支持触发条件，切换时清掉（v1.8.0）
       if (mode === 'parallel_all') {
+        n.condition = [];
         if (!n.approvers || !n.approvers.length) {
           const seed = [n.approver].filter(Boolean);
           const free = ALL_PEOPLE.find(p => seed.indexOf(p.id) < 0);
@@ -1043,58 +1147,86 @@
       renderCanvas();
     }
 
-    // ---- 条件规则 ----
-    function renderRules(n) {
-      const box = document.getElementById('ruleBox');
-      if (!box) return;
-      if (!n.condition) n.condition = [];
-      box.innerHTML = n.condition.map((r, i) => `
-        <div class="cv-rule">
-          <div class="cv-rule-grid">
-            <select class="select" onchange="setRule(${i},'field',this.value)">
-              ${Object.keys(AE.FIELD_LABELS).map(k =>
-                `<option value="${k}" ${r.field===k?'selected':''}>${AE.FIELD_LABELS[k]}</option>`).join('')}
-            </select>
-            <select class="select" onchange="setRule(${i},'operator',this.value)">
-              ${Object.keys(AE.OP_LABELS).map(k =>
-                `<option value="${k}" ${r.operator===k?'selected':''}>${AE.OP_LABELS[k]}</option>`).join('')}
-            </select>
-            <input type="number" class="input" value="${r.value}"
-                   oninput="setRule(${i},'value',Number(this.value))">
-          </div>
-          <div class="cv-rule-foot">
-            <span class="label">不满足则跳过本节点</span>
-            <div style="flex:1;"></div>
-            <button class="cv-op danger" title="删除条件" onclick="removeRule(${i})">×</button>
-          </div>
-        </div>`).join('') || '<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0;">暂无触发条件</div>';
-    }
-
-    function addRule() {
+    // ---- 触发条件（v1.8.0：固定金额、最多 1 条） ----
+    function setCondEnabled(on) {
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
-      if (!n.condition) n.condition = [];
-      n.condition.push({ field: 'amount', operator: 'gt', value: 1000000 });
+      n.condition = on ? [{ field: 'amount', operator: 'gt', value: 1000000 }] : [];
       markDirty();
-      renderRules(n);
       renderCanvas();
+      refreshPropsBody();
     }
 
-    function setRule(i, key, val) {
+    function setCondRule(key, val) {
       const n = draft.nodes[selNodeIdx];
-      if (!n) return;
-      n.condition[i][key] = val;
+      if (!n || !n.condition || !n.condition.length) return;
+      n.condition[0][key] = val;      // 恒为第 0 条
+      n.condition[0].field = 'amount'; // 字段固定单据金额
       markDirty();
       renderCanvas();
     }
 
-    function removeRule(i) {
+    // ---- 审批通知（v1.8.0 新增） ----
+    function notifyGroupHtml(selected) {
+      const groups = {};
+      ALL_PEOPLE.forEach(p => { (groups[p.dept] = groups[p.dept] || []).push(p); });
+      return Object.keys(groups).map(dept => `
+        <div class="notify-grp">
+          <div class="notify-grp-title">${AE.esc(dept)}</div>
+          ${groups[dept].map(p => `
+            <label class="wz-dd-opt">
+              <input type="checkbox" ${selected.indexOf(p.id) >= 0 ? 'checked' : ''}
+                     onchange="toggleNotify('${p.id}', this.checked)">
+              <span>${AE.esc(p.name)}</span>
+              <span class="ph">${AE.esc(p.phone)}</span>
+            </label>`).join('')}
+        </div>`).join('');
+    }
+
+    function toggleNotifyDD(ev) {
+      if (ev) ev.stopPropagation();
+      const dd = document.getElementById('dd-notify');
+      if (!dd) return;
+      const wasOpen = dd.classList.contains('open');
+      document.querySelectorAll('.wz-dd.open').forEach(e => e.classList.remove('open', 'up'));
+      if (wasOpen) return;
+
+      // 先展开再量高度（display:none 时 scrollHeight 为 0，量不准）
+      dd.classList.add('open');
+      // 下方空间不够就改为向上弹出，避免被 .ap-drawer-body 的 overflow 裁掉
+      const panel = dd.querySelector('.wz-dd-panel');
+      const trig = dd.querySelector('.wz-dd-trigger');
+      const host = document.querySelector('.ap-drawer-body');
+      if (panel && trig && host) {
+        const need = panel.scrollHeight + 12;
+        const below = host.getBoundingClientRect().bottom - trig.getBoundingClientRect().bottom;
+        if (below < need) dd.classList.add('up');
+      }
+    }
+
+    function toggleNotify(pid, on) {
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
-      n.condition.splice(i, 1);
+      if (!n.notify) n.notify = [];
+      const i = n.notify.indexOf(pid);
+      if (on && i < 0) n.notify.push(pid);
+      if (!on && i >= 0) n.notify.splice(i, 1);
       markDirty();
-      renderRules(n);
       renderCanvas();
+      refreshPropsBody();
+      const dd = document.getElementById('dd-notify');
+      if (dd) dd.classList.add('open');   // 保持展开，方便连续多选
+    }
+
+    function setNotifyAll(on) {
+      const n = draft.nodes[selNodeIdx];
+      if (!n) return;
+      n.notify = on ? ALL_PEOPLE.map(p => p.id) : [];
+      markDirty();
+      renderCanvas();
+      refreshPropsBody();
+      const dd = document.getElementById('dd-notify');
+      if (dd) dd.classList.add('open');
     }
 
     // 应用模块（v1.5.0：子项已下线，8 个模块全部平级 checkbox）
