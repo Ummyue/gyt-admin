@@ -19,11 +19,24 @@
   // ================================================================
   // 一、审批节点类型
   // ================================================================
+  // v1.6.0：业务节点类型收敛为单一的「审批节点」。
+  // 串行审批 / 并行会签不再是两个节点类型，而是审批节点上的 approveMode 二选一；
+  // 原「条件分支」不再是独立节点类型，改为审批节点可选的触发条件 condition。
   const NODE_TYPE = {
-    START: 'start',              // 发起（系统自动）
-    SERIAL: 'serial',            // 串行审批：单人依次审批
-    PARALLEL_ALL: 'parallel_all', // 并行会签：全部通过才过
-    BRANCH: 'branch'             // 条件分支：按条件走不同路径
+    START: 'start',      // 提交申请（系统节点，不可编辑）
+    APPROVAL: 'approval',// 审批节点（唯一业务节点类型）
+    ARCHIVE: 'archive'   // 归档完成（系统节点，不可编辑）
+  };
+
+  /** 审批节点的审批方式（单个节点只能二选一） */
+  const APPROVE_MODE = {
+    SERIAL: 'serial',          // 串行审批：1 名审批人
+    PARALLEL_ALL: 'parallel_all' // 并行会签：多人同时，全部通过才过
+  };
+
+  const APPROVE_MODE_LABEL = {
+    serial: '串行审批',
+    parallel_all: '并行会签'
   };
 
   const NODE_STATUS = {
@@ -98,7 +111,8 @@
 
   /** 取节点展示色：优先人员部门色 → 环节色 → 灰 */
   function nodeColorOf(node) {
-    const p = node && node.approver ? getPerson(node.approver) : null;
+    let p = node && node.approver ? getPerson(node.approver) : null;
+    if (!p && node && node.approvers && node.approvers.length) p = getPerson(node.approvers[0]);
     if (p && DEPT_COLORS[p.dept]) return DEPT_COLORS[p.dept];
     if (node && node.roleKey && ROLES[node.roleKey]) return ROLES[node.roleKey].color;
     if (node && node.role && ROLES[node.role]) return ROLES[node.role].color;
@@ -183,16 +197,21 @@
       updatedBy: '张爽',
       nodes: [
         { id: 'n1', type: NODE_TYPE.START, name: '提交申请', roleKey: 'submitter' },
-        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
-          approver: 'u_biz_01', remind: { enabled: true, afterHours: 24 } },
+        { id: 'n2', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL,
+          name: '业务审批', roleKey: 'biz_manager',
+          approver: 'u_biz_01', remind: { enabled: true, afterHours: 24 }, condition: [] },
         {
-          id: 'n3', type: NODE_TYPE.PARALLEL_ALL, name: '风控财务会签', roleKey: 'risk_manager',
+          id: 'n3', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.PARALLEL_ALL,
+          name: '风控财务会签', roleKey: 'risk_manager',
           approvers: ['u_risk_01', 'u_fin_01'],
           remind: { enabled: true, afterHours: 48 },
           desc: '风控、财务全部通过才算通过'
         },
-        { id: 'n4', type: NODE_TYPE.BRANCH, name: '金额分支', condition: DEFAULT_BRANCH_RULES },
-        { id: 'n5', type: NODE_TYPE.SERIAL, name: '归档完成', roleKey: 'system', auto: true }
+        // 原「金额分支」节点改为「总经理审批」节点 + 触发条件（金额 > 100 万才需要总经理审批）
+        { id: 'n4', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL,
+          name: '总经理审批', roleKey: 'gm', approver: 'u_gm_01',
+          remind: { enabled: true, afterHours: 24 }, condition: DEFAULT_BRANCH_RULES },
+        { id: 'n5', type: NODE_TYPE.ARCHIVE, name: '归档完成' }
       ]
     },
 
@@ -206,11 +225,11 @@
       updatedBy: '李娜',
       nodes: [
         { id: 'n1', type: NODE_TYPE.START, name: '提交申请', roleKey: 'submitter' },
-        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
+        { id: 'n2', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
           approver: 'u_biz_03', remind: { enabled: true, afterHours: 24 } },
-        { id: 'n3', type: NODE_TYPE.SERIAL, name: '财务审批', roleKey: 'finance_manager',
+        { id: 'n3', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL, name: '财务审批', roleKey: 'finance_manager',
           approver: 'u_fin_02', remind: { enabled: true, afterHours: 48 } },
-        { id: 'n4', type: NODE_TYPE.SERIAL, name: '归档完成', roleKey: 'system', auto: true }
+        { id: 'n4', type: NODE_TYPE.ARCHIVE, name: '归档完成' }
       ]
     },
 
@@ -224,18 +243,21 @@
       updatedBy: '王浩',
       nodes: [
         { id: 'n1', type: NODE_TYPE.START, name: '提交申请', roleKey: 'submitter' },
-        { id: 'n2', type: NODE_TYPE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
+        { id: 'n2', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL, name: '业务审批', roleKey: 'biz_manager',
           approver: 'u_biz_02', remind: { enabled: true, afterHours: 12 } },
         {
-          id: 'n3', type: NODE_TYPE.PARALLEL_ALL, name: '风控财务会签', roleKey: 'risk_manager',
+          id: 'n3', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.PARALLEL_ALL,
+          name: '风控财务会签', roleKey: 'risk_manager',
           approvers: ['u_risk_01', 'u_fin_01'],
           remind: { enabled: true, afterHours: 24 }
         },
-        { id: 'n4', type: NODE_TYPE.SERIAL, name: '合规审查', roleKey: 'legal_review',
+        { id: 'n4', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL,
+          name: '合规审查', roleKey: 'legal_review',
           approver: 'u_legal_01', remind: { enabled: true, afterHours: 48 } },
-        { id: 'n5', type: NODE_TYPE.SERIAL, name: '总经理审批', roleKey: 'gm',
+        { id: 'n5', type: NODE_TYPE.APPROVAL, approveMode: APPROVE_MODE.SERIAL,
+          name: '总经理审批', roleKey: 'gm',
           approver: 'u_gm_01', remind: { enabled: true, afterHours: 24 } },
-        { id: 'n6', type: NODE_TYPE.SERIAL, name: '归档完成', roleKey: 'system', auto: true }
+        { id: 'n6', type: NODE_TYPE.ARCHIVE, name: '归档完成' }
       ]
     }
   };
@@ -341,6 +363,81 @@
     customerLevel: '客户等级', riskLevel: '风险等级'
   };
 
+  /**
+   * 节点归一化 → v1.6.0 模型（start / approval / archive）。
+   * 兼容三代历史数据：
+   *   serial          → approval + approveMode:'serial'
+   *   parallel_all    → approval + approveMode:'parallel_all'
+   *   serial+auto     → archive
+   *   branch          → 按 condition[].then 里的角色展开成多个 approval 节点
+   *                     （每个角色一个节点，继承同一条触发条件）
+   * 同时清掉 condition[].then（新模型里条件只负责「是否执行」，不再指定追加角色）。
+   */
+  function normNode(node) {
+    if (!node) return node;
+    const n = Object.assign({}, node);
+
+    if (n.type === 'branch') {
+      const rules = (n.condition || []).map(r => ({
+        field: r.field, operator: r.operator, value: r.value
+      }));
+      const roleKeys = [];
+      (n.condition || []).forEach(r => (r.then || []).forEach(k => { if (roleKeys.indexOf(k) < 0) roleKeys.push(k); }));
+      if (!roleKeys.length) return null;                 // 没有 then 角色的分支节点直接丢弃
+      return roleKeys.map(roleKey => {
+        const meta = ROLES[roleKey] || { label: roleKey, dept: '—', color: '#64748B' };
+        return {
+          id: n.id + '_' + roleKey,
+          type: NODE_TYPE.APPROVAL,
+          approveMode: APPROVE_MODE.SERIAL,
+          name: meta.label,
+          roleKey: roleKey,
+          role: meta.label,
+          approver: meta.defaultPerson || null,
+          remind: { enabled: true, afterHours: 24 },
+          condition: rules
+        };
+      });
+    }
+
+    if (n.auto || n.type === 'serial' || n.type === NODE_TYPE.ARCHIVE) {
+      // 归档节点（历史上是 serial + auto:true）
+      const isArchive = !!n.auto || n.type === NODE_TYPE.ARCHIVE ||
+                        (n.type === 'serial' && n.roleKey === 'system');
+      if (isArchive) return { id: n.id, type: NODE_TYPE.ARCHIVE, name: n.name || '归档完成' };
+    }
+
+    if (n.type === 'parallel_all') {
+      n.type = NODE_TYPE.APPROVAL;
+      n.approveMode = APPROVE_MODE.PARALLEL_ALL;
+      if (!n.approvers) n.approvers = [];
+    } else if (n.type === NODE_TYPE.START || n.type === 'start') {
+      n.type = NODE_TYPE.START;
+    } else {
+      n.type = NODE_TYPE.APPROVAL;
+      n.approveMode = APPROVE_MODE.SERIAL;
+    }
+
+    if (Array.isArray(n.condition)) {
+      n.condition = n.condition.map(r => ({ field: r.field, operator: r.operator, value: r.value }));
+    } else if (n.condition == null) {
+      n.condition = [];
+    }
+    return n;
+  }
+
+  /** 流程归一化：节点数组展开（旧 branch 会变成多个节点） */
+  function normFlow(flow) {
+    if (!flow) return flow;
+    const nodes = [];
+    (flow.nodes || []).forEach(n => {
+      const r = normNode(n);
+      if (Array.isArray(r)) { r.forEach(x => nodes.push(x)); }
+      else if (r) nodes.push(r);
+    });
+    return Object.assign({}, flow, { nodes: nodes });
+  }
+
   function evalBranch(node, formData) {
     if (!node.condition || !node.condition.length) return { matched: false, rules: [] };
     const rules = node.condition.map(r => {
@@ -370,61 +467,39 @@
    */
   function resolveFlow(flow, formData) {
     const out = [];
-    (flow.nodes || []).forEach(node => {
-      if (node.type === NODE_TYPE.BRANCH) {
-        const res = evalBranch(node, formData);
-        if (res.matched) {
-          // 必须用 res.rules（已求值，含 matched/then/text），不能用 node.condition（原始配置）
-          const seen = {};
-          res.rules.filter(r => r.matched).forEach(r => {
-            (r.then || []).forEach(roleKey => {
-              if (seen[roleKey]) return;
-              seen[roleKey] = true;
-              const meta = ROLES[roleKey] || { label: roleKey, dept: '—', color: '#64748B' };
-              out.push({
-                id: node.id + '_' + roleKey,
-                type: NODE_TYPE.SERIAL,
-                name: meta.label,
-                roleKey: roleKey,
-                role: meta.label,
-                approver: meta.defaultPerson || null,
-                dept: meta.dept,
-                color: meta.color,
-                remind: { enabled: true, afterHours: 24 },
-                fromBranch: true,
-                branchRule: r.text,
-                status: NODE_STATUS.PENDING
-              });
-            });
-          });
-        } else {
-          out.push({
-            id: node.id,
-            type: NODE_TYPE.BRANCH,
-            name: node.name || '条件分支',
+    normFlow(flow).nodes.forEach(raw => {
+      const node = Object.assign({}, raw);
+      const rules = node.condition || [];
+
+      // 审批节点带触发条件：任一条命中才执行，全部不命中则跳过本节点
+      if (node.type === NODE_TYPE.APPROVAL && rules.length) {
+        const res = evalBranch({ condition: rules }, formData);
+        if (!res.matched) {
+          out.push(Object.assign({}, node, {
             skipped: true,
             status: NODE_STATUS.SKIPPED,
-            branchRules: res.rules
-          });
+            branchRules: res.rules,
+            conditionText: res.rules.map(r => r.text).join(' 或 ')
+          }));
+          return;
         }
-      } else {
-        out.push(Object.assign({}, node, { status: node.status || NODE_STATUS.PENDING }));
+        node.conditionMatched = res.rules.filter(r => r.matched).map(r => r.text);
+        node.branchRules = res.rules;
       }
+
+      out.push(Object.assign({}, node, { status: node.status || NODE_STATUS.PENDING }));
     });
     return out;
   }
 
   /** 取节点当前审批人（串行 → 单人；会签 → 多人） */
   function nodeApprovers(node) {
-    if (!node) return [];
-    if (node.type === NODE_TYPE.PARALLEL_ALL) {
+    if (!node || node.type !== NODE_TYPE.APPROVAL) return [];
+    if (node.approveMode === APPROVE_MODE.PARALLEL_ALL) {
       return (node.approvers || []).map(getPerson).filter(Boolean);
     }
-    if (node.type === NODE_TYPE.SERIAL && node.approver) {
-      const p = getPerson(node.approver);
-      return p ? [p] : [];
-    }
-    return [];
+    const p = getPerson(node.approver);
+    return p ? [p] : [];
   }
 
   // ================================================================
@@ -475,12 +550,17 @@
       html += '    <div class="timeline-title">' + esc(node.name || meta.label);
 
       // 类型 chip
-      if (node.type === NODE_TYPE.PARALLEL_ALL) {
-        html += ' <span class="chip chip-gray">会签 ALL</span>';
-      } else if (node.type === NODE_TYPE.START) {
+      if (node.type === NODE_TYPE.START) {
         html += ' <span class="chip chip-gray">发起</span>';
-      } else if (node.fromBranch) {
-        html += ' <span class="chip chip-blue">条件命中</span>';
+      } else if (node.type === NODE_TYPE.ARCHIVE) {
+        html += ' <span class="chip chip-gray">归档</span>';
+      } else if (node.type === NODE_TYPE.APPROVAL) {
+        html += node.approveMode === APPROVE_MODE.PARALLEL_ALL
+          ? ' <span class="chip chip-gray">会签</span>'
+          : ' <span class="chip chip-gray">串行</span>';
+        if (node.conditionMatched && node.conditionMatched.length) {
+          html += ' <span class="chip chip-blue">条件命中</span>';
+        }
       }
 
       // 状态 chip
@@ -491,8 +571,8 @@
 
       html += '  </div>';
 
-      // 串行节点：审批人员（姓名 + 脱敏手机号）
-      if (node.type === NODE_TYPE.SERIAL && !node.auto) {
+      // 串行审批节点：审批人员（姓名 + 脱敏手机号）
+      if (node.type === NODE_TYPE.APPROVAL && node.approveMode === APPROVE_MODE.SERIAL) {
         const p = getPerson(node.approver);
         if (p) {
           html += '    <div class="timeline-subitem">';
@@ -508,8 +588,8 @@
         }
       }
 
-      // 会签子审批人
-      if (node.type === NODE_TYPE.PARALLEL_ALL) {
+      // 并行会签节点：子审批人
+      if (node.type === NODE_TYPE.APPROVAL && node.approveMode === APPROVE_MODE.PARALLEL_ALL) {
         nodeApprovers(node).forEach(p => {
           const aStatus = status === NODE_STATUS.DONE ? '已通过' : (status === NODE_STATUS.CURRENT ? '审批中' : '待审批');
           const aCls = status === NODE_STATUS.DONE ? 'chip-green'
@@ -526,9 +606,9 @@
         });
       }
 
-      // 条件分支说明
-      if (node.fromBranch && node.branchRule) {
-        html += '    <div class="timeline-meta"><span>触发条件：' + esc(node.branchRule) + '</span></div>';
+      // 触发条件说明
+      if (node.type === NODE_TYPE.APPROVAL && node.conditionText) {
+        html += '    <div class="timeline-meta"><span>触发条件：' + esc(node.conditionText) + '</span></div>';
       }
       if (isBranchSkipped && node.branchRules && node.branchRules.length) {
         html += '    <div class="timeline-meta"><span>条件未命中，已跳过（' +
@@ -561,10 +641,10 @@
       html += '  <div class="afc-node-role">' +
               (ps.length ? esc(ps.map(p => p.name).join('、')) : esc(ROLES[n.roleKey] ? ROLES[n.roleKey].dept : '—')) +
               '</div>';
-      if (n.type === NODE_TYPE.PARALLEL_ALL) {
+      if (n.type === NODE_TYPE.APPROVAL && n.approveMode === APPROVE_MODE.PARALLEL_ALL) {
         html += '  <div class="afc-node-tag">会签 ' + ps.length + ' 人</div>';
       }
-      if (n.fromBranch) html += '  <div class="afc-node-tag is-blue">条件命中</div>';
+      if (n.conditionMatched && n.conditionMatched.length) html += '  <div class="afc-node-tag is-blue">条件命中</div>';
       if (isSkip)        html += '  <div class="afc-node-tag is-gray">已跳过</div>';
       html += '</div>';
       if (i < nodes.length - 1) {
@@ -649,12 +729,14 @@
   // ================================================================
   global.ApprovalEngine = {
     // 常量
-    NODE_TYPE, NODE_STATUS, ROLES, OPERATORS, OP_LABELS, FIELD_LABELS,
+    NODE_TYPE, NODE_STATUS, APPROVE_MODE, APPROVE_MODE_LABEL,
+    ROLES, OPERATORS, OP_LABELS, FIELD_LABELS,
     DEPT_COLORS, APPLY_MODULES, PEOPLE,
     // 人员
     getPerson, listPeople, personLabel, nodeApprovers,
     // 模块
     getModule, applyModulesText, normModules,
+    normNode, normFlow,
     // 流程 CRUD
     listFlows, getFlow, saveFlow, deleteFlow, duplicateFlow,
     // 求值

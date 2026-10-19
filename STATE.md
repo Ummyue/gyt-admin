@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-19 审批管理模块 v1.5.0（去掉应用模块子项）
+最后更新: 2026-10-19 审批管理模块 v1.6.0（节点类型聚合为单一审批节点 + 画布整页纵向）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `547430b` (refactor(approval): v1.5.0 去掉应用模块子项，8 模块全部平级，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.5.0，2026-10-19）
+## 审批管理模块（v1.6.0，2026-10-19）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -69,6 +69,25 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.6.0 变更（2026-10-19，user 指定「节点聚合 + 画布整页纵向」）
+1. **业务节点类型收敛为单一「审批节点」**
+   `NODE_TYPE = { start, approval, archive }`。串行/并行不再是节点类型，
+   而是 `approveMode: 'serial' | 'parallel_all'`（单选互斥）。
+   原 `branch` 节点类型删除 —— 条件改为审批节点上的可选 `condition[]`，
+   语义是「满足任一条才执行本节点，全不命中则跳过」，**不再有 `condition[].then` 追加角色**。
+   插入选项由 3 项（串行/会签/分支）聚合为 **1 项「审批节点」**；
+   抽屉表单由「按 n.type 分 3 套」改为「固定 6 段，人员区按 approveMode 切换」。
+2. **画布整页铺满 + 节点纵向**
+   进入步骤 2 给 `.page-body` 加 `is-canvas`（`overflow: hidden !important` + flex），
+   滚动交给 `.cv-canvas` 自身。节点 420px 宽纵向单列居中，连接线改 1×34 竖线。
+   ⚠️ `.page-body` 上有内联 `style="overflow-y:auto"`，优先级高于样式表，
+   `is-canvas` 的 overflow **必须 `!important`** 才生效。
+3. **兼容**：`normNode()` / `normFlow()` 在 listFlows/getFlow/resolveFlow 入口归一化三代历史数据
+   （`serial`→`approval+serial`、`parallel_all`→`approval+parallel_all`、`serial+auto`→`archive`、
+   `branch`→按 `then` 角色展开成多个 `approval` 节点并继承条件）。
+   `standard` 内置模板的「金额分支」节点已直接改写为「总经理审批 + 单据金额>100万 条件」，行为不变。
+   持久化 key 仍是 `..._v2`（读取侧已兼容，不升版）。
 
 ### v1.5.0 变更（2026-10-19，user 指定「本次需求去掉子项」）
 子项整条链路下线：编排页的复选下拉（`.wz-dd*`）与「至少 1 子项」校验、

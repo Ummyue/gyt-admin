@@ -1,7 +1,7 @@
 # 02.17 审批管理 · 审批流程配置（流程模板列表）
 
 > **页面**：`approval-flow-list.html`
-> **版本**：v1.5.0（2026-10-19，流程状态文案全站统一 + 去掉应用模块子项）
+> **版本**：v1.6.0（2026-10-19，节点类型聚合为单一「审批节点」+ 画布整页纵向）
 > **模块归属**：数字供应链 → 审批管理 → 审批流程配置
 > **引擎**：`shared/js/approval-engine.js` v1.1.0
 > **页面映射**：`shared/js/approval-config.js`
@@ -16,7 +16,7 @@
 |---|---|---|
 | 审批节点硬编码在页面里 | 14 个业务页面各写一套 timeline，改节点要改代码 | 节点抽成配置数据，页面读配置渲染 |
 | 不同业务审批规则不同 | 合同/回款/立项各不一样，无法统一 | 内置 3 套模板 + 可自由复制新建 |
-| 金额大的单据审批层级不够 | 小额和大额走同样流程 | 条件分支按金额阈值自动增减节点 |
+| 金额大的单据审批层级不够 | 小额和大额走同样流程 | 审批节点可挂触发条件，按金额阈值自动决定该节点跑不跑 |
 
 **一句话**：配置一次流程，全平台业务模块复用；改流程只改配置，不动代码。
 
@@ -118,7 +118,7 @@
 | 字段 | 类型 | 说明 |
 |---|---|---|
 | `id` | string | 节点唯一标识 |
-| `type` | enum | `start` 发起 / `serial` 串行 / `parallel_all` 并行会签 / `branch` 条件分支 |
+| `type` | enum | v1.6.0 起三分：`start` 提交申请 / `approval` 审批节点 / `archive` 归档完成；串行与会签由 `approveMode` 区分 |
 | `name` | text | 节点显示名 |
 | `roleKey` | enum | 审批环节 key（分支指向 + 默认配色用） |
 | `approver` | string | **v1.1.0** 审批人员 id（`type=serial` 且非归档时必填） |
@@ -131,7 +131,7 @@
 
 ### 4.3 审批环节字典（7 个）
 
-> v1.1.0 起，环节只用于「条件分支指向」和「默认配色/默认审批人」，
+> v1.1.0 起，环节只用于「默认配色/默认审批人」（v1.6.0 起不再用于条件分支指向），
 > 实际审批人以节点上的 `approver` / `approvers` 为准。
 
 | roleKey | 环节名 | 部门 | 配色 | 默认审批人 |
@@ -147,7 +147,7 @@
 **平台人员目录**：16 人，字段 `{ id, name, phone, dept, post }`，手机号全部脱敏。
 完整名单见 `p-approval-flow-editor.md` §4.1。
 
-### 4.4 条件分支字段
+### 4.4 触发条件字段（挂在审批节点上）
 
 | 字段 | 类型 | 可选值 | 说明 |
 |---|---|---|---|
@@ -252,7 +252,7 @@
 | `ApprovalEngine.saveFlow(flow)` | 新建/更新 |
 | `ApprovalEngine.deleteFlow(id)` | 删除 |
 | `ApprovalEngine.duplicateFlow(id, name)` | 复制 |
-| `ApprovalEngine.evalBranch(node, formData)` | 条件分支求值 |
+| `ApprovalEngine.evalBranch(node, formData)` | 触发条件求值 |
 | `ApprovalEngine.resolveFlow(flow, formData)` | 展开为实际节点序列 |
 | `ApprovalEngine.renderTimeline(opts)` | 渲染时间线 HTML |
 | `ApprovalEngine.renderFlowChain(flow, formData)` | 渲染流程链 HTML |
@@ -280,7 +280,7 @@
 | 异常 | 表现 | 处理 |
 |---|---|---|
 | 引用已删除流程 | 业务页打开 | `getFlow()` 返回 null → fallback 到 `standard` |
-| 无单据金额 | 条件分支求值 | 条件判定为 false → 分支节点标记「已跳过」 |
+| 无单据金额 | 触发条件求值 | 条件判定为 false → 该审批节点标记「已跳过」 |
 | localStorage 不可用 | 隐私模式 | `console.warn` 降级，配置仅本次会话有效 |
 | v1 存量配置 | 升级后打开 | `_v1` key 不再读取，自动回落到内置模板 |
 | 编排画布流程 id 不存在 | 打开画布 | Alert「流程不存在或已被删除」并跳新建态 |
@@ -306,7 +306,7 @@ ApprovalEngine.getFlow(flowId)
 
 ## 11. 技术实现要点
 
-### 11.1 条件分支求值链路
+### 11.1 触发条件求值链路
 
 ```
 resolveFlow(flow, formData)

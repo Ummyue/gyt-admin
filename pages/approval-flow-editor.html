@@ -82,22 +82,32 @@
     .wz-mod-main { display: flex; align-items: center; gap: 6px; flex: none; }
     .wz-mod-main label { font-size: 13px; color: var(--text-primary); cursor: pointer; }
 
-    /* ===== 编排画布（满宽） ===== */
+    /* ===== 编排画布（v1.6.0：整页铺满 + 节点自上而下） ===== */
+    /* 进入步骤 2 时 page-body 不再整体滚动，改由画布自身滚动 */
+    /* 注意：.page-body 上有内联 style="overflow-y:auto"，优先级高于样式表，
+       这里必须用 !important 才能真正接管滚动 */
+    .page-body.is-canvas { overflow: hidden !important; display: flex; flex-direction: column; }
+    .page-body.is-canvas .wz-step-pane.active { display: flex; flex-direction: column; flex: 1; min-height: 0; }
+    .cv-head {
+      display: flex; align-items: center; justify-content: space-between;
+      flex-shrink: 0; padding-bottom: 10px;
+    }
+    .cv-body { flex: 1; min-height: 0; display: flex; flex-direction: column; gap: 10px; }
     .cv-canvas {
-      display: flex; align-items: stretch; flex-wrap: wrap;
-      padding: 28px 24px; background: var(--bg-hover);
+      flex: 1; min-height: 0; overflow-y: auto;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 20px 24px; background: var(--bg-hover);
       border: 1px solid var(--border-default); border-radius: 8px;
-      min-height: 260px;
     }
     .cv-node {
-      width: 200px; flex-shrink: 0; background: var(--bg-card);
+      width: 420px; max-width: 100%; flex-shrink: 0; background: var(--bg-card);
       border: 1px solid var(--border-default); border-radius: 8px;
-      border-top: 3px solid var(--node-color, #64748B);
+      border-left: 3px solid var(--node-color, #64748B);
       cursor: pointer; transition: all .15s;
     }
     .cv-node:hover { box-shadow: var(--shadow-sm); border-color: var(--border-strong); }
     .cv-node.active { box-shadow: 0 0 0 2px rgba(30,64,175,.18); border-color: var(--color-primary); }
-    .cv-node.is-branch { background: #FFFBEB; border-style: dashed; }
+    .cv-node.has-cond { background: #FFFBEB; }
     .cv-node-head {
       display: flex; align-items: center; gap: 8px;
       padding: 10px 12px 8px; border-bottom: 1px solid var(--border-light);
@@ -119,8 +129,12 @@
     }
     .cv-node-type.t-serial   { background: #EFF6FF; color: #1E40AF; }
     .cv-node-type.t-parallel { background: #F5F3FF; color: #6D28D9; }
-    .cv-node-type.t-branch   { background: #FFFBEB; color: #B45309; }
-    .cv-node-type.t-start    { background: var(--bg-disabled); color: var(--text-secondary); }
+    .cv-node-type.t-system   { background: var(--bg-disabled); color: var(--text-secondary); }
+    .cv-node-cond {
+      display: inline-block; padding: 1px 6px; margin-left: 6px;
+      font-size: 11px; border-radius: 3px;
+      background: #FFFBEB; color: #B45309;
+    }
     .cv-line {
       display: flex; align-items: center; gap: 4px;
       font-size: 11px; color: var(--text-secondary); margin-top: 4px;
@@ -138,16 +152,30 @@
     .cv-op:hover { border-color: var(--border-strong); color: var(--color-primary); background: var(--bg-hover); }
     .cv-op.danger:hover { color: #DC2626; border-color: #FCA5A5; }
 
-    /* 连接线 + 加号（点击弹出选项卡片，从上到下） */
+    /* ===== 抽屉：审批方式单选卡（v1.6.0） ===== */
+    .cv-mode { display: flex; gap: 10px; }
+    .cv-mode-opt {
+      flex: 1; display: flex; align-items: flex-start; gap: 8px;
+      padding: 10px 12px; cursor: pointer;
+      border: 1px solid var(--border-default); border-radius: 8px;
+      background: var(--bg-card); transition: all .15s;
+    }
+    .cv-mode-opt:hover { border-color: var(--color-primary); }
+    .cv-mode-opt.active { border-color: var(--color-primary); background: var(--color-primary-lighter); }
+    .cv-mode-opt input { margin: 2px 0 0; flex-shrink: 0; }
+    .cv-mode-name { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+    .cv-mode-desc { font-size: 11px; color: var(--text-tertiary); margin-top: 3px; line-height: 1.5; }
+
+    /* 连接线 + 加号（竖向，节点自上而下） */
     .cv-conn {
       display: flex; align-items: center; justify-content: center;
-      width: 60px; flex-shrink: 0; position: relative;
+      height: 34px; width: auto; flex-shrink: 0; position: relative;
     }
-    .cv-conn-line { width: 100%; height: 1px; background: var(--border-strong); position: relative; }
+    .cv-conn-line { width: 1px; height: 100%; background: var(--border-strong); position: relative; }
     .cv-conn-line::after {
-      content: ''; position: absolute; right: -1px; top: -3px;
-      border-left: 6px solid var(--border-strong);
-      border-top: 3.5px solid transparent; border-bottom: 3.5px solid transparent;
+      content: ''; position: absolute; left: -3.5px; bottom: -1px;
+      border-top: 6px solid var(--border-strong);
+      border-left: 3.5px solid transparent; border-right: 3.5px solid transparent;
     }
     .cv-conn-add {
       position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
@@ -394,26 +422,24 @@
 
         <!-- ===== 步骤 2：流程设计 ===== -->
         <div class="wz-step-pane" id="pane2">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px;">
+          <div class="cv-head">
             <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
               节点编排画布
               <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">
-                点击连接线上的 + 插入节点 · 点击节点卡片在右侧抽屉编辑属性
+                自上而下依次执行 · 点连接线上的 + 插入审批节点 · 点节点卡片在右侧抽屉编辑属性
               </span>
             </div>
             <span style="font-size: 12px; color: var(--text-tertiary);" id="nodeCountHint"></span>
           </div>
 
-          <div class="cp-panel">
-            <div class="cp-block">
-              <div class="cv-canvas" id="canvas"></div>
-              <div class="cv-footbar">
-                <button class="btn btn-default btn-sm" onclick="gotoStep(1)">上一步：基础信息</button>
-                <div style="flex:1;"></div>
-                <span style="font-size: 12px; color: var(--text-tertiary);">
-                  至少保留「提交申请」发起节点与「归档完成」节点，二者不可删除
-                </span>
-              </div>
+          <div class="cv-body">
+            <div class="cv-canvas" id="canvas"></div>
+            <div class="cv-footbar">
+              <button class="btn btn-default btn-sm" onclick="gotoStep(1)">上一步：基础信息</button>
+              <div style="flex:1;"></div>
+              <span style="font-size: 12px; color: var(--text-tertiary);">
+                至少保留「提交申请」发起节点与「归档完成」节点，二者不可删除
+              </span>
             </div>
           </div>
         </div>
@@ -497,9 +523,10 @@
           applyModules: [],
           nodes: [
             { id: 'n1', type: 'start', name: '提交申请', roleKey: 'submitter' },
-            { id: 'n2', type: 'serial', name: '业务审批', roleKey: 'biz_manager',
-              approver: 'u_biz_01', remind: { enabled: true, afterHours: 24 } },
-            { id: 'n3', type: 'serial', name: '归档完成', roleKey: 'system', auto: true }
+            { id: 'n2', type: 'approval', approveMode: 'serial', name: '业务审批',
+              roleKey: 'biz_manager', approver: 'u_biz_01',
+              remind: { enabled: true, afterHours: 24 }, condition: [] },
+            { id: 'n3', type: 'archive', name: '归档完成' }
           ]
         };
       } else {
@@ -509,6 +536,7 @@
           location.href = './approval-flow-editor.html?flowId=new';
           return;
         }
+        // v1.6.0：AE.getFlow 已做节点归一化（旧 serial/parallel_all/branch → approval + approveMode）
         draft = JSON.parse(JSON.stringify(f));
         if (!draft.applyModules) draft.applyModules = [];
         if (!draft.nodes) draft.nodes = [];
@@ -566,6 +594,7 @@
       }
       closePicker();
       step = n;
+      document.querySelector('.page-body').classList.toggle('is-canvas', n === 2);
       document.getElementById('pane1').classList.toggle('active', n === 1);
       document.getElementById('pane2').classList.toggle('active', n === 2);
       const b1 = document.getElementById('step1Btn');
@@ -593,6 +622,7 @@
 
     function gotoStepForce(n) {
       step = n;
+      document.querySelector('.page-body').classList.toggle('is-canvas', n === 2);
       document.getElementById('pane1').classList.toggle('active', n === 1);
       document.getElementById('pane2').classList.toggle('active', n === 2);
       document.getElementById('step1Btn').classList.toggle('active', n === 1);
@@ -602,13 +632,27 @@
     // ================================================================
     // 画布渲染
     // ================================================================
-    function nodeTypeLabel(t, n) {
-      if (n && n.auto) return '归档';
-      return { start: '发起', serial: '串行审批', parallel_all: '并行会签', branch: '条件分支' }[t] || t;
+    /** v1.6.0：业务节点只有「审批节点」一种，串行/会签是节点上的审批方式 */
+    function nodeTypeLabel(n) {
+      if (n.type === 'start') return '发起';
+      if (n.type === 'archive') return '归档';
+      return '审批节点';
     }
-    function nodeTypeClass(t, n) {
-      if (n && n.auto) return 't-start';
-      return { start: 't-start', serial: 't-serial', parallel_all: 't-parallel', branch: 't-branch' }[t] || '';
+    function nodeTypeClass(n) {
+      if (n.type === 'start' || n.type === 'archive') return 't-system';
+      return n.approveMode === 'parallel_all' ? 't-parallel' : 't-serial';
+    }
+
+    /** 节点的触发条件文案（无条件返回空串） */
+    function nodeCondText(n) {
+      const rs = n.condition || [];
+      if (!rs.length) return '';
+      return rs.map(r => (AE.FIELD_LABELS[r.field] || r.field) + ' ' +
+                         (AE.OP_LABELS[r.operator] || r.operator) + ' ' + r.value).join(' 或 ');
+    }
+
+    function isSystemNode(n) {
+      return n.type === 'start' || n.type === 'archive';
     }
 
     function renderCanvas() {
@@ -618,36 +662,43 @@
 
       const cards = draft.nodes.map((n, i) => {
         const color = AE.nodeColorOf(n);
-        const people = AE.nodeApprovers(n);
-        const peopleText = people.length ? people.map(p => p.name + ' ' + p.phone).join('、') : '—';
-        const disabled = (n.type === 'start' || n.auto);
+        const cond = nodeCondText(n);
+        const disabled = isSystemNode(n);
+        const mode = n.approveMode === 'parallel_all' ? '并行会签' : '串行审批';
 
         let bodyLine;
-        if (n.type === 'branch') {
-          bodyLine = `<div class="cv-line"><span class="ico">⚙</span><span class="txt">${(n.condition || []).length} 条条件规则</span></div>`;
-        } else if (n.type === 'start') {
+        if (n.type === 'start') {
           bodyLine = `<div class="cv-line"><span class="ico">👤</span><span class="txt">发起人提交，系统自动记录</span></div>`;
-        } else if (n.auto) {
+        } else if (n.type === 'archive') {
           bodyLine = `<div class="cv-line"><span class="ico">✔</span><span class="txt">系统自动归档</span></div>`;
         } else {
+          const people = AE.nodeApprovers(n);
+          const peopleText = people.length
+            ? people.map(p => p.name + ' ' + p.phone).join('、')
+            : '未设置审批人员';
           bodyLine = `<div class="cv-line"><span class="ico">👤</span><span class="txt" title="${AE.esc(peopleText)}">${AE.esc(peopleText)}</span></div>`;
         }
 
         return `
-        <div class="cv-node ${selNodeIdx === i ? 'active' : ''} ${n.type === 'branch' ? 'is-branch' : ''}"
+        <div class="cv-node ${selNodeIdx === i ? 'active' : ''} ${cond ? 'has-cond' : ''}"
              style="--node-color:${color}" onclick="openProps(${i})">
           <div class="cv-node-head">
             <div class="cv-node-no">${AE.CIRCLED[i] || (i + 1)}</div>
             <div class="cv-node-title" title="${AE.esc(n.name)}">${AE.esc(n.name)}</div>
             <div class="cv-node-ops">
-              <button class="cv-op" title="上移" onclick="event.stopPropagation();moveNode(${i},-1)">↑</button>
-              <button class="cv-op" title="下移" onclick="event.stopPropagation();moveNode(${i},1)">↓</button>
+              <button class="cv-op" title="上移" onclick="event.stopPropagation();moveNode(${i},-1)"
+                ${disabled ? 'disabled style="opacity:.25;cursor:not-allowed;"' : ''}>↑</button>
+              <button class="cv-op" title="下移" onclick="event.stopPropagation();moveNode(${i},1)"
+                ${disabled ? 'disabled style="opacity:.25;cursor:not-allowed;"' : ''}>↓</button>
               <button class="cv-op danger" title="删除" onclick="event.stopPropagation();delNode(${i})"
                 ${disabled ? 'disabled style="opacity:.25;cursor:not-allowed;"' : ''}>×</button>
             </div>
           </div>
           <div class="cv-node-body">
-            <span class="cv-node-type ${nodeTypeClass(n.type, n)}">${nodeTypeLabel(n.type, n)}</span>
+            <span class="cv-node-type ${nodeTypeClass(n)}">${nodeTypeLabel(n)}</span>
+            ${n.type === 'approval'
+              ? `<span class="cv-node-type ${nodeTypeClass(n)}">${mode}</span>` : ''}
+            ${cond ? `<span class="cv-node-cond" title="${AE.esc(cond)}">有条件：${AE.esc(cond)}</span>` : ''}
             ${bodyLine}
             ${n.remind && n.remind.enabled ? `
               <div class="cv-line"><span class="ico">⏰</span><span class="txt">未处理满 ${n.remind.afterHours}h 提醒</span></div>` : ''}
@@ -663,28 +714,14 @@
           withConn.push(`
             <div class="cv-conn">
               <div class="cv-conn-line"></div>
-              <button class="cv-conn-add" title="插入节点" onclick="event.stopPropagation();togglePicker(${pos}, this)">+</button>
+              <button class="cv-conn-add" title="插入审批节点" onclick="event.stopPropagation();togglePicker(${pos}, this)">+</button>
               <div class="cv-picker ${openPickerPos === pos ? 'open' : ''}" data-picker="${pos}" onclick="event.stopPropagation()">
                 <div class="cv-picker-title">插入节点</div>
-                <div class="cv-picker-item" onclick="insertNodeAt(${pos},'serial')">
-                  <div class="cv-picker-ico s">序</div>
+                <div class="cv-picker-item" onclick="insertNodeAt(${pos})">
+                  <div class="cv-picker-ico s">审</div>
                   <div>
-                    <div class="cv-picker-name">串行审批</div>
-                    <div class="cv-picker-desc">单人依次审批，逐级通过</div>
-                  </div>
-                </div>
-                <div class="cv-picker-item" onclick="insertNodeAt(${pos},'parallel_all')">
-                  <div class="cv-picker-ico p">签</div>
-                  <div>
-                    <div class="cv-picker-name">并行会签</div>
-                    <div class="cv-picker-desc">多人同时收到，全部通过才算过</div>
-                  </div>
-                </div>
-                <div class="cv-picker-item" onclick="insertNodeAt(${pos},'branch')">
-                  <div class="cv-picker-ico b">分</div>
-                  <div>
-                    <div class="cv-picker-name">条件分支</div>
-                    <div class="cv-picker-desc">按字段阈值自动增减节点</div>
+                    <div class="cv-picker-name">审批节点</div>
+                    <div class="cv-picker-desc">插入后在右侧抽屉里选串行审批或并行会签，并可加触发条件</div>
                   </div>
                 </div>
               </div>
@@ -718,23 +755,15 @@
     // ================================================================
     // 节点增删改序
     // ================================================================
-    function newNode(type) {
-      if (type === 'serial') {
-        return { id: 'n_' + Date.now(), type: 'serial', name: '新审批节点',
-                 roleKey: 'biz_manager', approver: 'u_biz_01',
-                 remind: { enabled: true, afterHours: 24 } };
-      }
-      if (type === 'parallel_all') {
-        return { id: 'n_' + Date.now(), type: 'parallel_all', name: '新会签节点',
-                 roleKey: 'risk_manager', approvers: ['u_risk_01', 'u_fin_01'],
-                 remind: { enabled: true, afterHours: 48 } };
-      }
-      return { id: 'n_' + Date.now(), type: 'branch', name: '金额分支',
-               condition: [{ field: 'amount', operator: 'gt', value: 1000000, then: ['gm'] }] };
+    /** v1.6.0：只产出一种业务节点 —— 审批节点（串行/会签在抽屉里选） */
+    function newNode() {
+      return { id: 'n_' + Date.now(), type: 'approval', approveMode: 'serial',
+               name: '新审批节点', roleKey: 'biz_manager', approver: 'u_biz_01',
+                 remind: { enabled: true, afterHours: 24 }, condition: [] };
     }
 
-    function insertNodeAt(pos, type) {
-      const node = newNode(type);
+    function insertNodeAt(pos) {
+      const node = newNode();
       draft.nodes.splice(pos, 0, node);
       selNodeIdx = pos;
       closePicker();
@@ -746,7 +775,7 @@
     function moveNode(i, dir) {
       const j = i + dir;
       if (j < 0 || j >= draft.nodes.length) return;
-      if (draft.nodes[i].auto || draft.nodes[j].auto) return;
+      if (isSystemNode(draft.nodes[i]) || isSystemNode(draft.nodes[j])) return;
       const t = draft.nodes[i];
       draft.nodes[i] = draft.nodes[j];
       draft.nodes[j] = t;
@@ -759,8 +788,8 @@
 
     function delNode(i) {
       const n = draft.nodes[i];
-      if (n.type === 'start') { alert('发起节点不可删除'); return; }
-      if (n.auto) { alert('归档节点不可删除'); return; }
+      if (n.type === 'start') { alert('「提交申请」发起节点不可删除'); return; }
+      if (n.type === 'archive') { alert('「归档完成」节点不可删除'); return; }
       if (!confirm(`确定删除节点「${n.name}」？`)) return;
       draft.nodes.splice(i, 1);
       if (selNodeIdx === i) closePropsDrawer();
@@ -797,31 +826,65 @@
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
       const idx = selNodeIdx;
-      document.getElementById('propsTitle').textContent = '节点属性';
+      document.getElementById('propsTitle').textContent =
+        n.type === 'approval' ? '审批节点属性' : '节点属性';
       document.getElementById('propsSubtitle').textContent =
-        `${AE.CIRCLED[idx] || (idx + 1)} · ${n.name} · ${nodeTypeLabel(n.type, n)}`;
+        `${AE.CIRCLED[idx] || (idx + 1)} · ${n.name} · ${nodeTypeLabel(n)}`;
 
-      const locked = (n.type === 'start' || n.auto);
       let html = '';
 
-      if (locked) {
+      // ---------- 系统节点（发起 / 归档）：只读 ----------
+      if (isSystemNode(n)) {
         html += `<div class="cv-field-title">${AE.esc(n.name)}</div>`;
         html += `<div class="ap-meta-grid" style="grid-template-columns:96px 1fr;">
-          <div class="k">节点类型</div><div class="v">${nodeTypeLabel(n.type, n)}</div>
+          <div class="k">节点类型</div><div class="v">${nodeTypeLabel(n)}</div>
           <div class="k">可编辑</div><div class="v">否（系统节点）</div>
         </div>`;
-        html += `<div class="cv-field-help">发起与归档为系统节点，属性不可编辑。</div>`;
+        html += `<div class="cv-field-help">「提交申请」与「归档完成」由系统自动执行，属性不可编辑。</div>`;
         document.getElementById('propsBody').innerHTML = html;
         return;
       }
 
+      // ---------- 1. 节点名称 ----------
       html += `<div class="cv-field">
         <label>节点名称</label>
         <input type="text" class="input" value="${AE.esc(n.name)}" maxlength="20"
                oninput="setNodeProp('name', this.value)">
       </div>`;
 
-      if (n.type === 'serial') {
+      // ---------- 2. 审批方式（单选，互斥） ----------
+      const isPar = n.approveMode === 'parallel_all';
+      html += `<div class="cv-field">
+        <label>审批方式<span class="cv-field-help" style="display:inline;margin-left:6px;">单选，一个节点只能是其中一种</span></label>
+        <div class="cv-mode">
+          <label class="cv-mode-opt ${!isPar ? 'active' : ''}">
+            <input type="radio" name="approveMode" value="serial" ${!isPar ? 'checked' : ''}
+                   onchange="setApproveMode('serial')">
+            <div>
+              <div class="cv-mode-name">串行审批</div>
+              <div class="cv-mode-desc">1 名审批人，通过后才轮到下一个节点</div>
+            </div>
+          </label>
+          <label class="cv-mode-opt ${isPar ? 'active' : ''}">
+            <input type="radio" name="approveMode" value="parallel_all" ${isPar ? 'checked' : ''}
+                   onchange="setApproveMode('parallel_all')">
+            <div>
+              <div class="cv-mode-name">并行会签</div>
+              <div class="cv-mode-desc">多人同时收到，全部通过才算过</div>
+            </div>
+          </label>
+        </div>
+      </div>`;
+
+      // ---------- 3. 审批人员（随审批方式切换） ----------
+      if (isPar) {
+        html += `<div class="cv-field">
+          <label>会签人员<span class="cv-field-help" style="display:inline;margin-left:6px;">至少 1 人，全部通过才算通过</span></label>
+          <div id="signBox"></div>
+          <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addSign()">+ 添加会签人</button>
+          <div class="cv-field-help">所有会签人同时收到待办，任一人驳回则整个流程驳回。</div>
+        </div>`;
+      } else {
         html += `<div class="cv-field">
           <label>审批人员</label>
           <select class="select" onchange="setNodeProp('approver', this.value)">${peopleOptions(n.approver)}</select>
@@ -829,44 +892,44 @@
         </div>`;
       }
 
-      if (n.type === 'parallel_all') {
-        html += `<div class="cv-field">
-          <label>会签人员<span class="cv-field-help" style="display:inline;margin-left:6px;">全部通过才算通过</span></label>
-          <div id="signBox"></div>
-          <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addSign()">+ 添加会签人</button>
-          <div class="cv-field-help">所有会签人同时收到待办，任一人驳回则整个流程驳回。</div>
-        </div>`;
-      }
-
-      if (n.type === 'branch') {
-        html += `<div class="cv-field">
-          <label>条件规则<span class="cv-field-help" style="display:inline;margin-left:6px;">满足任一条即命中</span></label>
-          <div id="ruleBox"></div>
-          <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addRule()">+ 添加条件</button>
-          <div class="cv-field-help">命中时追加右侧所列审批环节的节点（自动带出该环节默认审批人）；不命中则跳过本节点。</div>
-        </div>`;
-      }
-
-      if (n.type !== 'branch') {
-        const r = n.remind || { enabled: false, afterHours: 24 };
-        html += `<div class="cv-field">
-          <label>提醒规则</label>
-          <div class="cv-remind-box">
-            <div class="cv-remind-row">
-              <input type="checkbox" id="remindEnabled" ${r.enabled ? 'checked' : ''}
-                     style="margin:0;" onchange="setRemind('enabled', this.checked)">
-              <span style="font-size:12px;color:var(--text-secondary);">开启审批提醒</span>
-            </div>
-            <div class="cv-remind-row" style="margin-top:10px;">
-              <input type="number" class="input" min="1" max="720" value="${r.afterHours || 24}"
-                     ${r.enabled ? '' : 'disabled'} oninput="setRemind('afterHours', Number(this.value))">
-              <span class="unit">小时未处理后，向当前审批人发送提醒</span>
-            </div>
+      // ---------- 4. 触发条件（可选） ----------
+      const condOn = (n.condition || []).length > 0;
+      html += `<div class="cv-field">
+        <label>触发条件<span class="cv-field-help" style="display:inline;margin-left:6px;">可选，满足任一条才执行本节点</span></label>
+        <div class="cv-remind-box">
+          <div class="cv-remind-row">
+            <input type="checkbox" id="condEnabled" ${condOn ? 'checked' : ''}
+                   style="margin:0;" onchange="setCondEnabled(this.checked)">
+            <span style="font-size:12px;color:var(--text-secondary);">按条件触发（不勾选则每单都执行）</span>
           </div>
-          <div class="cv-field-help">提醒将推送至该节点审批人的站内消息与短信</div>
-        </div>`;
-      }
+        </div>
+        <div id="condWrap" style="${condOn ? '' : 'display:none;'}">
+          <div id="ruleBox" style="margin-top:8px;"></div>
+          <button class="btn btn-default btn-sm" style="margin-top:6px;" onclick="addRule()">+ 添加条件</button>
+        </div>
+        <div class="cv-field-help">不满足全部条件时，本节点自动跳过，流程继续往下走。</div>
+      </div>`;
 
+      // ---------- 5. 提醒规则 ----------
+      const r = n.remind || { enabled: false, afterHours: 24 };
+      html += `<div class="cv-field">
+        <label>提醒规则</label>
+        <div class="cv-remind-box">
+          <div class="cv-remind-row">
+            <input type="checkbox" id="remindEnabled" ${r.enabled ? 'checked' : ''}
+                   style="margin:0;" onchange="setRemind('enabled', this.checked)">
+            <span style="font-size:12px;color:var(--text-secondary);">开启审批提醒</span>
+          </div>
+          <div class="cv-remind-row" style="margin-top:10px;">
+            <input type="number" class="input" min="1" max="720" value="${r.afterHours || 24}"
+                   ${r.enabled ? '' : 'disabled'} oninput="setRemind('afterHours', Number(this.value))">
+            <span class="unit">小时未处理后，向当前审批人发送提醒</span>
+          </div>
+        </div>
+        <div class="cv-field-help">提醒将推送至该节点审批人的站内消息与短信</div>
+      </div>`;
+
+      // ---------- 6. 节点说明 ----------
       html += `<div class="cv-field">
         <label>节点说明</label>
         <textarea class="textarea" rows="2" style="width:100%;" placeholder="给审批人的提示语"
@@ -874,8 +937,38 @@
       </div>`;
 
       document.getElementById('propsBody').innerHTML = html;
-      if (n.type === 'parallel_all') renderSign(n);
-      if (n.type === 'branch') renderRules(n);
+      if (isPar) renderSign(n);
+      renderRules(n);
+    }
+
+    /** 切换审批方式：串行 ⇄ 并行会签，人员字段随之切换 */
+    function setApproveMode(mode) {
+      const n = draft.nodes[selNodeIdx];
+      if (!n || n.type !== 'approval') return;
+      n.approveMode = mode;
+      if (mode === 'parallel_all') {
+        if (!n.approvers || !n.approvers.length) {
+          const seed = [n.approver].filter(Boolean);
+          const free = ALL_PEOPLE.find(p => seed.indexOf(p.id) < 0);
+          if (free) seed.push(free.id);
+          n.approvers = seed.length ? seed : [ALL_PEOPLE[0].id];
+        }
+      } else {
+        if (!n.approver && n.approvers && n.approvers.length) n.approver = n.approvers[0];
+      }
+      markDirty();
+      renderCanvas();
+      refreshPropsBody();
+    }
+
+    /** 触发条件总开关 */
+    function setCondEnabled(on) {
+      const n = draft.nodes[selNodeIdx];
+      if (!n) return;
+      n.condition = on ? (n.condition && n.condition.length ? n.condition : [{ field: 'amount', operator: 'gt', value: 1000000 }]) : [];
+      markDirty();
+      renderCanvas();
+      refreshPropsBody();
     }
 
     function setNodeProp(key, val) {
@@ -886,7 +979,7 @@
       renderCanvas();
       if (key === 'name') {
         document.getElementById('propsSubtitle').textContent =
-          `${AE.CIRCLED[selNodeIdx] || (selNodeIdx + 1)} · ${val} · ${nodeTypeLabel(n.type, n)}`;
+          `${AE.CIRCLED[selNodeIdx] || (selNodeIdx + 1)} · ${val} · ${nodeTypeLabel(n)}`;
       }
     }
 
@@ -937,7 +1030,7 @@
 
     function removeSign(i) {
       const n = draft.nodes[selNodeIdx];
-      if (!n || n.approvers.length <= 1) { alert('会签节点至少保留 1 人'); return; }
+      if (!n || n.approvers.length <= 1) { alert('并行会签至少保留 1 人'); return; }
       n.approvers.splice(i, 1);
       markDirty();
       renderSign(n);
@@ -964,21 +1057,18 @@
                    oninput="setRule(${i},'value',Number(this.value))">
           </div>
           <div class="cv-rule-foot">
-            <span class="label">命中时追加节点</span>
-            <select class="select" style="flex:1;" onchange="setRule(${i},'thenRole',this.value)">
-              ${Object.keys(AE.ROLES).filter(k => k !== 'submitter' && k !== 'system').map(k =>
-                `<option value="${k}" ${(r.then||[])[0]===k?'selected':''}>${AE.esc(AE.ROLES[k].label)}</option>`).join('')}
-            </select>
+            <span class="label">不满足则跳过本节点</span>
+            <div style="flex:1;"></div>
             <button class="cv-op danger" title="删除条件" onclick="removeRule(${i})">×</button>
           </div>
-        </div>`).join('') || '<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0;">暂无条件规则</div>';
+        </div>`).join('') || '<div style="font-size:12px;color:var(--text-tertiary);padding:4px 0;">暂无触发条件</div>';
     }
 
     function addRule() {
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
       if (!n.condition) n.condition = [];
-      n.condition.push({ field: 'amount', operator: 'gt', value: 1000000, then: ['gm'] });
+      n.condition.push({ field: 'amount', operator: 'gt', value: 1000000 });
       markDirty();
       renderRules(n);
       renderCanvas();
@@ -987,8 +1077,7 @@
     function setRule(i, key, val) {
       const n = draft.nodes[selNodeIdx];
       if (!n) return;
-      if (key === 'thenRole') n.condition[i].then = [val];
-      else n.condition[i][key] = val;
+      n.condition[i][key] = val;
       markDirty();
       renderCanvas();
     }
@@ -1049,41 +1138,42 @@
     function renderPreview() {
       const amt = Number(document.getElementById('previewAmount').value || 0);
       const nodes = AE.resolveFlow(draft, { amount: amt });
-      const branchNodes = nodes.filter(n => n.fromBranch || n.skipped);
+      // 带触发条件的审批节点（含被跳过的）
+      const condNodes = nodes.filter(n => n.branchRules && n.branchRules.length);
+      const skipped = condNodes.filter(n => n.skipped);
 
       document.getElementById('pvBody').innerHTML = `
         <div class="pv-summary">
           <div class="k">流程名称</div><div class="v">${AE.esc(draft.name || '未命名流程')}</div>
           <div class="k">节点总数</div><div class="v">${nodes.length} 个</div>
           <div class="k">模拟金额</div><div class="v">¥ ${AE.fmtAmount(amt)}</div>
-          <div class="k">分支结果</div>
-          <div class="v">${branchNodes.length
-            ? (branchNodes.some(n => n.skipped) ? '条件未命中，相关节点已跳过' : '条件命中，已追加节点')
-            : '该流程无条件分支'}</div>
+          <div class="k">条件结果</div>
+          <div class="v">${condNodes.length
+            ? (skipped.length
+                ? `${skipped.length} 个节点未满足条件，已跳过`
+                : `${condNodes.length} 个节点条件全部命中，正常执行`)
+            : '该流程所有节点均无条件触发'}</div>
         </div>
 
         <div class="ap-section-title">审批节点流转</div>
         <div id="pvTimeline"></div>
 
-        ${branchNodes.length ? `
-        <div class="ap-section-title">条件分支求值明细</div>
+        ${condNodes.length ? `
+        <div class="ap-section-title">触发条件求值明细</div>
         <div style="overflow-x:auto;">
         <table class="cp-table is-compact" style="width:100%;">
-          <thead><tr><th>条件</th><th>操作符</th><th>阈值</th><th>实际值</th><th>结果</th><th>命中节点</th></tr></thead>
-          <tbody>${branchNodes.map(n => {
-            if (n.fromBranch) {
-              return `<tr>
-                <td>单据金额</td><td>&gt;</td><td>1,000,000</td><td>${AE.fmtAmount(amt)}</td>
-                <td><span class="tag tag-green">命中</span></td><td>${AE.esc(n.name)}</td>
-              </tr>`;
-            }
-            const r = (n.branchRules || [])[0];
-            return `<tr>
-              <td>${AE.esc(r ? r.fieldLabel : '—')}</td><td>${AE.esc(r ? r.opLabel : '—')}</td>
-              <td>${AE.fmtAmount(r ? r.value : 0)}</td><td>${AE.fmtAmount(r ? r.actual : 0)}</td>
-              <td><span class="tag tag-gray">未命中 → 跳过</span></td><td>—</td>
-            </tr>`;
-          }).join('')}</tbody>
+          <thead><tr><th>节点</th><th>条件</th><th>操作符</th><th>阈值</th><th>实际值</th><th>结果</th></tr></thead>
+          <tbody>${condNodes.map(n => (n.branchRules || []).map((r, ri) => `
+            <tr>
+              <td>${ri === 0 ? AE.esc(n.name) : ''}</td>
+              <td>${AE.esc(r.fieldLabel || '—')}</td>
+              <td>${AE.esc(r.opLabel || '—')}</td>
+              <td>${AE.fmtAmount(r.value)}</td>
+              <td>${AE.fmtAmount(r.actual)}</td>
+              <td>${n.skipped ? '<span class="tag tag-gray">未命中 → 跳过节点</span>'
+                              : (r.matched ? '<span class="tag tag-green">命中 → 执行节点</span>'
+                                           : '<span class="tag tag-gray">未命中</span>')}</td>
+            </tr>`).join('')).join('')}</tbody>
         </table></div>` : ''}
       `;
 
@@ -1100,13 +1190,14 @@
       if (!validateBasic()) return;
 
       if (!draft.nodes.some(n => n.type === 'start')) { alert('必须保留「提交申请」发起节点'); gotoStepForce(2); return; }
-      if (!draft.nodes.some(n => n.auto)) { alert('必须保留「归档完成」节点'); gotoStepForce(2); return; }
+      if (!draft.nodes.some(n => n.type === 'archive')) { alert('必须保留「归档完成」节点'); gotoStepForce(2); return; }
       for (const n of draft.nodes) {
-        if (n.type === 'parallel_all' && (!n.approvers || !n.approvers.length)) {
-          alert(`会签节点「${n.name}」至少需要 1 名会签人`); gotoStepForce(2); openProps(draft.nodes.indexOf(n)); return;
+        if (n.type !== 'approval') continue;
+        if (n.approveMode === 'parallel_all' && (!n.approvers || !n.approvers.length)) {
+          alert(`审批节点「${n.name}」选择了并行会签，至少需要 1 名会签人`); gotoStepForce(2); openProps(draft.nodes.indexOf(n)); return;
         }
-        if (n.type === 'serial' && !n.auto && !n.approver) {
-          alert(`串行节点「${n.name}」请选择审批人员`); gotoStepForce(2); openProps(draft.nodes.indexOf(n)); return;
+        if (n.approveMode === 'serial' && !n.approver) {
+          alert(`审批节点「${n.name}」请选择审批人员`); gotoStepForce(2); openProps(draft.nodes.indexOf(n)); return;
         }
       }
 
