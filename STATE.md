@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-19 审批管理模块 v1.4.0（状态文案统一 + 子项复选下拉）
+最后更新: 2026-10-19 审批管理模块 v1.5.0（去掉应用模块子项）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `4fe30d9` (feat(approval): v1.4.0 流程状态文案统一 + 应用模块子项改复选下拉，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.4.0，2026-10-19）
+## 审批管理模块（v1.5.0，2026-10-19）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -38,9 +38,14 @@
 法务部 许文静·何俊 / 仓储部 马强·高倩 / 总经理 秦建国 / 运营管理部 张爽
 手机号全部为 `1XX 000X XXXX` 脱敏形式。下拉展示「完整姓名 + 脱敏手机号」。
 
-### 应用模块（8 项，3 项带子项级联）
-项目准入 / 合同管理（采购合同·销售合同）/ 货转管理（上游货转·下游货转）/
-付款管理 / 退款管理 / 结算单管理（上游结算单·下游结算单）/ 追保函管理 / 放货管理
+### 应用模块（8 项，v1.5.0 起全部平级，无子项）
+项目准入 / 合同管理 / 货转管理 / 付款管理 / 退款管理 / 结算单管理 / 追保函管理 / 放货管理
+
+`applyModules` 数据结构 = **纯字符串数组**：`['contract','payment','refund','bond_letter']`。
+v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 统一收敛，
+旧 localStorage 数据无需迁移即可正常渲染与筛选 → **持久化 key 保持 `..._v2` 不升版**。
+⚠️ 子项概念已彻底下线，`APPLY_MODULES` 上不要再加 `children`；
+调用方一律先用 `AE.normModules(list)` 再判断，list 页的 `e.key === md` 写法已失效。
 
 ### 编排向导（v1.2.0）
 - 两步：① 基础信息（名称/说明/状态/应用模块）② 流程设计（画布），新建与编辑共用
@@ -64,6 +69,14 @@
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.5.0 变更（2026-10-19，user 指定「本次需求去掉子项」）
+子项整条链路下线：编排页的复选下拉（`.wz-dd*`）与「至少 1 子项」校验、
+引擎 `APPLY_MODULES` 的 children、3 套内置模板的 children、列表页 chip 的
+`has-child` 样式与子项后缀，全部删除。**v1.4.0 那版复选下拉已整体回退。**
+改动文件：`approval-engine.js` / `approval-flow-editor.html` / `approval-flow-list.html`。
+监控页与 14 个业务页无需改动（筛选下拉由 `APPLY_MODULES` 自动生成，
+页面映射只用顶级模块 key），已回归确认。
 
 ## ⚠️ 已知既有缺陷（v1.4.0 排查时发现，非本轮引入，待产品决策）
 **117 页里有 61 页左侧 sidemenu 渲染 0 项**（空 div）。

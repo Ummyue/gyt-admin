@@ -26,7 +26,6 @@
     .ap-mod { display: inline-block; padding: 1px 7px; margin: 2px 4px 2px 0;
               font-size: 11px; border-radius: 3px;
               background: var(--bg-disabled); color: var(--text-secondary); }
-    .ap-mod.has-child { background: #EFF6FF; color: #1E40AF; }
 
     /* 长文本列允许换行：避免 nowrap 撑宽表格，导致 sticky 操作列遮挡相邻列
        选择器需高于 .cp-table tbody td（0,1,2），故用 (0,2,2) */
@@ -203,11 +202,7 @@
       return AE.listFlows().filter(f => {
         if (kw && f.name.indexOf(kw) < 0 && (f.desc || '').indexOf(kw) < 0) return false;
         if (st && f.status !== st) return false;
-        if (md) {
-          const hit = (f.applyModules || []).some(e =>
-            e.key === md || (e.children || []).length > 0);
-          if (!hit) return false;
-        }
+        if (md && AE.normModules(f.applyModules).indexOf(md) < 0) return false;
         return true;
       });
     }
@@ -254,19 +249,14 @@
       renderPagination(all.length, totalPages);
     }
 
-    /** 应用模块 chip：带子项的显示为「合同管理 采购合同/销售合同」 */
+    /** 应用模块 chip（v1.5.0：子项已下线，仅显示模块名） */
     function renderModChips(list) {
-      if (!list || !list.length) return '<span style="color:var(--text-tertiary);">—</span>';
-      return list.map(entry => {
-        const mod = AE.getModule(entry.key);
+      const keys = AE.normModules(list);
+      if (!keys.length) return '<span style="color:var(--text-tertiary);">—</span>';
+      return keys.map(key => {
+        const mod = AE.getModule(key);
         if (!mod) return '';
-        const kids = entry.children || [];
-        const hasChild = kids.length > 0;
-        const kidText = hasChild
-          ? kids.map(k => (AE.getModule(k) || {}).label || k).join(' / ')
-          : '';
-        return `<span class="ap-mod ${hasChild ? 'has-child' : ''}"
-                  title="${hasChild ? mod.label + '：' + kidText : mod.label}">${AE.esc(mod.label)}${hasChild ? ' · ' + AE.esc(kidText) : ''}</span>`;
+        return `<span class="ap-mod" title="${AE.esc(mod.label)}">${AE.esc(mod.label)}</span>`;
       }).join('');
     }
 

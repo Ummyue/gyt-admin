@@ -119,55 +119,49 @@
   // ================================================================
   // 四、应用模块（含子模块级联）
   // ================================================================
+  // v1.5.0：去掉子项，8 个应用模块全部平级（v1.4.0 及之前的
+  // 合同管理 / 货转管理 / 结算单管理 曾带子项，本期需求已下线子项）
   const APPLY_MODULES = [
     { key: 'project',        label: '项目准入' },
-    { key: 'contract',       label: '合同管理',   children: [
-      { key: 'contract_purchase', label: '采购合同' },
-      { key: 'contract_sales',    label: '销售合同' }
-    ]},
-    { key: 'goods_transfer', label: '货转管理',   children: [
-      { key: 'transfer_up',   label: '上游货转' },
-      { key: 'transfer_down', label: '下游货转' }
-    ]},
+    { key: 'contract',       label: '合同管理' },
+    { key: 'goods_transfer', label: '货转管理' },
     { key: 'payment',        label: '付款管理' },
     { key: 'refund',         label: '退款管理' },
-    { key: 'settlement',     label: '结算单管理', children: [
-      { key: 'settlement_up',   label: '上游结算单' },
-      { key: 'settlement_down', label: '下游结算单' }
-    ]},
+    { key: 'settlement',     label: '结算单管理' },
     { key: 'bond_letter',    label: '追保函管理' },
     { key: 'release',        label: '放货管理' }
   ];
 
   function getModule(key) {
     for (var i = 0; i < APPLY_MODULES.length; i++) {
-      const m = APPLY_MODULES[i];
-      if (m.key === key) return m;
-      if (m.children) {
-        for (var j = 0; j < m.children.length; j++) {
-          if (m.children[j].key === key) return { key: key, label: m.children[j].label, parent: m.key, parentLabel: m.label };
-        }
-      }
+      if (APPLY_MODULES[i].key === key) return APPLY_MODULES[i];
     }
     return null;
   }
 
+  /**
+   * applyModules 归一化 → 纯 key 字符串数组。
+   * v1.5.0 起 applyModules 不再有子项；此处兼容历史数据里的
+   * { key, children } 写法（旧 localStorage 与 v1.4.0 模板），
+   * 一律收敛成父级 key，避免调用方各处再判空。
+   */
+  function normModules(list) {
+    if (!Array.isArray(list)) return [];
+    const out = [];
+    list.forEach(function (e) {
+      const k = (typeof e === 'string') ? e : (e && e.key);
+      if (k && out.indexOf(k) < 0) out.push(k);
+    });
+    return out;
+  }
+
   /** applyModules 数组 → 展示文案 */
   function applyModulesText(list) {
-    if (!list || !list.length) return '—';
-    return list.map(function (entry) {
-      var key = typeof entry === 'string' ? entry : entry.key;
-      var kids = (typeof entry === 'string') ? null : entry.children;
-      var mod = getModule(key);
-      if (!mod) return key;
-      if (kids && kids.length) {
-        var kidLabels = kids.map(function (k) {
-          var c = getModule(k);
-          return c ? c.label : k;
-        });
-        return mod.label + '（' + kidLabels.join(' / ') + '）';
-      }
-      return mod.label;
+    const keys = normModules(list);
+    if (!keys.length) return '—';
+    return keys.map(function (key) {
+      const mod = getModule(key);
+      return mod ? mod.label : key;
     }).join('、');
   }
 
@@ -184,7 +178,7 @@
       name: '标准审批流程',
       desc: '发起 → 业务审批 → 风控+财务会签 →（金额 > 100 万加总经理）→ 完成',
       status: 'enabled',
-      applyModules: [{ key: 'project' }],
+      applyModules: ['project'],
       updatedAt: '2026-10-12 10:30',
       updatedBy: '张爽',
       nodes: [
@@ -207,10 +201,7 @@
       name: '简易审批流程',
       desc: '发起 → 业务审批 → 财务审批 → 完成（适用小额单据）',
       status: 'enabled',
-      applyModules: [
-        { key: 'goods_transfer', children: ['transfer_up', 'transfer_down'] },
-        { key: 'release' }
-      ],
+      applyModules: ['goods_transfer', 'release'],
       updatedAt: '2026-10-12 09:15',
       updatedBy: '李娜',
       nodes: [
@@ -228,12 +219,7 @@
       name: '高风险审批流程',
       desc: '发起 → 业务审批 → 风控+财务会签 → 合规审查 → 总经理审批 → 完成',
       status: 'enabled',
-      applyModules: [
-        { key: 'contract', children: ['contract_purchase', 'contract_sales'] },
-        { key: 'payment' },
-        { key: 'refund' },
-        { key: 'bond_letter' }
-      ],
+      applyModules: ['contract', 'payment', 'refund', 'bond_letter'],
       updatedAt: '2026-10-11 17:40',
       updatedBy: '王浩',
       nodes: [
@@ -282,16 +268,24 @@
 
   function listFlows() {
     const all = loadAll();
-    return Object.keys(all).map(k => all[k]);
+    return Object.keys(all).map(k => withNormModules(all[k]));
   }
 
   function getFlow(id) {
-    return loadAll()[id] || null;
+    const f = loadAll()[id];
+    return f ? withNormModules(f) : null;
+  }
+
+  /** 归一化单个流程的 applyModules */
+  function withNormModules(flow) {
+    if (!flow) return flow;
+    flow.applyModules = normModules(flow.applyModules);
+    return flow;
   }
 
   function saveFlow(flow) {
     const all = loadAll();
-    all[flow.id] = Object.assign({}, flow, {
+    all[flow.id] = Object.assign({}, withNormModules(Object.assign({}, flow)), {
       updatedAt: nowStr(),
       updatedBy: '张爽'
     });
@@ -316,7 +310,7 @@
       id: newId,
       name: newName || (src.name + ' - 副本'),
       status: 'draft',
-      applyModules: JSON.parse(JSON.stringify(src.applyModules || [])),
+      applyModules: normModules(src.applyModules),
       nodes: src.nodes.map(n => Object.assign({}, n, { id: n.id + '_' + suffix }))
     }));
   }
@@ -660,7 +654,7 @@
     // 人员
     getPerson, listPeople, personLabel, nodeApprovers,
     // 模块
-    getModule, applyModulesText,
+    getModule, applyModulesText, normModules,
     // 流程 CRUD
     listFlows, getFlow, saveFlow, deleteFlow, duplicateFlow,
     // 求值
