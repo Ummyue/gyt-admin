@@ -1,7 +1,7 @@
 # 02.17 审批管理 · 审批流程配置（流程模板列表）
 
 > **页面**：`approval-flow-list.html`
-> **版本**：v1.3.0（2026-10-16，页面外壳对齐标准列表页）
+> **版本**：v1.4.0（2026-10-19，流程状态文案全站统一）
 > **模块归属**：数字供应链 → 审批管理 → 审批流程配置
 > **引擎**：`shared/js/approval-engine.js` v1.1.0
 > **页面映射**：`shared/js/approval-config.js`
@@ -67,7 +67,7 @@
 | 列 | 宽度 | 内容 | 说明 |
 |---|---|---|---|
 | 流程名称 | 17% | 加粗蓝色 | 点击进入编排器 |
-| 状态 | 8% | 已启用 / 草稿 / 已停用 | 三色 tag（green / yellow / gray） |
+| 状态 | 8% | 草稿 / 启用 / 停用 | 三色 tag（gray / green / gray）；v1.4.0 起「已启用/已停用」改为「启用/停用」，全站统一 |
 | 节点数 | 7% | 整数，居中 | 不含「提交申请」发起节点 |
 | 流程说明 | 26% | 一句话描述，允许 2 行换行 | 编排向导第 1 步维护 |
 | 应用模块 | 14% | 模块 chip，带子项的显示子项名，chip 间可换行 | 多选，在编排向导第 1 步维护 |
@@ -104,7 +104,7 @@
 | `id` | string | 系统 | 内置：`standard` / `simple` / `highRisk`；新建：`flow_{时间戳}` |
 | `name` | text | ✅ | 流程名称 |
 | `desc` | textarea | - | 一句话流程说明 |
-| `status` | select | ✅ | `draft` 草稿 / `enabled` 已启用 / `disabled` 已停用 |
+| `status` | select | ✅ | `draft` 草稿 / `enabled` 启用 / `disabled` 停用 |
 | `applyModules` | array | - | **v1.1.0 改名** 应用模块，结构见 `p-approval-flow-editor.md` §5.3 |
 | `nodes` | array | ✅ | 节点数组，见 §4.2 |
 | `updatedAt` | datetime | 自动 | 保存时自动写入 |

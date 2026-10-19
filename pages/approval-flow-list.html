@@ -115,9 +115,9 @@
                 <span class="cp-filter-label">流程状态</span>
                 <select class="select" id="filterStatus" onchange="renderList()">
                   <option value="">全部状态</option>
-                  <option value="enabled">已启用</option>
+                  <option value="enabled">启用</option>
                   <option value="draft">草稿</option>
-                  <option value="disabled">已停用</option>
+                  <option value="disabled">停用</option>
                 </select>
               </div>
               <div class="cp-filter-item">
@@ -223,9 +223,9 @@
 
       // 状态 → 设计系统既有 tag 色板
       const statusMeta = {
-        enabled:  { label: '已启用', cls: 'tag-green'  },
+        enabled:  { label: '启用',   cls: 'tag-green'  },
         draft:    { label: '草稿',   cls: 'tag-yellow' },
-        disabled: { label: '已停用', cls: 'tag-gray'   }
+        disabled: { label: '停用',   cls: 'tag-gray'   }
       };
 
       document.getElementById('flowTableBody').innerHTML = rows.map(f => {

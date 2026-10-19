@@ -78,19 +78,50 @@
     .wz-field-help { font-size: 12px; color: var(--text-tertiary); margin-top: 6px; line-height: 1.6; }
 
     .wz-mods { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px 24px; }
-    .wz-mod { display: flex; align-items: flex-start; gap: 8px; }
-    .wz-mod-main { display: flex; align-items: center; gap: 6px; }
+    .wz-mod { display: flex; align-items: center; gap: 8px; }
+    .wz-mod-main { display: flex; align-items: center; gap: 6px; flex: none; }
     .wz-mod-main label { font-size: 13px; color: var(--text-primary); cursor: pointer; }
-    .wz-mod-kids {
-      margin: 6px 0 0 22px; padding: 8px 10px;
-      border-left: 2px solid var(--border-light); display: none;
-    }
-    .wz-mod.has-kids .wz-mod-kids { display: block; }
-    .wz-mod-kids label {
+
+    /* ===== 子项复选下拉（v1.4.0：子项不再平铺，收到下拉里） ===== */
+    .wz-dd { position: relative; min-width: 0; flex: 1; }
+    .wz-dd-trigger {
       display: flex; align-items: center; gap: 6px;
-      font-size: 12px; color: var(--text-secondary); cursor: pointer; margin-bottom: 4px;
+      width: 100%; height: 26px; padding: 0 6px 0 8px;
+      font-size: 12px; color: var(--text-secondary);
+      background: var(--bg-card); border: 1px solid var(--border-default);
+      border-radius: 4px; cursor: pointer; text-align: left;
     }
-    .wz-mod-kids label:last-child { margin-bottom: 0; }
+    .wz-dd-trigger:hover:not(.is-disabled) { border-color: var(--color-primary); color: var(--color-primary); }
+    .wz-dd-trigger.is-disabled {
+      background: var(--bg-disabled); color: var(--text-tertiary);
+      cursor: not-allowed; border-color: var(--border-light);
+    }
+    .wz-dd-text { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .wz-dd-text.is-empty { color: var(--text-tertiary); }
+    .wz-dd-trigger svg { flex: none; }
+    .wz-dd.open .wz-dd-trigger svg { transform: rotate(180deg); }
+
+    .wz-dd-panel {
+      position: absolute; z-index: 80; top: calc(100% + 4px); left: 0;
+      min-width: 190px; padding: 5px;
+      background: var(--bg-card); border: 1px solid var(--border-default);
+      border-radius: 6px; box-shadow: 0 6px 18px rgba(15, 23, 42, .14);
+      display: none;
+    }
+    .wz-dd.open .wz-dd-panel { display: block; }
+    .wz-dd-bar {
+      display: flex; gap: 12px; padding: 3px 6px 6px; margin-bottom: 4px;
+      border-bottom: 1px solid var(--border-light);
+      font-size: 11px; color: var(--color-primary);
+    }
+    .wz-dd-bar span { cursor: pointer; }
+    .wz-dd-bar span:hover { text-decoration: underline; }
+    .wz-dd-opt {
+      display: flex; align-items: center; gap: 8px;
+      padding: 5px 6px; border-radius: 4px;
+      font-size: 12px; color: var(--text-primary); cursor: pointer; white-space: nowrap;
+    }
+    .wz-dd-opt:hover { background: var(--bg-hover); }
 
     /* ===== 编排画布（满宽） ===== */
     .cv-canvas {
@@ -375,13 +406,13 @@
                   <input type="radio" name="flowStatus" value="draft" onchange="onEdit()">草稿
                 </label>
                 <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
-                  <input type="radio" name="flowStatus" value="enabled" onchange="onEdit()">已启用
+                  <input type="radio" name="flowStatus" value="enabled" onchange="onEdit()">启用
                 </label>
                 <label style="display: flex; align-items: center; gap: 6px; font-size: 13px; cursor: pointer;">
-                  <input type="radio" name="flowStatus" value="disabled" onchange="onEdit()">已停用
+                  <input type="radio" name="flowStatus" value="disabled" onchange="onEdit()">停用
                 </label>
               </div>
-              <div class="wz-field-help">草稿仅自己可见；已启用的流程才会被应用模块的业务单据引用</div>
+              <div class="wz-field-help">草稿仅自己可见；启用状态的流程才会被应用模块的业务单据引用</div>
             </div>
 
             <div class="wz-field">
@@ -391,8 +422,8 @@
               </label>
               <div class="wz-mods" id="modPicker"></div>
               <div class="wz-field-help">
-                勾选后，对应业务模块的单据将引用此流程模板。带子项的模块需进一步确认应用到哪些子项；
-                子项未全选时，流程仅对已勾选的子项生效。
+                勾选后，对应业务模块的单据将引用此流程模板。带子项的模块（合同管理 / 货转管理 / 结算单管理）
+                在右侧下拉中选择具体子项；子项未全选时，流程仅对已勾选的子项生效。
               </div>
             </div>
 
@@ -482,12 +513,13 @@
 
     const STATUS_META = {
       draft:    { label: '草稿',   cls: 'tag-gray'   },
-      enabled:  { label: '已启用', cls: 'tag-green'  },
-      disabled: { label: '已停用', cls: 'tag-yellow' }
+      enabled:  { label: '启用', cls: 'tag-green'  },
+      disabled: { label: '停用', cls: 'tag-gray'  }
     };
 
     let draft = null;       // 当前编辑中的流程
     let step = 1;           // 当前步骤
+    let openDD = null;      // 应用模块：当前展开的子项复选下拉所属模块 key
     let selNodeIdx = -1;    // 选中节点下标
     let openPickerPos = -1; // 当前展开选项卡片的连接线位置
 
@@ -1022,36 +1054,99 @@
       renderCanvas();
     }
 
-    // ================================================================
-    // 应用模块（含子项级联）
-    // ================================================================
+    // 应用模块：带子项的模块改用复选下拉，子项不再平铺
     function renderModules() {
       const box = document.getElementById('modPicker');
       box.innerHTML = AE.APPLY_MODULES.map(m => {
         const entry = (draft.applyModules || []).find(x => x.key === m.key);
         const on = !!entry;
-        const kids = (m.children || []).map(c => {
+        const main = `
+          <div class="wz-mod-main">
+            <input type="checkbox" id="chk-${m.key}" ${on ? 'checked' : ''}
+                   onchange="toggleModule('${m.key}',this.checked)">
+            <label for="chk-${m.key}">${AE.esc(m.label)}</label>
+          </div>`;
+
+        // 无子项：只有模块本身
+        if (!m.children || !m.children.length) {
+          return `<div class="wz-mod">${main}</div>`;
+        }
+
+        const ct = childText(entry, m);
+        const allOn = on && entry.children.length === m.children.length;
+        const opts = m.children.map(c => {
           const kon = entry && (entry.children || []).includes(c.key);
-          return `<label>
-            <input type="checkbox" ${kon ? 'checked' : ''} ${on ? '' : 'disabled'}
+          return `<label class="wz-dd-opt">
+            <input type="checkbox" ${kon ? 'checked' : ''}
                    onchange="toggleChild('${m.key}','${c.key}',this.checked)">
             ${AE.esc(c.label)}
           </label>`;
         }).join('');
-        return `
-        <div class="wz-mod ${m.children ? 'has-kids' : ''}">
-          <div style="flex:1;">
-            <div class="wz-mod-main">
-              <input type="checkbox" id="chk-${m.key}" ${on ? 'checked' : ''}
-                     onchange="toggleModule('${m.key}',this.checked)">
-              <label for="chk-${m.key}">${AE.esc(m.label)}</label>
-              ${m.children ? `<span style="font-size:11px;color:var(--text-tertiary);">（${m.children.length} 个子项）</span>` : ''}
+
+        return `<div class="wz-mod">
+          ${main}
+          <div class="wz-dd ${openDD === m.key ? 'open' : ''}" id="dd-${m.key}"
+               onclick="event.stopPropagation()">
+            <button type="button" class="wz-dd-trigger ${on ? '' : 'is-disabled'}"
+                    onclick="toggleDD('${m.key}',event)">
+              <span class="wz-dd-text ${ct.empty ? 'is-empty' : ''}">${AE.esc(ct.t)}</span>
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="6 9 12 15 18 9"/></svg>
+            </button>
+            <div class="wz-dd-panel">
+              <div class="wz-dd-bar">
+                <span onclick="setAllChildren('${m.key}',true)">全选</span>
+                <span onclick="setAllChildren('${m.key}',false)">清空</span>
+              </div>
+              ${opts}
             </div>
-            ${m.children ? `<div class="wz-mod-kids">${kids}</div>` : ''}
           </div>
         </div>`;
       }).join('');
     }
+
+    /** 下拉触发器文案：未选 / 全选 / 单项 / 「首项 等 N 项」 */
+    function childText(entry, mod) {
+      const all = (mod.children || []).map(c => c.key);
+      const sel = (entry && entry.children) || [];
+      if (!sel.length) return { t: '请选择子项', empty: true };
+      if (sel.length === all.length) return { t: '全部（' + all.length + '）', empty: false };
+      const names = (mod.children || []).filter(c => sel.includes(c.key)).map(c => c.label);
+      if (names.length === 1) return { t: names[0], empty: false };
+      return { t: names[0] + ' 等 ' + names.length + ' 项', empty: false };
+    }
+
+    function toggleDD(key, ev) {
+      if (ev) ev.stopPropagation();
+      const dd = document.getElementById('dd-' + key);
+      if (!dd) return;
+      const trig = dd.querySelector('.wz-dd-trigger');
+      if (trig && trig.classList.contains('is-disabled')) return;  // 父模块未勾选
+      const willOpen = openDD !== key;
+      closeDD();
+      if (willOpen) { openDD = key; dd.classList.add('open'); }
+    }
+
+    function closeDD() {
+      openDD = null;
+      document.querySelectorAll('.wz-dd.open').forEach(e => e.classList.remove('open'));
+    }
+
+    /** 下拉顶部「全选 / 清空」 */
+    function setAllChildren(key, on) {
+      const mod = AE.APPLY_MODULES.find(m => m.key === key);
+      if (!mod || !mod.children) return;
+      if (on) {
+        const e = ensureEntry(key);
+        e.children = mod.children.map(c => c.key);
+      } else {
+        draft.applyModules = draft.applyModules.filter(x => x.key !== key);
+      }
+      markDirty();
+      renderModules();
+    }
+
+    // 点击空白收起下拉
+    document.addEventListener('click', closeDD);
 
     function ensureEntry(key) {
       if (!draft.applyModules) draft.applyModules = [];

@@ -63,6 +63,10 @@
     panel.querySelectorAll('.cp-filter input, .cp-filter select').forEach(function(el) {
       if (el.tagName === 'SELECT') el.selectedIndex = 0;
       else el.value = '';
+      // 同时触发 input + change 事件（与单个 chip 的 × 一致），
+      // 否则页面 oninput/onchange 驱动的实时过滤不会重绘表格，只清输入框不清结果
+      el.dispatchEvent(new Event('input', { bubbles: true }));
+      el.dispatchEvent(new Event('change', { bubbles: true }));
     });
     renderChips(panel);
   };

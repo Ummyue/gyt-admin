@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-16 审批管理模块 v1.3.0（页面外壳对齐标准列表页）
+最后更新: 2026-10-19 审批管理模块 v1.4.0（状态文案统一 + 子项复选下拉）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `7f9cd7e` (fix(approval): v1.3.0 页面外壳对齐标准列表页，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.3.0，2026-10-16）
+## 审批管理模块（v1.4.0，2026-10-19）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -49,6 +49,29 @@
 - 流程图预览为弹窗，用引擎渲染时间线（与业务单据「审批详情」同一视觉）
 - 平台统一右侧抽屉：`.ap-drawer*` 定义在 `assets/css/approval.css`，
   监控页审批详情 / 画布节点属性 / 预览弹窗三处共用
+
+### v1.4.0 变更（2026-10-19，user 指定）
+1. **流程状态文案全站统一为「草稿 / 启用 / 停用」**（原「草稿 / 已启用 / 已停用」）。
+   改的位点：编排页 3 个 radio + 帮助文案、编排页 `STATUS_META`、
+   列表页 `statusMeta` + 筛选下拉 option。列表页操作列按钮本来就是「启用/停用」。
+   顺带统一了 `disabled` 的 tag 色（编排页原 `tag-yellow` / 列表页 `tag-gray` → 统一 `tag-gray`）。
+   **保留不动**：列表页操作后的 toast「流程已启用/流程已停用」——那是动作结果，
+   「已启用」是正确的完成态表述，不要跟状态名混淆。
+2. **应用模块子项从平铺改为复选下拉**。合同管理 / 货转管理 / 结算单管理 三个模块
+   的子项不再向下平铺，改为 checkbox 右侧的复选下拉（`.wz-dd*`）。
+   触发器文案：未选「请选择子项」/ 全选「全部（2）」/ 单选显示子项名 / 多选「首项 等 N 项」。
+   面板顶部有「全选 / 清空」；点子项后面板保持展开（靠 `openDD` 变量在重渲染时恢复）。
+   父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
+   - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
+     否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+## ⚠️ 已知既有缺陷（v1.4.0 排查时发现，非本轮引入，待产品决策）
+**117 页里有 61 页左侧 sidemenu 渲染 0 项**（空 div）。
+原因：这 61 页未登记进 `shared/js/topnav-drawer.js` 的 `window.TOPNAV_MENU`，
+`left-sidemenu.js` 的 `getCurrentModule()` 按文件名反查，查不到就返回 null → 什么都不渲染。
+历史上登记数一直是 67→70→71（71 是 v1.2.0 补的编排页），这 61 页从未登记过。
+典型：所有 `*-detail.html` / `*-new.html` 下钻页，含 14 个已接审批引擎的业务详情页。
+修复需要逐页确定「归属哪个一级模块 / 二级菜单」，属产品结构决策，未擅自批量补。
 
 ### ⚠️ 测试脚本坑（线上回归）
 - `verify_v11_pages.py` 里「画布 · 8 个应用模块」用 `.cv-mod`，但 v1.2.0 已把
@@ -81,6 +104,14 @@
 状态标签只用 `tag-blue/yellow/green/red/gray`（**没有 tag-orange**），
 表格类用 `cp-table`（**没有 data-table**），
 边框 token 用 `--border-default`（**没有 --border-color，全站未定义，用了 border 整条失效**）。
+
+### ⚠️ 清除全部必须派发事件（v1.4.0 修，勿回退）
+`shared/js/filter-chips.js` 的 `clearAllFilters()` 清空 `.cp-filter input/select` 后
+**必须** `dispatchEvent(new Event('input'))` + `Event('change')`，
+否则页面 `oninput="renderList()"` 这类实时过滤不会重绘表格 —— 表现为：
+输入框空了、chip 也清了，但表格仍停在筛选结果，用户以为筛选坏了。
+（单个 chip 的 `×` 一直有派发事件，`clearAllFilters` 漏了；`payment-list` /
+`goods-transfer-up` / 审批两页都中招。是全站通病，不止审批模块。）
 
 ### ⚠️ 页面外壳三件套（v1.3.0 补齐，审批三页曾集体缺失）
 1. **`.page-body { padding: 20px 24px; }`** 必须写在页面自己的 `<style>` 首行。
