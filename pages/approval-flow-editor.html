@@ -129,6 +129,24 @@
       padding: 4px 6px 2px; font-size: 11px; color: var(--text-tertiary); font-weight: 500;
     }
 
+    /* 通知类型：站内信锁定 + 短信可勾（v1.10.0） */
+    .cv-chan-box {
+      border: 1px solid var(--border-default); border-radius: 6px; overflow: hidden; background: #fff;
+    }
+    .cv-chan-box.is-disabled { background: var(--bg-hover); }
+    .cv-chan-opt {
+      display: flex; align-items: center; gap: 8px; cursor: pointer;
+      padding: 9px 12px; font-size: 13px; color: var(--text-primary);
+    }
+    .cv-chan-opt + .cv-chan-opt { border-top: 1px solid var(--border-light); }
+    .cv-chan-opt:hover { background: var(--bg-hover); }
+    .cv-chan-box.is-disabled .cv-chan-opt { cursor: not-allowed; color: var(--text-tertiary); }
+    .cv-chan-box.is-disabled .cv-chan-opt:hover { background: transparent; }
+    .cv-chan-lock {
+      margin-left: auto; padding: 1px 7px; border-radius: 10px; font-size: 11px; line-height: 16px;
+      color: var(--color-primary, #2563EB); background: #EFF6FF; border: 1px solid #DBEAFE;
+    }
+
     /* 触发条件：固定金额条件行 */
     .cv-cond-row { display: flex; align-items: center; gap: 8px; }
     .cv-cond-field {
@@ -764,7 +782,7 @@
             ${n.remind && n.remind.enabled ? `
               <div class="cv-line"><span class="ico">⏰</span><span class="txt">未处理满 ${n.remind.afterHours}h 提醒</span></div>` : ''}
             ${(n.notify || []).length ? `
-              <div class="cv-line"><span class="ico">🔔</span><span class="txt" title="${AE.esc(notifyNamesText(n))}">通过后通知 ${(n.notify || []).length} 人：${AE.esc(notifyNamesText(n))}</span></div>` : ''}
+              <div class="cv-line"><span class="ico">🔔</span><span class="txt" title="${AE.esc(notifyNamesText(n))}">通过后通知 ${(n.notify || []).length} 人：${AE.esc(notifyNamesText(n))}${AE.esc(AE.notifyChannelsText(n.notifyChannels))}</span></div>` : ''}
           </div>
         </div>`;
       });
@@ -1029,7 +1047,31 @@
             </div>
           </div>
         </div>
-        <div class="cv-field-help">本节点审批通过后，向所选人员推送站内消息与短信；不选则不通知。</div>
+        <div class="cv-field-help">本节点审批通过后，向所选人员推送通知；不选人员则不通知。</div>
+      </div>`;
+
+      // ---------- 6.1 通知类型（v1.10.0，仅作用于「审批通知」；站内信锁定不可取消） ----------
+      const chans = (n.notifyChannels && n.notifyChannels.length) ? n.notifyChannels : ['inbox'];
+      const hasSms = chans.indexOf('sms') >= 0;
+      const notifyOff = !notify.length;   // 没选接收人时渠道无意义，置灰
+      html += `<div class="cv-field">
+        <label>通知类型</label>
+        <div class="cv-chan-box ${notifyOff ? 'is-disabled' : ''}">
+          <label class="cv-chan-opt">
+            <input type="checkbox" ${chans.indexOf('inbox') >= 0 ? 'checked' : ''} disabled
+                   style="margin:0;cursor:not-allowed;">
+            <span>站内信</span>
+            <span class="cv-chan-lock" title="站内信强制开启，不可取消">必选</span>
+          </label>
+          <label class="cv-chan-opt">
+            <input type="checkbox" ${hasSms ? 'checked' : ''} ${notifyOff ? 'disabled' : ''}
+                   style="margin:0;" onchange="setNotifyChannel('sms', this.checked)">
+            <span>短信提醒</span>
+          </label>
+        </div>
+        <div class="cv-field-help">${notifyOff
+          ? '请先在上方选择接收通知的人员，再配置推送渠道。'
+          : '站内信为必选渠道，保证审批通知有留痕；短信提醒按需开启。'}</div>
       </div>`;
 
       // ---------- 7. 节点说明 ----------
@@ -1221,6 +1263,20 @@
       refreshPropsBody();
       const dd = document.getElementById('dd-notify');
       if (dd) dd.classList.add('open');
+    }
+
+    /** 勾选/取消短信提醒（v1.10.0）。站内信锁定，不走这里 */
+    function setNotifyChannel(ch, on) {
+      const n = draft.nodes[selNodeIdx];
+      if (!n) return;
+      if (!Array.isArray(n.notifyChannels)) n.notifyChannels = [];
+      const i = n.notifyChannels.indexOf(ch);
+      if (on && i < 0) n.notifyChannels.push(ch);
+      if (!on && i >= 0) n.notifyChannels.splice(i, 1);
+      // 站内信恒在，前端绕过也会被引擎 normNode 兜住
+      if (n.notifyChannels.indexOf('inbox') < 0) n.notifyChannels.unshift('inbox');
+      markDirty();
+      renderCanvas();
     }
 
     // 应用模块（v1.5.0：子项已下线，8 个模块全部平级 checkbox）

@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-19 审批管理模块 v1.9.0（删除预览弹窗模拟金额输入框）
+最后更新: 2026-10-20 审批管理模块 v1.10.0（新增「通知类型」推送渠道）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `33202a5` (feat(approval): v1.9.0 删除流程图预览弹窗的「模拟单据金额」输入框，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.9.0，2026-10-19）
+## 审批管理模块（v1.10.0，2026-10-20）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -69,6 +69,26 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.10.0 变更（2026-10-20，user 要求「节点属性抽屉增加通知类型，默认勾选站内信 + 支持短信」）
+三个决策点已与 user 确认：① **只作用于「审批通知」**，提醒规则不变（仍固定站内信+短信）；
+② **站内信强制勾选不可取消**（合规留痕）；③ **画布卡片 + 时间线同步显示渠道**。
+
+- **引擎**：`NOTIFY_CHANNEL{inbox,sms}` / `NOTIFY_CHANNEL_LABEL` / `NOTIFY_CHANNEL_ORDER` /
+  `notifyChannelsText(list)`；`normNode` 里 **恒补 `inbox`**、只认 `inbox`/`sms`、去重、
+  按固定顺序排列 —— 前端绕过直接改 localStorage 也去不掉站内信。
+- **编排页抽屉**：「审批通知」下方新增 `.cv-field` 「通知类型」，2 行 `.cv-chan-opt`；
+  站内信 `disabled` + 行尾蓝色「必选」标记；短信可勾。
+- **依赖态**：未选接收人 → `.cv-chan-box.is-disabled` 整块置灰 + 换文案
+  「请先在上方选择接收通知的人员，再配置推送渠道」。
+- **同步展示**：画布卡片 🔔 行与引擎 `renderTimeline` 通知行都追加 `（站内信、短信提醒）`。
+- ⚠️ **localStorage 结构是 `{ flowId: flow }`（按 id 存），不是 `{flows:[...]}`** ——
+  写验证脚本读落库数据时别读错路径。
+- ⚠️ **保存/点画布前要先关抽屉**：`.ap-drawer` 的遮罩会拦截 topbar 的「保存」按钮，
+  playwright 直接 click 会超时。用 `#propsDrawer .ap-drawer-close` 的 JS click 关掉。
+- ⚠️ **关预览弹窗要用 `#previewMask .ap-drawer-close`**：`[onclick='closePreview()']`
+  会同时命中 × 和「关闭」按钮（strict mode violation）；
+  `.ap-drawer-close` 裸选会先命中抽屉的关闭按钮。
 
 ### v1.9.0 变更（2026-10-19，user 指出「预览审批流下方的金额没有实际意义，删除」）
 - **删除流程图预览弹窗 footer 的「模拟单据金额」输入框**：配置态没有真实单据，

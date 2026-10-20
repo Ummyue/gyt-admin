@@ -39,6 +39,20 @@
     parallel_all: '并行会签'
   };
 
+  /** 审批通知的推送渠道（v1.10.0；站内信恒开、不可关闭） */
+  const NOTIFY_CHANNEL = {
+    INBOX: 'inbox',  // 站内信：强制勾选，保证审批通知有留痕
+    SMS: 'sms'       // 短信提醒：可选
+  };
+
+  const NOTIFY_CHANNEL_LABEL = {
+    inbox: '站内信',
+    sms: '短信提醒'
+  };
+
+  /** 渠道展示顺序（固定：站内信在前） */
+  const NOTIFY_CHANNEL_ORDER = [NOTIFY_CHANNEL.INBOX, NOTIFY_CHANNEL.SMS];
+
   const NODE_STATUS = {
     DONE: 'done',
     REJECTED: 'rejected',
@@ -364,6 +378,18 @@
   };
 
   /**
+   * 通知渠道展示文案（v1.10.0）→ 「（站内信、短信提醒）」
+   * 空数组视为仅站内信 —— normNode 已保证 inbox 恒在，这里兜住未归一化的直接调用。
+   */
+  function notifyChannelsText(list) {
+    var arr = Array.isArray(list) && list.length ? list : [NOTIFY_CHANNEL.INBOX];
+    var labels = NOTIFY_CHANNEL_ORDER
+      .filter(function (c) { return arr.indexOf(c) >= 0; })
+      .map(function (c) { return NOTIFY_CHANNEL_LABEL[c]; });
+    return labels.length ? '（' + labels.join('、') + '）' : '';
+  }
+
+  /**
    * 节点归一化 → v1.6.0 模型（start / approval / archive）。
    * 兼容三代历史数据：
    *   serial          → approval + approveMode:'serial'
@@ -421,6 +447,13 @@
 
     if (Array.isArray(n.notify)) n.notify = n.notify.filter(Boolean);
     else if (n.notify == null) n.notify = [];
+
+    // 通知渠道（v1.10.0）：站内信恒在，其余只认 inbox/sms，去重并按固定顺序
+    if (!Array.isArray(n.notifyChannels)) n.notifyChannels = [];
+    var chSet = {};
+    n.notifyChannels.forEach(function (c) { if (c === NOTIFY_CHANNEL.SMS) chSet[NOTIFY_CHANNEL.SMS] = 1; });
+    chSet[NOTIFY_CHANNEL.INBOX] = 1;   // 站内信强制保留，前端绕过也会被这层兜住
+    n.notifyChannels = NOTIFY_CHANNEL_ORDER.filter(function (c) { return chSet[c]; });
 
     if (Array.isArray(n.condition)) {
       n.condition = n.condition.map(r => ({ field: r.field, operator: r.operator, value: r.value }));
@@ -619,10 +652,11 @@
                 esc(node.branchRules.map(r => r.text + ' → 实际 ' + r.actual).join('；')) + '）</span></div>';
       }
 
-      // 审批通知（v1.8.0）：本节点通过后通知的人员
+      // 审批通知（v1.8.0）：本节点通过后通知的人员；v1.10.0 追加推送渠道
       if (node.type === NODE_TYPE.APPROVAL && node.notify && node.notify.length && status !== NODE_STATUS.SKIPPED) {
         const names = node.notify.map(id => { const p = getPerson(id); return p ? p.name : id; });
-        html += '    <div class="timeline-meta"><span>🔔 审批通过后通知：' + esc(names.join('、')) + '</span></div>';
+        html += '    <div class="timeline-meta"><span>🔔 审批通过后通知：' + esc(names.join('、')) +
+                notifyChannelsText(node.notifyChannels) + '</span></div>';
       }
 
       // 提醒规则（v1.1.0：替代原「审批时限」）
@@ -740,6 +774,7 @@
   global.ApprovalEngine = {
     // 常量
     NODE_TYPE, NODE_STATUS, APPROVE_MODE, APPROVE_MODE_LABEL,
+    NOTIFY_CHANNEL, NOTIFY_CHANNEL_LABEL, NOTIFY_CHANNEL_ORDER, notifyChannelsText,
     ROLES, OPERATORS, OP_LABELS, FIELD_LABELS,
     DEPT_COLORS, APPLY_MODULES, PEOPLE,
     // 人员
