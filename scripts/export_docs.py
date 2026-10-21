@@ -141,7 +141,7 @@ def esc(s):
     return html.escape(s, quote=False)
 
 
-def md_to_html(md):
+def md_to_html(md, shift=1):
     """最小 Markdown → HTML（不依赖 marked，导出时静态化，保证离线零依赖）。"""
     out, i, n = [], 0, len(md)
     in_fence = False
@@ -221,7 +221,7 @@ def md_to_html(md):
         m = re.match(r'^(#{1,6})\s+(.*)', ln)
         if m:
             flush_all()
-            lv = min(len(m.group(1)) + 1, 6)
+            lv = min(len(m.group(1)) + shift, 6)
             tid = re.sub(r'[^\w\u4e00-\u9fff-]', '', m.group(2))[:40]
             out.append('<h%d id="%s">%s</h%d>' % (lv, tid, inline(m.group(2)), lv))
             i += 1; continue
@@ -414,8 +414,13 @@ def main():
         if not os.path.exists(fp):
             print('  ⚠️ 跳过缺失源文档：%s' % fn); continue
         md = open(fp, encoding='utf-8').read()
-        body = '<h1>%s</h1>%s' % (esc(disp), md_to_html(md)) if fn != 'README.md' \
-            else md_to_html(md)
+        if fn == 'README.md':
+            body = md_to_html(md)
+        elif fn in PLATFORM_ALIAS:
+            # 对外独立文档：自带 H1 标题，不再注入，避免层级多一级
+            body = md_to_html(md, shift=0)
+        else:
+            body = '<h1>%s</h1>%s' % (esc(disp), md_to_html(md))
         with open(os.path.join(out, fn[:-3] + '.html'), 'w', encoding='utf-8') as f:
             f.write(page(disp, body, fn))
         n += 1
