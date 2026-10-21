@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `bcd9f34a` (审批管理模块 v1.10.0 新增「通知类型」推送渠道)
+- **最新 hash**: `25c52367` (审批管理模块 v1.11.0 应用模块新增「回款管理」+ 遗留手机号脱敏)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `d496430` (feat(approval): v1.10.0 新增「通知类型」推送渠道（站内信必选 + 短信可选），已推送)
+- 最新 commit: `decfc7c` (feat(approval): v1.11.0 应用模块新增「回款管理」+ 补做遗留手机号脱敏，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.11.0，2026-10-21）
@@ -69,6 +69,17 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### ⚠️ 脱敏扫描的两种误报（2026-10-21 踩）
+手机号正则 `[1][3-9]\d{9}` 会在**长数字串**里误命中：
+- `SKZJ20240618150005005`（银行流水号）→ 命中其中 `18150005005`
+- 发票号 `264120000001452870092` → 命中其中 `18150005005` 同类片段
+**判定方法**：看命中处**上下文是不是手机号语境**（人名后缀、`data-owner`、
+`contactPhone`）。误报**不要改**，改了就破坏流水号/发票号。
+
+另外：`.offline-build/` 与 `.deploy_tmp/` 在 `.gitignore` 里（第 5、12 行），
+git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；但 `.offline-build/`
+是给业主的离线包，内容已陈旧（早于 2026-07-09 脱敏），要重打需 user 确认。
 
 ### v1.11.0 变更（2026-10-21，user 要求「基础信息页应用模块增加回款管理」）
 - **`APPLY_MODULES` 新增第 9 项** `{ key: 'receipt', label: '回款管理' }`，
