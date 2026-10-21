@@ -54,6 +54,10 @@ CSS = """
 .qasaved.show{opacity:1}
 body.qahide .qacard.answered{display:none}
 body.qahideonly .qacard:not(.filled){display:none}
+.qadump{display:none;margin:10px 0 20px;padding:14px 16px;background:#0f172a;color:#e2e8f0;
+ border-radius:8px;font:12.5px/1.7 Consolas,Menlo,monospace;white-space:pre-wrap;
+ max-height:60vh;overflow:auto}
+.qadump.show{display:block}
 .qatotop{position:fixed;right:22px;bottom:22px;width:42px;height:42px;border-radius:50%;
  border:none;background:#1D4ED8;color:#fff;font-size:19px;cursor:pointer;display:none;
  box-shadow:0 4px 14px rgba(29,78,216,.4);z-index:50}
@@ -83,6 +87,7 @@ JS = """
     '<span class="qaprog">已填 <em id="qaN">0</em> / %d 条</span>' +
     '<button class="qabtn" id="qaToggle">仅看待答</button>' +
     '<span class="sp"></span>' +
+    '<button class="qabtn" id="qaView">预览答复</button>' +
     '<button class="qabtn pri" id="qaCopy">复制全部答复</button>' +
     '<button class="qabtn" id="qaDl">下载 Markdown</button>' +
     '<button class="qabtn" id="qaClr">清空</button>' +
@@ -107,6 +112,8 @@ JS = """
     if (done) return;                       // 已裁决的条目不再给输入框
     var ta = document.createElement('textarea');
     ta.className = 'qata'; ta.dataset.qid = id; ta.rows = 1;
+    ta.dataset.q = p.getAttribute('data-question') || '';
+    ta.dataset.b = p.getAttribute('data-badge') || '';
     ta.placeholder = badge.indexOf('🔴') === 0 ? '🔴 必答 —— 请在此填写你的裁决…'
                   : badge.indexOf('🟡') === 0 ? '🟡 请在此填写…' : '⚪ 研发自决，留空即可';
     ta.value = store[id] || '';
@@ -143,15 +150,23 @@ JS = """
                '', '> 由业主在离线 HTML 填写页回填，生成时间 ' + new Date().toLocaleString('zh-CN'), ''];
     [].slice.call(document.querySelectorAll('textarea.qata')).forEach(function(ta){
       var v = ta.value.trim(); if (!v) return;
-      var p = ta.closest('.qacard');
-      out.push('**' + ta.dataset.qid + '** ' + p.getAttribute('data-badge').replace(/^[^\\s]+\\s*/, '') +
-               '　' + p.getAttribute('data-question').trim());
+      out.push('**' + ta.dataset.qid + '** ' + (ta.dataset.b || '') + '　' +
+               (ta.dataset.q || '').trim());
       out.push('');
       out.push('> ' + v.replace(/\\n/g, '\\n> '));
       out.push('');
     });
     if (out.length <= 5) out.push('（尚未填写任何答复）');
     return out.join('\\n');
+  };
+  var dump = document.createElement('pre');
+  dump.className = 'qadump'; dump.id = 'qaDump';
+  bar.parentNode.insertBefore(dump, bar.nextSibling);
+  document.getElementById('qaView').onclick = function(){
+    var t = build();
+    if (dump.classList.contains('show')) { dump.classList.remove('show'); return; }
+    dump.textContent = t; dump.classList.add('show');
+    dump.scrollIntoView({behavior:'smooth', block:'nearest'});
   };
   document.getElementById('qaCopy').onclick = function(){
     var t = build(), btn = this;

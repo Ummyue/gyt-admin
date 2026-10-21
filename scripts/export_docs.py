@@ -24,7 +24,12 @@ from datetime import date
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, 'docs-v2')
-VENDOR = '/tmp/ygt-vendor'
+# vendor 资源：优先用仓库内已跟踪的副本，其次回落 /tmp/ygt-vendor
+VENDOR_CANDIDATES = [
+    os.path.join(ROOT, '.offline-build', 'dist', 'vendor'),
+    '/tmp/ygt-vendor',
+]
+VENDOR = next((d for d in VENDOR_CANDIDATES if os.path.isdir(d)), VENDOR_CANDIDATES[-1])
 
 # 文档顺序 / 元信息（与 docs-v2/README.md §2 保持一致）
 DOCS = [
@@ -47,6 +52,7 @@ DOCS = [
     ('02.16-数据中心.md', '02.16 数据中心', '功能规格', '🟡'),
     ('03-贸易风险合规-天眼查集成.md', '03 贸易风险合规 · 天眼查集成', '外部集成', '🟡'),
     ('README.md', '交付说明与索引', '交付说明', '⚪'),
+    ('BUSINESS-DECISIONS-2026-10-21.md', '业务方裁决记录 2026-10-21', '交付说明', '🟢'),
     ('99-待确认清单.md', '待确认问题清单', '交付说明', '⚪'),
 ]
 
@@ -163,13 +169,25 @@ def md_to_html(md):
         return './' + base[:-3] + '.html' + frag
 
     def inline(t):
+        # 先把代码片段摘出来占位，避免片段内的 ** / * 被当成强调语法
+        codes = []
+
+        def stash(m):
+            codes.append(m.group(0))
+            return '\x00CODE%d\x00' % (len(codes) - 1)
+
+        t = re.sub(r'`[^`\n]+`', stash, t)
         t = esc(t)
         t = re.sub(r'\*\*(.+?)\*\*', r'<strong>\1</strong>', t)
         t = re.sub(r'(?<!\*)\*([^*\n]+)\*(?!\*)', r'<em>\1</em>', t)
-        t = re.sub(r'`([^`]+)`', r'<code>\1</code>', t)
         t = re.sub(r'\[([^\]]+)\]\(([^)]+)\)',
                    lambda m: '<a href="%s">%s</a>' % (fix_link(m.group(2)), m.group(1)), t)
         t = re.sub(r'(?<!\w)_([^_]+)_(?!\w)', r'<em>\1</em>', t)
+        # 还原代码片段（片段内的 \| 还原为 |）
+        def restore(m):
+            raw = codes[int(m.group(1))]
+            return '<code>%s</code>' % esc(raw[1:-1].replace('\\|', '|'))
+        t = re.sub(r'\x00CODE(\d+)\x00', restore, t)
         return t
 
     lines = md.split('\n')
@@ -208,8 +226,16 @@ def md_to_html(md):
             rows = []
             while i < len(lines) and lines[i].strip().startswith('|'):
                 rows.append(lines[i].strip()); i += 1
-            cells = [[c.strip() for c in r.strip('|').split('|')] for r in rows]
+            cells = [[c.strip() for c in re.split(r'(?<!\\)\|', r.strip().strip('|'))]
+                     for r in rows]
             hd, body = cells[0], cells[2:]
+            # 兜底：列数与表头不一致时，多的并入末列（用全角｜保留原文），少的补空
+            ncol = len(hd)
+            for ri, r in enumerate(body):
+                if len(r) > ncol:
+                    body[ri] = r[:ncol - 1] + ['｜'.join(r[ncol - 1:])]
+                elif len(r) < ncol:
+                    body[ri] = r + [''] * (ncol - len(r))
             o = ['<table><thead><tr>']
             o += ['<th>%s</th>' % inline(c) for c in hd]
             o.append('</tr></thead><tbody>')
@@ -285,7 +311,7 @@ def index_html():
         lines = txt.count('\n') + 1
         todo = txt.count('待补充')
         cs = len(set(re.findall(r'\*\*C(\d+)\s+—', txt)))
-        if fn != 'README.md' and fn != '99-待确认清单.md':
+        if fn not in ('README.md', '99-待确认清单.md', 'BUSINESS-DECISIONS-2026-10-21.md'):
             tot_todo += todo; tot_c += cs
         b = {'🔴': 'b-imp', '🟡': 'b-ok', '⚪': 'b-fwd'}.get(pri, '')
         rows.append('<tr><td><a href="%s.html">%s</a></td><td>%s</td>'

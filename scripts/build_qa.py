@@ -49,51 +49,23 @@ MODULES = [
 
 # ------------------------------------------------ 业务方已补充的答复（硬编）
 # key = (文件名, 条目号)   → { 'ans': 原样保留的答复, 'res': 残留问题 }
-ANSWERS = {
-    ('00-产品概述与需求总纲.md', 'Q7'): {
-        'ans': '合同部分的状态机统一为：全部 / 待提交 / 审批中 / 待上传双签合同 / '
-               '执行中 / 已完结 / 审批驳回 / 已作废',
-        'res': '底层 `t_contract.status` 的 snake_case 枚举值仍未给（只定了中文名）；'
-               '「待盖章 / 已双签」签署状态是挂在 `status` 上还是独立字段也未定。'
-               '→ 见 02.03 合同管理 的 QA 编号',
-    },
-    ('02.01-项目管理.md', 'C1'): {
-        'ans': '是业务周期，并且是一个时间范围',
-        'res': '字段中文名按「业务周期」落表；另需确认该字段存的是「月数」还是'
-               '「起止日期」——业务方口径为「时间范围」，但源文档字段名为 '
-               '`project_period_months`（月数），二者不一致。',
-    },
-    ('02.02-客户管理.md', 'C5'): {
-        'ans': '只保留登记逻辑，且等级为：一般 / 中度 / 高度',
-        'res': '① 落库仍缺：黑名单状态机有 4 状态（active / lift_pending / lifted / '
-               'expired）但表中无 `status` 字段，`lift_pending`（待解除）无落库字段；'
-               '② 源文档另有「永久 / 期限 / 观察 / 行业」4 值维度，是否确认**全部作废**？',
-    },
-    ('02.05-收发货管理.md', 'Q12'): {
-        'ans': '收发货管理中的状态机统一为：全部 / 待收货 / 已收货 / 已作废',
-        'res': '① 与源文档 §11.4 的「待发货 / 已发货 / 已收货 / 已作废」4 态不一致，'
-               '「待发货 / 已发货」2 态是否**取消**？② 4 个状态对应的 snake_case 枚举值仍未给。',
-    },
-    ('02.06-业务线管理.md', 'C2'): {
-        'ans': '业务线状态机统一为：全部 / 执行中 / 采购已完结 / 销售已完结 / 全部完结',
-        'res': '① 源文档另有 `finished` / `done` 等写法，是否全部作废？'
-               '② 5 个状态的 snake_case 枚举值仍未给。',
-    },
-    ('02.07-货转管理.md', 'C8'): {
-        'ans': '上下游货转的状态机为：全部 / 审批中 / 待上传已生效单据 / 已生效 / '
-               '驳回 / 已作废',
-        'res': '⚠️ 你答的是**主列表 6 状态**。子页 `goods-transfer-up/down.html` 另有 '
-               '**9 状态**（待提交 / 审批中 / 待签约 / 已签约 / 退回 / 已作废 / 待确认 / '
-               '已驳回），其中「待签约 / 已签约 / 退回 / 待确认」4 态源文档从未定义、'
-               '本次也未覆盖 —— 是否**取消子页 9 状态、统一用这 6 个**？',
-    },
-    ('02.08-盯市价格管理.md', 'C4'): {
-        'ans': '目前项目中的品类为：淀粉制品 / 糖粉 / 谷物',
-        'res': '① 与源文档 §1.3 / §6.5 的「玉米 / 糖粉 / 木薯淀粉」不一致：'
-               '「谷物」是否即「玉米」、「淀粉制品」是否即「木薯淀粉」？'
-               '② 源文档 v1.7.99.33 汇总表还记过「货物品类 4 选项」，第 4 个是什么？',
-    },
-}
+# ---- 业务方答复数据源（2026-10-21 回收 102 条）----
+# 由 scripts/merge_answers.py 生成，含每条的分类（A 已裁决 / B 需重述 / C 不进 PRD）
+try:
+    from qa_answers import ANSWERS as BIZ_ANSWERS
+except ImportError:
+    import os as _os, sys as _sys
+    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+    from qa_answers import ANSWERS as BIZ_ANSWERS
+
+# 2026-10-09 对话里补充的 8 条（早于线上填写页，分层存放避免被整体覆盖）
+try:
+    from qa_answers_prior import PRIOR_ANSWERS
+except ImportError:
+    import os as _os2, sys as _sys2
+    _sys2.path.insert(0, _os2.path.dirname(_os2.path.abspath(__file__)))
+    from qa_answers_prior import PRIOR_ANSWERS
+
 
 # ---- 已由业务方裁决（D1~D5，2026-10-08）自动关闭的条目 ----
 DECIDED = {
@@ -126,7 +98,15 @@ DECIDED = {
         'res': '⚠️ 遗留：研发核对线上代码中 `已确认` / `confirmed` 是否仍有残留。',
     },
 }
-ANSWERS = {**DECIDED, **ANSWERS}   # 显式补充优先于已裁决默认
+ANSWERS = {**DECIDED, **PRIOR_ANSWERS, **BIZ_ANSWERS}   # 线上填写页优先，其次对话补充，最后 10-08 默认裁决
+
+# 答复分类 → 卡片徽章
+CAT_BADGE = {'A': '🟢 已答', 'B': '🔁 待重述', 'C': '⛔ 不进 PRD'}
+# 2026-10-08 的 D1~D5 默认裁决没有 cat 字段 → 按 A 处理
+for _k, _v in DECIDED.items():
+    _v.setdefault('cat', 'A')
+    _v.setdefault('body', '')
+    _v.setdefault('qa', '')
 
 # 问题改写：业务方反馈「看不出问什么」的条目，改成把用途说清楚
 REWRITE = {
@@ -153,6 +133,33 @@ REWRITE = {
 def ans_of(key):
     v = ANSWERS.get(key)
     return v if v else None
+
+
+# ---- 稳定编号用的「部署时已答复集合」 ----------------------------------------
+# 线上填写页的 localStorage 以 QA 编号为键，业���已填的答复绑定在**部署那一刻
+# 的编号**上。若编号随答复状态变化而重排，业主的答案就会错位、且每新增一条
+# 答复就会全表洗牌。
+#
+# 因此：QA 编号的排序**只参考部署时已答复的集合**（10-08 的 5 条默认裁决 +
+# 10-09 对话补充的 8 条 = 13 条），与之后回收的 102 条无关。这样：
+#   ① 编号与线上填写页、与《业务方裁决记录》台账完全一致；
+#   ② 后续再收答复不会改变任何已有编号。
+STABLE_ANSWERED = set(DECIDED) | set(PRIOR_ANSWERS)
+
+
+def is_stably_answered(key):
+    return key in STABLE_ANSWERED
+
+
+def load_pin():
+    """读取 QA 编号锁定表（不存在时返回空 dict，退回顺序编号）。"""
+    import json
+    p = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'qa_numbering_pin.json')
+    if not os.path.exists(p):
+        print('⚠️ 未找到 QA 编号锁定表 qa_numbering_pin.json，将退回顺序编号')
+        return {}
+    with open(p, encoding='utf-8') as f:
+        return json.load(f)
 
 
 def extract():
@@ -259,20 +266,38 @@ def build(items):
         it['prio'], it['icon'] = pr, icon
         by_mod.setdefault(it['key'], []).append(it)
     for k in by_mod:
-        by_mod[k].sort(key=lambda x: (1 if ans_of((x['file'], x['id'])) else 0,
+        # 排序键里的「已答复」只看部署时的稳定集合，避免新增答复导致编号洗牌
+        by_mod[k].sort(key=lambda x: (1 if is_stably_answered((x['file'], x['id'])) else 0,
                                       x['prio'], x['id']))
 
-    # 连续编号
-    seq, index = 0, {}
+    # 编号分配：**优先按锁定表 pin**（= 线上填写页部署那一刻的编号），
+    # pin 里没有的条目才追加到末尾。编号只增不改，保证业主已填的 localStorage
+    # 答复、裁决台账、模块正文引用的编号始终指向同一个问题。
+    pin = load_pin()
+    used = set(pin.values())
+    seq = 0
+    while 'QA-%03d' % seq in used:
+        seq += 1
     for k, lst in by_mod.items():
         for it in lst:
-            seq += 1
-            it['qa'] = 'QA-%03d' % seq
-            index[(it['file'], it['id'])] = it['qa']
+            key = '%s|%s' % (it['file'], it['id'])
+            if key in pin:
+                it['qa'] = pin[key]
+            else:
+                while 'QA-%03d' % seq in used:
+                    seq += 1
+                it['qa'] = 'QA-%03d' % seq
+                used.add(it['qa'])
+                seq += 1
+    # 渲染顺序按编号升序（模块内也按编号）
+    for k, lst in by_mod.items():
+        lst.sort(key=lambda x: int(x['qa'][3:]))
 
     total = len(items)
     cnt = collections.Counter(it['icon'] for it in items)
     answered = [it for it in items if ans_of((it['file'], it['id']))]
+    catcnt = collections.Counter(
+        (ans_of((it['file'], it['id'])) or {}).get('cat', 'A') for it in answered)
     resid = [it for it in items if ans_of((it['file'], it['id']))
              and ans_of((it['file'], it['id'])).get('res')]
 
@@ -282,32 +307,37 @@ def build(items):
     A('')
     A('> **文档类型**：PRD Writer 范式 · 交付附件 · 业主回填用')
     A('> **生成日期**：%s' % date.today().isoformat())
-    A('> **总量**：%d 条　|　🔴 业务方必答 %d　🟡 业务方确认 %d　⚪ 研发或文档自决 %d'
-      % (total, cnt['🔴'], cnt['🟡'], cnt['⚪']))
+    A('> **总量**：%d 条　|　待答 🔴 %d　🟡 %d　⚪ %d　|　已回收 🟢 %d　🔁 %d　⛔ %d'
+      % (total, cnt['🔴'], cnt['🟡'], cnt['⚪'],
+         catcnt['A'], catcnt['B'], catcnt['C']))
     A('')
     A('## 📌 怎么答这份清单')
     A('')
     A('1. 全文编号 `QA-001` ~ `QA-%03d` 连续，**回复时请注明编号**，例如「QA-003：是 6 个」。' % total)
     A('2. 每条最后一行是 **`你的答复：______`**，直接写在冒号后面，或在 Word 里另起一段写。')
-    A('3. 你已补充过的 **%d 条**标 🟢 并原样保留在「你的补充」栏，不需要重复回答；'
-      '其中 **%d 条还有残留问题**，已在该条下用 ⚠️ 单独列出。'
-      % (len(answered), len(resid)))
-    A('4. 徽章含义：🔴 **必答**（源文档自相矛盾，不裁决无法开发）　'
+    A('3. **已回收的答复状态**（2026-10-21 首轮，%d 条）：' % len(answered))
+    A('   - 🟢 **已答** —— 答复明确，正文已按此更新（%d 条）' % catcnt['A'])
+    A('   - 🔁 **待重述** —— 业务方反馈问题表述不清，已改写问题待再答（%d 条）' % catcnt['B'])
+    A('   - ⛔ **不进 PRD** —— 属技术实现细节或已废弃，需求文档不体现（%d 条）' % catcnt['C'])
+    A('4. **未答复条目的徽章**：🔴 **必答**（源文档自相矛盾，不裁决无法开发）　'
       '🟡 **确认**（影响实现细节，可批量答）　'
       '⚪ **自决**（研发或文档维护层面即可解决，**无需你回答**，列出仅供知悉）')
     A('')
     A('## 进度总览')
     A('')
-    A('| # | 模块 | 🔴 必答 | 🟡 确认 | ⚪ 自决 | 小计 | 你已补充 |')
-    A('|---|---|---|---|---|---|---|')
+    A('| # | 模块 | 🔴 必答 | 🟡 确认 | ⚪ 自决 | 🟢 已答 | 🔁 待重述 | ⛔ 不进PRD | 小计 |')
+    A('|---|---|---|---|---|---|---|---|---|')
     for idx, (k, lst) in enumerate(by_mod.items(), 1):
         c = collections.Counter(x['icon'] for x in lst)
-        a = sum(1 for x in lst if ans_of((x['file'], x['id'])))
-        A('| %d | [%s](%s) | %d | %d | %d | %d | %s |'
+        cc = collections.Counter(
+            (ans_of((x['file'], x['id'])) or {}).get('cat', 'A')
+            for x in lst if ans_of((x['file'], x['id'])))
+        A('| %d | [%s](%s) | %d | %d | %d | %d | %d | %d | %d |'
           % (idx, lst[0]['disp'], './' + lst[0]['file'],
-             c['🔴'], c['🟡'], c['⚪'], len(lst), a or '—'))
-    A('| | **合计** | **%d** | **%d** | **%d** | **%d** | **%d** |'
-      % (cnt['🔴'], cnt['🟡'], cnt['⚪'], total, len(answered)))
+             c['🔴'], c['🟡'], c['⚪'], cc['A'], cc['B'], cc['C'], len(lst)))
+    A('| | **合计** | **%d** | **%d** | **%d** | **%d** | **%d** | **%d** | **%d** |'
+      % (cnt['🔴'], cnt['🟡'], cnt['⚪'],
+         catcnt['A'], catcnt['B'], catcnt['C'], total))
     A('')
     A('> **建议回复顺序**：先把 🔴 全部答完（不答无法开工），再一次性过 🟡。')
     A('> ⚪ 部分你可以直接跳过，等研发给出方案后确认即可。')
@@ -340,7 +370,8 @@ def build(items):
             key = (it['file'], it['id'])
             a = ans_of(key)
             q = REWRITE.get(key) or it['q']
-            badge = '🟢 已答' if a else it['icon']
+            cat = (a or {}).get('cat', 'A')
+            badge = CAT_BADGE.get(cat, '🟢 已答') if a else it['icon']
             A('**%s** ｜ %s ｜ %s' % (it['qa'], badge, clean(q)))
             A('')
             if it['bg']:
@@ -353,7 +384,21 @@ def build(items):
             if it['state']:
                 A('- **文档现状态**：%s' % clean(it['state']))
             if a:
-                A('- 🟢 **你的补充**：%s' % a['ans'])
+                if cat == 'B':
+                    A('- 🔁 **你的回复**：%s' % a['ans'])
+                    q2 = a.get('body', '')
+                    if '需重问：' in q2:
+                        q2 = q2.split('需重问：', 1)[1].strip()
+                    if q2:
+                        A('- ❓ **需要你确认的新问题**：%s' % q2)
+                elif cat == 'C':
+                    A('- ⛔ **你的回复**：%s' % a['ans'])
+                    if a.get('body'):
+                        A('- 📎 **处理方式**：%s' % a['body'])
+                else:
+                    A('- 🟢 **你的答复**：%s' % a['ans'])
+                    if a.get('body'):
+                        A('- 📌 **已按此更新正文**：%s' % a['body'])
                 if a.get('res'):
                     A('- ⚠️ **残留问题**：%s' % a['res'])
             else:

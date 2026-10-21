@@ -23,6 +23,7 @@ ORDER = [
     '02.11-预警中心.md', '02.12-仓储管理.md', '02.13-结算单管理.md',
     '02.14-资金管理.md', '02.15-发票管理.md', '02.16-数据中心.md',
     '03-贸易风险合规-天眼查集成.md',
+    'BUSINESS-DECISIONS-2026-10-21.md',
 ]
 PRIO = {
     '02.01': '🔴核心', '02.02': '🔴核心', '02.03': '🔴核心', '02.10': '🔴核心',
@@ -48,14 +49,14 @@ def collect():
         qs = re.findall(r'^\|\s*\*\*(Q\d+)\*\*\s*\|(.+)$', sec, re.M)
         key = fn[:-3].split('-')[0]
         for cid, rest in rows:
-            cells = [c.strip() for c in rest.split('|')]
+            cells = [c.strip() for c in re.split(r'(?<!\\)\|', rest)]
             title = cells[0] if cells else ''
             status = cells[-1] if cells else ''
             if re.search(r'已裁决|已解除|已确认', status):
                 continue
             out.append((fn, key, cid, re.sub(r'\*\*|`', '', title), status))
         for qid, rest in qs:
-            cells = [c.strip() for c in rest.split('|')]
+            cells = [c.strip() for c in re.split(r'(?<!\\)\|', rest)]
             title = cells[0] if cells else ''
             if not title:
                 continue
@@ -172,12 +173,22 @@ def md_to_docx(md, path, title=None):
         cols = max(len(r) for r in rows)
         t = doc.add_table(rows=len(rows), cols=cols)
         t.style = 'Table Grid'
+        # 兜底：列数与表头不一致时，多的并入末列（用全角｜保留原文），少的补空
+        ncol = len(rows[0]) if rows else cols
+        fixed = []
+        for ri, r in enumerate(rows):
+            if ri > 0 and len(r) > ncol:
+                r = r[:ncol - 1] + ['｜'.join(r[ncol - 1:])]
+            elif ri > 0 and len(r) < ncol:
+                r = r + [''] * (ncol - len(r))
+            fixed.append(r)
+        rows = fixed
         for ri, r in enumerate(rows):
             for ci in range(cols):
                 cell = t.cell(ri, ci)
                 cell.text = ''
                 p = cell.paragraphs[0]
-                txt = re.sub(r'[*`>#]', '', r[ci]) if ci < len(r) else ''
+                txt = re.sub(r'[*`>#]', '', r[ci].replace('\\|', '|')) if ci < len(r) else ''
                 run = p.add_run(txt.strip())
                 run.font.size = Pt(8.5)
                 run.font.name = 'Microsoft YaHei'
@@ -218,7 +229,8 @@ def md_to_docx(md, path, title=None):
         if ln.strip().startswith('|') and i + 1 < n and re.match(r'^\s*\|[\s:|-]+\|\s*$', lines[i + 1]):
             rows = []
             while i < n and lines[i].strip().startswith('|'):
-                rows.append([c.strip() for c in lines[i].strip().strip('|').split('|')]); i += 1
+                rows.append([c.strip() for c in
+                             re.split(r'(?<!\\)\|', lines[i].strip().strip('|'))]); i += 1
             add_table(rows); continue
         if ln.strip().startswith('>'):
             bq = []
@@ -270,7 +282,7 @@ def main():
              '> 本文档由项目需求文档库（133 份源文档）按 PRD Writer 范式重组编制。', '',
              '> **阅读提示**：正文中标注「待确认」的条目需业主/业务方后续确认，'
              '完整清单见本文件末尾的《待确认问题清单》章节。', '', '---', '']
-    for fn in ORDER + ['99-待确认清单.md']:
+    for fn in ORDER + ['BUSINESS-DECISIONS-2026-10-21.md', '99-待确认清单.md']:
         fp = os.path.join(SRC, fn)
         if not os.path.exists(fp):
             print('  ⚠️ 跳过缺失：%s' % fn); continue
