@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `60ddac65` (审批管理模块 v1.9.0 删除预览弹窗模拟金额输入框)
+- **最新 hash**: `bcd9f34a` (审批管理模块 v1.10.0 新增「通知类型」推送渠道)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `33202a5` (feat(approval): v1.9.0 删除流程图预览弹窗的「模拟单据金额」输入框，已推送)
+- 最新 commit: `d496430` (feat(approval): v1.10.0 新增「通知类型」推送渠道（站内信必选 + 短信可选），已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.10.0，2026-10-20）
@@ -69,6 +69,17 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### ⚠️ wrangler「fetch failed」= 代理瞬时抖动，不是 token 问题（2026-10-20 踩）
+连续 6 次 `fetch failed` 时**先别怀疑 token 有效性**。用 curl 分层定位：
+```
+curl --noproxy '*' https://api.cloudflare.com/client/v4/ips   # 直连
+curl -x http://127.0.0.1:7890 https://api.cloudflare.com/client/v4/ips  # 走代理
+nc -z 127.0.0.1 7890   # 代理端口
+```
+本例：curl 全部 `status=000 t=0.008s`（秒失败不是超时 = 连接被拒），
+但 github / pages.dev 同时正常 → 是**本机代理客户端瞬时抽风**，等一会儿重试即恢复。
+判定要点：**秒级失败 ≠ 超时**，秒级失败看代理端口；超长超时才看 token / 权限。
 
 ### v1.10.0 变更（2026-10-20，user 要求「节点属性抽屉增加通知类型，默认勾选站内信 + 支持短信」）
 三个决策点已与 user 确认：① **只作用于「审批通知」**，提醒规则不变（仍固定站内信+短信）；
