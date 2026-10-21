@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-20 审批管理模块 v1.10.0（新增「通知类型」推送渠道）
+最后更新: 2026-10-21 审批管理模块 v1.11.0（应用模块新增「回款管理」）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -21,7 +21,7 @@
 - 最新 commit: `d496430` (feat(approval): v1.10.0 新增「通知类型」推送渠道（站内信必选 + 短信可选），已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
-## 审批管理模块（v1.10.0，2026-10-20）
+## 审批管理模块（v1.11.0，2026-10-21）
 - **引擎**: `shared/js/approval-engine.js` v1.1.0
 - **页面映射**: `shared/js/approval-config.js`（`window.APPROVAL_CONFIG_BY_PAGE`）
 - **持久化**: `localStorage['ygt_approval_flow_templates_v2']`（v1 结构不兼容，未迁移）
@@ -69,6 +69,22 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
    父模块未勾选时触发器 `is-disabled` 不可点开。存储结构与级联规则均未变。
    - ⚠️ `let openDD` 必须声明在脚本顶部（与 `let draft` / `let step` 同处），
      否则 `renderModules()` 在 init 时就调用它 → TDZ `Cannot access before initialization`
+
+### v1.11.0 变更（2026-10-21，user 要求「基础信息页应用模块增加回款管理」）
+- **`APPLY_MODULES` 新增第 9 项** `{ key: 'receipt', label: '回款管理' }`，
+  位置插在「退款管理」之后 —— 依据产品菜单「数字供应链 → 资金管理」下
+  付款管理 → 退款管理 → 回款管理 → 保证金管理 的相对顺序。
+- **模块 key = `receipt`**，与 `receipt-list.html` / `receipt-detail.html` / `receipt-edit.html` 对齐。
+- **全站自动生效**：列表页 `#filterModule`、监控页 `#fltModule`、编排页 `.wz-mods`
+  全部从 `AE.APPLY_MODULES` 派生，改一处就够，**不用逐页改**。
+- **内置模板 `applyModules` 默认值未动**（`standard`/`simple`/`highRisk` 保持原样），
+  避免影响既有演示行为；localStorage key 不升版。
+- ⚠️ **发现缺口（未修，待 user 决策）**：`approval-config.js` 里已写了
+  `'receipt-detail': 'simple'` / `'receipt-edit': 'simple'`，
+  但 **4 个回款页都没引入 `approval-engine.js`**，所以这些映射是**死配置**，
+  回款单据上不会出现审批时间线。接入成本不高（参照 `payment-detail.html`：
+  容器 div + 2 个 script 标签 + `mount()` 调用，参数读 URL query），
+  但属于「新增 2 个业务页接审批」的独立范围，需 user 确认是否要做。
 
 ### ⚠️ wrangler「fetch failed」= 代理瞬时抖动，不是 token 问题（2026-10-20 踩）
 连续 6 次 `fetch failed` 时**先别怀疑 token 有效性**。用 curl 分层定位：
