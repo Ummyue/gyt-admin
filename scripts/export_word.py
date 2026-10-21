@@ -24,6 +24,7 @@ ORDER = [
     '02.14-资金管理.md', '02.15-发票管理.md', '02.16-数据中心.md',
     '03-贸易风险合规-天眼查集成.md',
     'BUSINESS-DECISIONS-2026-10-21.md',
+    '10-系统使用报告.md',
 ]
 PRIO = {
     '02.01': '🔴核心', '02.02': '🔴核心', '02.03': '🔴核心', '02.10': '🔴核心',
@@ -141,6 +142,28 @@ def build_todo_md(items):
 
 
 # ---------------- Word 导出 ----------------
+def _rich(p, text, size=None, italic=False):
+    """把 **粗体** / `代码` 渲染成真正的 Word run，避免导出后残留星号。"""
+    from docx.shared import Pt, RGBColor
+    from docx.oxml.ns import qn
+    token = re.compile(r'(\*\*.+?\*\*|`[^`]+`)')
+    for part in token.split(text or ''):
+        if not part:
+            continue
+        bold = part.startswith('**') and part.endswith('**') and len(part) > 4
+        code = part.startswith('`') and part.endswith('`') and len(part) > 2
+        s = part[2:-2] if bold else (part[1:-1] if code else part)
+        r = p.add_run(s)
+        r.bold = bold
+        r.italic = italic
+        r.font.size = Pt(size) if size else Pt(10.5)
+        r.font.name = 'Consolas' if code else 'Microsoft YaHei'
+        r._element.rPr.rFonts.set(qn('w:eastAsia'), 'Microsoft YaHei')
+        if code:
+            r.font.color.rgb = RGBColor(0x1D, 0x4E, 0xD8)
+    return p
+
+
 def md_to_docx(md, path, title=None):
     from docx import Document
     from docx.shared import Pt, RGBColor, Inches
@@ -237,9 +260,9 @@ def md_to_docx(md, path, title=None):
             while i < n and lines[i].strip().startswith('>'):
                 bq.append(lines[i].strip().lstrip('>').strip()); i += 1
             p = doc.add_paragraph()
-            r = p.add_run(' '.join(x for x in bq if x))
-            r.italic = True; r.font.size = Pt(9.5)
-            r.font.color.rgb = RGBColor(0x1d, 0x4e, 0xd8)
+            _rich(p, ' '.join(x for x in bq if x), size=9.5, italic=True)
+            for r in p.runs:
+                r.font.color.rgb = RGBColor(0x1d, 0x4e, 0xd8)
             continue
         m = re.match(r'^(\s*)([-*+]|\d+\.)\s+(.*)', ln)
         if m:
@@ -249,7 +272,8 @@ def md_to_docx(md, path, title=None):
             i += 1; continue
         if not ln.strip():
             i += 1; continue
-        p = doc.add_paragraph(re.sub(r'\*\*(.+?)\*\*', r'\1', re.sub(r'`([^`]+)`', r'\1', ln.strip())))
+        p = doc.add_paragraph()
+        _rich(p, ln.strip())
         p.paragraph_format.space_after = Pt(4)
         i += 1
     doc.save(path)
@@ -260,9 +284,24 @@ def main():
     ap = argparse.ArgumentParser()
     ap.add_argument('--out', default=os.path.join(ROOT, '..', 'docs-v2-export'))
     ap.add_argument('--no-docx', action='store_true')
+    ap.add_argument('--single', default=None,
+                    help='只导出一份 markdown 为独立 docx（对外文档用）')
+    ap.add_argument('--single-title', default=None)
     a = ap.parse_args()
     out = os.path.abspath(a.out)
     os.makedirs(out, exist_ok=True)
+
+    # 单文档模式：对外交付件（自带标题，不含内部章节）
+    if a.single:
+        fp = os.path.join(SRC, a.single)
+        if not os.path.exists(fp):
+            print('❌ 找不到源文档：%s' % fp)
+            return
+        md = open(fp, encoding='utf-8').read()
+        name = a.single[:-3] + '.docx'
+        md_to_docx(md, os.path.join(out, name), title=a.single_title)
+        print('✅ 单文档 Word 导出：%s' % os.path.join(out, name))
+        return
 
     # 待确认清单统一由 build_qa.py 生成（QA 问答表格式），
     # 本脚本只负责读它来出 Word，不再重复生成，避免两种口径互相覆盖。

@@ -51,10 +51,19 @@ DOCS = [
     ('02.15-发票管理.md', '02.15 发票管理', '功能规格', '🟡'),
     ('02.16-数据中心.md', '02.16 数据中心', '功能规格', '🟡'),
     ('03-贸易风险合规-天眼查集成.md', '03 贸易风险合规 · 天眼查集成', '外部集成', '🟡'),
+    ('10-系统使用报告.md', '系统使用报告', '使用报告', '🟢'),
     ('README.md', '交付说明与索引', '交付说明', '⚪'),
     ('BUSINESS-DECISIONS-2026-10-21.md', '业务方裁决记录 2026-10-21', '交付说明', '🟢'),
     ('99-待确认清单.md', '待确认问题清单', '交付说明', '⚪'),
 ]
+
+# 对外文档使用中性平台名；未列出的文档沿用默认名
+PLATFORM_ALIAS = {
+    '10-系统使用报告.md': '大宗商品数字供应链平台',
+}
+DEFAULT_PLATFORM = '豫港通数字供应链管理平台'
+DEFAULT_DOC = '豫港通需求规格说明书'
+
 
 CSS = """
 :root{--bd:#e5e7eb;--tx:#1f2937;--tx2:#4b5563;--tx3:#6b7280;--bg:#f9fafb;
@@ -274,7 +283,24 @@ def md_to_html(md):
 
 
 def page(title, body, cur, depth=1):
-    nav = ['<div class="brand">豫港通需求规格说明书</div>',
+    plat = PLATFORM_ALIAS.get(cur, DEFAULT_PLATFORM)
+    docname = plat if cur in PLATFORM_ALIAS else DEFAULT_DOC
+    if cur in PLATFORM_ALIAS:
+        # 对外文档：独立成页，不带内部文档导航与内部来源说明
+        return """<!DOCTYPE html>
+<html lang="zh-CN"><head><meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>%s · %s</title>
+<style>%s</style></head><body><div class="wrap">
+<nav><div class="brand">%s</div>
+<div class="ver">系统使用报告 · %s</div></nav>
+<main>%s
+<div class="foot">%s · 系统使用报告<br>生成日期：%s</div>
+</main></div>
+<script>%s</script></body></html>""" % (esc(title), esc(docname), CSS, esc(docname),
+                                   date.today().isoformat(), body, esc(plat),
+                                   date.today().isoformat(), NAV_JS)
+    nav = ['<div class="brand">%s</div>' % esc(docname),
            '<div class="ver">交付版 v2.0 · %s</div>' % date.today().isoformat()]
     last_grp = None
     for fn, disp, grp, pri in DOCS:
@@ -290,14 +316,15 @@ def page(title, body, cur, depth=1):
     return """<!DOCTYPE html>
 <html lang="zh-CN"><head><meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>%s · 豫港通需求规格说明书</title>
+<title>%s · %s</title>
 <style>%s</style></head><body><div class="wrap">
 <nav>%s</nav>
 <main>%s
-<div class="foot">豫港通数字供应链管理平台 · 需求规格说明书（交付版）<br>
+<div class="foot">%s · 需求规格说明书（交付版）<br>
 源文档：项目需求文档库（只读）｜范式：PRD Writer 落地需求文档｜生成日期：%s</div>
 </main></div>
-<script>%s</script></body></html>""" % (esc(title), CSS, ''.join(nav), body, date.today().isoformat(), NAV_JS)
+<script>%s</script></body></html>""" % (esc(title), esc(docname), CSS, ''.join(nav), body,
+                                   esc(plat), date.today().isoformat(), NAV_JS)
 
 
 def index_html():
@@ -320,7 +347,7 @@ def index_html():
                     % (fn[:-3], esc(disp), grp, b, pri, cs, lines, todo))
     hero = """
 <div class="hero">
-  <h1>豫港通数字供应链管理平台</h1>
+  <h1>%s</h1>
   <p class="sub">需求规格说明书 · 交付版</p>
   <p>按 PRD Writer 范式重组 · 8 个一级菜单 / 16 个业务模块 / 外部系统集成规格</p>
   <p>生成日期：%s</p>
@@ -332,7 +359,7 @@ def index_html():
   <div class="card"><div class="n">3</div><div class="l">已裁决冲突</div></div>
   <div class="card"><div class="n">%d</div><div class="l">待确认问题</div></div>
 </div>
-""" % (date.today().isoformat(), len(DOCS), tot_todo)
+""" % (esc(DEFAULT_PLATFORM), date.today().isoformat(), len(DOCS), tot_todo)
 
     md = """
 ## 本文档的定位
