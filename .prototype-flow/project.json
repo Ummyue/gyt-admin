@@ -1,0 +1,20 @@
+{
+  "schemaVersion": 1,
+  "id": "PROJECT-928DA71DBD44",
+  "name": "大宗商品数字供应链平台",
+  "revision": 12,
+  "libraryRoot": "prd-library",
+  "mode": "local",
+  "modules": [
+    {
+      "id": "MODULE-CA1A6A84B4FF",
+      "title": "02.01 项目准入 · 需求规格说明（原型反向生成）",
+      "documentId": "DOC-23C1E78876D3",
+      "documentPath": "prd-library/01-active/MODULE-CA1A6A84B4FF.md",
+      "stage": "draft"
+    }
+  ],
+  "maintainerPath": null,
+  "createdAt": "2026-10-23T09:07:09.663+00:00",
+  "updatedAt": "2026-10-23T09:29:59.633+00:00"
+}

@@ -1,0 +1,45 @@
+{
+  "schemaVersion": 1,
+  "items": [
+    {
+      "id": "SRC-C446F570A77E",
+      "label": "项目准入 v2 需求规格说明（业务方 2026-10-21 裁决后口径）",
+      "kind": "prd",
+      "locator": "docs-v2/02.01-项目管理.md",
+      "createdAt": "2026-10-23T09:14:10.733+00:00",
+      "status": "captured",
+      "path": "prd-library/03-research/SRC-C446F570A77E.md",
+      "hash": "d90bf7ffc1a757bc52b3bf461444ed4f564b5b3fa0b5d6ecabadd3ab2cd49746"
+    },
+    {
+      "id": "SRC-520C75DB71E0",
+      "label": "项目列表页原型（项目准入）",
+      "kind": "prototype",
+      "locator": "pages/project-list.html",
+      "createdAt": "2026-10-23T09:14:10.843+00:00",
+      "status": "captured",
+      "path": "prd-library/03-research/SRC-520C75DB71E0.md",
+      "hash": "52ebd1ad335a4560029d02fca43b282e016c5aa6cafb71fe12cdcbdd4171c59e"
+    },
+    {
+      "id": "SRC-FE83E0303BD3",
+      "label": "新增立项申请页原型（项目准入 5 步向导）",
+      "kind": "prototype",
+      "locator": "pages/project-apply.html",
+      "createdAt": "2026-10-23T09:14:10.944+00:00",
+      "status": "captured",
+      "path": "prd-library/03-research/SRC-FE83E0303BD3.md",
+      "hash": "0e254e7663c6e2740e330d247c39ba963ea20efa41e55ad78cbdb06026dbf28b"
+    },
+    {
+      "id": "SRC-DEFD94BC9A29",
+      "label": "项目详情页原型（项目准入）",
+      "kind": "prototype",
+      "locator": "pages/project-detail.html",
+      "createdAt": "2026-10-23T09:14:11.041+00:00",
+      "status": "captured",
+      "path": "prd-library/03-research/SRC-DEFD94BC9A29.md",
+      "hash": "1b9d2e60368491c1c49b8d12a24c51e6eeba51273c8f36d0a309a2cf446da244"
+    }
+  ]
+}

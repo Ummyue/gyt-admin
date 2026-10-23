@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "flows": [],
+  "bindings": [],
+  "supersessions": [
+    {
+      "id": "CHANGE-6FC2921A7F31",
+      "operation": "remove",
+      "from": [
+        "REQ-MODULE-CA1A6A84B4FF-BF51BB056334"
+      ],
+      "to": [],
+      "createdAt": "2026-10-23T09:22:03.446+00:00",
+      "status": "needs-review"
+    }
+  ]
+}

@@ -10,3 +10,7 @@
 
 # 离线导出构建中间产物（不入库）
 .offline-build/
+# prototype-flow:content-storage:start
+/.prototype-flow/storage-local.json
+/local_tasks/
+# prototype-flow:content-storage:end
