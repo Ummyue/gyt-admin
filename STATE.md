@@ -81,6 +81,28 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
 git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；但 `.offline-build/`
 是给业主的离线包，内容已陈旧（早于 2026-07-09 脱敏），要重打需 user 确认。
 
+### 部署限流排查 + .assetsignore（2026-10-26）
+**现象**：`wrangler pages deploy` 连续报 `POST /pages/assets/upload -> 429 Too Many Requests`，
+换 token / 换代理 / 退避重试**全部无效**。
+
+**根因**：① 本机代理客户端（127.0.0.1:7890）瞬时抽风；
+② **`.offline-build/` 是整个站点的完整副本**（304 文件 / 28MB，含 4 组截图 + 离线包 + dist），
+`wrangler pages deploy .` 传的是**整个目录**（含 gitignore 的构建产物），上传量 685 文件 / 48MB；
+③ **失败的重试本身在消耗上传配额**，让限流窗口一直不恢复。
+
+**修法**：新增 `.assetsignore`（wrangler pages 读取，gitignore 语法）排除
+`.git/` `.offline-build/` `.deploy_tmp/` `.prototype-flow/` `prd-library/` `local_tasks/` `*.zip`
+→ 上传量降到 **352 文件 / 10.4MB**。
+顺带把 `prd-library/`（含 17 项差异清单与裁决记录）**排除出公网** —— 那是对内文档。
+
+**排查手法（下次直接用）**：
+```bash
+curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudflare.com/client/v4/accounts | grep -iE "retry-after|ratelimit"
+# error code: 1015 = Cloudflare 限流中
+```
+⚠️ **重试策略**：429 时**不要密集重试**（每次失败都在烧配额）——
+先看 `retry-after` 头，**静默等待后再打一次**。密集重试会让窗口永远恢复不了。
+
 ### 顺带修掉的 2 个页面脚本结构缺陷（2026-10-26）
 排查 pin 缺口时发现**全站只有 2 页的脚本块结构是断的**（用「HTML 里声明了 + 浏览器实际加载了」双向比对定位）：
 

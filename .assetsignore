@@ -1,0 +1,22 @@
+# ===== Cloudflare Pages 上传排除（wrangler pages deploy 读取本文件） =====
+# 说明：以下均为本地构建产物 / 内部运行时数据，不应发布到公网
+
+# 版本控制
+.git/
+.gitignore
+
+# 本地构建产物（内含完整站点副本 + 4 组截图 + 离线包，约 28MB）
+.offline-build/
+
+# 部署临时目录
+.deploy_tmp/
+
+# prototype-flow 运行时数据与 PRD 文档库（含内部差异清单/裁决记录，不对外）
+.prototype-flow/
+prd-library/
+
+# 本地任务脚本与日志
+local_tasks/
+
+# 离线交付压缩包
+*.zip
