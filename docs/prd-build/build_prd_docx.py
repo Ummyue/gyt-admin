@@ -163,6 +163,62 @@ def numbered(doc, idx, text, size=12):
     return p
 
 
+FLOW_TABLES = {}
+try:
+    FLOW_TABLES = json.load(open(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                              "flow_tables.json"), encoding="utf-8"))
+except Exception:
+    FLOW_TABLES = {}
+
+
+def flow_font_pt(png_path, width_cm=15.6):
+    """估算图内 16px 字号嵌入到指定宽度后的物理磅值（<7pt 视为不可读）"""
+    try:
+        from PIL import Image
+        w = Image.open(png_path).size[0]
+        css_w = w / 2.0          # 渲染时 device_scale_factor=2
+        return 16.0 / css_w * (width_cm / 2.54 * 72.0)
+    except Exception:
+        return 99.0
+
+
+def add_flow_tables(doc, slug, fig_no, idx):
+    """idx 形如 4-12，表号用 4-12-0 / 4-12-1"""
+    """把 mermaid 解析出的泳道/流转渲染成 Word 原生表格"""
+    data = FLOW_TABLES.get(slug)
+    if not data:
+        return 0
+    rows = []
+    for sl in data.get("swimlanes", []):
+        role = sl.get("role") or "流程"
+        for i, n in enumerate(sl.get("nodes", []), 1):
+            outs = []
+            for e in data.get("edges", []):
+                if e.get("from") == n["id"]:
+                    t = data.get("index", {}).get(e.get("to"), {})
+                    outs.append(t.get("label") or e.get("to"))
+            rows.append([role, str(i), neutralize(n.get("label", "")), "、".join(outs) if outs else "—"])
+    if not rows:
+        return 0
+    add_table(doc, ["泳道（角色）", "步骤", "节点内容", "后继节点"], rows,
+              widths=[2.8, 1.0, 7.4, 4.8], size=9.5)
+    para(doc, f"表 {idx}-0　流程泳道（角色 → 步骤 → 后继）", size=10.5,
+         align=WD_ALIGN_PARAGRAPH.CENTER, indent_chars=0, space_after=8)
+    rows2 = []
+    for e in data.get("edges", []):
+        f = data.get("index", {}).get(e.get("from"), {})
+        t = data.get("index", {}).get(e.get("to"), {})
+        if f.get("role") and t.get("role") and f["role"] != t["role"]:
+            rows2.append([f["role"], e.get("label") or "—", t["role"], f.get("label", "")])
+    if rows2:
+        add_table(doc, ["发起方", "动作", "接收方", "流转内容"], rows2,
+                  widths=[3.0, 2.4, 3.0, 7.6], size=9.5)
+        para(doc, f"表 {idx}-1　跨角色流转", size=10.5,
+             align=WD_ALIGN_PARAGRAPH.CENTER, indent_chars=0, space_after=8)
+        return 2
+    return 1
+
+
 def neutralize(s):
     """统一品牌口径"""
     if not s: return s
@@ -496,10 +552,14 @@ def main():
         mm = m.get("mermaid") or ""
         if mm.strip():
             mp = os.path.join(SHOTS, f"mermaid-{m['slug']}.png")
-            if os.path.exists(mp):
+            pt = flow_font_pt(mp) if os.path.exists(mp) else 0
+            if os.path.exists(mp) and pt >= 7.0:
                 add_figure(doc, mp, f"图 4-{i}-1　{m.get('name','')} 主业务流程")
             else:
-                para(doc, "（流程图见原型页面）", indent_chars=0)
+                para(doc, "主业务流程（按角色泳道展开）：", bold=True, space_after=3)
+                n_tbl = add_flow_tables(doc, m["slug"], i, f"4-{i}")
+                if n_tbl == 0:
+                    para(doc, "（完整流程图见原型页面）", indent_chars=0)
         fn = m.get("flow_nodes") or []
         if fn:
             para(doc, "主流程步骤：", bold=True, space_after=3)
@@ -513,12 +573,14 @@ def main():
         shot = os.path.join(SHOTS, f"{m['slug']}.png")
         multi = sorted(glob.glob(os.path.join(SHOTS, f"{m['slug']}-*.png")))
         lbl = m.get("name", "")
+        base = 1 if (mm.strip() and os.path.exists(os.path.join(SHOTS, f"mermaid-{m['slug']}.png"))
+                     and flow_font_pt(os.path.join(SHOTS, f"mermaid-{m['slug']}.png")) >= 7.0) else 1
         if multi:
             for k, sp in enumerate(multi, 1):
                 tag = os.path.basename(sp).rsplit("-", 1)[-1].replace(".png", "")
-                add_figure(doc, sp, f"图 4-{i}-2.{k}　{lbl}（{tag}）")
+                add_figure(doc, sp, f"图 4-{i}-{base + k - 1}.{k}　{lbl}（{tag}）")
         elif os.path.exists(shot):
-            add_figure(doc, shot, f"图 4-{i}-2　{lbl} 原型页面")
+            add_figure(doc, shot, f"图 4-{i}-{base}　{lbl} 原型页面")
         if pgs:
             para(doc, "页面级说明：", bold=True, space_before=4, space_after=3)
             add_table(doc, ["页面", "原型文件", "进入方式", "关键区块", "主要按钮与行为", "跳转去向"],

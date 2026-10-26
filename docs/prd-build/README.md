@@ -9,8 +9,11 @@ prd-build/
 ├── modules/*.json        29 个业务模块的结构化事实层（唯一数据源）
 ├── capture_shots.py      抓原型截图并做品牌中性化（输出到 /tmp，脚本内路径可改）
 ├── render_mermaid.py     把 JSON 里的 mermaid 渲染成 PNG（本地 Chrome，不外传内容）
+├── parse_mermaid.py      解析 mermaid 源码 → flow_tables.json（泳道 / 节点 / 流转）
+├── flow_tables.json      26 个模块的流程结构化数据
 ├── build_prd_docx.py     组装 Word（python-docx）
-└── verify_docx.py        成品校验（结构 / 图片 / 品牌字样 / 字体 / 域）
+├── verify_docx.py        成品校验（结构 / 图片 / 品牌字样 / 字体 / 域）
+└── verify_images_ocr.py  逐图 OCR 校验（图片里画出来的字也查）
 ```
 
 ## 事实层 JSON schema
@@ -45,17 +48,39 @@ prd-build/
 5. **资金口径**：线下操作 + 凭证上传 + 系统内确认，不写线上扣款打款
 6. **权限口径**：本期未划分角色权限、系统全量权限（裁决 D17），文档中的角色仅表示典型使用角色
 
+## 流程图在 Word 里的处理规则
+
+mermaid 泳道图横向展开后宽度可达 4000+ CSS px，**塞进 A4 竖版后字号只有 2–4pt，等于不可读**。因此：
+
+- 估算图内 16px 字号嵌入 15.6cm 宽后的物理磅值
+- **≥ 7pt** → 直接嵌图（图 4-x-1）
+- **< 7pt** → 不嵌图，改为 Word 原生两张表：
+  - 表 4-x-0 流程泳道：泳道（角色）| 步骤 | 节点内容 | 后继节点
+  - 表 4-x-1 跨角色流转：发起方 | 动作 | 接收方 | 流转内容
+
+表格可读、可编辑、可搜索，比压扁的图更适合 Word 分发。完整流程图仍保留在各模块的 Markdown 源文档与原型页面中。
+
+## 品牌中性化的三道防线
+
+1. **响应级改写**：所有文本类响应（含无扩展名的 HTML，如外部 BI 的 `/dashboard-command-center`）做字符串替换
+2. **canvas 绘制拦截**：`fillText` / `strokeText` 传参替换（画布上的字）
+3. **逐图 OCR 校验**：`verify_images_ocr.py` 对 Word 内嵌的每一张图做 OCR 并检索品牌词——这是最终硬标准，图片里画出来的字也能查出来
+
+> 注意：注入脚本里的 MutationObserver 必须**只在值变化时写回**，否则自触发死循环会导致页面永远加载不出来。
+
 ## 重新生成
 
 ```bash
 # 1) 抓原型截图（品牌中性化，输出 /Users/fuyu/.minimax/tmp/prd-modules/shots）
 python3 capture_shots.py
-# 2) 渲染 mermaid 流程图
+# 2) 渲染 mermaid 流程图 + 解析流程结构
 python3 render_mermaid.py
+python3 parse_mermaid.py
 # 3) 组装 Word
 python3 build_docd_docx.py 2>/dev/null || python3 build_prd_docx.py
-# 4) 校验
+# 4) 校验（结构 + 逐图 OCR）
 python3 verify_docx.py
+python3 verify_images_ocr.py
 ```
 
 ## 校验口径
