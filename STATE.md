@@ -149,6 +149,37 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
 
+### v1.17.0 项目立项「业务负责人」改模糊搜索 + 修 chip × 点不动（2026-10-26）
+
+**改动 1：业务负责人由单选下拉改为模糊搜索输入框**（user 截图标注）
+
+| 项 | 内容 |
+|---|---|
+| 控件 | `<select>`（枚举 张爽/李建国/王慧敏/陈志远）→ `<input type="text" placeholder="模糊搜索业务负责人">` |
+| 理由 | 人员名单来自用户中心且会增减，前端枚举会失真；改为文本模糊查询后与「企业名称」写法一致 |
+| 页面 | `pages/project-list.html` |
+| 文档 | `docs/p-project-list.md` §3.3 筛选区表（原本写成 7 字段且与原型脱节，本次按原型 10 字段逐项校准） |
+
+⚠️ 全站只有项目立项这一处「业务负责人」下拉，其他页面无同类控件。
+
+**改动 2：修 `shared/js/filter-chips.js` 的 chip「×」点不动（真 bug，影响 51 个页面）**
+
+| 症状 | 先在输入框输内容 → chip 出现 → 点 chip 上的 ×，**无任何反应** |
+|---|---|
+| 根因 | 点 × 的 **mousedown** 让输入框失焦 → 触发 `change` → `renderChips()` 执行 `chipsContainer.innerHTML = ''` **整体重建** → 用户正要点的那个 × 节点在 mouseup/click 之前就被摘除 → click 落在**已分离节点**上不冒泡 → 事件丢失 |
+| 修复 | `renderChips()` 改为**按筛选项下标做增量对齐**（键 = `data-filter-idx`）：只删多余 chip、只建缺失 chip、已有 chip 只更新取值；顺序不对才 `insertBefore` 归位 |
+| 配套 | × 的点击改为**事件委托**到 `chipsContainer`，chip 节点即使重建也不丢监听器 |
+
+⚠️ **关键坑：增量对齐里也不能无条件 `appendChild` 归位。**
+`appendChild` / `insertBefore` 对已在容器里的节点 = 「移除 + 重新插入」，
+mousedown 与 mouseup 之间移动节点会让浏览器判定 **mousedown 与 mouseup 目标不一致**
+→ 不派发 click 事件（点击照样丢）。
+必须**先判断顺序是否真的需要调整**，顺序正确时**完全不动 DOM**。
+
+**影响面**：`shared/js/filter-chips.js` 被 **51 个列表页**引用（客户准入/项目立项/付款/退款/
+回款/合同/发票/结算/仓储/报表/黑名单/审批监控等），此 bug 是**全站通用**的 ——
+之前没人报是因为多数人不用鼠标点 chip 的 ×，或以为"筛选区本来就没实现过滤"。
+
 ### v1.16.0 审批监控页删「已触发审批提醒」KPI 卡（2026-10-26）
 user 在监控页截图上红框标注删除第 4 张 KPI 卡「已触发审批提醒」。
 

@@ -160,7 +160,9 @@
               </div>
               <div class="cp-filter-item">
                 <span class="cp-filter-label">业务负责人</span>
-                <select class="select"><option>请选择业务负责人</option><option>张爽</option><option>李建国</option><option>王慧敏</option><option>陈志远</option></select>
+                <!-- v1.17.0：业务负责人由单选下拉改为模糊搜索输入框（人员名单来自用户中心，
+                     不做前端枚举；与「企业名称」同为文本模糊查询） -->
+                <input type="text" class="input" placeholder="模糊搜索业务负责人">
               </div>
             </div>
           </div>
