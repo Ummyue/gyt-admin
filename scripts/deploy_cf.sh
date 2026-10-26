@@ -36,6 +36,8 @@ rsync -a \
   --exclude='.wrangler/' \
   --exclude='.DS_Store' \
   --exclude='*.zip' \
+  --exclude='*.docx' \
+  --exclude='prd-build/' \
   "$ROOT/" "$STAGE/"
 
 # ---- 2. 统计 ----

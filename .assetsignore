@@ -24,3 +24,7 @@ local_tasks/
 
 # 离线交付压缩包
 *.zip
+
+# PRD 汇编 Word 与生成包（10MB+，内部文档，不对外发布）
+*.docx
+prd-build/
