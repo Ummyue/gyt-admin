@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `b5a39fcd` (审批管理模块 v1.13.0 回款管理接入审批流 + 收发货移出应用范围 + 修左侧菜单四级递归)
+- **最新 hash**: `c72264d1` (回款审批详情页按项目准入模板重做 + 收发货移出应用范围 + 修左侧菜单四级递归)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `c48cb12` (feat(receipt): v1.13.0 回款管理接入审批流 + 收发货移出应用范围 + 修左侧菜单四级递归，已推送): v1.12.0 纠正「应用范围」描述，业务线/发票/保证金目前无审批流，已推送)
+- 最新 commit: `72973de` (feat(receipt): v1.13.1 回款审批详情页按项目准入模板重做，已推送): v1.13.0 回款管理接入审批流 + 收发货移出应用范围 + 修左侧菜单四级递归，已推送): v1.12.0 纠正「应用范围」描述，业务线/发票/保证金目前无审批流，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.11.0，2026-10-21）
