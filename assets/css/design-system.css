@@ -972,6 +972,23 @@ input, select, textarea {
   color: var(--color-primary) !important;
   background: var(--color-primary-lighter) !important;
   border-left-color: var(--color-primary) !important;
+  font-weight: 500;}
+
+/* 四级菜单项（在三级项下再缩进一级，如「回款管理」下的 回款审批详情） */
+.sidemenu-grandchild {
+  padding: 6px 20px 6px 56px !important;
+  font-size: 12px !important;
+  color: var(--text-tertiary) !important;
+  border-left: 3px solid transparent !important;
+}
+.sidemenu-grandchild:hover {
+  color: var(--text-primary) !important;
+  background: var(--bg-hover);
+}
+.sidemenu-grandchild.active {
+  color: var(--color-primary) !important;
+  background: var(--color-primary-lighter) !important;
+  border-left-color: var(--color-primary) !important;
   font-weight: 500;
 }
 

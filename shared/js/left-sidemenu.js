@@ -17,17 +17,20 @@
 
   function getCurrentModule() {
     const path = getCurrentPage();
+    // 菜单最多 4 层（二级 subMenus → 三级 children → 四级 children.children），
+    // 递归查找，避免四层页面（如回款详情/编辑回款、保证金明细）匹配不到而渲染空菜单
+    function findIn(list) {
+      if (!list || !list.length) return null;
+      for (const item of list) {
+        if (!item) continue;
+        if (item.file && item.file.replace(/\.html$/, '') === path) return true;
+        if (item.children && findIn(item.children)) return true;
+      }
+      return null;
+    }
     for (const menuKey in window.TOPNAV_MENU) {
       const m = window.TOPNAV_MENU[menuKey];
-      for (const sm of m.subMenus) {
-        const smFile = sm.file.replace(/\.html$/, '');
-        if (smFile === path) return menuKey;
-        if (sm.children) {
-          for (const c of sm.children) {
-            if (c.file.replace(/\.html$/, '') === path) return menuKey;
-          }
-        }
-      }
+      if (findIn(m.subMenus)) return menuKey;
     }
     return null;
   }
@@ -50,6 +53,49 @@
     } catch (e) {}
   }
 
+  /** 递归判断某个节点树里是否包含当前页（用于自动展开父级） */
+  function containsCurrent(children, currentPath) {
+    if (!children || !children.length) return false;
+    return children.some(c => {
+      if (!c) return false;
+      if (c.file && c.file.replace(/\.html$/, '') === currentPath) return true;
+      return containsCurrent(c.children, currentPath);
+    });
+  }
+
+  /**
+   * 渲染某个节点的下级列表。
+   * 三级项若还有下级（如「回款管理」下的 回款详情 / 回款审批详情 / 编辑回款），
+   * 渲染成可展开的嵌套组 —— 否则这层页面在左侧菜单里完全不可达。
+   */
+  function renderChildItems(children, currentPath, menuKey, isGrand) {
+    if (!children || !children.length) return '';
+    return children.map(c => {
+      if (!c) return '';
+      const cFile = c.file.replace(/\.html$/, '');
+      const cActive = cFile === currentPath;
+      const grand = c.children && c.children.length;
+      if (!grand) {
+        const cls = isGrand ? 'sidemenu-item sidemenu-child sidemenu-grandchild' : 'sidemenu-item sidemenu-child';
+        return `<a href="./${c.file}" class="${cls}${cActive ? ' active' : ''}">${c.label}</a>`;
+      }
+      const gActive = containsCurrent(c.children, currentPath);
+      const expandState = getExpandState(menuKey);
+      const userExpanded = expandState[c.label];
+      const isOpen = gActive ? true : (userExpanded === undefined ? false : userExpanded);
+      const grandHtml = renderChildItems(c.children, currentPath, menuKey, true);
+      return `
+        <div class="sidemenu-group" data-sub="${c.label}">
+          <div class="sidemenu-item sidemenu-parent${gActive ? ' active-parent' : ''}" data-toggle-parent="${c.label}" title="点击展开/收起子菜单">
+            <span class="sidemenu-parent-label">${c.label}</span>
+            <span class="arrow" data-toggle="${c.label}">${isOpen ? '▾' : '▸'}</span>
+          </div>
+          <div class="sidemenu-children ${isOpen ? 'show' : ''}">${grandHtml}</div>
+        </div>
+      `;
+    }).join('');
+  }
+
   function renderSubMenuItem(sm, currentPath, menuKey) {
     const smFile = sm.file.replace(/\.html$/, '');
     const isActive = smFile === currentPath;
@@ -61,18 +107,13 @@
     }
 
     // 有 children：父项仅作展开/收起（点击不跳转）
-    const childActiveIdx = sm.children.findIndex(c => c.file.replace(/\.html$/, '') === currentPath);
-    const childActive = childActiveIdx >= 0;
+    const childActive = containsCurrent(sm.children, currentPath);
     const expandState = getExpandState(menuKey);
     const userExpanded = expandState[sm.label];
     // 当前 page 在 children 中 → 自动展开；否则用用户记忆
     const isOpen = childActive ? true : (userExpanded === undefined ? false : userExpanded);
 
-    const childrenHtml = sm.children.map(c => {
-      const cFile = c.file.replace(/\.html$/, '');
-      const cActive = cFile === currentPath;
-      return `<a href="./${c.file}" class="sidemenu-item sidemenu-child${cActive ? ' active' : ''}">${c.label}</a>`;
-    }).join('');
+    const childrenHtml = renderChildItems(sm.children, currentPath, menuKey, false);
 
     return `
       <div class="sidemenu-group" data-sub="${sm.label}">

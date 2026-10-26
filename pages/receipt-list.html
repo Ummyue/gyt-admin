@@ -9,7 +9,9 @@
   <link rel="stylesheet" href="../assets/css/pin-annotation.css">
   <style>
     .page-body { padding: 20px 24px; }
-    /* 认领状态 3 种 badge 颜色（v1.7.99.66） */
+    /* 回款状态 7 种 badge 颜色
+       v1.7.99.66 认领态 3 种（未认领/部分认领/已认领）
+       v1.13.0    审批态 4 种（待提交/审批中/驳回/无效），参照付款管理状态机 */
     .claim-status {
       display: inline-flex; align-items: center; gap: 6px;
       padding: 2px 10px; border-radius: 4px; font-size: 12px; font-weight: 500;
@@ -17,6 +19,10 @@
     .claim-status.unclaim { background: #FEF3C7; color: #A16207; }
     .claim-status.partial { background: #FFEDD5; color: #EA580C; }
     .claim-status.claimed { background: #D1FAE5; color: #047857; }
+    .claim-status.draft    { background: #EFF6FF; color: #1E40AF; }
+    .claim-status.approving{ background: #FEF3C7; color: #A16207; }
+    .claim-status.rejected { background: #FEE2E2; color: #B91C1C; }
+    .claim-status.void     { background: #F3F4F6; color: #6B7280; }
   </style>
 </head>
 <body>
@@ -114,14 +120,21 @@
             </div>
           </div>
 
-          <!-- 区块 2：状态 tab（v1.7.99.66 4 tab：全部/未认领/部分认领/已认领） -->
+          <!-- 区块 2：状态 tab
+               v1.13.0：按付款管理状态机扩充为 8 tab
+               全部 / 待提交 / 审批中 / 未认领 / 部分认领 / 已认领 / 驳回 / 无效
+               （未认领前插入待提交·审批中，已认领后追加驳回·无效）-->
           <div class="cp-block cp-block-tab">
             <div class="cp-tab-bar">
               <div class="cp-tab-bar-tabs">
-                <div class="cp-tab active" data-status="all" onclick="switchTab(this, 'all')">全部 <span class="count">10</span></div>
-                <div class="cp-tab" data-status="unclaim" onclick="switchTab(this, 'unclaim')">未认领 <span class="count" style="color: #A16207; font-weight: 600;">0</span></div>
+                <div class="cp-tab active" data-status="all" onclick="switchTab(this, 'all')">全部 <span class="count">16</span></div>
+                <div class="cp-tab" data-status="draft" onclick="switchTab(this, 'draft')">待提交 <span class="count" style="color: #1E40AF; font-weight: 600;">2</span></div>
+                <div class="cp-tab" data-status="approving" onclick="switchTab(this, 'approving')">审批中 <span class="count" style="color: #A16207; font-weight: 600;">2</span></div>
+                <div class="cp-tab" data-status="unclaim" onclick="switchTab(this, 'unclaim')">未认领 <span class="count" style="color: #A16207; font-weight: 600;">1</span></div>
                 <div class="cp-tab" data-status="partial" onclick="switchTab(this, 'partial')">部分认领 <span class="count" style="color: #EA580C; font-weight: 600;">1</span></div>
-                <div class="cp-tab" data-status="claimed" onclick="switchTab(this, 'claimed')">已认领 <span class="count" style="color: #047857; font-weight: 600;">9</span></div>
+                <div class="cp-tab" data-status="claimed" onclick="switchTab(this, 'claimed')">已认领 <span class="count" style="color: #047857; font-weight: 600;">8</span></div>
+                <div class="cp-tab" data-status="rejected" onclick="switchTab(this, 'rejected')">驳回 <span class="count" style="color: #B91C1C; font-weight: 600;">1</span></div>
+                <div class="cp-tab" data-status="void" onclick="switchTab(this, 'void')">无效 <span class="count" style="color: #6B7280; font-weight: 600;">1</span></div>
               </div>
               <div class="cp-tab-bar-actions">
                 <button class="btn btn-default" style="height: 30px; padding: 0 12px; display: inline-flex; align-items: center; gap: 6px;" onclick="exportData()">
@@ -184,7 +197,10 @@
   <script src="../shared/js/left-sidemenu.js"></script>
   <script src="../assets/js/app.js"></script>
   <script>
-    // ========== v1.7.99.66 回款管理 mock 数据（10 行真实感但脱敏） ==========
+    // ========== 回款管理 mock 数据（14 行真实感但脱敏） ==========
+    // v1.13.0：按付款管理状态机扩充状态维度
+    //   审批态 4 种：draft 待提交 / approving 审批中 / rejected 驳回 / void 无效
+    //   认领态 3 种：unclaim 未认领 / partial 部分认领 / claimed 已认领
     var RECEIPT_MOCK = [
       { id: 1, no: '961416', payer: '郑州信必达国际供应链有限公司', date: '2026-07-28', amount: 229467.09, claimed: 229467.09, status: 'claimed', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
       { id: 2, no: '797043', payer: '郑州信必达国际供应链有限公司', date: '2026-07-27', amount: 229467.09, claimed: 229467.09, status: 'claimed', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
@@ -194,19 +210,56 @@
       { id: 6, no: '887676', payer: '郑州信必达国际供应链有限公司', date: '2026-07-20', amount: 159447.72, claimed: 159447.72, status: 'claimed', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
       { id: 7, no: '713327', payer: '郑州信必达国际供应链有限公司', date: '2026-07-20', amount: 173763.12, claimed: 173763.12, status: 'claimed', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '银行同步' },
       { id: 8, no: '926521', payer: '郑州信必达国际供应链有限公司', date: '2026-07-18', amount: 109963.95, claimed: 109963.95, status: 'claimed', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
-      { id: 9, no: '361195', payer: '郑州信必达国际供应链有限公司', date: '2026-07-17', amount: 106822.12, claimed: 106822.12, status: 'claimed', account: '河南中豫港通供应链管理有限...', method: '电汇', source: 'OA同步' },
-      { id: 10, no: '396835', payer: '郑州信必达国际供应链有限公司', date: '2026-07-17', amount: 43681.10, claimed: 0, status: 'partial', account: '河南中豫港通供应链管理有限...', method: '电子银行承兑汇票', source: '手工录入' }
+      { id: 9, no: '396835', payer: '郑州信必达国际供应链有限公司', date: '2026-07-17', amount: 43681.10, claimed: 0, status: 'partial', account: '河南中豫港通供应链管理有限...', method: '电子银行承兑汇票', source: '手工录入' },
+      // ↓ v1.13.0 新增：审批态 4 种
+      { id: 10, no: '521864', payer: '郑州信必达国际供应链有限公司', date: '2026-07-16', amount: 158320.44, claimed: 0, status: 'draft', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
+      { id: 11, no: '847302', payer: '郑州信必达国际供应链有限公司', date: '2026-07-15', amount: 76418.60, claimed: 0, status: 'draft', account: '河南中豫港通供应链管理有限...', method: '商业承兑汇票', source: '手工录入' },
+      { id: 12, no: '610947', payer: '郑州信必达国际供应链有限公司', date: '2026-07-14', amount: 205893.25, claimed: 0, status: 'approving', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '银行同步' },
+      { id: 13, no: '435781', payer: '郑州信必达国际供应链有限公司', date: '2026-07-12', amount: 98304.57, claimed: 0, status: 'approving', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
+      { id: 14, no: '739265', payer: '郑州信必达国际供应链有限公司', date: '2026-07-11', amount: 142760.88, claimed: 0, status: 'rejected', account: '河南中豫港通供应链管理有限...', method: '商业承兑汇票', source: '手工录入' },
+      { id: 15, no: '903418', payer: '郑州信必达国际供应链有限公司', date: '2026-07-09', amount: 67521.36, claimed: 0, status: 'void', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '手工录入' },
+      { id: 16, no: '268573', payer: '郑州信必达国际供应链有限公司', date: '2026-07-08', amount: 113994.02, claimed: 0, status: 'unclaim', account: '河南中豫港通供应链管理有限...', method: '电汇', source: '银行同步' }
     ];
+    // v1.13.0：状态 7 种。审批态 4 种参照付款管理状态机，认领态 3 种沿用 v1.7.99.66
     var STATUS_MAP = {
-      'unclaim': { label: '未认领', cls: 'unclaim' },
-      'partial': { label: '部分认领', cls: 'partial' },
-      'claimed': { label: '已认领', cls: 'claimed' }
+      'draft':     { label: '待提交',   cls: 'draft' },
+      'approving': { label: '审批中',   cls: 'approving' },
+      'unclaim':   { label: '未认领',   cls: 'unclaim' },
+      'partial':   { label: '部分认领', cls: 'partial' },
+      'claimed':   { label: '已认领',   cls: 'claimed' },
+      'rejected':  { label: '驳回',     cls: 'rejected' },
+      'void':      { label: '无效',     cls: 'void' }
     };
+    // v1.13.0：各状态对应的行内操作项
+    //   待提交 → 详情 / 修改 / 删除      审批中 → 详情 / 撤回
+    //   驳回   → 详情 / 修改 / 删除      无效   → 详情
+    //   认领态（未认领/部分认领/已认领）→ 详情 / 修改 / 删除（沿用原逻辑）
+    var STATUS_ACTIONS = {
+      'draft':     ['detail', 'edit', 'del'],
+      'approving': ['detail', 'withdraw'],
+      'rejected':  ['detail', 'edit', 'del'],
+      'void':      ['detail']
+    };
+    // 审批态的「详情」进入回款审批详情页；认领态进入原回款详情页
+    var APPROVAL_STATES = ['draft', 'approving', 'rejected', 'void'];
     function fmt(n) { return n.toLocaleString('zh-CN', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+
+    // v1.13.0：页签计数按当前 mock 实时统计（撤回 / 删除后计数自动跟随）
+    function updateTabCounts() {
+      var keys = ['all', 'draft', 'approving', 'unclaim', 'partial', 'claimed', 'rejected', 'void'];
+      keys.forEach(function (k) {
+        var el = document.querySelector('.cp-tab[data-status="' + k + '"] .count');
+        if (!el) return;
+        el.textContent = (k === 'all')
+          ? RECEIPT_MOCK.length
+          : RECEIPT_MOCK.filter(function (r) { return r.status === k; }).length;
+      });
+    }
 
     // ========== v1.7.99.66 渲染表格 ==========
     var currentTab = 'all';
     function renderTable() {
+      updateTabCounts();
       var list = RECEIPT_MOCK.filter(function(r) { return currentTab === 'all' || r.status === currentTab; });
       var tbody = document.getElementById('receiptTbody');
       if (!tbody) return;
@@ -217,23 +270,38 @@
       tbody.innerHTML = list.map(function(r) {
         var remain = (r.amount - r.claimed);
         var meta = STATUS_MAP[r.status] || { label: r.status, cls: '' };
-        return '<tr class="cp-row-clickable" data-detail-href="./receipt-detail.html?no=' + r.no + '" style="cursor: pointer;">'
+        // v1.13.0：审批态的「详情」进入回款审批详情页；认领态进入原回款详情页
+        var detailHref = (APPROVAL_STATES.indexOf(r.status) >= 0)
+          ? './receipt-approval-detail.html?no=' + r.no + '&status=' + r.status
+          : './receipt-detail.html?no=' + r.no;
+        return '<tr class="cp-row-clickable" data-detail-href="' + detailHref + '" style="cursor: pointer;">'
           + '<td class="col-num">' + r.no + '</td>'
           + '<td>' + r.payer + '</td>'
           + '<td>' + r.date + '</td>'
           + '<td style="text-align: right;" class="col-num">' + fmt(r.amount) + '</td>'
           + '<td style="text-align: right;" class="col-num">' + fmt(r.claimed) + '</td>'
-          + '<td style="text-align: right;" class="col-num">' + fmt(remain) + '</td>'
+          + '<td style="text-align: right;" class="col-num">' + (r.status === 'void' ? '—' : fmt(remain)) + '</td>'
           + '<td style="color: var(--text-secondary);" title="' + r.account + '">' + r.account + '</td>'
           + '<td class="col-status"><span class="claim-status ' + meta.cls + '">' + meta.label + '</span></td>'
-          + '<td class="col-action" style="text-align: right;">'
-          +   '<a href="./receipt-detail.html?no=' + r.no + '">详情</a> '
-          +   '<a href="./receipt-edit.html?no=' + r.no + '">修改</a> '
-          +   '<a href="javascript:void(0)" style="color: #DC2626;" onclick="deleteReceipt(' + r.id + ')">删除</a>'
-          + '</td>'
+          + '<td class="col-action" style="text-align: right;">' + buildActions(r, detailHref) + '</td>'
           + '</tr>';
       }).join('');
       document.getElementById('paginationInfo').textContent = '共 ' + list.length + ' 条记录 · 第 1 / 1 页';
+    }
+
+    // v1.13.0：按状态渲染行内操作项
+    //   待提交 → 详情 / 修改 / 删除    审批中 → 详情 / 撤回
+    //   驳回   → 详情 / 修改 / 删除    无效   → 详情
+    //   认领态 → 详情 / 修改 / 删除
+    function buildActions(r, detailHref) {
+      var acts = STATUS_ACTIONS[r.status] || ['detail', 'edit', 'del'];
+      return acts.map(function(a) {
+        if (a === 'detail') return '<a href="' + detailHref + '">详情</a>';
+        if (a === 'edit')   return '<a href="./receipt-edit.html?no=' + r.no + '">修改</a>';
+        if (a === 'del')    return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="deleteReceipt(' + r.id + ')">删除</a>';
+        if (a === 'withdraw') return '<a href="javascript:void(0)" style="color: #D97706;" onclick="withdrawReceipt(' + r.id + ')">撤回</a>';
+        return '';
+      }).join(' ');
     }
     function switchTab(el, key) {
       currentTab = key;
@@ -249,6 +317,15 @@
       if (!confirm('确定要删除回款编号【' + r.no + '】吗？\n\n删除后数据将不可恢复。')) return;
       RECEIPT_MOCK = RECEIPT_MOCK.filter(function(x) { return x.id !== id; });
       Utils.toast('已删除：' + r.no, 'success');
+      renderTable();
+    }
+    // v1.13.0：审批中 → 撤回（回到待提交）
+    function withdrawReceipt(id) {
+      var r = RECEIPT_MOCK.find(function(x) { return x.id === id; });
+      if (!r) return;
+      if (!confirm('确定要撤回回款编号【' + r.no + '】吗？\n\n撤回后该笔回款将回到「待提交」状态，可修改后重新提交审批。')) return;
+      r.status = 'draft';
+      Utils.toast('已撤回：' + r.no, 'success');
       renderTable();
     }
     renderTable();
