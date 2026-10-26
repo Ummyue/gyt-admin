@@ -65,6 +65,7 @@
             {
               label: '回款管理', file: 'receipt-list.html',
               children: [
+                { label: '回款列表', file: 'receipt-list.html' },
                 { label: '回款详情', file: 'receipt-detail.html' },
                 { label: '回款审批详情', file: 'receipt-approval-detail.html' },
                 { label: '编辑回款', file: 'receipt-edit.html' },
