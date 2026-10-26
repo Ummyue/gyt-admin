@@ -23,7 +23,9 @@ echo "▸ 暂存目录:   $STAGE"
 
 # ---- 1. 只同步公开内容 ----
 # 排除：版本控制 / 本地构建产物 / 部署临时目录 / prototype-flow 运行时与 PRD 库
-#       / agent 工作目录 / 离线压缩包
+#       / agent 工作目录 / 离线压缩包 / 内部工作笔记（STATE.md）
+# 注：STATE.md 是 agent 内部状态快照（部署 hash、踩坑记录），不对外发布。
+#     已发布的旧副本需删除同名 CF Pages 项目重建才能彻底清除。
 rsync -a \
   --exclude='.git/' \
   --exclude='.offline-build/' \
@@ -38,6 +40,7 @@ rsync -a \
   --exclude='*.zip' \
   --exclude='*.docx' \
   --exclude='prd-build/' \
+  --exclude='STATE.md' \
   "$ROOT/" "$STAGE/"
 
 # ---- 2. 统计 ----

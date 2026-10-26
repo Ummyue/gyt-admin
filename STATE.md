@@ -3,7 +3,8 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `2492b720` (v1.15.0 回款管理列表页补「回款列表」导航入口 + 删除「数据来源」筛选)
+- **最新 hash**: 见 CF Pages 控制台 / `git log`（本文件不随站点发布，故不记 hash）
+  - v1.15.0 起本文件已从部署产物中排除（`scripts/deploy_cf.sh`），避免内部工作笔记公开
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**:
