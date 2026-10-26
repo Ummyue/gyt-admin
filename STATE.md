@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `25c52367` (审批管理模块 v1.11.0 应用模块新增「回款管理」+ 遗留手机号脱敏)
+- **最新 hash**: `f87e97f5` (审批管理模块 v1.12.0 纠正应用范围描述)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `decfc7c` (feat(approval): v1.11.0 应用模块新增「回款管理」+ 补做遗留手机号脱敏，已推送)
+- 最新 commit: `a79988a` (fix(approval): v1.12.0 纠正「应用范围」描述，业务线/发票/保证金目前无审批流，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.11.0，2026-10-21）
@@ -89,6 +89,11 @@ git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；�
 ② **`.offline-build/` 是整个站点的完整副本**（304 文件 / 28MB，含 4 组截图 + 离线包 + dist），
 `wrangler pages deploy .` 传的是**整个目录**（含 gitignore 的构建产物），上传量 685 文件 / 48MB；
 ③ **失败的重试本身在消耗上传配额**，让限流窗口一直不恢复。
+
+⚠️ **脚本里的强删清理会被权限网关拦截 → 脚本非零退出 → 部署其实已发生，
+但输出里只看得到「待上传 341 个文件」，极易误判成「没部署」**（v1.12.0 踩过一次，
+线上 config 仍是旧的 27 条映射）。现已把清理改成可恢复删除且**清理失败不影响部署结果**，
+脚本末尾加了提示。**每次部署后必须回线上核验文件内容，不能只看脚本输出。**
 
 **修法**：新增 `scripts/deploy_cf.sh` —— 先 rsync 出「只含公开文件」的暂存目录（排除
 `.git/` `.offline-build/` `.deploy_tmp/` `.prototype-flow/` `prd-library/` `local_tasks/`
