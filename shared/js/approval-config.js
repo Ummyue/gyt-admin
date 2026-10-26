@@ -10,8 +10,18 @@
 //
 // 应用模块（见 approval-engine.js APPLY_MODULES）：
 //   project 项目准入 / contract 合同管理 / goods_transfer 货转管理 /
-//   payment 付款管理 / refund 退款管理 / settlement 结算单管理 /
-//   bond_letter 追保函管理 / release 放货管理
+//   payment 付款管理 / refund 退款管理 / receipt 回款管理 /
+//   settlement 结算单管理 / bond_letter 追保函管理 / release 放货管理
+//
+// ⚠️ 关于「规划中」映射（v1.12.0）：
+//   下方标「规划中」的条目，其对应业务页面**尚未引入 approval-engine.js**，
+//   因此当前不会渲染出审批时间线；保留条目是为标明后续接入计划。
+//   业务线管理 / 发票管理 / 保证金管理 **目前没有应用审批流程**，
+//   已从本表移除（原先的 margin-adjust-detail / invoice-detail /
+//   invoice-out-detail / business-line-detail）。
+//
+// 另有 2 个页面自绘审批时间线、不走通用引擎：
+//   project-detail.html  /  customer-detail.html（容器 class="approval-timeline"）
 
 window.APPROVAL_CONFIG_BY_PAGE = {
 
@@ -27,7 +37,6 @@ window.APPROVAL_CONFIG_BY_PAGE = {
   // ---------- 付款管理 / 退款管理（highRisk：资金流出） ----------
   'payment-detail':      'highRisk',
   'refund-detail':       'highRisk',
-  'margin-adjust-detail':'highRisk',
 
   // ---------- 追保函管理（highRisk：涉担保责任） ----------
   'bond-letter-detail':  'highRisk',
@@ -45,24 +54,20 @@ window.APPROVAL_CONFIG_BY_PAGE = {
   // ---------- 放货管理（simple：仓储放货） ----------
   'warehouse-release-detail':    'simple',
 
-  // ---------- 收发货管理 ----------
+  // ---------- 收发货管理（规划中：页面尚未接入引擎） ----------
   'shipment-out-detail': 'simple',
   'shipment-in-detail':  'simple',
 
-  // ---------- 结算单管理 ----------
+  // ---------- 结算单管理（规划中：页面尚未接入引擎） ----------
   'settlement-purchase-detail': 'standard',
   'settlement-sales-detail':    'standard',
 
-  // ---------- 发票管理 ----------
-  'invoice-detail':       'simple',
-  'invoice-out-detail':   'simple',
-
-  // ---------- 回款管理 ----------
+  // ---------- 回款管理（规划中：页面尚未接入引擎） ----------
   'receipt-edit':         'simple',
   'receipt-detail':       'simple',
 
-  // ---------- 业务线管理 ----------
-  'business-line-detail': 'standard'
+  // ---------- 合同管理 · 运输合同（规划中：页面尚未接入引擎） ----------
+  'contract-shipping':                   'highRisk'
 };
 
 // 各页面的审批单据金额提取配置（用于条件分支求值）

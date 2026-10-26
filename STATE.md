@@ -133,6 +133,38 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
 
+### v1.12.0 应用范围口径纠正（2026-10-26）
+user 指出：审批管理的「应用范围」描述有误 —— **业务线 / 发票 / 保证金模块目前没有应用审批流程**，
+要求删掉对应描述并全量检查该模块需求文档。
+
+**排查方法（可复用）**：用「**HTML 里声明了 + 浏览器实际加载了**」双向比对，
+而不是只 grep 源码：
+```python
+# config 映射了 27 条，但其中 13 条指向的页面根本没引 approval-engine.js → 死映射
+has_engine = "shared/js/approval-engine.js" in src
+has_box    = bool(re.search(r'approvalTimeline_|class="timeline"|approval-timeline', src))
+```
+
+**结论**：实际渲染审批时间线的只有 **14 个引擎页** + **2 个自绘页**（project-detail / customer-detail，
+用 `class="approval-timeline"` 页面内联实现，不读映射表）。
+
+**文档纠正（docs/p-approval-flow-list.md §6）** —— 映射表重列 4 类：
+| 分类 | 内容 |
+|---|---|
+| §6.1 已接入通用引擎（14 页） | 合同管理(6) / 付款 / 退款 / 追保函 / 项目准入(1) / 客户准入(1) / 货转(2) / 放货(1) |
+| §6.2 页面自绘（2 页） | 项目详情 / 客户详情，不读 `APPROVAL_CONFIG_BY_PAGE` |
+| §6.3 规划中（4 项） | 收发货 / 结算单 / 回款 / 运输合同 —— 映射保留，标注**页面尚未引入引擎** |
+| §6.4 目前没有审批流（3 模块） | 业务线管理 / 发票管理 / 保证金管理 |
+
+**代码同步**：`shared/js/approval-config.js` 删掉 4 条死映射
+（`margin-adjust-detail` / `invoice-detail` / `invoice-out-detail` / `business-line-detail`），
+其余 9 条规划中映射保留并加注释。映射 27 → 24 条。
+
+**另外查出两处同类问题**：
+- 监控页文档 §3.3 的「全部模块」筛选器写的是 8 项且名称全错，实际取自 `AE.APPLY_MODULES`（9 项）→ 已改
+- **客户准入**：申请页已接 `highRisk`、详情页自绘，但**不在可勾选清单内**（`APPLY_MODULES` 9 项无此项），
+  编排时无法把应用模块选为客户准入 → 已在文档 §6.5 记为待决，未擅自改清单（会动编排页 UI）
+
 ### 页面标记点 pin annotation 接入补全（2026-10-26）
 **背景**：功能早在 `v1.7.99.262` 就全局装好了（`assets/js/pin-annotation.js` + `assets/css/pin-annotation.css`），
 但**后续新建的页面没被覆盖到**，且触发按钮存在「渲染出来但点不动」的隐患。
