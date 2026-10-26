@@ -269,7 +269,8 @@
         status:'withdrawn', elapsedH: 8 }
     ];
 
-    // Mock 审批提醒记录（由节点提醒规则触发）
+    // Mock 审批提醒（由节点提醒规则触发）—— v1.14.0 起仅用于 KPI 卡「已触发审批提醒」计数，
+    // 「审批提醒记录」明细模块已下线
     const REMINDS = [
       { docNo:'FK-20261014-003',  module:'payment',    node:'合规审查',   to:'许文静',
         phone:'136 0001 XXXX', threshold: 48, channel:'站内消息 + 短信', at:'2026-10-15 10:20', status:'已送达' },
