@@ -59,10 +59,9 @@ window.APPROVAL_CONFIG_BY_PAGE = {
   'settlement-purchase-detail': 'standard',
   'settlement-sales-detail':    'standard',
 
-  // ---------- 回款管理 ----------
-  // 回款审批详情页（v1.13.0 新增，流程参照付款详情页）
-  'receipt-approval-detail':    'highRisk',
-  // 回款编辑 / 回款详情（规划中：页面尚未接入引擎）
+  // ---------- 回款管理（规划中：页面尚未接入引擎） ----------
+  // 注：回款审批详情页（receipt-approval-detail.html）按项目准入「审批详情」模板
+  // **页面自绘**审批进度，不走通用引擎，故不在本表登记。
   'receipt-edit':         'simple',
   'receipt-detail':       'simple',
 

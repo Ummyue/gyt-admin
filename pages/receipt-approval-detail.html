@@ -35,10 +35,10 @@
       padding: 18px 20px; margin-bottom: 16px;
     }
     .detail-header-row1 { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
-    .detail-title { font-size: 18px; font-weight: 600; color: var(--text-primary); }
+    .detail-title { font-size: 18px; font-weight: 600; color: var(--text-primary); white-space: nowrap; }
     .status-badge {
       display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 4px;
-      font-size: 12px; font-weight: 500;
+      font-size: 12px; font-weight: 500; white-space: nowrap; flex-shrink: 0;
     }
     .status-badge.draft     { background: #EFF6FF; color: #1E40AF; }
     .status-badge.approving { background: #FEF3C7; color: #A16207; }
@@ -248,18 +248,193 @@
 
       <!-- 审批管理面板 -->
       <div id="tabPanelApproval" style="display: none;">
-        <div class="info-section">
-          <h3 class="info-section-title">审批进度</h3>
-          <div class="info-section-body">
-            <div style="display:flex;justify-content:flex-end;margin-bottom:12px;">
-              <button class="btn btn-default" onclick="withdrawApply()">↩ 撤回申请</button>
+        <!-- 顶部黄底状态条（v1.13.1 参照项目准入「项目详情」审批详情模板） -->
+        <div class="approval-status" style="margin-bottom: 16px;">
+          <div class="approval-status-icon">⏳</div>
+          <div class="approval-status-body">
+            <div class="approval-status-title">
+              <span>审批进行中</span>
+              <span class="tag tag-yellow">待审批</span>
+              <span class="tag tag-blue">外部 OA 系统</span>
             </div>
-            <!-- 审批时间线由通用审批引擎渲染（shared/js/approval-engine.js） -->
-            <div class="timeline" id="approvalTimeline_receipt-approval-detail" data-approval-engine="1" data-approval-migrated="5">
-              <!-- 审批节点由通用审批引擎渲染（v1.13.0） -->
+            <div class="approval-status-desc">
+              郑州信必达国际供应链有限公司 · 回款申请 <strong>610947</strong>
+              已提交至外部审批系统，当前在「<strong id="approvalCurrentNode">业务审批</strong>」阶段。
+            </div>
+            <div class="approval-status-meta">
+              <div><span style="color: var(--text-tertiary);">申请编号</span> <strong>610947</strong></div>
+              <div><span style="color: var(--text-tertiary);">提交时间</span> <strong>2026-07-14 10:22</strong></div>
+            </div>
+          </div>
+          <button class="btn btn-danger-outline" id="withdrawBtn" onclick="withdrawApply()">↩ 撤回申请</button>
+        </div>
+
+        <!-- 左右两栏：审批进度 + 关键指标 / 实时活动 / 催办 -->
+        <div style="display: grid; grid-template-columns: 1.6fr 1fr; gap: 16px;">
+          <!-- 左：审批进度时间线 -->
+          <div class="card">
+            <div class="card-header">
+              <div class="card-title">审批进度 <span style="color: var(--text-tertiary); font-weight: 400; font-size: 13px;">（共 5 个节点，当前进行中 ①）</span></div>
+              <button class="btn btn-text" onclick="refreshApproval()">🔄 刷新</button>
+            </div>
+            <div class="card-body" style="padding: 0;">
+              <!-- 审批进度时间线（v1.13.1 按项目准入「项目详情」审批详情模板自绘，
+                   节点结构与 .at-item 一致） -->
+              <div class="approval-timeline" id="receiptApprovalTimeline">
+                <!-- 节点 1 -->
+                <div class="at-item completed">
+                  <div class="at-circle">✓</div>
+                  <div class="at-content">
+                    <div class="at-title">
+                      <span class="at-name">① 提交申请</span>
+                      <span class="at-status ok">已完成</span>
+                    </div>
+                    <div class="at-sub">张爽（业务人员）提交回款申请</div>
+                    <div class="at-meta">
+                      <span>🕐 2026-07-14 10:22:36</span>
+                      <span>📎 附件 2 份</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 节点 2（一级审批） -->
+                <div class="at-item completed">
+                  <div class="at-circle">✓</div>
+                  <div class="at-content">
+                    <div class="at-title">
+                      <span class="at-name">② 一级审批</span>
+                      <span class="at-status ok">已通过</span>
+                    </div>
+                    <div class="at-sub">审批人：李娜（业务部负责人）</div>
+                    <div class="at-opinion">审批意见：同意，回款凭证齐全，金额与合同一致，同意进入下一环节。</div>
+                    <div class="at-meta">
+                      <span>🕐 2026-07-14 11:04:18</span>
+                      <span>⏱ 历时 1 小时 42 分</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 节点 3（二级审批 · 进行中） -->
+                <div class="at-item current">
+                  <div class="at-circle">⏳</div>
+                  <div class="at-content">
+                    <div class="at-title">
+                      <span class="at-name">③ 二级审批</span>
+                      <span class="at-status running">进行中</span>
+                    </div>
+                    <div class="at-sub">审批人：宋美玲（风控部）</div>
+                    <div class="at-opinion">等待审批人处理，已等待 3 小时 30 分钟</div>
+                    <div class="at-meta">
+                      <span>🕐 2026-07-14 13:40:02</span>
+                      <span>⏱ 等待中</span>
+                    </div>
+                  </div>
+                </div>
+                <!-- 节点 4（三级审批 · 待开始） -->
+                <div class="at-item pending">
+                  <div class="at-circle">④</div>
+                  <div class="at-content">
+                    <div class="at-title">
+                      <span class="at-name">④ 三级审批</span>
+                      <span class="at-status pending">待开始</span>
+                    </div>
+                    <div class="at-sub">审批人：吴静（财务部）</div>
+                    <div class="at-meta">需在二级审批通过后自动触发</div>
+                  </div>
+                </div>
+                <!-- 节点 5（回款生效 · 待开始） -->
+                <div class="at-item pending">
+                  <div class="at-circle">⑤</div>
+                  <div class="at-content">
+                    <div class="at-title">
+                      <span class="at-name">⑤ 回款生效</span>
+                      <span class="at-status pending">待开始</span>
+                    </div>
+                    <div class="at-sub">三级审批通过后自动生效，回款进入认领环节</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- 右：关键指标 + 实时活动 + 催办 -->
+          <div style="display: flex; flex-direction: column; gap: 16px;">
+            <div class="card">
+              <div class="card-header"><div class="card-title">关键指标</div></div>
+              <div class="card-body" style="padding: 0;">
+                <div class="kpi-list">
+                  <div class="kpi-row"><span class="kpi-label">当前节点</span><span class="kpi-value blue">业务审批</span></div>
+                  <div class="kpi-row"><span class="kpi-label">剩余节点</span><span class="kpi-value">3 个（复核 / 审查 / 完成）</span></div>
+                  <div class="kpi-row"><span class="kpi-label">已耗时</span><span class="kpi-value">1 天 7 小时</span></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="card-header">
+                <div class="card-title">实时活动 <span style="color: var(--text-tertiary); font-weight: 400; font-size: 12px;">最近 24h</span></div>
+              </div>
+              <div class="card-body" style="padding: 0;">
+                <div class="activity-list">
+                  <div class="activity-item">
+                    <div class="activity-dot">👁</div>
+                    <div class="activity-content">
+                      <div class="activity-text">宋美玲 查看了审批单</div>
+                      <div class="activity-time">10 分钟前</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-dot">✓</div>
+                    <div class="activity-content">
+                      <div class="activity-text">王浩 通过了「业务审批节点 1/3」</div>
+                      <div class="activity-time">2 小时前 · 09:15</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-dot">🔔</div>
+                    <div class="activity-content">
+                      <div class="activity-text">系统向审批节点发起催办</div>
+                      <div class="activity-time">3 小时前 · 08:45</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-dot">⏰</div>
+                    <div class="activity-content">
+                      <div class="activity-text">邱占伍 查看了审批单</div>
+                      <div class="activity-time">5 小时前 · 06:30</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-dot">📨</div>
+                    <div class="activity-content">
+                      <div class="activity-text">张爽 通过了「一级审批」</div>
+                      <div class="activity-time">昨天 · 18:22</div>
+                    </div>
+                  </div>
+                  <div class="activity-item">
+                    <div class="activity-dot">📝</div>
+                    <div class="activity-content">
+                      <div class="activity-text">张爽 提交了回款申请</div>
+                      <div class="activity-time">昨天 · 16:45</div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div class="card" style="background: #FEF3C7; border: 1px solid #FCD34D;">
+              <div class="card-body" style="padding: 16px;">
+                <div style="display: flex; align-items: flex-start; gap: 12px;">
+                  <div style="font-size: 18px;">⚠️</div>
+                  <div style="flex: 1;">
+                    <div style="font-size: 13px; color: #92400E; font-weight: 500; margin-bottom: 4px;">宋美玲 已 2 小时未处理</div>
+                    <div style="font-size: 12px; color: #A16207; margin-bottom: 12px;">建议催办 @ 该审批人 加快处理</div>
+                    <button class="btn btn-warning" style="background: #F59E0B; color: #fff; border: 0; padding: 4px 12px; font-size: 12px; border-radius: 4px;" onclick="urgeApproval()">立即催办</button>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
+      </div>
       </div>
 
       <!-- 操作记录 -->
@@ -290,8 +465,6 @@
   </div>
 
   <script src="../assets/js/app.js"></script>
-  <script src="../shared/js/approval-engine.js"></script>
-  <script src="../shared/js/approval-config.js"></script>
   <script src="../assets/js/pin-annotation.js"></script>
   <script>
     // ===== 状态映射（与回款列表页 STATUS_MAP 一致）=====
@@ -334,6 +507,12 @@
       if (!confirm('确定要撤回该笔回款的审批申请吗？\n\n撤回后状态回到「待提交」，可修改后重新提交。')) return;
       Utils.toast('已撤回申请', 'success');
     }
+    function refreshApproval() {
+      Utils.toast('已刷新审批进度', 'success');
+    }
+    function urgeApproval() {
+      Utils.toast('已发送催办', 'success');
+    }
 
     // ===== 初始化：按 URL ?no= / ?status= 还原 =====
     (function () {
@@ -353,24 +532,29 @@
       var footer = document.getElementById('receiptApprovalFooter');
       if (footer) footer.style.display = (statusKey === 'approving') ? '' : 'none';
       if (showApproval) switchDetailTab('approval', approvalTab);
+
+      // 顶部黄底状态条：仅「审批中」显示；「驳回」改为驳回态提示
+      var bar = document.querySelector('#tabPanelApproval .approval-status');
+      if (bar) {
+        if (statusKey === 'approving') {
+          bar.style.display = '';
+          var w = document.getElementById('withdrawBtn');
+          if (w) w.style.display = '';
+        } else if (statusKey === 'rejected') {
+          bar.style.display = '';
+          var t = bar.querySelector('.approval-status-title');
+          if (t) t.innerHTML = '<span>审批已驳回</span><span class="tag tag-red">需修改重提</span>';
+          var d = bar.querySelector('.approval-status-desc');
+          if (d) d.innerHTML = '该笔回款申请在审批环节被驳回，请修改后重新提交审批。';
+          var w2 = document.getElementById('withdrawBtn');
+          if (w2) w2.style.display = 'none';
+        } else {
+          bar.style.display = 'none';
+        }
+      }
     })();
 
-    // ===== 审批时间线挂载（通用引擎）=====
-    (function () {
-      function boot() {
-        var el = document.getElementById('approvalTimeline_receipt-approval-detail');
-        if (!el || !window.ApprovalEngine) return;
-        var q = new URLSearchParams(location.search);
-        var opts = {};
-        var step = q.get('step');
-        if (step !== null && step !== '') opts.currentIdx = parseInt(step, 10);
-        else opts.currentIdx = 1;
-        window.ApprovalEngine.mount(el, opts);
-      }
-      if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-      else boot();
-      window.addEventListener('load', boot);
-    })();
+    // v1.13.1：审批进度改为按项目准入模板自绘（.at-item），不再挂载通用审批引擎
   </script>
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
