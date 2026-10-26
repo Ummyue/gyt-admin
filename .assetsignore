@@ -1,5 +1,9 @@
-# ===== Cloudflare Pages 上传排除（wrangler pages deploy 读取本文件） =====
-# 说明：以下均为本地构建产物 / 内部运行时数据，不应发布到公网
+# ===== Cloudflare 上传排除 =====
+# ⚠️ 注意：**wrangler pages deploy 不读本文件**（这是 Workers 静态资源的特性，实测无效）。
+#    Pages 的正确做法见 scripts/deploy_cf.sh —— rsync 出「只含公开文件」的暂存目录再部署。
+#    本文件仅对 Workers / 其它走 assets 机制的上传路径生效，保留备用。
+#
+# 以下均为本地构建产物 / 内部运行时数据，不应发布到公网
 
 # 版本控制
 .git/

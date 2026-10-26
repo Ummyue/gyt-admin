@@ -81,7 +81,7 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
 git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；但 `.offline-build/`
 是给业主的离线包，内容已陈旧（早于 2026-07-09 脱敏），要重打需 user 确认。
 
-### 部署限流排查 + .assetsignore（2026-10-26）
+### 部署限流排查 + 暂存目录部署（2026-10-26）
 **现象**：`wrangler pages deploy` 连续报 `POST /pages/assets/upload -> 429 Too Many Requests`，
 换 token / 换代理 / 退避重试**全部无效**。
 
@@ -90,10 +90,25 @@ git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；�
 `wrangler pages deploy .` 传的是**整个目录**（含 gitignore 的构建产物），上传量 685 文件 / 48MB；
 ③ **失败的重试本身在消耗上传配额**，让限流窗口一直不恢复。
 
-**修法**：新增 `.assetsignore`（wrangler pages 读取，gitignore 语法）排除
-`.git/` `.offline-build/` `.deploy_tmp/` `.prototype-flow/` `prd-library/` `local_tasks/` `*.zip`
-→ 上传量降到 **352 文件 / 10.4MB**。
-顺带把 `prd-library/`（含 17 项差异清单与裁决记录）**排除出公网** —— 那是对内文档。
+**修法**：新增 `scripts/deploy_cf.sh` —— 先 rsync 出「只含公开文件」的暂存目录（排除
+`.git/` `.offline-build/` `.deploy_tmp/` `.prototype-flow/` `prd-library/` `local_tasks/`
+`.work/` `.session-handoff/` `.wrangler/` `*.zip`），再从暂存目录部署。
+上传量 **685 文件 / 48MB → 339 文件 / 11MB**。
+
+⚠️ **`.assetsignore` 对 `wrangler pages deploy` 无效**（那是 Workers 静态资源的特性，
+实测 Pages 忽略它）。文件保留但已注明；Pages 走暂存目录方案。
+
+⚠️ **CF Pages 的资源存储是累积的**：新部署只上传本次的 339 个文件，
+**上次部署里存在、本次没上传的路径仍会继续对外提供**（实测 `.offline-build/shots/` 仍 200）。
+- 想彻底清掉 → 需要**删除并同名重建项目**（`pages.dev` 子域由项目名派生，URL 不变；
+  token 已验证具备 create/delete 权限，用一次性项目验过）。
+- **本项目未做**：删线上项目属不可逆动作，需 user 明确同意。
+- 现状风险可控：站点本来就公开 `docs/` `docs-v2/`（含裁决记录），`prd-library/` 不算新增暴露类别；
+  真正别扭的是 `.offline-build/dist/` 那份 v1.0.0 旧版站点副本可被猜到 URL 浏览。
+
+⚠️ **CF Pages `_redirects` 不支持 404 重写**（官方文档：Rewrites (other status codes) ❌，
+示例 `/blog/* /blog/404.html 404` 被明确标为不支持）→ 非破坏性封堵内部路径走不通，
+只能靠「删项目重建」或「加 Pages Function 拦 404」。
 
 **排查手法（下次直接用）**：
 ```bash
