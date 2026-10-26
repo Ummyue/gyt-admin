@@ -149,6 +149,19 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
 
+### CF Pages 部署 429 限流（2026-10-26 v1.17.0 部署时遇到）
+
+本会话短时间内连续部署 6+ 次，Cloudflare API 开始返回 429：
+
+| 现象 | `wrangler` 报 `GET /accounts -> 429 Too Many Requests`，或 `POST /pages/assets/upload -> 429`（带 `retryAfterMs`） |
+|---|---|
+| 绕过 /accounts 限流 | 设置 `CLOUDFLARE_ACCOUNT_ID=9bd52949bf6d4e023b94a32feaa72dd9`（可从 `~/Library/Preferences/.wrangler/logs/` 里 grep `"account_id":"..."` 拿到），wrangler 就不再调 `/accounts` |
+| upload 限流 | 没有绕过办法，只能**按 `retryAfterMs` 退避后重试**（本次 retryAfterMs 给了 214000~255000，约 3.5~4.3 分钟） |
+| 部署脚本 | `scripts/deploy_cf.sh` 本身没问题，限流是账号级配额；建议**同一小时内不要连续多次部署** |
+
+⚠️ 排查顺序：先看报错是 `/accounts` 还是 `/pages/assets/upload` ——
+前者加 `CLOUDFLARE_ACCOUNT_ID` 即可，后者只能等。
+
 ### v1.17.0 项目立项「业务负责人」改模糊搜索 + 修 chip × 点不动（2026-10-26）
 
 **改动 1：业务负责人由单选下拉改为模糊搜索输入框**（user 截图标注）

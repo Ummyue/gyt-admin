@@ -49,12 +49,19 @@ MB=$(du -sm "$STAGE" | cut -f1)
 echo "▸ 待上传: $N 个文件 / ${MB}MB"
 
 # ---- 3. 部署 ----
+# ⚠️ **不要加 --skip-caching**（v1.17.0 起）：
+#   该标志的语义是「**强制跳过**资产缓存」—— wrangler 会跳过
+#   `POST /pages/assets/check-missing`（按内容哈希问服务端哪些文件已存在），
+#   把全部文件当成新增逐个重传。本项目 348 个文件 → 每次部署 348 次上传请求，
+#   极易触发 CF Pages 的上传配额 429（本次实测连续 6+ 次部署后必 429）。
+#   去掉后：先 1 次 check-missing（服务端按 hash 去重），只上传**变更文件**，
+#   本次实测从 348 次请求降到个位数。
+#   （`.wrangler` 在 wrangler Pages 默认 IGNORE_LIST 内，不会上传到站点）
 echo "▸ 开始部署到 Cloudflare Pages（project=${PROJECT}）…"
 cd "$STAGE"
 CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:?请先设置 CLOUDFLARE_API_TOKEN}" \
   npx --prefix "$ROOT" wrangler pages deploy . \
     --project-name="$PROJECT" \
-    --skip-caching \
     --cwd="$STAGE"
 
 # ---- 4. 清理暂存目录 ----
