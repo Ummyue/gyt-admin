@@ -3,22 +3,24 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `8cd789f4` (审批流程监控页删除「引用流程」筛选与「审批提醒记录」模块)
+- **最新 hash**: `a372bea8` (v1.15.0 回款管理列表页补「回款列表」导航入口 + 删除「数据来源」筛选)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
-- **部署命令**: 
+- **部署命令**:
   ```
-  CLOUDFLARE_API_TOKEN=<token> npx wrangler pages deploy . \
-    --project-name=yugangtong-prototype --skip-caching \
-    --cwd=$(pwd)
+  CLOUDFLARE_API_TOKEN=<token> bash scripts/deploy_cf.sh
   ```
+  ⚠️ **必须走 `scripts/deploy_cf.sh`，不能直接 `wrangler pages deploy .`**：
+  脚本会先 rsync 出干净暂存目录（排除 `.git/` `.offline-build/` `.deploy_tmp/`
+  `.prototype-flow/` `prd-library/` 等），把上传量从 685 文件/48MB 压到 ~350 文件/14MB，
+  否则会触发 CF 429。
   （`--cwd` 必须带：父目录 workspace 下有别的项目的 wrangler.toml 含 `[assets]`，
    wrangler 4.x 会向上递归搜到并导致 "Configuration file for Pages projects
    does not support 'assets'"）
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `e516fbd` (feat(approval): v1.14.0 审批流程监控页删除「引用流程」筛选与「审批提醒记录」模块，已推送): v1.13.1 回款审批详情页按项目准入模板重做，已推送): v1.13.0 回款管理接入审批流 + 收发货移出应用范围 + 修左侧菜单四级递归，已推送): v1.12.0 纠正「应用范围」描述，业务线/发票/保证金目前无审批流，已推送)
+- 最新 commit: `b0db217` (feat(receipt): v1.15.0 回款管理列表页补「回款列表」导航入口 + 删除「数据来源」筛选，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.11.0，2026-10-21）
@@ -145,6 +147,25 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 「在 body 末尾 … 之前插入 modal 弹窗」）。用 `s.replace("</body>", ...)` 会把脚本标签
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
+
+### v1.15.0 回款管理列表页两项修正（2026-10-26）
+user 截图标注：回款管理缺少列表页的导航菜单按钮 + 「数据来源」筛选可删除。
+
+| 改动 | 说明 |
+|---|---|
+| 菜单补「回款列表」入口 | `topnav-drawer.js` 的「回款管理」children 原本只有 回款详情 / 回款审批详情 / 编辑回款，**唯独缺指向列表页的入口**。现为 回款列表 / 回款详情 / 回款审批详情 / 编辑回款，与「保证金管理 → 保证金明细」结构对齐 |
+| 删「数据来源」筛选 | `pages/receipt-list.html` 筛选区删除该下拉（选项 OA同步 / 手工录入 / 银行同步），6 项减为 5 项（编号/回款方/收款账号/回款日期/回款方式）。该筛选**无 JS 过滤逻辑**，纯展示，删除安全 |
+| 保留项 | 详情页顶栏的「数据来源」是**展示字段**（非筛选项），不动 |
+| 文档 | `docs/p-receipt-list.md` 筛字段落改 5 项 + 追加 v1.15.0 版本记录 |
+
+⚠️ **菜单层级是四级**：数字供应链 › 资金管理 › 回款管理 › 回款列表。
+`TOPNAV_MENU` 是 **object**（7 个一级 key），不是数组；「回款管理」在「资金管理」的
+`children` 里，「回款列表」在「回款管理」的 `children` 里 —— 查菜单必须**递归**，
+只查一层会漏。
+
+⚠️ **顶栏抽屉（v1.3 设计）只列二级菜单**，不展开三级/四级。
+所以「回款列表」**永远不会出现在抽屉里**，它在**左侧菜单**里 —— 验证抽屉断言时
+不要断言它含四级项。
 
 ### v1.14.0 审批流程监控页精简（2026-10-26）
 user 要求删除「引用流程」筛选与「审批提醒记录」子功能模块。
