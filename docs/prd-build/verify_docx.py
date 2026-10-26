@@ -79,6 +79,14 @@ print("空表(仅表头):", empty if empty else "无 ✅")
 
 # 9) 章节完整性
 need = ["1　文档说明", "2　产品概述", "3　全局规范与共性约定",
-        "4　各模块需求说明", "5　跨模块待确认问题清单", "附录 A　页面索引", "附录 B　术语与缩写"]
+        "4　各模块需求说明", "附录 A　页面索引", "附录 B　术语与缩写"]
+FORBID = ["5　跨模块待确认问题清单"]
 miss = [n for n in need if n not in h1]
 print("必备章节:", "齐全 ✅" if not miss else f"缺 {miss}")
+present_forbidden = [n for n in FORBID if n in h1]
+print("已删除章节残留:", "无 ✅" if not present_forbidden else f"❌ 仍存在 {present_forbidden}")
+# 正文里不得再出现指向第 5 章的引用
+raw = z.read("word/document.xml").decode("utf-8", "ignore")
+body_txt = re.sub(r"<[^>]+>", "", raw)
+stale = [k for k in ["第 5 章", "跨模块待确认问题清单"] if k in body_txt]
+print("失效交叉引用:", "无 ✅" if not stale else f"❌ {stale}")
