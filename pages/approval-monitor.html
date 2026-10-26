@@ -123,7 +123,7 @@
                 当前搜索：<span data-filter-chips class="filter-chips"></span><span class="filter-empty-hint">（无筛选条件）</span>
                 <button type="button" class="clear-all-btn" style="display: none;" onclick="clearAllFilters(this)">清除全部</button>
               </div>
-              <button class="btn btn-text btn-sm" onclick="exportReminds()">
+              <button class="btn btn-text btn-sm" onclick="exportInstances()">
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
                 数据导出
               </button>
@@ -137,12 +137,6 @@
                 <span class="cp-filter-label">应用模块</span>
                 <select class="select" id="fltModule" onchange="renderTable()">
                   <option value="">全部模块</option>
-                </select>
-              </div>
-              <div class="cp-filter-item">
-                <span class="cp-filter-label">引用流程</span>
-                <select class="select" id="fltFlow" onchange="renderTable()">
-                  <option value="">全部流程</option>
                 </select>
               </div>
             </div>
@@ -199,37 +193,6 @@
 
         </div>
         <!-- /cp-panel -->
-
-        <!-- ========== 审批提醒记录 ========== -->
-        <div class="cp-panel" style="margin-top: 16px;">
-          <div class="cp-block">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
-              <div style="font-size: 13px; font-weight: 600; color: var(--text-primary);">
-                审批提醒记录
-                <span style="font-weight: 400; color: var(--text-tertiary); margin-left: 8px;">
-                  节点「提醒规则」触发后自动发送，记录推送对象与时间
-                </span>
-              </div>
-            </div>
-            <div style="overflow-x: auto;">
-              <table class="cp-table is-compact" style="width:100%;">
-                <thead>
-                  <tr>
-                    <th style="width: 16%;">单据编号</th>
-                    <th style="width: 10%;">应用模块</th>
-                    <th style="width: 12%;">卡在节点</th>
-                    <th style="width: 11%;">提醒对象</th>
-                    <th style="width: 11%;">提醒阈值</th>
-                    <th style="width: 9%;">推送渠道</th>
-                    <th style="width: 11%;">触发时间</th>
-                    <th style="width: 8%;">状态</th>
-                  </tr>
-                </thead>
-                <tbody id="remindBody"></tbody>
-              </table>
-            </div>
-          </div>
-        </div>
 
       </div>
     </div>
@@ -338,8 +301,6 @@
     (function initFilters() {
       document.getElementById('fltModule').innerHTML +=
         AE.APPLY_MODULES.map(m => `<option value="${m.key}">${AE.esc(m.label)}</option>`).join('');
-      document.getElementById('fltFlow').innerHTML +=
-        AE.listFlows().map(f => `<option value="${f.id}">${AE.esc(f.name)}</option>`).join('');
     })();
 
     // ================================================================
@@ -384,11 +345,9 @@
     function getFiltered() {
       const kw = (document.getElementById('fltKw').value || '').trim();
       const mod = document.getElementById('fltModule').value;
-      const fid = document.getElementById('fltFlow').value;
       return INSTANCES.filter(i => {
         if (curTab && i.status !== curTab) return false;
         if (mod && i.module !== mod) return false;
-        if (fid && i.flowId !== fid) return false;
         if (kw && i.docNo.indexOf(kw) < 0 && i.submitter.indexOf(kw) < 0) return false;
         return true;
       });
@@ -426,7 +385,6 @@
       }).join('') || `<tr><td colspan="10"><div class="ap-empty">暂无匹配记录</div></td></tr>`;
 
       renderPagination(all.length, totalPages);
-      renderReminds();
     }
 
     function renderPagination(total, totalPages) {
@@ -445,20 +403,6 @@
       if (p < 1 || p > totalPages) return;
       currentPage = p;
       renderTable();
-    }
-
-    function renderReminds() {
-      document.getElementById('remindBody').innerHTML = REMINDS.map(r => `
-        <tr>
-          <td style="font-family: var(--font-mono); font-size: 12px;">${AE.esc(r.docNo)}</td>
-          <td>${AE.esc(moduleLabel(r.module))}</td>
-          <td style="font-size:12px;">${AE.esc(r.node)}</td>
-          <td style="font-size:12px;">${AE.esc(r.to)}<br><span style="color:var(--text-tertiary);">${AE.esc(r.phone)}</span></td>
-          <td style="font-size:12px;">未处理满 ${r.threshold}h</td>
-          <td style="font-size:12px; color: var(--text-secondary);">${AE.esc(r.channel)}</td>
-          <td style="font-size:12px; color: var(--text-tertiary);">${AE.esc(r.at)}</td>
-          <td><span class="tag ${r.status === '已送达' ? 'tag-green' : 'tag-gray'}">${AE.esc(r.status)}</span></td>
-        </tr>`).join('') || '<tr><td colspan="8"><div class="ap-empty">暂无提醒记录</div></td></tr>';
     }
 
     // ================================================================
@@ -559,8 +503,8 @@
       toast('申请已撤回');
     }
 
-    function exportReminds() {
-      toast('已导出 ' + REMINDS.length + ' 条审批提醒记录');
+    function exportInstances() {
+      toast('已导出 ' + getFiltered().length + ' 条审批实例记录');
     }
 
     function toast(msg) {
