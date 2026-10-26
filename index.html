@@ -198,6 +198,7 @@
       box-shadow: 0 8px 20px rgba(0,0,0,0.15);
     }
   </style>
+  <link rel="stylesheet" href="./assets/css/pin-annotation.css">
 </head>
 <body>
   <!-- 顶部 nav -->
@@ -213,6 +214,7 @@
       <a href="#" class="topbar-menu-item">关于</a>
     </div>
     <div class="topbar-right">
+      <button class="pin-trigger-btn" id="pinTriggerBtn" title="页面标记（4 位数字密码保护）"><svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>标记</button>
       <div class="topbar-user">
         <div class="topbar-user-avatar">张</div>
         <div>
@@ -379,5 +381,6 @@
       </a>
     </div>
   </div>
+  <script src="./assets/js/pin-annotation.js"></script>
 </body>
 </html>

@@ -557,10 +557,11 @@
   function init() {
     renderAllPins();
     ensureToggleBtn();
+    // 触发按钮：页面自带 #pinTriggerBtn 时直接绑定并同步状态；
+    // 没有自带按钮且无 #btnCenter 时 ensureTriggerBtn 内部直接返回，不创建按钮
+    ensureTriggerBtn();
+    updateTriggerBtn();
     if (document.getElementById('btnCenter')) {
-      // 顶层 app.html：创建 trigger 按钮
-      ensureTriggerBtn();
-      updateTriggerBtn();
       // 顶层 app.html：监听 prototypeFrame iframe 加载，新页面加载完同步 pin 模式
       var frame = document.getElementById('prototypeFrame');
       if (frame) {

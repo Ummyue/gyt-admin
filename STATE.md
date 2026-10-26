@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-21 审批管理模块 v1.11.0（应用模块新增「回款管理」）
+最后更新: 2026-10-26 页面标记点 pin annotation 接入补全 + 触发按钮绑定修复
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -80,6 +80,44 @@ v1.4.0 及之前是 `[{key, children:[...]}]`。读取侧用 `AE.normModules()` 
 另外：`.offline-build/` 与 `.deploy_tmp/` 在 `.gitignore` 里（第 5、12 行），
 git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；但 `.offline-build/`
 是给业主的离线包，内容已陈旧（早于 2026-07-09 脱敏），要重打需 user 确认。
+
+### 顺带修掉的 2 个页面脚本结构缺陷（2026-10-26）
+排查 pin 缺口时发现**全站只有 2 页的脚本块结构是断的**（用「HTML 里声明了 + 浏览器实际加载了」双向比对定位）：
+
+| 页面 | 病因 | 症状 | 修法 |
+|---|---|---|---|
+| `pages/shipment-in-detail.html` | 闭合标签写成转义形式 `<\/script>`（3 处）—— HTML 解析器在 script-data 状态下**不认** `\/` 转义，导致整个块不闭合 | `left-sidemenu.js` / 内联脚本 / pin 脚本**全都没加载**；左侧菜单空白 | 还原为 `</script>` |
+| `pages/changelog.html` | 缺 pin 脚本引用 | 无标记点能力 | 在**真正的** `</body>` 前注入（见下方坑） |
+| `docs-renderer.html` | `h.textContent.replace(/#, '')` —— 非法正则（未闭合字符类） | 控制台 `Invalid regular expression: missing /` | 改为 `replace(/^#\s*/, '')` |
+
+⚠️ **注入 `</body>` 前必须用 `rfind` 而不是 `replace`（第一次匹配）**：
+`changelog.html` 的变更记录**数据字符串里含有字面量 `</body>`**（那段文字在描述
+「在 body 末尾 … 之前插入 modal 弹窗」）。用 `s.replace("</body>", ...)` 会把脚本标签
+插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
+**通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
+
+### 页面标记点 pin annotation 接入补全（2026-10-26）
+**背景**：功能早在 `v1.7.99.262` 就全局装好了（`assets/js/pin-annotation.js` + `assets/css/pin-annotation.css`），
+但**后续新建的页面没被覆盖到**，且触发按钮存在「渲染出来但点不动」的隐患。
+
+| 改动 | 说明 |
+|---|---|
+| 3 个审批页补引用 | `approval-flow-list` / `approval-flow-editor` / `approval-monitor` 建于 pin 全量注入之后，缺 CSS+JS 引用 |
+| `index.html` 补全 | 原型首页（用户实际入口）原本无任何 pin 引用；补 CSS+JS + 顶部工具区触发按钮 |
+| **修 JS bug（关键）** | `init()` 里 `ensureTriggerBtn()` / `updateTriggerBtn()` 原本**只在存在 `#btnCenter` 时才调用**（`#btnCenter` 是 app.html 专有）。导致任何「自带 `#pinTriggerBtn` 但没有 `#btnCenter`」的页面，按钮渲染出来却**没绑事件，点了没反应**。改为无条件调用（`ensureTriggerBtn` 内部对「无自带按钮且无 `#btnCenter`」会直接返回，不会多造按钮） |
+| `_clear-pins.html` 不注入 | 它就是「清理全站标记点」工具页本身，注入反而自相矛盾 |
+
+⚠️ **不要用 skill 的基础版资产覆盖项目版**：`assets/js/pin-annotation.js` 有 22 处
+iframe / postMessage 增强（cockpit 嵌外部 BI 站点、project-apply/detail 带 iframe），
+skill 原版没有这些，会丢 `v1.7.99.262.x` 系列热修。
+
+**pin 的真实行为**（写验证脚本时别踩）：
+- 存储 `localStorage['ygt_pin_data']` = `{ password, pins: [] }`，`pins` 是**扁平数组**，
+  每条带 `page` 字段按 URL 归一化（无 `.html`）→ **pin 按页面隔离，跨页不串**
+- 描述保存走 **`#pinEditorSave` 按钮**（不是 skill 文档写的 Ctrl+Enter）
+- 锁定是**内存态** `state.lockedUntil`（5 分钟），**不落 localStorage**
+- 输错 3 次 → 关闭密码框 + `alert('密码错误次数过多，已锁定 5 分钟')`；
+  锁定期间再点触发 → `alert('密码输入已被锁定…')` 且**不再创建密码框**
 
 ### v1.11.0 变更（2026-10-21，user 要求「基础信息页应用模块增加回款管理」）
 - **`APPLY_MODULES` 新增第 9 项** `{ key: 'receipt', label: '回款管理' }`，

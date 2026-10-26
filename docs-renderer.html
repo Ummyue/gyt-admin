@@ -333,7 +333,7 @@
           const a = document.createElement('a');
           a.className = 'doc-toc-jump';
           a.href = '#' + h.id;
-          a.textContent = h.textContent.replace(/#, '').trim();
+          a.textContent = h.textContent.replace(/^#\s*/, '').trim();
           a.dataset.target = h.id;
           a.onclick = e => {
             e.preventDefault();
