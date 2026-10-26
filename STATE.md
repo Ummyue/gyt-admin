@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `f87e97f5` (审批管理模块 v1.12.0 纠正应用范围描述)
+- **最新 hash**: `b5a39fcd` (审批管理模块 v1.13.0 回款管理接入审批流 + 收发货移出应用范围 + 修左侧菜单四级递归)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
@@ -18,7 +18,7 @@
 
 ## Git
 - 仓库: git@github.com:Ummyue/gyt-admin.git
-- 最新 commit: `a79988a` (fix(approval): v1.12.0 纠正「应用范围」描述，业务线/发票/保证金目前无审批流，已推送)
+- 最新 commit: `c48cb12` (feat(receipt): v1.13.0 回款管理接入审批流 + 收发货移出应用范围 + 修左侧菜单四级递归，已推送): v1.12.0 纠正「应用范围」描述，业务线/发票/保证金目前无审批流，已推送)
 - 项目级 config: `git -c user.name="Mavis" -c user.email="Mavis@local"`
 
 ## 审批管理模块（v1.11.0，2026-10-21）
@@ -89,6 +89,14 @@ git 未跟踪 → **不发布到公开仓库**，里面的旧值不算泄漏；�
 ② **`.offline-build/` 是整个站点的完整副本**（304 文件 / 28MB，含 4 组截图 + 离线包 + dist），
 `wrangler pages deploy .` 传的是**整个目录**（含 gitignore 的构建产物），上传量 685 文件 / 48MB；
 ③ **失败的重试本身在消耗上传配额**，让限流窗口一直不恢复。
+
+⚠️ **bash 变量名后紧跟全角标点 → 变量名被吞掉 → `set -u` 直接报错**：
+`echo "（project=$PROJECT）"` 里的 `）` 是**全角括号**，在非 UTF-8 locale 下
+bash 会把它的字节当成变量名的一部分 → 实际展开成 `$PROJECT\xef...` → 报
+`PROJECT: unbound variable` → **脚本在跑 wrangler 之前就退出了**，
+而输出里只看到「待上传 N 个文件」，极易误判成「部署了但没生效」。
+**修法：变量后紧跟非 ASCII 字符一律用 `${VAR}` 界定边界。**
+本项目 `scripts/deploy_cf.sh` 踩过 2 次（v1.12.0 / v1.13.0 均因此静默失败）。
 
 ⚠️ **脚本里的强删清理会被权限网关拦截 → 脚本非零退出 → 部署其实已发生，
 但输出里只看得到「待上传 341 个文件」，极易误判成「没部署」**（v1.12.0 踩过一次，

@@ -44,7 +44,7 @@ MB=$(du -sm "$STAGE" | cut -f1)
 echo "▸ 待上传: $N 个文件 / ${MB}MB"
 
 # ---- 3. 部署 ----
-echo "▸ 开始部署到 Cloudflare Pages（project=$PROJECT）…"
+echo "▸ 开始部署到 Cloudflare Pages（project=${PROJECT}）…"
 cd "$STAGE"
 CLOUDFLARE_API_TOKEN="${CLOUDFLARE_API_TOKEN:?请先设置 CLOUDFLARE_API_TOKEN}" \
   npx --prefix "$ROOT" wrangler pages deploy . \
