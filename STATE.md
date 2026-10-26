@@ -3,7 +3,7 @@
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
-- **最新 hash**: `637276f3` (审批流程监控页删除「引用流程」筛选与「审批提醒记录」模块)
+- **最新 hash**: `8cd789f4` (审批流程监控页删除「引用流程」筛选与「审批提醒记录」模块)
 - **CF API Token**: 不入库 —— 从环境变量 `CLOUDFLARE_API_TOKEN` 读取
   （v1.7.99.349.2 修正：此前 STATE.md 明文记录 token，触发 GitHub push protection 拦截）
 - **部署命令**: 
