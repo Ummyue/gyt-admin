@@ -36,6 +36,9 @@
     .status-tag.rejected .dot { background: #64748B; }
     .status-tag.executing { color: #15803D; }
     .status-tag.executing .dot { background: #15803D; }
+    /* v1.19.0：待上传决议文件（执行中 → 待上传决议文件 → 已完结 的中间环节） */
+    .status-tag.awaiting-file { color: #7C3AED; }
+    .status-tag.awaiting-file .dot { background: #7C3AED; }
     .status-tag.finished { color: #15803D; }
     .status-tag.finished .dot { background: #15803D; }
     .status-tag.voided { color: #DC2626; }
@@ -174,7 +177,11 @@
                 <div class="cp-tab active" data-status="">全部 <span class="count">156</span></div>
                 <div class="cp-tab" data-status="待提交" style="color: #1E40AF;">待提交 <span class="count" style="color: #1E40AF; font-weight: 600;">12</span></div>
                 <div class="cp-tab" data-status="审批中" style="color: #A16207;">审批中 <span class="count" style="color: #A16207; font-weight: 600;">23</span></div>
-                <div class="cp-tab" data-status="执行中" style="color: #15803D;">执行中 <span class="count" style="color: #15803D; font-weight: 600;">76</span></div>
+                <div class="cp-tab" data-status="执行中" style="color: #15803D;">执行中 <span class="count" style="color: #15803D; font-weight: 600;">68</span></div>
+                <!-- v1.19.0：新增「待上传决议文件」环节（执行中 → 待上传决议文件 → 已完结）
+                     计数口径：原「执行中 76」中已有 8 个流转到待上传决议文件环节，
+                     故 执行中 76→68、新增 待上传决议文件 8，全部 156 不变 -->
+                <div class="cp-tab" data-status="待上传决议文件" style="color: #7C3AED;">待上传决议文件 <span class="count" style="color: #7C3AED; font-weight: 600;">8</span></div>
                 <div class="cp-tab" data-status="已完结" style="color: #15803D;">已完结 <span class="count" style="color: #15803D; font-weight: 600;">36</span></div>
                 <div class="cp-tab" data-status="驳回" style="color: #64748B;">驳回 <span class="count" style="color: #64748B; font-weight: 600;">4</span></div>
                 <div class="cp-tab" data-status="已作废" style="color: #DC2626;">已作废 <span class="count" style="color: #DC2626; font-weight: 600;">2</span></div>
@@ -245,14 +252,14 @@
   <div id="uploadModal" style="display: none; position: fixed; inset: 0; z-index: 1000; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
     <div style="width: 600px; max-height: 90vh; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); display: flex; flex-direction: column; overflow: hidden;">
       <div style="padding: 16px 24px; border-bottom: 1px solid var(--border-default); display: flex; align-items: center; gap: 10px;">
-        <span style="font-size: 15px; font-weight: 600; color: var(--text-primary);">上传客户准入报告</span>
+        <span id="uploadModalTitle" style="font-size: 15px; font-weight: 600; color: var(--text-primary);">上传客户准入报告</span>
         <div style="flex: 1;"></div>
         <button onclick="closeUploadModal()" style="background: none; border: none; cursor: pointer; color: var(--text-tertiary); padding: 4px;">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18M6 6l12 12"/></svg>
         </button>
       </div>
       <div style="flex: 1; overflow-y: auto; padding: 20px 24px;">
-        <div style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">支持上传 pdf / jpeg / jpg / png 格式文件，单个文件不超过 10MB</div>
+        <div id="uploadModalDesc" style="font-size: 12px; color: var(--text-tertiary); margin-bottom: 12px;">支持上传 pdf / jpeg / jpg / png 格式文件，单个文件不超过 10MB</div>
         <div id="uploadFileList" style="margin-bottom: 12px;"></div>
         <div id="uploadDropzone" style="border: 2px dashed var(--border-default); border-radius: 8px; padding: 32px; text-align: center; cursor: pointer; transition: all 0.15s;" onclick="triggerFileInput()">
           <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="var(--text-tertiary)" stroke-width="1.5" style="margin-bottom: 8px;"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
@@ -324,17 +331,25 @@
       // Row 14: 审批中
       { no: 'LX20260315014', name: '淀粉制品存货类项目', up: '菏泽德坤煤炭有限公司', down: '河南诚泽运输有限公司', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '存货业务', category: '淀粉', amount: 11000.00, period: '2026-03-15 ~ 2027-03-15', lxDate: '2026-03-15', owner: '李建国', applyDate: '2026-03-15 16:00', status: '审批中' },
       // Row 16: 已完结
-      { no: 'LX20260320016', name: '糖粉账期业务项目', up: '河北省粮食产业集团有限公司', down: '重庆基创建设开发有限公司', logistics: '中远海运物流有限公司', warehouse: '中外运国际仓储中心', type: '账期业务', category: '糖粉', amount: 19800.00, period: '2026-03-20 ~ 2027-03-20', lxDate: '2026-03-20', owner: '张爽', applyDate: '2026-03-20 09:00', status: '已完结' }
+      { no: 'LX20260320016', name: '糖粉账期业务项目', up: '河北省粮食产业集团有限公司', down: '重庆基创建设开发有限公司', logistics: '中远海运物流有限公司', warehouse: '中外运国际仓储中心', type: '账期业务', category: '糖粉', amount: 19800.00, period: '2026-03-20 ~ 2027-03-20', lxDate: '2026-03-20', owner: '张爽', applyDate: '2026-03-20 09:00', status: '已完结' },
+      // Row 17: 待上传决议文件（v1.19.0 新增状态枚举数据）
+      { no: 'LX20260408017', name: '玉米预付业务供应链项目', up: '山西金能物资贸易有限公司', down: '河南诚泽运输有限公司', logistics: '中外运国际物流有限公司', warehouse: '中外运国际仓储中心', type: '预付业务', category: '谷物', amount: 7600.00, period: '2026-04-08 ~ 2027-04-08', lxDate: '2026-04-08', owner: '李建国', applyDate: '2026-04-08 10:20', status: '待上传决议文件', filePending: true },
+      // Row 18: 待上传决议文件
+      { no: 'LX20260412018', name: '淀粉制品存货类项目', up: '天宇豪国际贸易集团有限公司', down: '国能濮阳热电有限公司', logistics: '中远海运物流有限公司', warehouse: '中储发展郑州分公司', type: '存货业务', category: '淀粉', amount: 9200.00, period: '2026-04-12 ~ 2027-04-12', lxDate: '2026-04-12', owner: '张爽', applyDate: '2026-04-12 15:40', status: '待上传决议文件', filePending: true }
     ];
 
     // ========== v1.7.99.72 状态机映射 ==========
-    // 7 状态（v1.7.99.65 砍「待补件」「已通过」；审批通过直跳「执行中」，无需手动「启动执行」）
+    // 8 状态（v1.7.99.65 砍「待补件」「已通过」；审批通过直跳「执行中」，无需手动「启动执行」）
+    // v1.19.0：在「执行中」与「已完结」之间插入「待上传决议文件」环节 → 7 状态变 8 状态
     // v1.7.99.124：执行中加「发起完结」文字按钮（弹窗二次确认 → 状态变「已完结」，与客户"执行中"对齐）
     var STATUS_META = {
       '待提交':   { cls: 'pending',   color: '#1E40AF', actions: ['查看', '编辑', '提交', '作废'] },
       '审批中':   { cls: 'approving', color: '#A16207', actions: ['查看', '撤回'] },
       // v1.7.99.134：执行中删「终止」操作（按 user 2026-08-05 反馈"准入立项中的，终止操作去除"）——只保留 发起完结（正常收尾流程）
       '执行中':   { cls: 'executing', color: '#15803D', actions: ['查看', '上传客户准入报告', '发起完结'] },
+      // v1.19.0：新增「待上传决议文件」状态（执行中 → 待上传决议文件 → 已完结）
+      //   操作项：查看（打开与「执行中」一致的详情页）/ 上传决议文件（复用上传弹窗，文案随之切换）
+      '待上传决议文件': { cls: 'awaiting-file', color: '#7C3AED', actions: ['查看', '上传决议文件'] },
       '已完结':   { cls: 'finished',  color: '#15803D', actions: ['查看'] },
       '驳回':     { cls: 'rejected',  color: '#64748B', actions: ['查看', '编辑', '重新提交', '作废'] },
       '已作废':   { cls: 'voided',    color: '#DC2626', actions: ['查看'] }
@@ -369,7 +384,9 @@
           if (act === '作废') return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="confirmAction(\'作废\', \'' + p.no + '\')">作废</a>';
           if (act === '撤回') return '<a href="javascript:void(0)" style="color: #EA580C;" onclick="confirmAction(\'撤回\', \'' + p.no + '\')">撤回</a>';
           if (act === '重新提交') return '<a href="javascript:void(0)" onclick="doFlow(\'重新提交\', \'' + p.no + '\')">重新提交</a>';
-          if (act === '上传客户准入报告') return '<a href="javascript:void(0)" style="color: #1E40AF;" onclick="openUploadModal(\'' + p.no + '\')">上传客户准入报告</a>';
+          if (act === '上传客户准入报告') return '<a href="javascript:void(0)" style="color: #1E40AF;" onclick="openUploadModal(\'' + p.no + '\', \'客户准入报告\')">上传客户准入报告</a>';
+          // v1.19.0：待上传决议文件 → 复用同一弹窗，标题与描述按文件类型切换
+          if (act === '上传决议文件') return '<a href="javascript:void(0)" style="color: #7C3AED;" onclick="openUploadModal(\'' + p.no + '\', \'决议文件\')">上传决议文件</a>';
           // v1.7.99.124 新增：执行中 → 发起完结（弹窗二次确认，红字）
           if (act === '发起完结') return '<a href="javascript:void(0)" style="color: #DC2626;" onclick="confirmAction(\'发起完结\', \'' + p.no + '\')">发起完结</a>';
           // v1.7.99.134：删「终止」操作（按 user 2026-08-05 反馈"准入立项中的，终止操作去除"）—— 终止按钮已废弃
@@ -479,11 +496,20 @@
       renderTable();
     }
 
-    // ========== v1.7.99.65 上传客户准入报告 modal ==========
+    // ========== v1.7.99.65 上传客户准入报告 modal（v1.19.0 参数化：同一弹窗复用于「上传决议文件」） ==========
     var uploadedFiles = [];
     var uploadTargetNo = '';
-    function openUploadModal(no) {
+    // v1.19.0：上传文件类型（决定弹窗标题与描述文案）
+    var uploadFileType = '客户准入报告';
+    var UPLOAD_DESC = {
+      '客户准入报告': '支持上传 pdf / jpeg / jpg / png 格式文件，单个文件不超过 10MB',
+      '决议文件': '请上传经审批通过的决议文件（pdf / jpeg / jpg / png），单个文件不超过 10MB；上传后项目进入「已完结」'
+    };
+    function openUploadModal(no, fileType) {
       uploadTargetNo = no;
+      uploadFileType = fileType || '客户准入报告';
+      document.getElementById('uploadModalTitle').textContent = '上传' + uploadFileType;
+      document.getElementById('uploadModalDesc').textContent = UPLOAD_DESC[uploadFileType] || UPLOAD_DESC['客户准入报告'];
       document.getElementById('uploadModal').style.display = 'flex';
       uploadedFiles = [];
       renderUploadFileList();
@@ -529,7 +555,7 @@
     function removeUploadFile() { uploadedFiles = []; renderUploadFileList(); }
     function confirmUpload() {
       if (uploadedFiles.length === 0) { alert('请先上传文件'); return; }
-      Utils.toast('客户准入报告上传成功：' + uploadTargetNo + '（' + uploadedFiles[0].name + '）', 'success');
+      Utils.toast(uploadFileType + '上传成功：' + uploadTargetNo + '（' + uploadedFiles[0].name + '）', 'success');
       closeUploadModal();
     }
 

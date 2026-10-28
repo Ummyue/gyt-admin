@@ -149,6 +149,21 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
 
+### v1.19.0 项目立项新增「待上传决议文件」状态（2026-10-28）
+
+user 截图标注三处改动：
+
+| 改动 | 位置 | 内容 |
+|---|---|---|
+| 状态机新增状态 | `pages/project-list.html` | 「执行中」后、「已完结」前插入 **待上传决议文件**（紫 #7C3AED）→ 7 状态变 8 状态；页签计数 **执行中 76→68、新增 8、全部 156 不变**（口径：原执行中 76 个里有 8 个已流转到新环节） |
+| 状态枚举数据 | 同上 | `PROJECT_MOCK` 新增 2 行（LX20260408017 / LX20260412018，`filePending: true`） |
+| 该状态操作项 | 同上 | **查看**（`project-detail.html?no=..&status=待上传决议文件`，与「执行中」一致的详情页）/ **上传决议文件** |
+| 上传弹窗参数化 | 同上 | `openUploadModal(no, fileType)` —— 标题与描述按类型切换；决议文件描述改「请上传经审批通过的决议文件…上传后项目进入「已完结」」。**原「上传客户准入报告」文案保持不变**（已回归验证） |
+| 详情页新增节点 | `pages/project-detail.html` | 步骤 5「准入完成 · 关键信息」内，③ 准入完成·最终状态 **之后**新增 **④ 决议文件信息 · 最终状态**：文件名 + 大小/上传时间/上传人 + **查看** / **下载** |
+
+文档：`docs/p-project-list.md`（旅程图/§3.4 状态 Tab/§4 状态机 mermaid/§5.1 状态色/§5.2 操作矩阵）、
+`docs/p-project-detail.md`（新增 §5.6 节点说明 + §13 版本记录）、`docs/prd-build/modules/project-apply.json`（事实层）。
+
 ### 腾讯云轻量服务器部署（v1.18.0，2026-10-28）✅ 已上线
 
 | 项 | 值 |
