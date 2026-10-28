@@ -149,6 +149,32 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
 
+### 腾讯云轻量服务器部署（v1.18.0，2026-10-28）
+
+| 项 | 值 |
+|---|---|
+| 实例 | `Ubuntu-M5MG` / `lhins-aiyspy7i` / ap-beijing / **192.144.175.203** |
+| 访问 | `http://192.144.175.203/`（域名未备案，只能 IP 直连） |
+| 脚本 | `scripts/deploy_lighthouse.sh`（**服务器端执行**，一条命令完成全部） |
+
+```bash
+# 在服务器上执行（自动 clone + rsync + 写 nginx + reload + 自检）
+bash -c "$(curl -fsSL https://raw.githubusercontent.com/Ummyue/gyt-admin/main/scripts/deploy_lighthouse.sh)"
+```
+
+**站点布局（不改动福景堂任何东西）**
+
+| 路径 | 内容 |
+|---|---|
+| `/var/www/yugangtong` | 豫港通原型（本脚本部署） |
+| `/var/www/fujingtang` | 福景堂站点（**目录与 `fujingtang.conf` 均未改动**） |
+| `http://192.144.175.203/` | 豫港通（新 server 块，`server_name` 匹配 IP） |
+| `http://192.144.175.203/fjt/` | 福景堂（alias 挂载） |
+| 其它 Host 头 | 仍命中 `fujingtang.conf` 的 `server_name _` |
+
+⚠️ **备案完成后**把域名追加到 `yugangtong.conf` 的 `server_name`（逗号分隔），
+并把域名解析到本 IP；在此之前域名访问会被未备案监测拦截。
+
 ### CF Pages 部署 429 限流（2026-10-26 v1.17.0 部署时遇到）
 
 本会话短时间内连续部署 6+ 次，Cloudflare API 开始返回 429：
