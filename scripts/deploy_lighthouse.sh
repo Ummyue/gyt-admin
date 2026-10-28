@@ -59,13 +59,13 @@ fi
 if [ -d "$SRC/.git" ]; then
   say "使用已有源码目录 → $SRC"
 elif [ -f "$BUNDLE" ]; then
-  say "解包本地部署包 → $SRC  （$BUNDLE）"
+  say "解包本地部署包 → $SRC  （${BUNDLE}）"
   rm -rf "$SRC" 2>/dev/null || true
   mkdir -p "$SRC"
   tar -xzf "$BUNDLE" -C "$SRC"
   ok "解包完成（$(find "$SRC" -type f | wc -l | tr -d ' ') 个文件）"
 else
-  say "拉取源码 → $SRC（git clone；境内可能很慢或失败）"
+  say "拉取源码 → ${SRC}（git clone；境内可能很慢或失败）"
   rm -rf "$SRC" 2>/dev/null || true
   git clone --depth 1 "$REPO_URL" "$SRC"
 fi
@@ -75,6 +75,10 @@ cd "$SRC"
 # 排除口径与 CF Pages 部署（scripts/deploy_cf.sh）保持一致：
 # 内部工作笔记 / 构建产物 / 离线包 一律不对外发布
 say "同步站点文件 → $WEBROOT"
+# ⚠️ rsync 的 --exclude 同时会**保护目标端**同名文件不被 --delete 删除。
+#    所以排除清单要「干净」——别在这里排除 ._* 之类本该被清掉的垃圾，
+#    否则它们会永远留在站点目录里（macOS tar 产生的 AppleDouble 文件就是这么漏出去的）。
+#    根治在打包端：COPYFILE_DISABLE=1 + rsync --exclude='._*'（见 deploy_lighthouse_local.sh）。
 sudo mkdir -p "$WEBROOT"
 sudo rsync -a --delete \
   --exclude='.git/' \
@@ -156,6 +160,8 @@ ok "nginx 已重载"
 # ---------------------------------------------------------------- 5. 自检
 ok "部署完成，访问地址： http://${HOST_IP}/"
 for p in / /index.html /app.html /pages/project-list.html /pages/receipt-list.html /shared/js/topnav-drawer.js /fjt/; do
-  code=$(curl -s -o /dev/null -w '%{http_code}' "http://127.0.0.1${p}")
+  # 必须带 Host 头：server_name 匹配的是公网 IP；
+  # 不带 Host 头（Host: 127.0.0.1）会落到 default server（福景堂）上去
+  code=$(curl -s -o /dev/null -w '%{http_code}' -H "Host: ${HOST_IP}" "http://127.0.0.1${p}")
   printf '   %-42s %s\n' "$p" "$code"
 done

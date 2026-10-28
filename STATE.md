@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-26 页面标记点 pin annotation 接入补全 + 触发按钮绑定修复
+最后更新: 2026-10-28 腾讯云轻量服务器（192.144.175.203）托管上线 + 本机一键部署脚本
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -149,7 +149,76 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 插进 JS 字符串中间 → `Invalid or unexpected token`，页面直接白屏。
 **通用规则：往 HTML 注入脚本一律用 `rfind("</body>")` 定位最后一个。**
 
-### 腾讯云轻量服务器部署（v1.18.0，2026-10-28）
+### 腾讯云轻量服务器部署（v1.18.0，2026-10-28）✅ 已上线
+
+| 项 | 值 |
+|---|---|
+| 实例 | `Ubuntu-M5MG` / `lhins-aiyspy7i` / ap-beijing / **192.144.175.203** |
+| 访问 | `http://192.144.175.203/`（域名未备案，只能 IP 直连） |
+| 站点目录 | `/var/www/yugangtong`（303 个文件 / 14MB） |
+| nginx | `/etc/nginx/conf.d/yugangtong.conf`（`server_name 192.144.175.203`） |
+| 脚本 | `scripts/deploy_lighthouse_local.sh`（**本机跑**）+ `scripts/deploy_lighthouse.sh`（**服务器端跑**） |
+| SSH | 本机私钥 `~/.ssh/id_lighthouse`，公钥已写入服务器 `~/.ssh/authorized_keys`（可用 `ssh-keygen -R`/删除该行撤销） |
+
+**本机一条命令完成部署（以后更新就用它）**
+
+```bash
+bash scripts/deploy_lighthouse_local.sh
+```
+
+流程：本机按「对外发布口径」打包 → rsync 到服务器 → 服务器端脚本解包 → rsync 到站点目录
+→ 写 nginx 配置 → `nginx -t` → reload → curl 自检。整轮约 40 秒。
+
+**站点布局（福景堂原目录与原配置均未改动）**
+
+| 路径 | 内容 |
+|---|---|
+| `http://192.144.175.203/` | 豫港通原型（新 server 块，server_name 匹配 IP） |
+| `http://192.144.175.203/fjt/` | 福景堂站点（alias 挂载到 `/var/www/fujingtang`） |
+| 其它 Host 头 | 仍命中 `fujingtang.conf` 的 `server_name _` |
+
+⚠️ **备案完成后**：把域名追加到 `yugangtong.conf` 的 `server_name`（逗号分隔），
+域名解析到本 IP；在此之前域名访问会被未备案监测拦截。
+
+⚠️ **nginx server 块按 Host 头匹配**，本地自检必须带 `-H "Host: 192.144.175.203"`，
+否则会落到 default server（福景堂）上，看���是「自己的」站点其实是福景堂。
+
+### 本次踩坑（腾讯云 / OrcaTerm / 境内网络）
+
+1. **境内服务器到 github.com 的 git 协议会挂死**
+   clone 跑 11 分钟仍未建立连接（`/tmp/ygt-src` 连目录都没建出来）；
+   而 `raw.githubusercontent.com` 是通的（脚本能 curl 下来）。
+   → **部署改走「本机打包 + rsync」，服务器不 clone**。
+
+2. **服务器是密码模式 SSH，本机密钥不匹配**
+   免密通道只有控制台 OrcaTerm「免密连接（TAT）」。
+   解决：用 OrcaTerm 的 **Monaco 命令面板**在服务器上写入本机公钥，之后本机就能直接 SSH。
+
+3. **OrcaTerm 里怎么可靠地执行命令**
+   - ❌ **xterm 终端里 `type` 会把字符重复发送**（`sudo` → `ssuuddoo`），
+     且 `
+` 不触发 Enter、右键「粘贴」走的是 OrcaTerm 的命令模板而不是系统剪贴板。
+   - ✅ **底部 Monaco 命令面板**（`textarea.inputarea.monaco-mouse-cursor-text`）：
+     `type` 进去字符零重复，用 `press_key` **Meta+Enter** 执行。
+   - ⚠️ `press_key` **必须不带 `ref`**（带了就报 "Browser action failed in Electron main"）；
+     带 `ref` 的 `type`/`fill` 在 xterm textarea 上无效。
+   - ⚠️ 文件管理器面板打开时会把命令面板挤掉，Monaco 输入的内容会丢 —— 先关面板再操作。
+
+4. **macOS 打包会带出 AppleDouble 垃圾文件**
+   `tar -czf` 把扩展属性打成 `._xxx`（几百个），在 Linux 解出来就是垃圾。
+   → 打包用 `COPYFILE_DISABLE=1` + `rsync --exclude='._*'`。
+
+5. **rsync 的 `--exclude` 会保护目标端同名文件不被 `--delete` 删除**
+   在服务端 rsync 里排除 `._*` → 那些垃圾文件会永远留在站点目录里删不掉。
+   → 排除清单要干净：垃圾在**打包端**挡掉，服务端不放宽。
+
+6. **bash 变量名后紧跟全角字符会被吞掉变量名**（`$HOST）` → `HOSTï...: unbound variable`）
+   → 一律写 `${VAR}`。
+
+7. **`USER` 是 bash 内置环境变量**（本地用户名），`USER="${USER:-ubuntu}"` 不会生效。
+   → 用 `SSH_USER`。
+
+### 腾讯云轻量服务器部署（v1.18.0 初始方案）
 
 | 项 | 值 |
 |---|---|
