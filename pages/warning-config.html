@@ -1342,6 +1342,11 @@
         { value: 'invoice_unopened', label: '发票未开', checkItem: '合同执行期结束后没有关联到发票数据时，生成预警', detail: '合同编号#合同编号#执行期于#有效期截止日#结束，未关联发票，请及时处理' },
         { value: 'invoice_status_abnormal', label: '发票状态异常', checkItem: '进项发票做定期查验，发票状态为红冲，生成预警', detail: '发票编码#发票编码#状态为红冲，请及时处理' },
       ],
+      // v1.20.0：补「回款监控」规则名称联动（原 RULE_NAME_MAP 无 receipt 键，
+      // 选到回款监控时规则名称下拉为空、考核项与规则明细无法回显）
+      receipt: [
+        { value: 'overdue_receipt_not_registered', label: '超过计划回款时间未登记回款', checkItem: '合同超过计划回款时间N天，仍未登记回款，生成预警', detail: '合同编号#合同编号#已超过计划回款时间#计划回款时间#，仍未登记回款，请及时处理' },
+      ],
     };
 
     // 打开弹窗
