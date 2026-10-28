@@ -16,10 +16,18 @@
 # 用法（在服务器上，任意目录执行）：
 #   bash -c "$(curl -fsSL https://raw.githubusercontent.com/Ummyue/gyt-admin/main/scripts/deploy_lighthouse.sh)"
 #
+# ⚠️ **境内服务器不要走 git clone**：实测北京节点到 github.com 的 git 协议握手会挂死
+#    （clone 跑 11 分钟仍未建立连接，/tmp/ygt-src 连目录都没建出来），
+#    而 raw.githubusercontent.com 是通的。**推荐用本地包模式**：
+#    把 ygt-deploy.tar.gz 传到服务器，再执行：
+#      BUNDLE=/home/ubuntu/ygt-deploy.tar.gz bash deploy_lighthouse.sh
+#    （本机打包：rsync 排除内部文件后 tar -czf，见 STATE.md）
+#
 # 环境变量可覆盖：
 #   HOST_IP   服务器公网 IP（默认 192.144.175.203）—— 同时写入 server_name
 #   WEBROOT   站点根目录（默认 /var/www/yugangtong）
 #   SRC       源码临时目录（默认 /tmp/ygt-src）
+#   BUNDLE    本地部署包路径（默认 /home/ubuntu/ygt-deploy.tar.gz）
 # ==========================================================================
 set -euo pipefail
 
@@ -29,6 +37,7 @@ WEBROOT="${WEBROOT:-/var/www/yugangtong}"
 FJT_ROOT="${FJT_ROOT:-/var/www/fujingtang}"
 NGINX_CONF="${NGINX_CONF:-/etc/nginx/conf.d/yugangtong.conf}"
 HOST_IP="${HOST_IP:-192.144.175.203}"
+BUNDLE="${BUNDLE:-/home/ubuntu/ygt-deploy.tar.gz}"
 
 say() { printf '\033[1;34m▸ %s\033[0m\n' "$*"; }
 ok()  { printf '\033[1;32m✓ %s\033[0m\n' "$*"; }
@@ -42,14 +51,25 @@ if ! need git || ! need rsync; then
   sudo DEBIAN_FRONTEND=noninteractive apt-get install -y git rsync
 fi
 
-# ---------------------------------------------------------------- 2. 拉源码
-if [ ! -d "$SRC/.git" ]; then
-  say "拉取源码 → $SRC"
+# ---------------------------------------------------------------- 2. 取源码
+# 三种来源，优先级从高到低：
+#   1) $SRC 已是源码目录（之前已 clone / 解包）
+#   2) $BUNDLE 本地部署包（推荐：境内到 github 的 git 协议会挂死）
+#   3) git clone（境外节点 / 网络良好时可用）
+if [ -d "$SRC/.git" ]; then
+  say "使用已有源码目录 → $SRC"
+elif [ -f "$BUNDLE" ]; then
+  say "解包本地部署包 → $SRC  （$BUNDLE）"
+  rm -rf "$SRC" 2>/dev/null || true
+  mkdir -p "$SRC"
+  tar -xzf "$BUNDLE" -C "$SRC"
+  ok "解包完成（$(find "$SRC" -type f | wc -l | tr -d ' ') 个文件）"
+else
+  say "拉取源码 → $SRC（git clone；境内可能很慢或失败）"
   rm -rf "$SRC" 2>/dev/null || true
   git clone --depth 1 "$REPO_URL" "$SRC"
 fi
 cd "$SRC"
-ok "源码版本： $(git log --oneline -1)"
 
 # ---------------------------------------------------------------- 3. 同步文件
 # 排除口径与 CF Pages 部署（scripts/deploy_cf.sh）保持一致：
@@ -71,6 +91,13 @@ sudo rsync -a --delete \
   --exclude='*.docx' \
   --exclude='prd-build/' \
   --exclude='STATE.md' \
+  --exclude='scripts/' \
+  --exclude='tests/' \
+  --exclude='wrangler.toml' \
+  --exclude='_headers' \
+  --exclude='.assetsignore' \
+  --exclude='.gitignore' \
+  --exclude='README.md' \
   ./ "$WEBROOT/"
 ok "已同步 $(sudo find "$WEBROOT" -type f | wc -l | tr -d ' ') 个文件"
 
