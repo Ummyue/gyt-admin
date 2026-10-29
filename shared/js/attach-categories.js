@@ -63,7 +63,30 @@
     '.ac-custom-addrow input{flex:1;font-size:13px;padding:5px 10px;border:1px solid var(--border-light,rgba(15,23,42,.1));border-radius:4px;}',
     '.ac-custom-addrow input:focus{outline:none;border-color:var(--color-primary,#1E40AF);}',
     '.ac-custom-addrow .ac-hint{font-size:11px;color:var(--text-tertiary,#94a3b8);}',
-    '.ac-empty{padding:10px 14px;font-size:12px;color:var(--text-tertiary,#94a3b8);}'
+    '.ac-empty{padding:10px 14px;font-size:12px;color:var(--text-tertiary,#94a3b8);}',
+    /* ===== 客户准入材料区（.cm-*，与 project-apply 的材料清单视觉一致） ===== */
+    '.cm-material-section{margin-top:20px;padding-top:18px;border-top:1px dashed var(--border-light,rgba(15,23,42,.1));}',
+    '.cm-material-section-title{font-size:14px;font-weight:600;color:var(--text-primary,#1f2937);margin-bottom:6px;}',
+    '.cm-material-section-hint{font-size:12px;color:var(--text-tertiary,#94a3b8);line-height:1.7;margin-bottom:12px;}',
+    '.cm-mats-summary{display:flex;align-items:center;gap:8px;margin-bottom:10px;}',
+    '.cm-mats-summary .sum-chip{padding:3px 10px;border-radius:12px;font-size:12px;font-weight:600;}',
+    '.cm-mats-summary .sum-chip.req-pending{background:rgba(220,38,38,.1);color:#B91C1C;}',
+    '.cm-mats-summary .sum-chip.req-done{background:rgba(4,120,87,.12);color:#047857;}',
+    '.cm-mats-summary .sum-chip.opt{background:rgba(100,116,139,.1);color:#64748B;}',
+    '.cm-mat-row{display:flex;align-items:center;gap:10px;padding:8px 12px;border:1px solid var(--border-light,rgba(15,23,42,.1));border-radius:6px;margin-bottom:6px;background:#fff;}',
+    '.cm-mat-row:hover{border-color:var(--color-primary,#1E40AF);}',
+    '.cm-mat-row .row-left{display:flex;align-items:center;gap:8px;flex:1;min-width:0;}',
+    '.cm-mat-row .row-num{color:var(--text-tertiary,#94a3b8);font-size:12px;min-width:20px;}',
+    '.cm-mat-row .row-name{font-size:13px;color:var(--text-primary,#1f2937);font-weight:500;}',
+    '.cm-mat-row .req-star{color:#DC2626;font-weight:700;font-size:13px;}',
+    '.cm-mat-row .req-tag-mini{padding:1px 6px;border-radius:3px;font-size:10px;font-weight:500;}',
+    '.cm-mat-row .req-tag-mini.req{background:rgba(220,38,38,.1);color:#B91C1C;}',
+    '.cm-mat-row .req-tag-mini.opt{background:rgba(100,116,139,.1);color:#64748B;}',
+    '.cm-mat-row.req-required{box-shadow:inset 3px 0 0 0 #DC2626;}',
+    '.cm-mat-row.req-required .row-num{color:#DC2626;font-weight:600;}',
+    '.cm-mat-row .row-right{display:flex;align-items:center;gap:8px;flex-shrink:0;}',
+    '.cm-mat-row .upload-btn{padding:4px 12px;border:1px solid var(--color-primary,#1E40AF);border-radius:4px;background:#fff;color:var(--color-primary,#1E40AF);font-size:12px;cursor:pointer;}',
+    '.cm-mat-row .upload-btn:hover{background:rgba(30,64,175,.08);}'
   ].join('\n');
 
   /* ---------------- 状态 ---------------- */
@@ -302,6 +325,25 @@
       st.customEl.innerHTML = html;
       st.customHost = st.customEl;
     }
+    // 通知页面：zone 已重渲（页面可用它刷新自己的摘要计数）
+    document.dispatchEvent(new CustomEvent('ac:zone-rendered', { detail: { zoneId: zoneId } }));
+  }
+
+  // 供页面查询 zone 内各行的文件状态（必填校验 / 摘要计数用）
+  function getZoneState(zoneId) {
+    var st = ZONES[zoneId];
+    if (!st) return null;
+    var rows = Object.keys(st.rows).map(function (k) {
+      var r = st.rows[k];
+      return { key: k, label: r.label, files: r.files.slice() };
+    });
+    return {
+      zoneId: zoneId,
+      rows: rows,
+      customs: st.customs.map(function (c) {
+        return { id: c.id, label: c.label, files: c.files.slice() };
+      })
+    };
   }
 
   /* ---------------- 自定义附件操作 ---------------- */
@@ -454,6 +496,8 @@
       var zone = resolveZone(cfg);
       if (!zone) return;
       var zoneId = 'z' + ci + '_' + (zone.id || '');
+      // 把 zoneId 写到容器上，页面可据此查状态（避免硬编码）
+      zone.setAttribute('data-ac-zone-id', zoneId);
       var st = { rows: {}, rowEls: {}, customs: [], holder: zone, adding: false, editing: null };
       ZONES[zoneId] = st;
       var rows = resolveRows(zone, cfg);
@@ -512,6 +556,7 @@
   window.AttachCategories = {
     init: init,
     renderZone: renderZone,
+    state: getZoneState,
     add: acAdd,
     commitAdd: acCommitAdd,
     cancelAdd: acCancelAdd,

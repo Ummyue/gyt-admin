@@ -2013,7 +2013,9 @@
     function updateCmMatsSummary() {
       var reqList = CUSTOMER_MATERIALS.filter(function(m){ return m.required; });
       var optList = CUSTOMER_MATERIALS.filter(function(m){ return !m.required; });
-      var reqDone = reqList.filter(function(m){ return (_cmMaterials[m.key] || []).length > 0; }).length;
+      var reqDone = reqList.filter(function(m){
+        return (_cmMaterials[m.key] || []).some(function(f){ return !f.noSuch; });
+      }).length;
       var optDone = optList.filter(function(m){ return (_cmMaterials[m.key] || []).length > 0; }).length;
       var reqChip = document.getElementById('cm_mat_req_summary');
       var optChip = document.getElementById('cm_mat_opt_summary');
@@ -2489,8 +2491,11 @@
       const sub = `${categoryMap[category] || category} · ${credit}`;
 
       // v1.7.99.298 客户准入材料必填校验（6 项：营业执照/税务登记证/特殊经营许可证/纳税申报表/完税证明/财务报表）
+      // v1.22.0：必填判定只认**材料本体**；「无此附件说明」不计入（说明不能替代本体）
       const missingRequired = CUSTOMER_MATERIALS.filter(function(m) {
-        return m.required && (!_cmMaterials[m.key] || _cmMaterials[m.key].length === 0);
+        if (!m.required) return false;
+        var files = _cmMaterials[m.key] || [];
+        return !files.some(function(f) { return !f.noSuch; });
       });
       if (missingRequired.length > 0) {
         const names = missingRequired.map(function(m){ return m.name; }).join('、');

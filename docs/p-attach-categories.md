@@ -54,6 +54,7 @@
 | 模块 | 落地页面 | 附件区形态 |
 |---|---|---|
 | 准入管理 | `project-apply.html` | 分组材料清单（内联实现，v1.21.0） |
+| **客户准入** | `customer-apply.html` | **v1.22.0 新建材料上传区块**（见 §2.0） |
 | 收发货 | `shipment-out-new.html` | `.attach-row` 行式 |
 | 货转 | `goods-transfer-up-new.html`、`goods-transfer-down-new.html` | `.attach-row` 行式 |
 | 付款 | `payment-detail.html` | 表格（标题「附件」定位） |
@@ -64,12 +65,29 @@
 | 出入库 | `warehouse-inbound-new.html`、`warehouse-outbound-new.html`、`warehouse-inbound-detail.html` | 表格 |
 | 提放货 | `warehouse-release-new.html` | 表格 |
 
+### 2.0 客户准入：新建「客户准入材料上传」区块（v1.22.0）
+
+客户准入模块原本**没有任何附件区**（`customer-apply` 是单企业表单、无「添加关联企业」弹窗；
+`customer-detail` 的「📎 附件 4 份」只是审批时间线里的静态文字）。
+按产品决定，在 **`customer-apply` 的「新增客户」表单内新增一个「客户准入材料上传」区块**，
+内容与 `project-apply` 的客户准入材料完全一致：
+
+| 项 | 规则 |
+|---|---|
+| 位置 | 「新增客户」卡片内，「关联项目」展开区之后 |
+| 材料清单 | 13 类（必填 6 + 非必填 7），与 project-apply 一致 |
+| 区块内容 | 顶部摘要（必填 X/6 · 非必填 X/7）+ 13 个材料类别行 + 共享组件注入的「上传无此附件说明」与「自定义附件」分区 |
+| 交互 | 与 project-apply 同一套：接管上传按钮 → 真实文件选择 → 行内回显文件名；无此附件说明带「非本附件本体」标记 |
+| **必填校验** | Step 1「下一步」时校验 6 项必填材料；**只认材料本体**，「无此附件说明」不计入；缺失时弹窗列出未传项 |
+| 实现 | 复用 `shared/js/attach-categories.js`（注入器 TARGETS 已加该页），类别行由页面静态给出 |
+
 ### 2.1 两个模块未覆盖（需产品确认）
 
 | 模块 | 原因 |
 |---|---|
-| **客户准入**（`customer-apply` / `customer-detail` / `customer-list`） | 该模块 4 步流程（客户信息录入 / 企业尽调报告 / 提交审批 / 准入完成）**当前没有附件区**，无处挂载。若确实需要，要先确定挂在哪一步 |
 | **黑名单**（`blacklist.html`） | 该页的「附件」实为 **Excel 名单批量导入**弹窗（导入 xlsx/xls/csv），语义是「导入名单文件」而非「单据附件」，不适用本套交互 |
+
+（客户准入已按产品决定新建材料上传区块，见 §2.0）
 
 ### 2.2 `shipment-in.html`（收发货-入库）无附件区
 

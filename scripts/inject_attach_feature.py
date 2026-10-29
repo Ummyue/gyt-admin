@@ -40,6 +40,9 @@ SCRIPT_REF = '<script src="../shared/js/attach-categories.js"></script>'
 #   row  —— 容器内的「材料类别行」
 # --------------------------------------------------------------------------
 TARGETS = [
+    # ---- 客户准入（v1.22.0 新建材料上传区块，类别行由页面静态给出） ----
+    {'module': '客户准入-附件', 'file': 'customer-apply.html',
+     'zone': '#custMaterialsList', 'row': '.cm-mat-row'},
     # ---- 收发货 ----
     {'module': '收发货-附件', 'file': 'shipment-out-new.html',
      'titleSel': '.info-section-title', 'titleText': '附件', 'zoneSel': '.info-section-body',

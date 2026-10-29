@@ -629,6 +629,155 @@
                 </table>
               </div>
             </div>
+
+              <!-- v1.22.0 客户准入材料上传（复用 shared/js/attach-categories.js，与 project-apply 口径一致） -->
+              <div class="cm-material-section" id="custMaterialSection">
+                <div class="cm-material-section-title">客户准入材料上传</div>
+                <div class="cm-material-section-hint">必填 6 项：企业营业执照 · 税务登记证 · 特殊经营许可证 · 纳税申报表 · 完税证明 · 财务报表。非必填 7 项：法定代表人身份证 · 代理人身份证 · 开户许可证 · 授权委托书 · KYC 调查表 · 周年申报表 · 其他材料。每个材料支持上传多个文件，单个文件 ≤ 10MB。某项材料确实无法提供的，可点「上传无此附件说明」上传说明文件（该文件会被标注为「非本附件本体」，不计入必填判定）。</div>
+                <div class="cm-mats-summary" id="custMatSummary">
+                  <span class="sum-chip req-pending" id="custMatReqChip">必填 0 / 6 ⚠</span>
+                  <span class="sum-chip opt" id="custMatOptChip">非必填 0 / 7</span>
+                </div>
+                <div id="custMaterialsList">
+                <div class="cm-mat-row req-required" data-mat-key="biz_license">
+                  <div class="row-left">
+                    <span class="row-num">1.</span>
+                    <span class="row-name">企业营业执照</span>
+                    <span class="req-star">*</span>
+                    <span class="req-tag-mini req">必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row req-required" data-mat-key="tax_cert">
+                  <div class="row-left">
+                    <span class="row-num">2.</span>
+                    <span class="row-name">税务登记证</span>
+                    <span class="req-star">*</span>
+                    <span class="req-tag-mini req">必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row req-required" data-mat-key="special_license">
+                  <div class="row-left">
+                    <span class="row-num">3.</span>
+                    <span class="row-name">特殊经营许可证</span>
+                    <span class="req-star">*</span>
+                    <span class="req-tag-mini req">必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row req-required" data-mat-key="tax_return">
+                  <div class="row-left">
+                    <span class="row-num">4.</span>
+                    <span class="row-name">纳税申报表</span>
+                    <span class="req-star">*</span>
+                    <span class="req-tag-mini req">必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row req-required" data-mat-key="tax_clear">
+                  <div class="row-left">
+                    <span class="row-num">5.</span>
+                    <span class="row-name">完税证明</span>
+                    <span class="req-star">*</span>
+                    <span class="req-tag-mini req">必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row req-required" data-mat-key="finance_report">
+                  <div class="row-left">
+                    <span class="row-num">6.</span>
+                    <span class="row-name">财务报表</span>
+                    <span class="req-star">*</span>
+                    <span class="req-tag-mini req">必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="legal_id">
+                  <div class="row-left">
+                    <span class="row-num">7.</span>
+                    <span class="row-name">法定代表人身份证</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="agent_id">
+                  <div class="row-left">
+                    <span class="row-num">8.</span>
+                    <span class="row-name">代理人身份证</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="bank_permit">
+                  <div class="row-left">
+                    <span class="row-num">9.</span>
+                    <span class="row-name">开户许可证</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="auth_letter">
+                  <div class="row-left">
+                    <span class="row-num">10.</span>
+                    <span class="row-name">授权委托书</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="kyc_form">
+                  <div class="row-left">
+                    <span class="row-num">11.</span>
+                    <span class="row-name">KYC 调查表</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="annual_return">
+                  <div class="row-left">
+                    <span class="row-num">12.</span>
+                    <span class="row-name">周年申报表</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                <div class="cm-mat-row" data-mat-key="other">
+                  <div class="row-left">
+                    <span class="row-num">13.</span>
+                    <span class="row-name">其他材料</span>
+                    <span class="req-tag-mini opt">非必填</span>
+                  </div>
+                  <div class="row-right">
+                    <button type="button" class="upload-btn">↑ 上传</button>
+                  </div>
+                </div>
+                </div>
+              </div>
+
           </div>
         </div>
         <!-- ========== /Step 1 ========== -->
@@ -1073,9 +1222,57 @@
       updateStep(currentStep - 1);
       document.querySelector('[style*="overflow-y: auto"]').scrollTop = 0;
     });
+    // ===== v1.22.0 客户准入材料上传（共享组件 attach-categories.js 驱动）=====
+    // 摘要：必填 / 非必填 已上传计数，随组件渲染事件刷新
+    (function initCustMaterialSummary() {
+      function refresh() {
+        var holder = document.getElementById('custMaterialsList');
+        var zid = holder && holder.getAttribute('data-ac-zone-id');
+        var st = zid && window.AttachCategories ? window.AttachCategories.state(zid) : null;
+        if (!st) return;
+        var req = st.rows.filter(function (r) { return r.label && isCustRequiredMat(r.label); });
+        var opt = st.rows.filter(function (r) { return r.label && !isCustRequiredMat(r.label); });
+        // 必填只认**材料本体**；「无此附件说明」不计入（与 project-apply 一致）
+        var hasBody = function (r) { return r.files.some(function (f) { return !f.noSuch; }); };
+        var reqDone = req.filter(hasBody).length;
+        var optDone = opt.filter(function (r) { return r.files.length > 0; }).length;
+        var reqChip = document.getElementById('custMatReqChip');
+        var optChip = document.getElementById('custMatOptChip');
+        if (reqChip) {
+          reqChip.textContent = '必填 ' + reqDone + ' / ' + req.length + (reqDone >= req.length ? ' ✓' : ' ⚠');
+          reqChip.className = 'sum-chip ' + (reqDone >= req.length ? 'req-done' : 'req-pending');
+        }
+        if (optChip) optChip.textContent = '非必填 ' + optDone + ' / ' + opt.length;
+      }
+      document.addEventListener('ac:zone-rendered', refresh);
+      setTimeout(refresh, 300);
+    })();
+
+    // 6 项必填材料（与 project-apply 一致）
+    const CUST_REQUIRED_MATERIALS = ['企业营业执照', '税务登记证', '特殊经营许可证', '纳税申报表', '完税证明', '财务报表'];
+    function isCustRequiredMat(label) {
+      return CUST_REQUIRED_MATERIALS.indexOf((label || '').replace(/^\*\s*/, '').trim()) >= 0;
+    }
+
     document.getElementById('btnNext').addEventListener('click', () => {
       // v1.7.99.23 + v1.7.99.26：step 1 校验 6 必填 + 项目小组成员
       if (currentStep === 1) {
+        // v1.22.0：客户准入材料 6 项必填校验（以**材料本体**为准，"无此附件说明"不计入）
+        var mHolder = document.getElementById('custMaterialsList');
+        var mZid = mHolder && mHolder.getAttribute('data-ac-zone-id');
+        var matState = mZid && window.AttachCategories ? window.AttachCategories.state(mZid) : null;
+        if (matState) {
+          var missingMats = CUST_REQUIRED_MATERIALS.filter(function (name) {
+            var r = matState.rows.find(function (x) { return (x.label || '').replace(/^\*\s*/, '').trim() === name; });
+            // 只认材料本体；「无此附件说明」不算已上传
+            return !r || !r.files.some(function (f) { return !f.noSuch; });
+          });
+          if (missingMats.length > 0) {
+            alert('客户准入材料 · 以下 6 项必填材料尚未上传：\n\n• ' + missingMats.join('、')
+              + '\n\n请上传完必填材料后再进入下一步。\n（若确实无法提供，请点该行的「上传无此附件说明」上传说明文件，并知会业务方。）');
+            return;
+          }
+        }
         const requiredFields = [
           { id: 'custContactName', label: '联系人姓名' },
           { id: 'custContactPhone', label: '联系人电话' },
@@ -1235,5 +1432,11 @@
     window.addEventListener('load', bootApproval);
   })();
   </script>
+
+  <!-- ==== attach-categories 注入开始 (v1.22.0) ==== -->
+  <script>window.__ATTACH_ZONES__ = window.__ATTACH_ZONES__ || [];
+  window.__ATTACH_ZONES__.push.apply(window.__ATTACH_ZONES__, [{"zone": "#custMaterialsList", "row": ".cm-mat-row"}]);</script>
+  <script src="../shared/js/attach-categories.js"></script>
+  <!-- ==== attach-categories 注入结束 ==== -->
 </body>
 </html>
