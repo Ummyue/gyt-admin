@@ -163,6 +163,30 @@
     .cm-mat-row.req-required { box-shadow: inset 3px 0 0 0 #DC2626; }
     .cm-mat-row.req-required .row-num { color: #DC2626; font-weight: 600; }
 
+    /* ===== v1.21.0：「上传无此附件说明」入口 + 自定义附件 ===== */
+    /* 「上传无此附件说明」次要按钮（琥珀色，与主上传入口区分） */
+    .cm-mat-row .cm-upload-trigger.nosuch { color: #B45309; border-color: rgba(180,83,9,0.35); background: #FFFBEB; }
+    .cm-mat-row .cm-upload-trigger.nosuch:hover { border-color: #B45309; color: #92400E; background: #FEF3C7; }
+    /* 行内「含无此附件说明」标记 */
+    .cm-mat-row .row-badge-nosuch { padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; background: rgba(180,83,9,0.12); color: #B45309; white-space: nowrap; }
+    /* 文件级「非本附件本体」标记 */
+    .cm-material-file .cm-file-badge-nosuch { padding: 1px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; background: rgba(180,83,9,0.12); color: #B45309; white-space: nowrap; flex-shrink: 0; }
+    /* 自定义附件条目（紫色系，与内置材料区分） */
+    .cm-mat-row.is-custom .row-name { color: #6D28D9; }
+    .cm-mat-row.is-custom { box-shadow: inset 3px 0 0 0 #7C3AED; }
+    .cm-mat-row.is-custom .row-num { color: #7C3AED; font-weight: 600; }
+    /* 名称内联编辑输入框 */
+    .cm-mat-row .row-name-input { font-size: 13px; font-weight: 500; color: var(--text-primary); border: 1px solid var(--color-primary); border-radius: 3px; padding: 2px 8px; width: 240px; background: #fff; }
+    /* 自定义附件「+ 新增附件」按钮 */
+    .cm-mats-group-header .group-actions { margin-left: 8px; display: inline-flex; align-items: center; gap: 6px; }
+    .cm-add-custom-btn { padding: 3px 10px; border: 1px dashed var(--color-primary); border-radius: 3px; background: rgba(30,64,175,0.04); color: var(--color-primary); font-size: 11px; cursor: pointer; transition: all 0.15s; }
+    .cm-add-custom-btn:hover { background: rgba(30,64,175,0.12); }
+    /* 内联新增行 */
+    .cm-custom-add-row { display: flex; gap: 8px; padding: 10px 14px; border-top: 1px dashed var(--border-default); align-items: center; background: #FFFBEB; }
+    .cm-custom-add-row input { flex: 1; font-size: 13px; padding: 5px 10px; border: 1px solid var(--border-default); border-radius: 4px; }
+    .cm-custom-add-row input:focus { outline: none; border-color: var(--color-primary); }
+    .cm-custom-add-hint { font-size: 11px; color: var(--text-tertiary); }
+
     .cm-mat-files-expanded { padding: 6px 14px 12px 44px; border-top: 1px dashed var(--border-light); background: #FAFBFC; }
     .cm-mat-files-expanded .empty-hint { padding: 8px 12px; color: #B91C1C; background: #FEF2F2; border: 1px dashed rgba(220,38,38,0.3); border-radius: 4px; font-size: 12px; }
     .cm-mat-files-expanded .empty-hint.opt { color: var(--text-tertiary); background: #F1F5F9; border-color: var(--border-light); }
@@ -1099,6 +1123,22 @@
     </div>
   </div>
 
+  <!-- v1.21.0 删除自定义附件条目 · 二次确认 modal（已上传附件时强提醒） -->
+  <div id="cmCustomDeleteModal" class="confirm-modal" style="display: none;">
+    <div class="confirm-overlay" onclick="closeCmCustomDeleteConfirm()"></div>
+    <div class="confirm-card">
+      <div class="confirm-icon danger">⚠</div>
+      <div class="confirm-title">删除自定义附件条目</div>
+      <div class="confirm-text" id="cmCustomDeleteText">
+        确定要删除该自定义附件条目吗？
+      </div>
+      <div class="confirm-actions">
+        <button class="btn btn-secondary" onclick="closeCmCustomDeleteConfirm()">取消</button>
+        <button class="btn btn-danger" id="cmCustomDeleteBtn" onclick="confirmCmCustomDelete()">确认删除</button>
+      </div>
+    </div>
+  </div>
+
   <!-- v1.7.99.31 已完成准入企业提示 modal（带"关闭提醒"按钮） -->
   <div id="inProgressTipModal" style="display: none; position: fixed; inset: 0; z-index: 1100; background: rgba(15,23,42,0.55); align-items: center; justify-content: center;">
     <div style="width: 520px; background: #fff; border-radius: 12px; box-shadow: 0 20px 60px rgba(0,0,0,0.3); overflow: hidden;">
@@ -1786,6 +1826,12 @@
     ];
 
     var _cmMaterials = {};  // 当前弹窗暂存（key → file[]）
+    // v1.21.0：自定义附件条目（用户手动新增），[{ id, name }]
+    var _cmCustomMaterials = [];
+    var _cmCustomSeq = 0;
+    var _cmEditingCustomId = null;   // 正在内联改名中的条目 id
+    var _cmAddingCustom = false;     // 是否处于「新增自定义附件」内联输入态
+    var _cmPendingDeleteId = null;   // 待确认删除的自定义条目 id
 
     function getCmFileIcon(type) {
       if (!type) return '📎';
@@ -1802,51 +1848,74 @@
     }
 
     // v1.7.99.307 重构 renderCmMaterials：分组折叠 + 每行紧凑布局
+    // v1.21.0：这里**不再重置暂存** —— 本函数现在也会被「新增/改名/删除自定义附件」
+    // 触发全量重渲，若在此清空 _cmMaterials 会把用户已上传的附件全部弄丢。
+    // 暂存的重置统一放在 openCompanyModal()（每次打开弹窗时清一次）。
     function renderCmMaterials() {
-      // 1. 重置暂存
-      Object.keys(_cmMaterials).forEach(function(k){ delete _cmMaterials[k]; });
-      CUSTOMER_MATERIALS.forEach(function(m){ _cmMaterials[m.key] = []; });
+      // 1. 确保每个内置材料都有暂存桶（不清空已有文件）
+      CUSTOMER_MATERIALS.forEach(function(m){ if (!_cmMaterials[m.key]) _cmMaterials[m.key] = []; });
 
       // 2. 按必填 / 非必填分组
       var reqList = CUSTOMER_MATERIALS.filter(function(m){ return m.required; });
       var optList = CUSTOMER_MATERIALS.filter(function(m){ return !m.required; });
 
       // 3. 渲染单行（v1.7.99.309 必填项行内显示上传+删除按钮）
-      function rowHtml(m, idx) {
+      //    v1.21.0：上传按钮后方增加「上传无此附件说明」入口；自定义附件条目支持改名 / 删除条目
+      function rowHtml(m, idx, isCustom) {
         var files = _cmMaterials[m.key] || [];
         var fileCountCls = files.length > 0 ? '' : (m.required ? 'missing' : 'zero');
         var fileCountText = files.length > 0 ? ('📎 ' + files.length + ' 个文件') : (m.required ? '⚠ 未上传' : '○ 未上传');
         var hasFiles = files.length > 0;
         var delDisabled = hasFiles ? '' : ' disabled';
-        return '<div class="cm-mat-row ' + (m.required ? 'req-required' : '') + '" data-mat-key="' + m.key + '">'
+        var hasNoSuch = files.some(function(f){ return f.noSuch; });
+        var key = m.key;
+        // 名称区：自定义条目可内联改名
+        var nameHtml;
+        if (isCustom && _cmEditingCustomId === m.id) {
+          nameHtml = '<input class="row-name-input" id="cm_custom_name_input" value="' + m.name.replace(/"/g, '&quot;') + '"'
+                   + ' onkeydown="if(event.key===\'Enter\'){commitCmCustomRename(\'' + m.id + '\', this.value);} if(event.key===\'Escape\'){cancelCmCustomRename();}"'
+                   + ' onblur="commitCmCustomRename(\'' + m.id + '\', this.value)" placeholder="请输入附件名称">';
+        } else if (isCustom) {
+          nameHtml = '<span class="row-name" title="点击可修改附件名称" style="cursor:pointer;" onclick="startCmCustomRename(\'' + m.id + '\')">' + m.name + '</span>';
+        } else {
+          nameHtml = '<span class="row-name">' + m.name + '</span>';
+        }
+        return '<div class="cm-mat-row ' + (m.required ? 'req-required' : '') + (isCustom ? ' is-custom' : '') + '" data-mat-key="' + key + '" data-custom-id="' + (m.id || '') + '">'
           + '<div class="row-left">'
           + '<span class="row-num">' + (idx + 1) + '.</span>'
-          + '<span class="row-name">' + m.name + '</span>'
+          + nameHtml
           + (m.required ? '<span class="req-star">*</span>' : '')
-          + '<span class="req-tag-mini ' + (m.required ? 'req' : 'opt') + '">' + (m.required ? '必填' : '非必填') + '</span>'
-          + '<span class="file-count ' + fileCountCls + '" data-file-count="' + m.key + '">' + fileCountText + '</span>'
+          + (isCustom ? '' : '<span class="req-tag-mini ' + (m.required ? 'req' : 'opt') + '">' + (m.required ? '必填' : '非必填') + '</span>')
+          + (isCustom ? '<span class="req-tag-mini opt">自定义</span>' : '')
+          + '<span class="file-count ' + fileCountCls + '" data-file-count="' + key + '">' + fileCountText + '</span>'
+          + (hasNoSuch ? '<span class="row-badge-nosuch" title="该材料已上传「无此附件说明」">⚠ 含无此附件说明</span>' : '')
           + '</div>'
           + '<div class="row-right">'
+          + '<label class="cm-upload-trigger" style="padding: 3px 10px;" title="上传该材料本体文件">'
+            + '<input type="file" multiple style="display:none;" data-mat-key="' + key + '" data-upload-kind="material" onchange="handleCmMaterialUpload(this)">'
+            + '<span>📎 上传</span>'
+            + '</label>'
+          // v1.21.0：无此附件说明入口（上传的是「说明」，不是材料本体）
+          + '<label class="cm-upload-trigger nosuch" style="padding: 3px 10px;" title="上传无此附件说明（说明材料缺失原因，非本材料本体）">'
+            + '<input type="file" multiple style="display:none;" data-mat-key="' + key + '" data-upload-kind="no-such" onchange="handleCmMaterialUpload(this)">'
+            + '<span>📄 上传无此附件说明</span>'
+            + '</label>'
           + (m.required
-              ? '<label class="cm-upload-trigger" style="padding: 3px 10px;">'
-                + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
-                + '<span>📎 上传</span>'
-                + '</label>'
-                + '<button type="button" class="row-del-btn" onclick="deleteCmMaterialAll(\'' + m.key + '\')"' + delDisabled + ' title="清空该材料所有文件">删除</button>'
-              : '<label class="cm-upload-trigger" style="padding: 3px 10px;">'
-                + '<input type="file" multiple style="display:none;" data-mat-key="' + m.key + '" onchange="handleCmMaterialUpload(this)">'
-                + '<span>📎 上传</span>'
-                + '</label>')
-          + '<button type="button" class="row-toggle" onclick="toggleCmMatFiles(\'' + m.key + '\')" title="展开/收起文件列表">▼</button>'
+              ? '<button type="button" class="row-del-btn" onclick="deleteCmMaterialAll(\'' + key + '\')"' + delDisabled + ' title="清空该材料所有文件">删除</button>'
+              : '')
+          + (isCustom
+              ? '<button type="button" class="row-del-btn" onclick="deleteCmCustomMaterial(\'' + m.id + '\')" title="删除该自定义附件条目">删除条目</button>'
+              : '')
+          + '<button type="button" class="row-toggle" onclick="toggleCmMatFiles(\'' + key + '\')" title="展开/收起文件列表">▼</button>'
           + '</div>'
           + '</div>'
-          + '<div class="cm-mat-files-expanded" id="cm_mat_' + m.key + '_files_wrap" style="display:none;">'
-          + '<div class="cm-material-files" id="cm_mat_' + m.key + '_files"></div>'
+          + '<div class="cm-mat-files-expanded" id="cm_mat_' + key + '_files_wrap" style="display:none;">'
+          + '<div class="cm-material-files" id="cm_mat_' + key + '_files"></div>'
           + '</div>';
       }
 
       // 4. 渲染分组
-      function groupHtml(title, list, defaultOpen) {
+      function groupHtml(title, list, defaultOpen, extraHeaderHtml, isCustomGroup) {
         var bodyCls = defaultOpen ? '' : 'collapsed';
         var display = defaultOpen ? '' : 'display:none;';
         return '<div class="cm-mats-group">'
@@ -1854,27 +1923,48 @@
           + '<span class="group-icon">▼</span>'
           + '<span class="group-title">' + title + '</span>'
           + '<span class="group-count">（' + list.length + ' 项）</span>'
-          + '<span class="group-progress" id="cm_mat_group_' + (title.indexOf('必填') >= 0 ? 'req' : 'opt') + '_progress">0 / ' + list.length + '</span>'
+          + '<span class="group-progress" id="cm_mat_group_' + (title.indexOf('必填') >= 0 ? 'req' : (title.indexOf('自定义') >= 0 ? 'custom' : 'opt')) + '_progress">0 / ' + list.length + '</span>'
+          + (extraHeaderHtml ? '<span class="group-actions" onclick="event.stopPropagation();">' + extraHeaderHtml + '</span>' : '')
           + '</div>'
           + '<div class="cm-mats-group-body" style="' + display + '">'
-          + list.map(function(m, i){ return rowHtml(m, i); }).join('')
+          + list.map(function(m, i){ return rowHtml(m, i, isCustomGroup); }).join('')
+          + (isCustomGroup && _cmAddingCustom ? cmCustomAddRowHtml() : '')
           + '</div>'
           + '</div>';
       }
 
+      // v1.21.0：自定义附件 · 内联新增行
+      function cmCustomAddRowHtml() {
+        return '<div class="cm-custom-add-row">'
+          + '<input type="text" id="cm_custom_add_input" placeholder="请输入自定义附件名称，如「股东会决议书」" onkeydown="if(event.key===\'Enter\'){commitCmCustomAdd();} if(event.key===\'Escape\'){cancelCmCustomAdd();}">'
+          + '<span class="cm-custom-add-hint">回车确认 · Esc 取消</span>'
+          + '<button type="button" class="btn btn-primary" style="padding:5px 14px; font-size:12px;" onclick="commitCmCustomAdd()">确定</button>'
+          + '<button type="button" class="btn btn-secondary" style="padding:5px 14px; font-size:12px;" onclick="cancelCmCustomAdd()">取消</button>'
+          + '</div>';
+      }
+
       // 5. 顶部摘要
+      var customList = _cmCustomMaterials.slice();
       var html = '<div class="cm-mats-summary">'
         + '<span class="sum-chip req-pending" id="cm_mat_req_summary">必填 0 / ' + reqList.length + ' ⚠</span>'
         + '<span class="sum-chip opt" id="cm_mat_opt_summary">非必填 0 / ' + optList.length + '</span>'
+        + '<span class="sum-chip opt" id="cm_mat_custom_summary">自定义 0 / ' + customList.length + '</span>'
         + '<button type="button" class="sum-toggle-all" onclick="toggleCmMatsAll(this)">全部展开</button>'
         + '</div>'
         + groupHtml('必填材料', reqList, true)
-        + groupHtml('非必填材料', optList, false);
+        + groupHtml('非必填材料', optList, false)
+        // v1.21.0：自定义附件分组（位于必填/非必填下方）
+        + groupHtml('自定义附件', customList, true,
+            '<button type="button" class="cm-add-custom-btn" onclick="startCmCustomAdd()">+ 新增附件</button>', true);
 
       document.getElementById('cmMaterialsList').innerHTML = html;
       // 重渲所有材料文件区（包含已暂存的文件）
-      CUSTOMER_MATERIALS.forEach(function(m){ renderCmMaterialFiles(m.key); });
+      CUSTOMER_MATERIALS.concat(customList).forEach(function(m){ renderCmMaterialFiles(m.key); });
       updateCmMatsSummary();
+      if (_cmAddingCustom) {
+        var addInput = document.getElementById('cm_custom_add_input');
+        if (addInput) addInput.focus();
+      }
     }
 
     // v1.7.99.307 折叠/展开单材料的文件列表
@@ -1934,14 +2024,26 @@
         reqChip.className = 'sum-chip ' + (reqDone >= reqList.length ? 'req-done' : 'req-pending');
       }
       if (optChip) optChip.textContent = '非必填 ' + optDone + ' / ' + optList.length;
+      // v1.21.0：自定义附件分组进度
+      var customList = _cmCustomMaterials;
+      var customDone = customList.filter(function(m){ return (_cmMaterials[m.key] || []).length > 0; }).length;
+      var customChip = document.getElementById('cm_mat_custom_summary');
+      var customProg = document.getElementById('cm_mat_group_custom_progress');
+      if (customChip) customChip.textContent = '自定义 ' + customDone + ' / ' + customList.length;
+      if (customProg) {
+        customProg.textContent = customDone + ' / ' + customList.length + ' 已上传';
+        if (customDone >= customList.length) customProg.classList.add('done');
+      }
       if (reqProg) {
         reqProg.textContent = reqDone + ' / ' + reqList.length + ' 已上传';
         if (reqDone >= reqList.length) reqProg.classList.add('done');
       }
       if (optProg) optProg.textContent = optDone + ' / ' + optList.length + ' 已上传';
       // 更新单行的 file-count chip
-      CUSTOMER_MATERIALS.forEach(function(m){
-        var n = (_cmMaterials[m.key] || []).length;
+      CUSTOMER_MATERIALS.concat(customList).forEach(function(m){
+        var files = _cmMaterials[m.key] || [];
+        var n = files.length;
+        var hasNoSuch = files.some(function(f){ return f.noSuch; });
         var fc = document.querySelector('.cm-mat-row[data-mat-key="' + m.key + '"] .file-count');
         if (!fc) return;
         if (n > 0) {
@@ -1951,11 +2053,27 @@
           fc.textContent = m.required ? '⚠ 未上传' : '○ 未上传';
           fc.className = 'file-count ' + (m.required ? 'missing' : 'zero');
         }
+        // v1.21.0：行内「含无此附件说明」标记
+        var row = document.querySelector('.cm-mat-row[data-mat-key="' + m.key + '"]');
+        if (row) {
+          var badge = row.querySelector('.row-badge-nosuch');
+          if (hasNoSuch && !badge) {
+            var b = document.createElement('span');
+            b.className = 'row-badge-nosuch';
+            b.title = '该材料已上传「无此附件说明」';
+            b.textContent = '⚠ 含无此附件说明';
+            row.querySelector('.row-left').appendChild(b);
+          } else if (!hasNoSuch && badge) {
+            badge.remove();
+          }
+        }
       });
     }
 
     function handleCmMaterialUpload(input) {
       var key = input.dataset.matKey;
+      // v1.21.0：区分上传入口 —— material=材料本体 / no-such=无此附件说明
+      var isNoSuch = input.dataset.uploadKind === 'no-such';
       var files = Array.from(input.files || []);
       if (!_cmMaterials[key]) _cmMaterials[key] = [];
       files.forEach(function(file) {
@@ -1971,6 +2089,7 @@
             size: file.size,
             type: file.type,
             dataUrl: e.target.result,
+            noSuch: isNoSuch,              // v1.21.0：true = 该文件是「无此附件说明」，非材料本体
             uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false })
           });
           renderCmMaterialFiles(key);
@@ -1980,9 +2099,41 @@
       input.value = '';  // 允许重复选同个文件
     }
 
+    // v1.21.0：更换「无此附件说明」文件（选新文件替换原文件，保留说明属性）
+    function replaceCmFile(key, fi) {
+      var old = _cmMaterials[key] && _cmMaterials[key][fi];
+      if (!old) return;
+      var inp = document.createElement('input');
+      inp.type = 'file';
+      inp.style.display = 'none';
+      inp.addEventListener('change', function() {
+        var f = inp.files && inp.files[0];
+        if (!f) { inp.remove(); return; }
+        if (f.size > 10 * 1024 * 1024) {
+          if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast(f.name + ' 超过 10MB，请压缩后再上传', 'warning');
+          inp.remove(); return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) {
+          _cmMaterials[key][fi] = {
+            name: f.name, size: f.size, type: f.type, dataUrl: e.target.result,
+            noSuch: !!old.noSuch,
+            uploadedAt: new Date().toLocaleString('zh-CN', { hour12: false })
+          };
+          renderCmMaterialFiles(key);
+          inp.remove();
+        };
+        reader.readAsDataURL(f);
+      });
+      document.body.appendChild(inp);
+      inp.click();
+    }
+
     function renderCmMaterialFiles(key) {
       var files = _cmMaterials[key] || [];
-      var m = CUSTOMER_MATERIALS.find(function(x){ return x.key === key; });
+      // v1.21.0：同时兼容自定义附件条目
+      var m = CUSTOMER_MATERIALS.find(function(x){ return x.key === key; })
+           || _cmCustomMaterials.find(function(x){ return x.key === key; });
       var html;
       if (files.length === 0) {
         // v1.7.99.307 空状态：根据是否必填切换文案
@@ -1994,8 +2145,12 @@
           return '<div class="cm-material-file">'
             + '<span class="cm-file-icon">' + getCmFileIcon(f.type) + '</span>'
             + '<span class="cm-file-name">' + f.name + '</span>'
+            // v1.21.0：标记该文件为「非本附件本体」
+            + (f.noSuch ? '<span class="cm-file-badge-nosuch" title="该文件是「无此附件说明」，非本材料本体">非本附件本体</span>' : '')
             + '<span class="cm-file-meta">' + formatCmFileSize(f.size) + '</span>'
             + '<button type="button" class="cm-file-btn" onclick="previewCmFile(\'' + key + '\', ' + fi + ')">预览</button>'
+            // v1.21.0：无此附件说明支持「更换」
+            + (f.noSuch ? '<button type="button" class="cm-file-btn" onclick="replaceCmFile(\'' + key + '\', ' + fi + ')" title="更换该说明文件">更换</button>' : '')
             + '<button type="button" class="cm-file-btn danger" onclick="deleteCmFile(\'' + key + '\', ' + fi + ')">删除</button>'
             + '</div>';
         }).join('');
@@ -2025,10 +2180,109 @@
     }
 
     // v1.7.99.309 必填项行内删除按钮：清空该材料所有文件
+    // ===== v1.21.0 自定义附件（新增 / 改名 / 删除条目） =====
+    function startCmCustomAdd() {
+      _cmAddingCustom = true;
+      _cmEditingCustomId = null;
+      renderCmMaterials();
+    }
+    function cancelCmCustomAdd() {
+      _cmAddingCustom = false;
+      renderCmMaterials();
+    }
+    function commitCmCustomAdd() {
+      var inp = document.getElementById('cm_custom_add_input');
+      var name = inp ? inp.value.trim() : '';
+      if (!name) {
+        if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('请输入附件名称', 'warn');
+        return;
+      }
+      var dup = _cmCustomMaterials.some(function(m){ return m.name === name; });
+      if (dup) {
+        if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('已存在同名附件「' + name + '」', 'warn');
+        return;
+      }
+      _cmCustomSeq = _cmCustomSeq + 1;
+      var id = 'cm_c' + _cmCustomSeq + '_' + Date.now();
+      _cmCustomMaterials.push({ id: id, name: name, key: 'cm_custom_' + id });
+      _cmMaterials['cm_custom_' + id] = [];
+      _cmAddingCustom = false;
+      renderCmMaterials();
+      if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('已新增自定义附件「' + name + '」', 'success');
+    }
+    function startCmCustomRename(id) {
+      _cmEditingCustomId = id;
+      _cmAddingCustom = false;
+      renderCmMaterials();
+      var inp = document.getElementById('cm_custom_name_input');
+      if (inp) { inp.focus(); inp.select(); }
+    }
+    function cancelCmCustomRename() {
+      _cmEditingCustomId = null;
+      renderCmMaterials();
+    }
+    function commitCmCustomRename(id, value) {
+      if (_cmEditingCustomId !== id) return;   // 已处理过（回车 + blur 双触发）
+      var name = (value || '').trim();
+      if (!name) {
+        if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('附件名称不能为空', 'warn');
+        _cmEditingCustomId = null;
+        renderCmMaterials();
+        return;
+      }
+      var dup = _cmCustomMaterials.some(function(m){ return m.id !== id && m.name === name; });
+      if (dup) {
+        if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('已存在同名附件「' + name + '」', 'warn');
+        return;
+      }
+      var target = _cmCustomMaterials.find(function(m){ return m.id === id; });
+      if (target) target.name = name;
+      _cmEditingCustomId = null;
+      renderCmMaterials();
+    }
+    // 删除自定义附件条目：已上传附件时强提醒确认
+    function deleteCmCustomMaterial(id) {
+      var target = _cmCustomMaterials.find(function(m){ return m.id === id; });
+      if (!target) return;
+      var files = _cmMaterials[target.key] || [];
+      if (files.length > 0) {
+        _cmPendingDeleteId = id;
+        var txt = document.getElementById('cmCustomDeleteText');
+        if (txt) {
+          txt.innerHTML = '自定义附件「<strong>' + target.name + '</strong>」已上传 <strong>' + files.length
+            + '</strong> 个附件。<br>删除该条目后，<strong>已上传的附件将一并删除且无法恢复</strong>。<br><br>确定要删除吗？';
+        }
+        var modal = document.getElementById('cmCustomDeleteModal');
+        if (modal) modal.style.display = 'flex';
+        return;
+      }
+      doDeleteCmCustomMaterial(id);
+    }
+    function closeCmCustomDeleteConfirm() {
+      _cmPendingDeleteId = null;
+      var modal = document.getElementById('cmCustomDeleteModal');
+      if (modal) modal.style.display = 'none';
+    }
+    function confirmCmCustomDelete() {
+      var id = _cmPendingDeleteId;
+      closeCmCustomDeleteConfirm();
+      if (id) doDeleteCmCustomMaterial(id);
+    }
+    function doDeleteCmCustomMaterial(id) {
+      var target = _cmCustomMaterials.find(function(m){ return m.id === id; });
+      if (!target) return;
+      _cmCustomMaterials = _cmCustomMaterials.filter(function(m){ return m.id !== id; });
+      delete _cmMaterials[target.key];
+      if (_cmEditingCustomId === id) _cmEditingCustomId = null;
+      renderCmMaterials();
+      if (typeof Utils !== 'undefined' && Utils.toast) Utils.toast('已删除自定义附件「' + target.name + '」', 'success');
+    }
+
     function deleteCmMaterialAll(key) {
       var files = _cmMaterials[key] || [];
       if (files.length === 0) return;
-      var m = CUSTOMER_MATERIALS.find(function(x){ return x.key === key; });
+      var m = CUSTOMER_MATERIALS.find(function(x){ return x.key === key; })
+           || _cmCustomMaterials.find(function(x){ return x.key === key; });
       var name = m ? m.name : key;
       if (!confirm('确认清空「' + name + '」的所有 ' + files.length + ' 个文件？')) return;
       _cmMaterials[key] = [];
@@ -2045,13 +2299,36 @@
           catch (e) { console.warn('保存材料失败', k, e); }
         }
       });
+      // v1.21.0：自定义附件条目名一并入库（编辑态再次打开时按此还原条目列表）
+      if (_cmCustomMaterials.length > 0) {
+        var ck = 'materials_custom_' + category + '_' + companyName;
+        try {
+          localStorage.setItem(ck, JSON.stringify(
+            _cmCustomMaterials.map(function(m){ return { id: m.id, name: m.name, key: m.key }; })
+          ));
+        } catch (e) { console.warn('保存自定义附件条目失败', ck, e); }
+      }
     }
 
     // ===== end v1.7.99.298 =====
 
-    function openCompanyModal() {
+    function openCompanyModal(category, companyName) {
       _cmMaterials = {};  // 重置暂存
       CUSTOMER_MATERIALS.forEach(function(m){ _cmMaterials[m.key] = []; });
+      // v1.21.0：载入该企业已保存的自定义附件条目（编辑态才需要；新增时无上下文）
+      _cmCustomMaterials = [];
+      if (category && companyName) {
+        var savedCustom = null;
+        try {
+          savedCustom = JSON.parse(localStorage.getItem('materials_custom_' + category + '_' + companyName) || '[]');
+        } catch (e) { savedCustom = []; }
+        if (Array.isArray(savedCustom)) {
+          savedCustom.forEach(function(m){
+            _cmMaterials[m.key] = [];
+            _cmCustomMaterials.push({ id: m.id, name: m.name, key: m.key });
+          });
+        }
+      }
       document.getElementById('companyModal').style.display = 'flex';
       renderCmMaterials();  // v1.7.99.298 重渲染材料上传列表
       document.getElementById('cmCompanyName').focus();
@@ -2276,8 +2553,8 @@
       const name = card.querySelector('.tag-card-title').textContent;
       const category = card.dataset.category || '上游客户';
       const credit = card.dataset.credit || '';
-      // 打开弹窗
-      openCompanyModal();
+      // 打开弹窗（v1.21.0：带上企业与类别上下文，用于载入已保存的自定义附件条目）
+      openCompanyModal(category, name);
       // 预填
       document.getElementById('cmCustomerCategory').value = category;
       document.getElementById('cmCompanyName').value = name;
