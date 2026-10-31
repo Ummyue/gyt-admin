@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-10-28 腾讯云轻量服务器（192.144.175.203）托管上线 + 本机一键部署脚本
+最后更新: 2026-10-31 腾讯云轻量防火墙补齐 TCP 8080（福景堂独立端口入口已通）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -270,6 +270,18 @@ bash scripts/deploy_lighthouse_local.sh
 | `http://192.144.175.203/fjt/` | 福景堂站点（alias 挂载到 `/var/www/fujingtang`） |
 | 其它 Host 头 | 仍命中 `fujingtang.conf` 的 `server_name _` |
 
+**轻量应用服务器防火墙规则（2026-10-31 补齐）**
+
+| 端口 | 协议 | 来源 | 策略 | 承载站点 |
+|---|---|---|---|---|
+| 22 | TCP | 全部IPv4 | 允许 | SSH |
+| 80 | TCP | 全部IPv4 | 允许 | 豫港通（`/`，`server_name 192.144.175.203`） |
+| 8080 | TCP | 全部IPv4 | 允许 | 福景堂（`fujingtang.conf` 的 `listen 8080`） |
+| ALL | ICMP | 全部IPv4 | 允许 | Ping |
+
+→ 福景堂现在有**两个入口**：`http://192.144.175.203/fjt/`（80 端口路径前缀）
+和 `http://192.144.175.203:8080/`（独立端口，根路径直达，无需带 `/fjt/` 前缀）。
+
 ⚠️ **备案完成后**：把域名追加到 `yugangtong.conf` 的 `server_name`（逗号分隔），
 域名解析到本 IP；在此之前域名访问会被未备案监测拦截。
 
@@ -310,6 +322,23 @@ bash scripts/deploy_lighthouse_local.sh
 
 7. **`USER` 是 bash 内置环境变量**（本地用户名），`USER="${USER:-ubuntu}"` 不会生效。
    → 用 `SSH_USER`。
+
+8. **「服务器本机 curl 通、外部访问不通」＝ 腾讯云轻量防火墙没放行**
+   排查顺序：`ssh 本机 curl 127.0.0.1:<端口>` → 通 = nginx 配置没问题；
+   外部连不上 = **控制台「轻量应用服务器 → 实例 → 防火墙」缺规则**（不是 ufw，ufw 默认 inactive）。
+   2026-10-31 就是这个问题：8080 在 `fujingtang.conf` 里已 `listen`，本机 curl 200，
+   外网 curl 返回 000 —— 控制台只放行了 22/80/ICMP。
+
+9. **腾讯云轻量控制台：实例详情页不能靠 URL 直达**
+   `.../lighthouse/instance/detail?rid=1&id=lhins-aiyspy7i` 会报「未找到指定资源」，
+   必须从**实例列表页**（`.../lighthouse/instance/index?rid=1`）点实例名进去，
+   实际 URL 会带 `rid=8`（不是 1）。
+   防火墙页签地址：`.../instance/detail?...&tab=firewall`；
+   「添加规则」抽屉：`...&action=CreateFirewallRules`。
+
+10. **轻量防火墙「来源」框填 `0.0.0.0/0` 会被组件解析成「全部IPv4地址」**
+    填完 `fill` 会报 "does not contain the exact requested value"（**这是成功**，不是失败）。
+    同理「应用类型」默认 `自定义`、「协议」默认 `TCP`、「策略」默认 `允许`。
 
 ### 腾讯云轻量服务器部署（v1.18.0 初始方案）
 
