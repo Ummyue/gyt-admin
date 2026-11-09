@@ -59,6 +59,31 @@ SCOPE_MAP = [
 ]
 
 
+# ===== 人工审核剔除清单（v1.24.0，2026-11-09）=====
+# user 逐项审核准入管理模块后确认：勾选的按钮 = 该模块应有的全部权限项，
+# 未勾选的现存按钮属于噪音权限项，从权限配置项中删除。
+# key = 菜单路径（与权限码里的路径一致），value = 要剔除的按钮名。
+# 其他模块后续同样审核时，往这里加即可，不用改逻辑。
+EXCLUDE_OPS = {
+    # 图1：项目准入 15 项 → 保留 10 项（删 确认上传 / 全部标记已读 / 查看 / 替换 / 删除）
+    "准入管理/项目准入": {
+        "确认上传", "全部标记已读", "查看", "替换", "删除",
+    },
+    # 图2：客户准入 9 项 → 保留 6 项（删 查看状态机说明 / 查看额度 / 发起完结）
+    "准入管理/客户准入": {
+        "查看状态机说明", "查看额度", "发起完结",
+    },
+    # 图3：黑名单管理 7 项 → 保留 4 项（删 批量删除 / 下载模板 / 开始导入）
+    "准入管理/黑名单管理": {
+        "批量删除", "下载模板", "开始导入",
+    },
+    # 角色权限管理页自身：「全选 / 清空」是权限面板的工具条按钮，不是业务操作权限项
+    "账户中心/企业管理/角色权限管理": {
+        "全选", "清空",
+    },
+}
+
+
 def _slug(fname):
     """contract-purchase.html → contract-purchase"""
     return (fname or "").replace(".html", "")
@@ -89,12 +114,17 @@ def _stamp(node, path):
         node["ops"] = []
     else:
         used = set()
+        drop = EXCLUDE_OPS.get(path, set())
         ops = []
         for i, b in enumerate(node.get("buttons", [])):
             scope = _scope(b, i + 1)
             if scope in used:
                 scope = "%s%d" % (scope, i + 1)
             used.add(scope)
+            # 被剔除的按钮不再产出权限项，但它仍占用 scope 编号，
+            # 这样其余按钮的权限码与剔除前完全一致（已保存角色的权限不会失效）
+            if b in drop:
+                continue
             ops.append({"label": b, "code": "%s#%s" % (path, scope)})
         node["ops"] = ops
     for i, child in enumerate(kids):

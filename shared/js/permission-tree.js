@@ -1,5 +1,5 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-09 16:51:13
+// 生成时间：2026-11-09 17:28:01
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
 
 window.PERMISSION_TREE = [
@@ -55,18 +55,6 @@ window.PERMISSION_TREE = [
             "code": "准入管理/项目准入#export"
           },
           {
-            "label": "确认上传",
-            "code": "准入管理/项目准入#submit"
-          },
-          {
-            "label": "全部标记已读",
-            "code": "准入管理/项目准入#view"
-          },
-          {
-            "label": "查看",
-            "code": "准入管理/项目准入#view5"
-          },
-          {
             "label": "编辑",
             "code": "准入管理/项目准入#edit"
           },
@@ -97,14 +85,6 @@ window.PERMISSION_TREE = [
           {
             "label": "发起完结",
             "code": "准入管理/项目准入#submit13"
-          },
-          {
-            "label": "替换",
-            "code": "准入管理/项目准入#replace"
-          },
-          {
-            "label": "删除",
-            "code": "准入管理/项目准入#delete"
           }
         ]
       },
@@ -134,10 +114,6 @@ window.PERMISSION_TREE = [
             "code": "准入管理/客户准入#export"
           },
           {
-            "label": "查看状态机说明",
-            "code": "准入管理/客户准入#view"
-          },
-          {
             "label": "编辑",
             "code": "准入管理/客户准入#edit"
           },
@@ -146,20 +122,12 @@ window.PERMISSION_TREE = [
             "code": "准入管理/客户准入#view5"
           },
           {
-            "label": "查看额度",
-            "code": "准入管理/客户准入#view6"
-          },
-          {
             "label": "撤回",
             "code": "准入管理/客户准入#withdraw"
           },
           {
             "label": "作废",
             "code": "准入管理/客户准入#void"
-          },
-          {
-            "label": "发起完结",
-            "code": "准入管理/客户准入#submit"
           }
         ]
       },
@@ -189,18 +157,6 @@ window.PERMISSION_TREE = [
           {
             "label": "数据导出",
             "code": "准入管理/黑名单管理#export"
-          },
-          {
-            "label": "批量删除",
-            "code": "准入管理/黑名单管理#delete"
-          },
-          {
-            "label": "下载模板",
-            "code": "准入管理/黑名单管理#export5"
-          },
-          {
-            "label": "开始导入",
-            "code": "准入管理/黑名单管理#import6"
           },
           {
             "label": "详情",
@@ -1678,14 +1634,57 @@ window.PERMISSION_TREE = [
         "buttons": [
           "新增企业中心"
         ],
-        "children": [],
-        "code": "menu:账户中心/企业管理",
-        "ops": [
+        "children": [
           {
-            "label": "新增企业中心",
-            "code": "账户中心/企业管理#create"
+            "label": "企业中心",
+            "file": "account-company.html",
+            "buttons": [
+              "新增企业中心"
+            ],
+            "children": [],
+            "code": "menu:账户中心/企业管理/企业中心",
+            "ops": [
+              {
+                "label": "新增企业中心",
+                "code": "账户中心/企业管理/企业中心#create"
+              }
+            ]
+          },
+          {
+            "label": "角色权限管理",
+            "file": "account-role-permission.html",
+            "buttons": [
+              "新增角色",
+              "全选",
+              "清空",
+              "保存",
+              "编辑该角色",
+              "确认删除"
+            ],
+            "children": [],
+            "code": "menu:账户中心/企业管理/角色权限管理",
+            "ops": [
+              {
+                "label": "新增角色",
+                "code": "账户中心/企业管理/角色权限管理#create"
+              },
+              {
+                "label": "保存",
+                "code": "账户中心/企业管理/角色权限管理#save"
+              },
+              {
+                "label": "编辑该角色",
+                "code": "账户中心/企业管理/角色权限管理#edit"
+              },
+              {
+                "label": "确认删除",
+                "code": "账户中心/企业管理/角色权限管理#submit"
+              }
+            ]
           }
-        ]
+        ],
+        "code": "menu:账户中心/企业管理",
+        "ops": []
       }
     ]
   }

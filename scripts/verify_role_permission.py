@@ -75,8 +75,8 @@ def main():
         drawer_txt = page.locator("#drawerBody").inner_text()
         check("抽屉显示数据权限说明", "全部数据" in drawer_txt or "仅本人创建" in drawer_txt)
         check("抽屉显示权限概览统计", "菜单权限" in drawer_txt and "操作按钮" in drawer_txt)
-        check("抽屉渲染权限树节点（7 一级 + 72 子节点）",
-              page.locator("#drawerBody .rp-tnode").count() == 79,
+        check("抽屉渲染权限树节点（7 一级 + 74 子节点）",
+              page.locator("#drawerBody .rp-tnode").count() == 81,
               f"实际 {page.locator('#drawerBody .rp-tnode').count()}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
@@ -88,8 +88,8 @@ def main():
         check("新增角色弹窗打开", page.locator(".rp-modal").is_visible())
         check("弹窗标题为新增角色",
               page.locator("#roleModalTitle").inner_text() == "新增角色")
-        check("左树渲染 79 个菜单节点（7 一级 + 72 子节点）",
-              page.locator("#permTree .rp-tnode").count() == 79,
+        check("左树渲染 81 个菜单节点（7 一级 + 74 子节点）",
+              page.locator("#permTree .rp-tnode").count() == 81,
               f"实际 {page.locator('#permTree .rp-tnode').count()}")
         check("左树一级菜单 7 个",
               page.locator('#permTree .rp-tnode[data-depth="0"]').count() == 7)
@@ -114,7 +114,13 @@ def main():
         check("操作按钮带权限编码",
               "#" in page.locator(".rp-op-code").first.inner_text())
         ops_before = page.locator(".rp-op-item").count()
-        check("项目准入共 15 个操作按钮", ops_before == 15, f"实际 {ops_before}")
+        check("项目准入权限项收敛为 10 项（user 图1 审核结果）", ops_before == 10, f"实际 {ops_before}")
+        op_labels = page.locator(".rp-op-label").all_inner_texts()
+        for gone in ["确认上传", "全部标记已读", "查看", "替换", "删除"]:
+            check(f"项目准入已剔除「{gone}」权限项", gone not in op_labels, str(op_labels))
+        for keep in ["新增立项申请", "数据导出", "编辑", "提交", "作废", "撤回",
+                     "重新提交", "上传客户准入报告", "上传决议文件", "发起完结"]:
+            check(f"项目准入保留「{keep}」权限项", keep in op_labels, str(op_labels))
 
         # 勾选一个操作按钮 → 计数变化
         cnt_before = page.locator("#opCount").inner_text()
@@ -129,9 +135,23 @@ def main():
         page.click('.rp-tnode[data-label="准入管理"] [data-check]')
         page.wait_for_timeout(300)
         foot = page.locator("#roleFootTip").inner_text()
-        # 准入管理 = 1 个一级 + 3 个二级；操作按钮 15 + 9 + 7 = 31
-        check("勾选一级菜单联动全部下级（4 菜单 / 31 按钮）",
-              "已选 4 个菜单 · 31 个操作按钮" in foot, foot)
+        # 准入管理 = 1 个一级 + 3 个二级；操作按钮 10 + 6 + 4 = 20（user 审核收敛后）
+        check("勾选一级菜单联动全部下级（4 菜单 / 20 按钮）",
+              "已选 4 个菜单 · 20 个操作按钮" in foot, foot)
+
+        # 客户准入 / 黑名单管理 也按 user 图2 / 图3 收敛
+        page.click('.rp-tnode[data-label="客户准入"] .rp-tnode-label')
+        page.wait_for_timeout(250)
+        cl = page.locator(".rp-op-label").all_inner_texts()
+        check("客户准入权限项收敛为 6 项（user 图2 审核结果）", len(cl) == 6, str(cl))
+        for gone in ["查看状态机说明", "查看额度", "发起完结"]:
+            check(f"客户准入已剔除「{gone}」权限项", gone not in cl, str(cl))
+        page.click('.rp-tnode[data-label="黑名单管理"] .rp-tnode-label')
+        page.wait_for_timeout(250)
+        bl = page.locator(".rp-op-label").all_inner_texts()
+        check("黑名单管理权限项收敛为 4 项（user 图3 审核结果）", len(bl) == 4, str(bl))
+        for gone in ["批量删除", "下载模板", "开始导入"]:
+            check(f"黑名单管理已剔除「{gone}」权限项", gone not in bl, str(bl))
 
         # 全选 / 清空操作按钮
         page.click('.rp-tnode[data-label="项目准入"] .rp-tnode-label')
@@ -139,7 +159,7 @@ def main():
         page.click('.rp-perm-right-tools button:has-text("全选")')
         page.wait_for_timeout(200)
         check("全选后当前页操作全选中",
-              page.locator('.rp-op-item input[checked]').count() == 15,
+              page.locator('.rp-op-item input[checked]').count() == 10,
               f"实际 {page.locator('.rp-op-item input[checked]').count()}")
         page.click('.rp-perm-right-tools button:has-text("清空")')
         page.wait_for_timeout(200)
