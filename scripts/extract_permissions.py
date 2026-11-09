@@ -89,6 +89,21 @@ def _slug(fname):
     return (fname or "").replace(".html", "")
 
 
+# ===== 子节点并入（v1.25.0，2026-11-09）=====
+# 「新增XXX」「编辑XXX」这类**新增/编辑页不是独立菜单**，而是所属业务列表页下的操作入口，
+# 不该各占一个可勾选的菜单节点；它们的可访问性用右侧的「操作按钮权限」来管。
+# key = 父菜单路径，value = {宿主菜单标签: [要并入的子菜单标签]}
+# 并入后：宿主节点的操作权限 = 自身 ops + 被并入子节点的 ops（权限码保留各自原路径，不失效）
+MERGE_CHILDREN = {
+    # 合同管理：只保留 采购合同 / 销售合同 / 补充协议 三个可配置菜单
+    "数字供应链/合同管理": {
+        "采购合同": ["新增采购框架合同", "新增采购订单/单批次合同"],
+        "销售合同": ["新增销售框架合同", "新增销售订单/单批次合同"],
+        "补充协议": ["新增补协-框架合同", "新增补协-订单/单批次合同"],
+    },
+}
+
+
 def _scope(text, idx):
     for keys, scope in SCOPE_MAP:
         if text in keys:
@@ -100,35 +115,71 @@ def _scope(text, idx):
     return "op%d" % idx
 
 
-def _stamp(node, path):
+def _build_ops(buttons, src_path, src_label=None):
+    """构造某个页面的操作权限项。
+
+    src_path  = 该按钮所属页面的菜单路径（用于生成权限码）
+    src_label = 并入场景下的来源菜单标签（宿主菜单自己的按钮为 None）
+    """
+    used = set()
+    out = []
+    drop = EXCLUDE_OPS.get(src_path, set())
+    for i, b in enumerate(buttons):
+        scope = _scope(b, i + 1)
+        if scope in used:
+            scope = "%s%d" % (scope, i + 1)
+        used.add(scope)
+        # 被剔除的按钮不再产出权限项，但仍占用 scope 编号，
+        # 这样其余按钮的权限码与剔除前完全一致（已保存角色的权限不会失效）
+        if b in drop:
+            continue
+        op = {"label": b, "code": "%s#%s" % (src_path, scope)}
+        if src_label:
+            op["src"] = src_label
+        out.append(op)
+    return out
+
+
+def _stamp(node, path, merged=None):
     """给菜单节点补 code / ops 明细。
 
     code 用「菜单路径」生成，保证可读且唯一：
         menu:数字供应链/合同管理/采购合同
     只有叶子节点（没有下级菜单）才挂操作按钮，
     中间层是纯目录，它的页面就是第一个子节点的落地页，重复列会让人困惑。
+
+    merged = 被本节点吸收的子节点（新增页并入到宿主菜单）
     """
     node["code"] = "menu:" + path
-    kids = node.get("children") or []
+    merged = merged or []
+    node["mergedMenus"] = [{"label": m["label"], "code": "menu:" + m["path"]} for m in merged]
+
+    raw_children = node.get("children") or []
+    merge_map = MERGE_CHILDREN.get(path, {})
+    consumed = set()
+    child_merged = {}
+    for host_label, labels in merge_map.items():
+        for c in raw_children:
+            if c["label"] in labels:
+                child_merged.setdefault(host_label, []).append({
+                    "label": c["label"],
+                    "path": path + "/" + c["label"],
+                    "buttons": c.get("buttons", []),
+                })
+                consumed.add(c["label"])
+
+    kids = [c for c in raw_children if c["label"] not in consumed]
+    node["children"] = kids          # ← 被并入的子节点要从树里移除，必须回写
     if kids:
         node["ops"] = []
     else:
-        used = set()
-        drop = EXCLUDE_OPS.get(path, set())
-        ops = []
-        for i, b in enumerate(node.get("buttons", [])):
-            scope = _scope(b, i + 1)
-            if scope in used:
-                scope = "%s%d" % (scope, i + 1)
-            used.add(scope)
-            # 被剔除的按钮不再产出权限项，但它仍占用 scope 编号，
-            # 这样其余按钮的权限码与剔除前完全一致（已保存角色的权限不会失效）
-            if b in drop:
-                continue
-            ops.append({"label": b, "code": "%s#%s" % (path, scope)})
-        node["ops"] = ops
-    for i, child in enumerate(kids):
-        _stamp(child, path + "/" + child["label"])
+        node["ops"] = _build_ops(node.get("buttons", []), path)
+        # 并入进来的新增/编辑页的操作权限
+        for m in merged:
+            node["ops"].extend(_build_ops(m["buttons"], m["path"], m["label"]))
+
+    for c in kids:
+        _stamp(c, path + "/" + c["label"], child_merged.get(c["label"], []))
 
 # 页面外壳（顶栏/分页/导航）按钮不算业务操作权限
 CHROME_TEXT = {
@@ -390,13 +441,10 @@ if __name__ == "__main__":
     tree = build_tree()
 
     # 生成权限编码（菜单节点用菜单路径，操作按钮用 语义 scope）
+    # ⚠️ _stamp 内部已递归子节点，这里**只能调一级**，否则会把合并结果覆盖掉
     for mod in tree:
         for sub in mod["subMenus"]:
             _stamp(sub, mod["label"] + "/" + sub["label"])
-            for ch in sub["children"]:
-                _stamp(ch, mod["label"] + "/" + sub["label"] + "/" + ch["label"])
-                for g in ch["children"]:
-                    _stamp(g, mod["label"] + "/" + sub["label"] + "/" + ch["label"] + "/" + g["label"])
 
     if "-j" in sys.argv:
         out = sys.argv[sys.argv.index("-j") + 1]

@@ -58,7 +58,26 @@ def main():
     txt = body.decode("utf-8")
     check("permission-tree.js 声明 PERMISSION_TREE", "window.PERMISSION_TREE" in txt)
     check("权限树含 7 个一级菜单", txt.count('"icon":') == 7, str(txt.count('"icon":')))
-    check("权限树含操作权限项", txt.count('"ops": [') >= 70, str(txt.count('"ops": [')))
+    check("权限树含操作权限项", txt.count('"ops": [') >= 60, str(txt.count('"ops": [')))
+    # 合同管理：新增/编辑页并入宿主菜单后，下级只保留 3 个可配置菜单
+    import json as _json
+    _d = _json.loads(txt[txt.index("["):txt.rindex(";")])
+    _cm = None
+    for _m in _d:
+        for _sm in _m["subMenus"]:
+            if _sm["label"] == "合同管理":
+                _cm = _sm
+    check("合同管理 下级只保留 采购合同/销售合同/补充协议",
+          _cm is not None and [c["label"] for c in _cm["children"]]
+          == ["采购合同", "销售合同", "补充协议"],
+          str([c["label"] for c in _cm["children"]] if _cm else None))
+    _pc = [c for c in _cm["children"] if c["label"] == "采购合同"][0]
+    check("采购合同 操作权限已并入新增页 5 项（合计 9 项）",
+          len(_pc["ops"]) == 9, str(len(_pc["ops"])))
+    check("并入的菜单码记在 mergedMenus",
+          [m["label"] for m in _pc["mergedMenus"]]
+          == ["新增采购框架合同", "新增采购订单/单批次合同"],
+          str([m["label"] for m in _pc["mergedMenus"]]))
 
     # ---------- 3. 浏览器端回归 ----------
     from playwright.sync_api import sync_playwright

@@ -232,6 +232,16 @@
     .rp-op-item.on { border-color: var(--color-primary); background: var(--color-primary-lighter); }
     .rp-op-item input { margin: 2px 0 0; width: 14px; height: 14px; accent-color: var(--color-primary); flex-shrink: 0; }
     .rp-op-label { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; word-break: break-all; }
+    .rp-op-src {
+      display: inline-block; margin-left: 6px; padding: 1px 6px;
+      background: var(--bg-page); border: 1px solid var(--border-light);
+      border-radius: 3px; font-size: 10.5px; color: var(--text-tertiary);
+      font-weight: 400; vertical-align: middle;
+    }
+    .rp-chip-src {
+      font-style: normal; margin-left: 5px; color: var(--text-tertiary);
+      font-size: 11px;
+    }
     .rp-op-code {
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 10.5px; color: var(--text-tertiary); margin-top: 3px; word-break: break-all;
@@ -645,21 +655,24 @@
           var smId = 'n' + (++seq);
           var smNode = {
             id: smId, label: sm.label, file: sm.file, depth: 1,
-            parentId: modId, code: sm.code, ops: sm.ops || [], children: []
+            parentId: modId, code: sm.code, ops: sm.ops || [],
+            mergedMenus: sm.mergedMenus || [], children: []
           };
           FLAT.push(smNode); BY_ID[smId] = smNode; modNode.children.push(smId);
           (sm.children || []).forEach(function (ch) {
             var chId = 'n' + (++seq);
             var chNode = {
               id: chId, label: ch.label, file: ch.file, depth: 2,
-              parentId: smId, code: ch.code, ops: ch.ops || [], children: []
+              parentId: smId, code: ch.code, ops: ch.ops || [],
+              mergedMenus: ch.mergedMenus || [], children: []
             };
             FLAT.push(chNode); BY_ID[chId] = chNode; smNode.children.push(chId);
             (ch.children || []).forEach(function (g) {
               var gId = 'n' + (++seq);
               var gNode = {
                 id: gId, label: g.label, file: g.file, depth: 3,
-                parentId: chId, code: g.code, ops: g.ops || [], children: []
+                parentId: chId, code: g.code, ops: g.ops || [],
+                mergedMenus: g.mergedMenus || [], children: []
               };
               FLAT.push(gNode); BY_ID[gId] = gNode; chNode.children.push(gId);
             });
@@ -678,6 +691,8 @@
         var n = BY_ID[id];
         if (!n) return;
         out.push(n.code);
+        // 并入的新增/编辑页：菜单码也算进本节点的权限范围
+        (n.mergedMenus || []).forEach(function (m) { out.push(m.code); });
         (n.ops || []).forEach(function (o) { out.push(o.code); });
         (n.children || []).forEach(walk);
       })(nodeId);
@@ -1157,7 +1172,7 @@
 
       if ((node.children || []).length) {
         countEl.textContent = '';
-        body.innerHTML = '<div class="rp-dir-tip">「' + esc(node.label) + '」是目录菜单，操作权限配置在其下级菜单中，勾选目录本身即表示该角色可访问全部下级菜单。</div>'
+        body.innerHTML = '<div class="rp-dir-tip">「' + esc(node.label) + '」是目录菜单，操作权限配置在其下级菜单中，勾选目录本身即表示该角色可访问全部下级菜单。新增/编辑页不单列为菜单节点，其可访问性由下级菜单里的操作权限项控制。</div>'
           + '<div class="rp-child-jump">' + (node.children || []).map(function (cid) {
             var c = BY_ID[cid];
             return '<span class="rp-jump-chip" data-jump="' + cid + '">' + esc(c.label) + ' · ' + allCodes(cid).length + ' 项</span>';
@@ -1186,7 +1201,8 @@
         var on = !!set[o.code];
         return '<label class="rp-op-item' + (on ? ' on' : '') + '">'
           + '<input type="checkbox" data-op="' + esc(o.code) + '"' + (on ? ' checked' : '') + '>'
-          + '<div><div class="rp-op-label">' + esc(o.label) + '</div>'
+          + '<div><div class="rp-op-label">' + esc(o.label)
+          + (o.src ? '<span class="rp-op-src">来自 ' + esc(o.src) + '</span>' : '') + '</div>'
           + '<div class="rp-op-code">' + esc(o.code) + '</div></div>'
           + '</label>';
       }).join('') + '</div>';
@@ -1295,7 +1311,9 @@
 
       var grantedOps = [];
       FLAT.forEach(function (n) {
-        (n.ops || []).forEach(function (o) { if (set[o.code]) grantedOps.push(o.label); });
+        (n.ops || []).forEach(function (o) {
+          if (set[o.code]) grantedOps.push({ label: o.label, src: o.src || '' });
+        });
       });
 
       var treeHtml = FLAT.map(function (n) {
@@ -1336,7 +1354,10 @@
         + '</div>'
         + '<div class="rp-sec"><div class="rp-sec-title">已授权操作按钮<span class="rp-sec-note">共 ' + grantedOps.length + ' 项</span></div>'
         + '<div class="rp-granted-list">' + (grantedOps.length
-          ? grantedOps.map(function (g) { return '<span class="rp-granted-chip">' + esc(g) + '</span>'; }).join('')
+          ? grantedOps.map(function (g) {
+              return '<span class="rp-granted-chip">' + esc(g.label)
+                + (g.src ? '<em class="rp-chip-src">' + esc(g.src) + '</em>' : '') + '</span>';
+            }).join('')
           : '<span style="font-size:12px;color:var(--text-tertiary);">暂无</span>') + '</div>'
         + '</div>';
 

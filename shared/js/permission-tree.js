@@ -1,5 +1,5 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-09 17:28:01
+// 生成时间：2026-11-09 17:42:39
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
 
 window.PERMISSION_TREE = [
@@ -14,6 +14,7 @@ window.PERMISSION_TREE = [
         "buttons": [],
         "children": [],
         "code": "menu:工作台/工作台",
+        "mergedMenus": [],
         "ops": []
       }
     ]
@@ -45,6 +46,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:准入管理/项目准入",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "新增立项申请",
@@ -104,6 +106,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:准入管理/客户准入",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "新增客户",
@@ -145,6 +148,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:准入管理/黑名单管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "新增黑名单企业",
@@ -192,6 +196,16 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/合同管理/采购合同",
+            "mergedMenus": [
+              {
+                "label": "新增采购框架合同",
+                "code": "menu:数字供应链/合同管理/新增采购框架合同"
+              },
+              {
+                "label": "新增采购订单/单批次合同",
+                "code": "menu:数字供应链/合同管理/新增采购订单/单批次合同"
+              }
+            ],
             "ops": [
               {
                 "label": "新增合同",
@@ -208,51 +222,31 @@ window.PERMISSION_TREE = [
               {
                 "label": "查看补协",
                 "code": "数字供应链/合同管理/采购合同#view"
-              }
-            ]
-          },
-          {
-            "label": "新增采购框架合同",
-            "file": "contract-purchase-new.html",
-            "buttons": [
-              "+ 上传",
-              "保存",
-              "提交"
-            ],
-            "children": [],
-            "code": "menu:数字供应链/合同管理/新增采购框架合同",
-            "ops": [
+              },
               {
                 "label": "+ 上传",
-                "code": "数字供应链/合同管理/新增采购框架合同#upload"
+                "code": "数字供应链/合同管理/新增采购框架合同#upload",
+                "src": "新增采购框架合同"
               },
               {
                 "label": "保存",
-                "code": "数字供应链/合同管理/新增采购框架合同#save"
+                "code": "数字供应链/合同管理/新增采购框架合同#save",
+                "src": "新增采购框架合同"
               },
               {
                 "label": "提交",
-                "code": "数字供应链/合同管理/新增采购框架合同#submit"
-              }
-            ]
-          },
-          {
-            "label": "新增采购订单/单批次合同",
-            "file": "contract-purchase-order-new.html",
-            "buttons": [
-              "+ 上传",
-              "提交"
-            ],
-            "children": [],
-            "code": "menu:数字供应链/合同管理/新增采购订单/单批次合同",
-            "ops": [
+                "code": "数字供应链/合同管理/新增采购框架合同#submit",
+                "src": "新增采购框架合同"
+              },
               {
                 "label": "+ 上传",
-                "code": "数字供应链/合同管理/新增采购订单/单批次合同#upload"
+                "code": "数字供应链/合同管理/新增采购订单/单批次合同#upload",
+                "src": "新增采购订单/单批次合同"
               },
               {
                 "label": "提交",
-                "code": "数字供应链/合同管理/新增采购订单/单批次合同#submit"
+                "code": "数字供应链/合同管理/新增采购订单/单批次合同#submit",
+                "src": "新增采购订单/单批次合同"
               }
             ]
           },
@@ -267,6 +261,16 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/合同管理/销售合同",
+            "mergedMenus": [
+              {
+                "label": "新增销售框架合同",
+                "code": "menu:数字供应链/合同管理/新增销售框架合同"
+              },
+              {
+                "label": "新增销售订单/单批次合同",
+                "code": "menu:数字供应链/合同管理/新增销售订单/单批次合同"
+              }
+            ],
             "ops": [
               {
                 "label": "新增合同",
@@ -283,51 +287,31 @@ window.PERMISSION_TREE = [
               {
                 "label": "查看补协",
                 "code": "数字供应链/合同管理/销售合同#view"
-              }
-            ]
-          },
-          {
-            "label": "新增销售框架合同",
-            "file": "contract-sales-new.html",
-            "buttons": [
-              "+ 上传",
-              "保存",
-              "提交"
-            ],
-            "children": [],
-            "code": "menu:数字供应链/合同管理/新增销售框架合同",
-            "ops": [
+              },
               {
                 "label": "+ 上传",
-                "code": "数字供应链/合同管理/新增销售框架合同#upload"
+                "code": "数字供应链/合同管理/新增销售框架合同#upload",
+                "src": "新增销售框架合同"
               },
               {
                 "label": "保存",
-                "code": "数字供应链/合同管理/新增销售框架合同#save"
+                "code": "数字供应链/合同管理/新增销售框架合同#save",
+                "src": "新增销售框架合同"
               },
               {
                 "label": "提交",
-                "code": "数字供应链/合同管理/新增销售框架合同#submit"
-              }
-            ]
-          },
-          {
-            "label": "新增销售订单/单批次合同",
-            "file": "contract-sales-order-new.html",
-            "buttons": [
-              "+ 上传",
-              "提交"
-            ],
-            "children": [],
-            "code": "menu:数字供应链/合同管理/新增销售订单/单批次合同",
-            "ops": [
+                "code": "数字供应链/合同管理/新增销售框架合同#submit",
+                "src": "新增销售框架合同"
+              },
               {
                 "label": "+ 上传",
-                "code": "数字供应链/合同管理/新增销售订单/单批次合同#upload"
+                "code": "数字供应链/合同管理/新增销售订单/单批次合同#upload",
+                "src": "新增销售订单/单批次合同"
               },
               {
                 "label": "提交",
-                "code": "数字供应链/合同管理/新增销售订单/单批次合同#submit"
+                "code": "数字供应链/合同管理/新增销售订单/单批次合同#submit",
+                "src": "新增销售订单/单批次合同"
               }
             ]
           },
@@ -343,6 +327,16 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/合同管理/补充协议",
+            "mergedMenus": [
+              {
+                "label": "新增补协-框架合同",
+                "code": "menu:数字供应链/合同管理/新增补协-框架合同"
+              },
+              {
+                "label": "新增补协-订单/单批次合同",
+                "code": "menu:数字供应链/合同管理/新增补协-订单/单批次合同"
+              }
+            ],
             "ops": [
               {
                 "label": "新增补充协议",
@@ -363,51 +357,32 @@ window.PERMISSION_TREE = [
               {
                 "label": "作废",
                 "code": "数字供应链/合同管理/补充协议#void"
-              }
-            ]
-          },
-          {
-            "label": "新增补协-框架合同",
-            "file": "contract-supplement-new.html",
-            "buttons": [
-              "+ 上传",
-              "提交"
-            ],
-            "children": [],
-            "code": "menu:数字供应链/合同管理/新增补协-框架合同",
-            "ops": [
+              },
               {
                 "label": "+ 上传",
-                "code": "数字供应链/合同管理/新增补协-框架合同#upload"
+                "code": "数字供应链/合同管理/新增补协-框架合同#upload",
+                "src": "新增补协-框架合同"
               },
               {
                 "label": "提交",
-                "code": "数字供应链/合同管理/新增补协-框架合同#submit"
-              }
-            ]
-          },
-          {
-            "label": "新增补协-订单/单批次合同",
-            "file": "contract-supplement-order-new.html",
-            "buttons": [
-              "+ 上传",
-              "提交"
-            ],
-            "children": [],
-            "code": "menu:数字供应链/合同管理/新增补协-订单/单批次合同",
-            "ops": [
+                "code": "数字供应链/合同管理/新增补协-框架合同#submit",
+                "src": "新增补协-框架合同"
+              },
               {
                 "label": "+ 上传",
-                "code": "数字供应链/合同管理/新增补协-订单/单批次合同#upload"
+                "code": "数字供应链/合同管理/新增补协-订单/单批次合同#upload",
+                "src": "新增补协-订单/单批次合同"
               },
               {
                 "label": "提交",
-                "code": "数字供应链/合同管理/新增补协-订单/单批次合同#submit"
+                "code": "数字供应链/合同管理/新增补协-订单/单批次合同#submit",
+                "src": "新增补协-订单/单批次合同"
               }
             ]
           }
         ],
         "code": "menu:数字供应链/合同管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -418,6 +393,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数字供应链/业务线管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "数据导出",
@@ -454,6 +430,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/收发货管理/发货管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "登记订单发货数据",
@@ -502,6 +479,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/收发货管理/收货管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "数据导出",
@@ -531,6 +509,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:数字供应链/收发货管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -551,6 +530,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数字供应链/货转管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "开具货转",
@@ -617,6 +597,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/资金管理/付款管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增付款",
@@ -641,6 +622,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/资金管理/退款管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增退款",
@@ -674,6 +656,8 @@ window.PERMISSION_TREE = [
                   "撤回"
                 ],
                 "code": "menu:数字供应链/资金管理/回款管理/回款列表",
+                "mergedMenus": [],
+                "children": [],
                 "ops": [
                   {
                     "label": "新增回款",
@@ -702,6 +686,8 @@ window.PERMISSION_TREE = [
                 "file": "receipt-detail.html",
                 "buttons": [],
                 "code": "menu:数字供应链/资金管理/回款管理/回款详情",
+                "mergedMenus": [],
+                "children": [],
                 "ops": []
               },
               {
@@ -713,6 +699,8 @@ window.PERMISSION_TREE = [
                   "驳回审批"
                 ],
                 "code": "menu:数字供应链/资金管理/回款管理/回款审批详情",
+                "mergedMenus": [],
+                "children": [],
                 "ops": [
                   {
                     "label": "立即催办",
@@ -739,6 +727,8 @@ window.PERMISSION_TREE = [
                   "提交"
                 ],
                 "code": "menu:数字供应链/资金管理/回款管理/编辑回款",
+                "mergedMenus": [],
+                "children": [],
                 "ops": [
                   {
                     "label": "上传",
@@ -764,6 +754,7 @@ window.PERMISSION_TREE = [
               }
             ],
             "code": "menu:数字供应链/资金管理/回款管理",
+            "mergedMenus": [],
             "ops": []
           },
           {
@@ -784,6 +775,8 @@ window.PERMISSION_TREE = [
                   "查看"
                 ],
                 "code": "menu:数字供应链/资金管理/保证金管理/保证金明细",
+                "mergedMenus": [],
+                "children": [],
                 "ops": [
                   {
                     "label": "登记保证金",
@@ -808,6 +801,8 @@ window.PERMISSION_TREE = [
                   "提交"
                 ],
                 "code": "menu:数字供应链/资金管理/保证金管理/保证金调整",
+                "mergedMenus": [],
+                "children": [],
                 "ops": [
                   {
                     "label": "+ 选择销售订单（贸易）合同",
@@ -833,6 +828,8 @@ window.PERMISSION_TREE = [
                   "保存"
                 ],
                 "code": "menu:数字供应链/资金管理/保证金管理/保证金调整记录",
+                "mergedMenus": [],
+                "children": [],
                 "ops": [
                   {
                     "label": "设置等比例冲抵货款比例",
@@ -854,10 +851,12 @@ window.PERMISSION_TREE = [
               }
             ],
             "code": "menu:数字供应链/资金管理/保证金管理",
+            "mergedMenus": [],
             "ops": []
           }
         ],
         "code": "menu:数字供应链/资金管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -877,6 +876,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/结算单管理/采购结算",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增采购结算单",
@@ -897,6 +897,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/结算单管理/销售结算",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增销售结算单",
@@ -910,6 +911,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:数字供应链/结算单管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -929,6 +931,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/发票管理/进项发票",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "Excel 导出",
@@ -949,6 +952,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/发票管理/销项发票",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "Excel 导出",
@@ -962,6 +966,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:数字供应链/发票管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -975,10 +980,12 @@ window.PERMISSION_TREE = [
             "buttons": [],
             "children": [],
             "code": "menu:数字供应链/盯市管理/盯市价格管理",
+            "mergedMenus": [],
             "ops": []
           }
         ],
         "code": "menu:数字供应链/盯市管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -994,6 +1001,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数字供应链/追保函管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "数据导出",
@@ -1038,6 +1046,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/审批管理/审批流程配置",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新建流程",
@@ -1061,6 +1070,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/审批管理/流程编排画布",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "流程图预览",
@@ -1094,6 +1104,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:数字供应链/审批管理/审批流程监控",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "数据导出",
@@ -1111,6 +1122,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:数字供应链/审批管理",
+        "mergedMenus": [],
         "ops": []
       }
     ]
@@ -1139,6 +1151,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/入库管理/入库记录",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增入库",
@@ -1156,6 +1169,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:仓储管理/入库管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1175,6 +1189,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/出库管理/出库记录",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增出库",
@@ -1188,6 +1203,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:仓储管理/出库管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1207,6 +1223,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/提放货管理/提货管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "提货申请",
@@ -1227,6 +1244,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/提放货管理/放货管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增放货指令",
@@ -1240,6 +1258,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:仓储管理/提放货管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1263,6 +1282,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/库存管理/库存台账",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "数据导出",
@@ -1284,6 +1304,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:仓储管理/库存管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1301,6 +1322,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/视频监控/库点监控",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增视频监控",
@@ -1310,6 +1332,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:仓储管理/视频监控",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1323,10 +1346,12 @@ window.PERMISSION_TREE = [
             "buttons": [],
             "children": [],
             "code": "menu:仓储管理/巡库管理/巡库记录",
+            "mergedMenus": [],
             "ops": []
           }
         ],
         "code": "menu:仓储管理/巡库管理",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1349,6 +1374,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/系统管理/库点信息管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "监控信息",
@@ -1370,6 +1396,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/系统管理/仓房管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增仓房",
@@ -1395,6 +1422,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/系统管理/品类配置",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增品类",
@@ -1412,6 +1440,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:仓储管理/系统管理",
+        "mergedMenus": [],
         "ops": []
       }
     ]
@@ -1427,6 +1456,7 @@ window.PERMISSION_TREE = [
         "buttons": [],
         "children": [],
         "code": "menu:数据中心/驾驶舱",
+        "mergedMenus": [],
         "ops": []
       },
       {
@@ -1438,6 +1468,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数据中心/项目台账表",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "导出 Excel",
@@ -1460,6 +1491,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数据中心/业务线台账表",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "导出 Excel",
@@ -1487,6 +1519,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数据中心/资金占压表",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "数据导出",
@@ -1502,6 +1535,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数据中心/库存明细表",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "数据导出",
@@ -1518,6 +1552,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数据中心/应收应付表",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "导出 Excel",
@@ -1538,6 +1573,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:数据中心/合规验证报告管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "数据导出",
@@ -1565,6 +1601,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:预警中心/预警管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "导出",
@@ -1587,6 +1624,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:预警中心/预警规则配置",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "添加规则",
@@ -1621,6 +1659,7 @@ window.PERMISSION_TREE = [
         ],
         "children": [],
         "code": "menu:账户中心/个人管理",
+        "mergedMenus": [],
         "ops": [
           {
             "label": "新增个人中心",
@@ -1643,6 +1682,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:账户中心/企业管理/企业中心",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增企业中心",
@@ -1663,6 +1703,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:账户中心/企业管理/角色权限管理",
+            "mergedMenus": [],
             "ops": [
               {
                 "label": "新增角色",
@@ -1684,6 +1725,7 @@ window.PERMISSION_TREE = [
           }
         ],
         "code": "menu:账户中心/企业管理",
+        "mergedMenus": [],
         "ops": []
       }
     ]

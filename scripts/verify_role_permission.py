@@ -75,8 +75,8 @@ def main():
         drawer_txt = page.locator("#drawerBody").inner_text()
         check("抽屉显示数据权限说明", "全部数据" in drawer_txt or "仅本人创建" in drawer_txt)
         check("抽屉显示权限概览统计", "菜单权限" in drawer_txt and "操作按钮" in drawer_txt)
-        check("抽屉渲染权限树节点（7 一级 + 74 子节点）",
-              page.locator("#drawerBody .rp-tnode").count() == 81,
+        check("抽屉渲染权限树节点（7 一级 + 68 子节点）",
+              page.locator("#drawerBody .rp-tnode").count() == 75,
               f"实际 {page.locator('#drawerBody .rp-tnode').count()}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
@@ -88,8 +88,8 @@ def main():
         check("新增角色弹窗打开", page.locator(".rp-modal").is_visible())
         check("弹窗标题为新增角色",
               page.locator("#roleModalTitle").inner_text() == "新增角色")
-        check("左树渲染 81 个菜单节点（7 一级 + 74 子节点）",
-              page.locator("#permTree .rp-tnode").count() == 81,
+        check("左树渲染 75 个菜单节点（7 一级 + 68 子节点）",
+              page.locator("#permTree .rp-tnode").count() == 75,
               f"实际 {page.locator('#permTree .rp-tnode').count()}")
         check("左树一级菜单 7 个",
               page.locator('#permTree .rp-tnode[data-depth="0"]').count() == 7)
@@ -165,6 +165,31 @@ def main():
         page.wait_for_timeout(200)
         check("清空后当前页操作全不选中",
               page.locator('.rp-op-item input[checked]').count() == 0)
+
+        # ===== 合同管理：新增/编辑页并入宿主菜单 =====
+        page.click('.rp-tnode[data-label="合同管理"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        cm_dir = page.locator("#opBody .rp-jump-chip").all_inner_texts()
+        check("合同管理 下只保留 采购合同/销售合同/补充协议",
+              len(cm_dir) == 3 and "采购合同" in cm_dir[0], str(cm_dir))
+        tree_labels = page.locator('#permTree .rp-tnode[data-depth="3"]').evaluate_all(
+            "els => els.map(e => e.getAttribute('data-label'))")
+        for gone in ["新增采购框架合同", "新增采购订单/单批次合同", "新增销售框架合同",
+                     "新增销售订单/单批次合同", "新增补协-框架合同", "新增补协-订单/单批次合同"]:
+            check(f"左树不再单列「{gone}」菜单节点", gone not in tree_labels, str(tree_labels))
+
+        page.click('.rp-tnode[data-label="采购合同"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        cm_ops = page.locator(".rp-op-item").count()
+        check("采购合同 操作权限 = 列表页 4 项 + 新增页 5 项 = 9 项", cm_ops == 9, f"实际 {cm_ops}")
+        srcs = page.locator(".rp-op-src").all_inner_texts()
+        check("并入的操作项标注来源「新增采购框架合同」",
+              any("新增采购框架合同" in x for x in srcs), str(srcs))
+        check("并入的操作项标注来源「新增采购订单/单批次合同」",
+              any("新增采购订单/单批次合同" in x for x in srcs), str(srcs))
+        codes = page.locator(".rp-op-code").all_inner_texts()
+        check("并入的操作项保留原页面权限码",
+              any("数字供应链/合同管理/新增采购框架合同#upload" == c for c in codes), str(codes))
 
         # 树搜索
         page.fill("#treeSearch", "保证金")
