@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-11-09 v1.28.0 预警中心改名 + 账户中心按真实系统结构重建
+最后更新: 2026-11-09 v1.29.0 修「用户看不到更新」：nginx 静态资源 7 天强缓存
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -178,6 +178,34 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 - 新增/编辑角色 = **居中弹窗**（1180px，两栏：左菜单树 + 右操作按钮）
 - 查看角色权限 = **右侧抽屉**（760px，只读）
 - 删除 = 居中二次确认弹窗
+
+### v1.29.0 ⚠️ 修「用户看不到更新」：nginx 静态资源 7 天强缓存（2026-11-09）
+
+**现象**：user 在 `https://www.yf9.club` 上看到的仍是 v1.23.0 的权限树
+（项目准入 15 项、合同管理 9 个子节点），但服务器上的文件早已是 v1.28.0。
+
+**根因（两处）**
+1. **nginx 对 `.js` 设了 `Cache-Control: public, max-age=604800`（7 天强缓存）**
+   → 浏览器在 7 天内**不会重新校验**，一直用第一次缓存的 `permission-tree.js`。
+   域名的 `yf9club.conf` 和 IP 的 `yugangtong.conf` **两边都有**这个设置。
+2. **改缓存响应头不会让「已缓存且未过期」的条目失效** → 光改 nginx 不够，
+   还得让**请求 URL 变**（加 `?v=` 版本号）。
+
+**为什么我的自动验证没测出来**：Playwright 每次都是**全新 profile（无缓存）**，
+每次都回源拿最新文件 → 假绿。**必须用持久化 profile 复现真实浏览器缓存行为。**
+
+**修法**
+| # | 改动 | 位置 |
+|---|---|---|
+| 1 | css/js/html → `no-cache, must-revalidate`（带 ETag 协商，未变更回 304）；图片 → 1 天 | `scripts/deploy_lighthouse.sh` 模板（IP 侧）+ 服务器 `/etc/nginx/conf.d/yf9club.conf`（域名侧，**手工维护，不在部署脚本里**） |
+| 2 | 生成器自动给页面的 `permission-tree.js` script src 打 `?v=<内容hash>` | `scripts/extract_permissions.py`（`_patch_page_cachebust`） |
+| 3 | 新增**持久化 profile** 的缓存新鲜度回归 | `scripts/verify_cache_freshness.py` |
+
+**鉴别力验证（关键）**：把缓存临时改回 7 天 → 测试立刻挂（3/5，「改文件后普通刷新拿到新内容」失败）；
+改回 no-cache → 全过（5/5）。证明这测试不是假绿。
+
+⚠️ **`yf9club.conf` 是手工维护的**（域名 + 证书 + 口令门禁 + 福景堂 /fjt/ 别名），
+**部署脚本不会碰它** —— 改域名侧配置要单独上服务器改，改前先备份。
 
 ### v1.28.0 预警中心改名 + 账户中心按真实系统结构重建（2026-11-09）
 

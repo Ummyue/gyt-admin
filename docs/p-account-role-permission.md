@@ -308,4 +308,16 @@ MENU_STRUCTURE_OVERRIDE = {
   - 列表 + 新增/编辑弹窗 + 权限详情抽屉 + 删除确认
   - 权限树数据由 `scripts/extract_permissions.py` 扫描 118 个页面自动生成
 
+### 4.5 缓存与「部署即生效」
+
+| 位置 | 策略 |
+|---|---|
+| nginx `css/js/html` | `no-cache, must-revalidate`（带 ETag 协商，未变更回 304） |
+| nginx 图片 | `public, max-age=86400` |
+| 权限树 js 的 script src | 自动带 `?v=<内容hash>`（生成器写入） |
+
+> ⚠️ 曾经用 `max-age=604800`（7 天强缓存）导致**用户浏览器一直拿旧版权限树**，
+> 而自动化验证因为每次用全新浏览器 profile（无缓存）测不出来 —— 是假绿。
+> 现在有 `scripts/verify_cache_freshness.py`（持久化 profile）专门守这条。
+
 修改记录：见 `06-修改记录.md`

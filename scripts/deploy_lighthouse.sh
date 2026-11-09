@@ -120,12 +120,18 @@ server {
     charset utf-8;
 
     # ---- 静态资源缓存 ----
-    location = /index.html { add_header Cache-Control "public, max-age=3600"; }
+    # ⚠️ 原型会频繁改动 css/js/页面，7 天强缓存会让用户浏览器一直拿到旧版本
+    #    （2026-11-09 踩坑：permission-tree.js 改了 5 版，用户看到的还是第 1 版）
+    # → 改用 no-cache（每次带 ETag 协商，未变更回 304），保证「部署即生效」
+    location = /index.html { add_header Cache-Control "no-cache, must-revalidate" always; }
+    location ~* \.html$ {
+        add_header Cache-Control "no-cache, must-revalidate" always;
+    }
     location ~* \.(css|js)$ {
-        add_header Cache-Control "public, max-age=604800";
+        add_header Cache-Control "no-cache, must-revalidate" always;
     }
     location ~* \.(png|jpg|jpeg|gif|svg|webp|ico|woff2?)$ {
-        add_header Cache-Control "public, max-age=2592000";
+        add_header Cache-Control "public, max-age=86400, must-revalidate" always;
     }
 
     # ---- 压缩 ----

@@ -549,6 +549,30 @@ def build_tree():
     return modules
 
 
+def _patch_page_cachebust(out_js):
+    """给引用权限树数据的页面 script src 打上 ?v=<内容hash>。
+
+    浏览器会按 URL 缓存同名 js；nginx 改成 no-cache 之前，旧缓存条目在 7 天内
+    不会重新校验 —— 用户会一直看到旧版权限树。带版本号 = 新 URL = 必定回源。
+    """
+    import hashlib
+    page = os.path.join(ROOT, "pages", "account-role-permission.html")
+    if not os.path.exists(page):
+        return
+    with open(out_js, "rb") as f:
+        digest = hashlib.md5(f.read()).hexdigest()[:8]
+    html = open(page, encoding="utf-8").read()
+    new_html, n = re.subn(
+        r'(src="\.\./shared/js/permission-tree\.js)(\?v=[^"]*)?(")',
+        r'\1?v=' + digest + r'\3',
+        html,
+    )
+    if n and new_html != html:
+        with open(page, "w", encoding="utf-8") as f:
+            f.write(new_html)
+        print("   页面 script src 已带版本号 ?v=%s" % digest)
+
+
 if __name__ == "__main__":
     tree = build_tree()
 
@@ -568,6 +592,7 @@ if __name__ == "__main__":
             f.write(json.dumps(tree, ensure_ascii=False, indent=2))
             f.write(";\n")
         print("written -> %s" % out)
+        _patch_page_cachebust(out)
     else:
         out = sys.argv[sys.argv.index("-o") + 1] if "-o" in sys.argv else None
         data = json.dumps(tree, ensure_ascii=False, indent=2)
