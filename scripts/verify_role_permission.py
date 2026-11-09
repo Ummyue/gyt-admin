@@ -75,8 +75,8 @@ def main():
         drawer_txt = page.locator("#drawerBody").inner_text()
         check("抽屉显示数据权限说明", "全部数据" in drawer_txt or "仅本人创建" in drawer_txt)
         check("抽屉显示权限概览统计", "菜单权限" in drawer_txt and "操作按钮" in drawer_txt)
-        check("抽屉渲染权限树节点（7 一级 + 68 子节点）",
-              page.locator("#drawerBody .rp-tnode").count() == 75,
+        check("抽屉渲染权限树节点（7 一级 + 63 子节点）",
+              page.locator("#drawerBody .rp-tnode").count() == 70,
               f"实际 {page.locator('#drawerBody .rp-tnode').count()}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
@@ -88,8 +88,8 @@ def main():
         check("新增角色弹窗打开", page.locator(".rp-modal").is_visible())
         check("弹窗标题为新增角色",
               page.locator("#roleModalTitle").inner_text() == "新增角色")
-        check("左树渲染 75 个菜单节点（7 一级 + 68 子节点）",
-              page.locator("#permTree .rp-tnode").count() == 75,
+        check("左树渲染 70 个菜单节点（7 一级 + 63 子节点）",
+              page.locator("#permTree .rp-tnode").count() == 70,
               f"实际 {page.locator('#permTree .rp-tnode').count()}")
         check("左树一级菜单 7 个",
               page.locator('#permTree .rp-tnode[data-depth="0"]').count() == 7)
@@ -190,6 +190,44 @@ def main():
         codes = page.locator(".rp-op-code").all_inner_texts()
         check("并入的操作项保留原页面权限码",
               any("数字供应链/合同管理/新增采购框架合同#upload" == c for c in codes), str(codes))
+
+        # ===== 回款管理 / 保证金管理：详情/编辑页并入列表页 =====
+        page.click('.rp-tnode[data-label="回款管理"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        rc_dir = page.locator("#opBody .rp-jump-chip").all_inner_texts()
+        check("回款管理 下只保留 回款列表",
+              len(rc_dir) == 1 and "回款列表" in rc_dir[0], str(rc_dir))
+
+        page.click('.rp-tnode[data-label="回款列表"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        rc_ops = page.locator(".rp-op-item").count()
+        check("回款列表 操作权限 = 列表 5 + 审批详情 3 + 编辑回款 5 = 13 项",
+              rc_ops == 13, f"实际 {rc_ops}")
+        tip = page.locator(".rp-merged-tip").inner_text()
+        check("回款列表 提示条列出已并入的子页面",
+              "回款详情" in tip and "回款审批详情" in tip and "编辑回款" in tip, tip)
+        check("并入页面的操作项数在提示条里标明",
+              "0 项操作权限" in tip and "3 项操作权限" in tip and "5 项操作权限" in tip, tip)
+
+        page.click('.rp-tnode[data-label="保证金管理"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        mc_dir = page.locator("#opBody .rp-jump-chip").all_inner_texts()
+        check("保证金管理 下只保留 保证金明细",
+              len(mc_dir) == 1 and "保证金明细" in mc_dir[0], str(mc_dir))
+
+        page.click('.rp-tnode[data-label="保证金明细"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        mc_ops = page.locator(".rp-op-item").count()
+        check("保证金明细 操作权限 = 明细 3 + 调整 3 + 调整记录 4 = 10 项",
+              mc_ops == 10, f"实际 {mc_ops}")
+        mt = page.locator(".rp-merged-tip").inner_text()
+        check("保证金明细 提示条列出已并入的子页面",
+              "保证金调整" in mt and "保证金调整记录" in mt, mt)
+
+        tree_labels2 = page.locator('#permTree .rp-tnode').evaluate_all(
+            "els => els.map(e => e.getAttribute('data-label'))")
+        for gone in ["回款详情", "回款审批详情", "编辑回款", "保证金调整", "保证金调整记录"]:
+            check(f"左树不再单列「{gone}」菜单节点", gone not in tree_labels2, str(tree_labels2))
 
         # 树搜索
         page.fill("#treeSearch", "保证金")

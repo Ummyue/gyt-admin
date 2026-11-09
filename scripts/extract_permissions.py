@@ -101,6 +101,14 @@ MERGE_CHILDREN = {
         "销售合同": ["新增销售框架合同", "新增销售订单/单批次合同"],
         "补充协议": ["新增补协-框架合同", "新增补协-订单/单批次合同"],
     },
+    # 资金管理/回款管理：只保留 回款列表；详情 / 审批详情 / 编辑页并入
+    "数字供应链/资金管理/回款管理": {
+        "回款列表": ["回款详情", "回款审批详情", "编辑回款"],
+    },
+    # 资金管理/保证金管理：只保留 保证金明细；调整 / 调整记录页并入
+    "数字供应链/资金管理/保证金管理": {
+        "保证金明细": ["保证金调整", "保证金调整记录"],
+    },
 }
 
 
@@ -152,7 +160,6 @@ def _stamp(node, path, merged=None):
     """
     node["code"] = "menu:" + path
     merged = merged or []
-    node["mergedMenus"] = [{"label": m["label"], "code": "menu:" + m["path"]} for m in merged]
 
     raw_children = node.get("children") or []
     merge_map = MERGE_CHILDREN.get(path, {})
@@ -170,13 +177,24 @@ def _stamp(node, path, merged=None):
 
     kids = [c for c in raw_children if c["label"] not in consumed]
     node["children"] = kids          # ← 被并入的子节点要从树里移除，必须回写
+
+    # 并入菜单的元信息（含它贡献了几个操作权限项）+ 它带的操作权限项
+    merged_info = []
+    merged_ops = []
+    for m in merged:
+        mops = _build_ops(m["buttons"], m["path"], m["label"])
+        merged_info.append({
+            "label": m["label"],
+            "code": "menu:" + m["path"],
+            "opCount": len(mops),
+        })
+        merged_ops.extend(mops)
+    node["mergedMenus"] = merged_info
+
     if kids:
         node["ops"] = []
     else:
-        node["ops"] = _build_ops(node.get("buttons", []), path)
-        # 并入进来的新增/编辑页的操作权限
-        for m in merged:
-            node["ops"].extend(_build_ops(m["buttons"], m["path"], m["label"]))
+        node["ops"] = _build_ops(node.get("buttons", []), path) + merged_ops
 
     for c in kids:
         _stamp(c, path + "/" + c["label"], child_merged.get(c["label"], []))

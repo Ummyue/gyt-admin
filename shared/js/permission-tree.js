@@ -1,5 +1,5 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-09 17:42:39
+// 生成时间：2026-11-09 17:47:06
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
 
 window.PERMISSION_TREE = [
@@ -199,11 +199,13 @@ window.PERMISSION_TREE = [
             "mergedMenus": [
               {
                 "label": "新增采购框架合同",
-                "code": "menu:数字供应链/合同管理/新增采购框架合同"
+                "code": "menu:数字供应链/合同管理/新增采购框架合同",
+                "opCount": 3
               },
               {
                 "label": "新增采购订单/单批次合同",
-                "code": "menu:数字供应链/合同管理/新增采购订单/单批次合同"
+                "code": "menu:数字供应链/合同管理/新增采购订单/单批次合同",
+                "opCount": 2
               }
             ],
             "ops": [
@@ -264,11 +266,13 @@ window.PERMISSION_TREE = [
             "mergedMenus": [
               {
                 "label": "新增销售框架合同",
-                "code": "menu:数字供应链/合同管理/新增销售框架合同"
+                "code": "menu:数字供应链/合同管理/新增销售框架合同",
+                "opCount": 3
               },
               {
                 "label": "新增销售订单/单批次合同",
-                "code": "menu:数字供应链/合同管理/新增销售订单/单批次合同"
+                "code": "menu:数字供应链/合同管理/新增销售订单/单批次合同",
+                "opCount": 2
               }
             ],
             "ops": [
@@ -330,11 +334,13 @@ window.PERMISSION_TREE = [
             "mergedMenus": [
               {
                 "label": "新增补协-框架合同",
-                "code": "menu:数字供应链/合同管理/新增补协-框架合同"
+                "code": "menu:数字供应链/合同管理/新增补协-框架合同",
+                "opCount": 2
               },
               {
                 "label": "新增补协-订单/单批次合同",
-                "code": "menu:数字供应链/合同管理/新增补协-订单/单批次合同"
+                "code": "menu:数字供应链/合同管理/新增补协-订单/单批次合同",
+                "opCount": 2
               }
             ],
             "ops": [
@@ -656,8 +662,24 @@ window.PERMISSION_TREE = [
                   "撤回"
                 ],
                 "code": "menu:数字供应链/资金管理/回款管理/回款列表",
-                "mergedMenus": [],
                 "children": [],
+                "mergedMenus": [
+                  {
+                    "label": "回款详情",
+                    "code": "menu:数字供应链/资金管理/回款管理/回款详情",
+                    "opCount": 0
+                  },
+                  {
+                    "label": "回款审批详情",
+                    "code": "menu:数字供应链/资金管理/回款管理/回款审批详情",
+                    "opCount": 3
+                  },
+                  {
+                    "label": "编辑回款",
+                    "code": "menu:数字供应链/资金管理/回款管理/编辑回款",
+                    "opCount": 5
+                  }
+                ],
                 "ops": [
                   {
                     "label": "新增回款",
@@ -678,77 +700,46 @@ window.PERMISSION_TREE = [
                   {
                     "label": "撤回",
                     "code": "数字供应链/资金管理/回款管理/回款列表#withdraw"
-                  }
-                ]
-              },
-              {
-                "label": "回款详情",
-                "file": "receipt-detail.html",
-                "buttons": [],
-                "code": "menu:数字供应链/资金管理/回款管理/回款详情",
-                "mergedMenus": [],
-                "children": [],
-                "ops": []
-              },
-              {
-                "label": "回款审批详情",
-                "file": "receipt-approval-detail.html",
-                "buttons": [
-                  "立即催办",
-                  "审批通过",
-                  "驳回审批"
-                ],
-                "code": "menu:数字供应链/资金管理/回款管理/回款审批详情",
-                "mergedMenus": [],
-                "children": [],
-                "ops": [
+                  },
                   {
                     "label": "立即催办",
-                    "code": "数字供应链/资金管理/回款管理/回款审批详情#urge"
+                    "code": "数字供应链/资金管理/回款管理/回款审批详情#urge",
+                    "src": "回款审批详情"
                   },
                   {
                     "label": "审批通过",
-                    "code": "数字供应链/资金管理/回款管理/回款审批详情#approve"
+                    "code": "数字供应链/资金管理/回款管理/回款审批详情#approve",
+                    "src": "回款审批详情"
                   },
                   {
                     "label": "驳回审批",
-                    "code": "数字供应链/资金管理/回款管理/回款审批详情#reject"
-                  }
-                ]
-              },
-              {
-                "label": "编辑回款",
-                "file": "receipt-edit.html",
-                "buttons": [
-                  "上传",
-                  "按比例分摊",
-                  "全部现金",
-                  "删除",
-                  "提交"
-                ],
-                "code": "menu:数字供应链/资金管理/回款管理/编辑回款",
-                "mergedMenus": [],
-                "children": [],
-                "ops": [
+                    "code": "数字供应链/资金管理/回款管理/回款审批详情#reject",
+                    "src": "回款审批详情"
+                  },
                   {
                     "label": "上传",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#upload"
+                    "code": "数字供应链/资金管理/回款管理/编辑回款#upload",
+                    "src": "编辑回款"
                   },
                   {
                     "label": "按比例分摊",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#allocate"
+                    "code": "数字供应链/资金管理/回款管理/编辑回款#allocate",
+                    "src": "编辑回款"
                   },
                   {
                     "label": "全部现金",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#allocate3"
+                    "code": "数字供应链/资金管理/回款管理/编辑回款#allocate3",
+                    "src": "编辑回款"
                   },
                   {
                     "label": "删除",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#delete"
+                    "code": "数字供应链/资金管理/回款管理/编辑回款#delete",
+                    "src": "编辑回款"
                   },
                   {
                     "label": "提交",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#submit"
+                    "code": "数字供应链/资金管理/回款管理/编辑回款#submit",
+                    "src": "编辑回款"
                   }
                 ]
               }
@@ -775,8 +766,19 @@ window.PERMISSION_TREE = [
                   "查看"
                 ],
                 "code": "menu:数字供应链/资金管理/保证金管理/保证金明细",
-                "mergedMenus": [],
                 "children": [],
+                "mergedMenus": [
+                  {
+                    "label": "保证金调整",
+                    "code": "menu:数字供应链/资金管理/保证金管理/保证金调整",
+                    "opCount": 3
+                  },
+                  {
+                    "label": "保证金调整记录",
+                    "code": "menu:数字供应链/资金管理/保证金管理/保证金调整记录",
+                    "opCount": 4
+                  }
+                ],
                 "ops": [
                   {
                     "label": "登记保证金",
@@ -789,63 +791,41 @@ window.PERMISSION_TREE = [
                   {
                     "label": "查看",
                     "code": "数字供应链/资金管理/保证金管理/保证金明细#view"
-                  }
-                ]
-              },
-              {
-                "label": "保证金调整",
-                "file": "margin-adjust.html",
-                "buttons": [
-                  "+ 选择销售订单（贸易）合同",
-                  "+ 上传",
-                  "提交"
-                ],
-                "code": "menu:数字供应链/资金管理/保证金管理/保证金调整",
-                "mergedMenus": [],
-                "children": [],
-                "ops": [
+                  },
                   {
                     "label": "+ 选择销售订单（贸易）合同",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整#transfer"
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整#transfer",
+                    "src": "保证金调整"
                   },
                   {
                     "label": "+ 上传",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整#upload"
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整#upload",
+                    "src": "保证金调整"
                   },
                   {
                     "label": "提交",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整#submit"
-                  }
-                ]
-              },
-              {
-                "label": "保证金调整记录",
-                "file": "margin-adjust-detail.html",
-                "buttons": [
-                  "设置等比例冲抵货款比例",
-                  "一键下载",
-                  "下载",
-                  "保存"
-                ],
-                "code": "menu:数字供应链/资金管理/保证金管理/保证金调整记录",
-                "mergedMenus": [],
-                "children": [],
-                "ops": [
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整#submit",
+                    "src": "保证金调整"
+                  },
                   {
                     "label": "设置等比例冲抵货款比例",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#edit"
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#edit",
+                    "src": "保证金调整记录"
                   },
                   {
                     "label": "一键下载",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#export"
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#export",
+                    "src": "保证金调整记录"
                   },
                   {
                     "label": "下载",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#export3"
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#export3",
+                    "src": "保证金调整记录"
                   },
                   {
                     "label": "保存",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#save"
+                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#save",
+                    "src": "保证金调整记录"
                   }
                 ]
               }
