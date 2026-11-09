@@ -75,8 +75,8 @@ def main():
         drawer_txt = page.locator("#drawerBody").inner_text()
         check("抽屉显示数据权限说明", "全部数据" in drawer_txt or "仅本人创建" in drawer_txt)
         check("抽屉显示权限概览统计", "菜单权限" in drawer_txt and "操作按钮" in drawer_txt)
-        check("抽屉渲染权限树节点（7 一级 + 63 子节点）",
-              page.locator("#drawerBody .rp-tnode").count() == 70,
+        check("抽屉渲染权限树节点（7 一级 + 62 子节点）",
+              page.locator("#drawerBody .rp-tnode").count() == 69,
               f"实际 {page.locator('#drawerBody .rp-tnode').count()}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
@@ -88,8 +88,8 @@ def main():
         check("新增角色弹窗打开", page.locator(".rp-modal").is_visible())
         check("弹窗标题为新增角色",
               page.locator("#roleModalTitle").inner_text() == "新增角色")
-        check("左树渲染 70 个菜单节点（7 一级 + 63 子节点）",
-              page.locator("#permTree .rp-tnode").count() == 70,
+        check("左树渲染 69 个菜单节点（7 一级 + 62 子节点）",
+              page.locator("#permTree .rp-tnode").count() == 69,
               f"实际 {page.locator('#permTree .rp-tnode').count()}")
         check("左树一级菜单 7 个",
               page.locator('#permTree .rp-tnode[data-depth="0"]').count() == 7)
@@ -228,6 +228,26 @@ def main():
             "els => els.map(e => e.getAttribute('data-label'))")
         for gone in ["回款详情", "回款审批详情", "编辑回款", "保证金调整", "保证金调整记录"]:
             check(f"左树不再单列「{gone}」菜单节点", gone not in tree_labels2, str(tree_labels2))
+
+        # ===== 审批管理：编排画布并入审批流程配置 =====
+        page.click('.rp-tnode[data-label="审批管理"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        ap_dir = page.locator("#opBody .rp-jump-chip").all_inner_texts()
+        check("审批管理 下只保留 审批流程配置 / 审批流程监控",
+              len(ap_dir) == 2 and "审批流程配置" in ap_dir[0] and "审批流程监控" in ap_dir[1],
+              str(ap_dir))
+        page.click('.rp-tnode[data-label="审批流程配置"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        ap_ops = page.locator(".rp-op-item").count()
+        check("审批流程配置 操作权限 = 配置页 2 + 编排画布 5 = 7 项",
+              ap_ops == 7, f"实际 {ap_ops}")
+        at = page.locator(".rp-merged-tip").inner_text()
+        check("审批流程配置 提示条列出已并入的流程编排画布（5 项）",
+              "流程编排画布" in at and "5 项操作权限" in at, at)
+        tree_labels3 = page.locator('#permTree .rp-tnode').evaluate_all(
+            "els => els.map(e => e.getAttribute('data-label'))")
+        check("左树不再单列「流程编排画布」菜单节点",
+              "流程编排画布" not in tree_labels3, str(tree_labels3))
 
         # 树搜索
         page.fill("#treeSearch", "保证金")
