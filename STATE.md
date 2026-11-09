@@ -159,6 +159,8 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 | 权限数据 | `shared/js/permission-tree.js`（**自动生成**，1890 行）：7 个一级菜单 + 72 个二/三级节点 + **178 个操作按钮权限项** |
 | 生成器 | `scripts/extract_permissions.py`（扫 118 个页面抽按钮，输出 JSON / JS） |
 | 验证脚本 | `scripts/verify_role_permission.py`（专项 46/46）、`scripts/regress_site.py`（全站 31/31） |
+| 部署 | 腾讯云 `http://192.144.175.203/pages/account-role-permission.html`（308 个文件，线上专项 46/46 + 线上全站 31/31） |
+| 提交 | `04554a3` |
 
 **权限码规则**
 
