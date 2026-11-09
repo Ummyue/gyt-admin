@@ -189,7 +189,15 @@
       icon: '👤',
       subMenus: [
         { label: '个人管理', file: 'account-personal.html' },
-        { label: '企业管理', file: 'account-company.html' }
+        {
+          label: '企业管理', file: 'account-company.html',
+          children: [
+            // v1.23.0：企业管理拆成三级（父项本身也保留一个入口，
+            // 否则左 sidemenu 会把它渲染成「只能展开、不能跳转」的目录项）
+            { label: '企业中心', file: 'account-company.html' },
+            { label: '角色权限管理', file: 'account-role-permission.html' }
+          ]
+        }
       ]
     }
   };

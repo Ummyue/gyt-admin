@@ -1,0 +1,1425 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>角色权限管理 - 豫港通</title>
+  <link rel="stylesheet" href="../assets/css/design-system.css">
+  <link rel="stylesheet" href="../assets/css/list-page.css">
+  <link rel="stylesheet" href="../assets/css/pin-annotation.css">
+  <style>
+    .page-body { padding: 20px 24px; }
+
+    /* ===== 统计卡 ===== */
+    .rp-stat-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 14px;
+      margin-bottom: 14px;
+    }
+    .rp-stat-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border-default);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-sm);
+      padding: 16px 18px;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+    .rp-stat-icon {
+      width: 38px; height: 38px;
+      border-radius: var(--radius-md);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 18px;
+      flex-shrink: 0;
+    }
+    .rp-stat-icon.blue { background: var(--color-primary-light); }
+    .rp-stat-icon.green { background: var(--color-success-light); }
+    .rp-stat-icon.orange { background: var(--color-warning-light); }
+    .rp-stat-icon.purple { background: #EDE9FE; }
+    .rp-stat-num {
+      font-size: 22px; font-weight: 600; color: var(--text-primary);
+      line-height: 1.2; font-variant-numeric: tabular-nums;
+    }
+    .rp-stat-label { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+
+    /* ===== 角色表格 ===== */
+    .rp-role-cell { display: flex; align-items: center; gap: 9px; }
+    .rp-role-ico {
+      width: 28px; height: 28px; border-radius: 6px; flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 13px; font-weight: 600; color: #fff;
+    }
+    .rp-role-name { font-weight: 500; color: var(--text-primary); }
+    .rp-role-desc { font-size: 12px; color: var(--text-tertiary); margin-top: 1px; }
+    .rp-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 12px; color: var(--text-secondary);
+      background: var(--bg-page); border: 1px solid var(--border-light);
+      border-radius: 4px; padding: 2px 6px;
+    }
+    .rp-scope-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      padding: 3px 9px; border-radius: var(--radius-full);
+      font-size: 12px; font-weight: 500;
+    }
+    .rp-scope-badge.all { background: var(--color-primary-light); color: var(--color-primary); }
+    .rp-scope-badge.own { background: var(--color-warning-light); color: #B45309; }
+    .rp-user-count { display: inline-flex; align-items: center; gap: 4px; color: var(--text-secondary); font-size: 13px; }
+    .rp-perm-count { color: var(--color-primary); font-weight: 500; font-variant-numeric: tabular-nums; }
+    .rp-act-link { color: var(--color-primary); font-size: 13px; cursor: pointer; margin-right: 12px; white-space: nowrap; }
+    .rp-act-link:hover { text-decoration: underline; }
+    .rp-act-link.danger { color: var(--color-danger); }
+
+    /* ===== 居中弹窗（新增 / 编辑角色） ===== */
+    .rp-modal-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: none; align-items: center; justify-content: center; z-index: 9998;
+      padding: 24px;
+    }
+    .rp-modal-mask.show { display: flex; }
+    .rp-modal {
+      background: #fff; border-radius: var(--radius-lg);
+      width: 1180px; max-width: 100%; max-height: 90vh;
+      display: flex; flex-direction: column;
+      box-shadow: 0 20px 50px rgba(15, 23, 42, 0.22);
+      overflow: hidden;
+    }
+    .rp-modal-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 22px; border-bottom: 1px solid var(--border-default);
+      flex-shrink: 0;
+    }
+    .rp-modal-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .rp-modal-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 2px; }
+    .rp-modal-body { flex: 1; overflow-y: auto; padding: 18px 22px; }
+    .rp-modal-foot {
+      display: flex; align-items: center; justify-content: flex-end; gap: 10px;
+      padding: 14px 22px; border-top: 1px solid var(--border-default);
+      background: var(--bg-page); flex-shrink: 0;
+    }
+    .rp-modal-foot .rp-foot-tip { margin-right: auto; font-size: 12px; color: var(--text-tertiary); }
+
+    .rp-sec { margin-bottom: 20px; }
+    .rp-sec:last-child { margin-bottom: 0; }
+    .rp-sec-title {
+      font-size: 13px; font-weight: 600; color: var(--text-primary);
+      padding-left: 9px; border-left: 3px solid var(--color-primary);
+      margin-bottom: 12px; line-height: 1.4;
+    }
+    .rp-sec-title .rp-sec-note { font-weight: 400; color: var(--text-tertiary); font-size: 12px; margin-left: 8px; }
+    .rp-form-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px 20px; }
+    .rp-field { display: flex; flex-direction: column; gap: 6px; }
+    .rp-field.full { grid-column: 1 / -1; }
+    .rp-label { font-size: 12px; color: var(--text-secondary); }
+    .rp-label .req { color: var(--color-danger); margin-right: 3px; }
+    .rp-input, .rp-textarea, .rp-select {
+      height: 34px; padding: 0 10px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-default);
+      font-size: 13px; font-family: inherit; color: var(--text-primary);
+      background: #fff; width: 100%;
+    }
+    .rp-textarea { height: 58px; padding: 8px 10px; resize: vertical; line-height: 1.6; }
+    .rp-input:focus, .rp-textarea:focus, .rp-select:focus {
+      outline: none; border-color: var(--color-primary);
+      box-shadow: 0 0 0 3px rgba(30, 64, 175, 0.1);
+    }
+    .rp-input:disabled { background: var(--bg-disabled); color: var(--text-tertiary); }
+    .rp-field-hint { font-size: 11px; color: var(--text-tertiary); }
+    .rp-field-err { font-size: 11px; color: var(--color-danger); display: none; }
+    .rp-field.has-err .rp-field-err { display: block; }
+    .rp-field.has-err .rp-input { border-color: var(--color-danger); }
+
+    /* ===== 数据隔离权限选项 ===== */
+    .rp-scope-opts { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; }
+    .rp-scope-opt {
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      padding: 14px 16px; cursor: pointer; position: relative;
+      transition: all .15s; background: #fff;
+    }
+    .rp-scope-opt:hover { border-color: var(--color-primary-light); background: #FAFBFF; }
+    .rp-scope-opt.on { border-color: var(--color-primary); background: var(--color-primary-lighter); }
+    .rp-scope-opt input { position: absolute; opacity: 0; pointer-events: none; }
+    .rp-scope-opt-head { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .rp-scope-opt-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .rp-scope-radio {
+      width: 16px; height: 16px; border-radius: 50%;
+      border: 1.5px solid var(--border-strong); flex-shrink: 0;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rp-scope-opt.on .rp-scope-radio { border-color: var(--color-primary); background: var(--color-primary); }
+    .rp-scope-opt.on .rp-scope-radio::after {
+      content: ''; width: 6px; height: 6px; border-radius: 50%; background: #fff;
+    }
+    .rp-scope-opt-desc { font-size: 12px; color: var(--text-secondary); line-height: 1.65; padding-left: 24px; }
+    .rp-scope-tip {
+      margin-top: 10px; padding: 9px 12px;
+      background: var(--color-info-light); border-radius: var(--radius-default);
+      font-size: 12px; color: #1E40AF; line-height: 1.6;
+      display: flex; gap: 7px; align-items: flex-start;
+    }
+
+    /* ===== 权限配置：左树 + 右按钮 ===== */
+    .rp-perm-box {
+      border: 1px solid var(--border-default); border-radius: var(--radius-md);
+      overflow: hidden; display: flex; height: 400px;
+    }
+    .rp-perm-left {
+      width: 320px; flex-shrink: 0; border-right: 1px solid var(--border-default);
+      display: flex; flex-direction: column; background: #FCFDFE;
+    }
+    .rp-perm-left-head { padding: 10px 12px; border-bottom: 1px solid var(--border-light); }
+    .rp-perm-search {
+      width: 100%; height: 30px; padding: 0 10px 0 28px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-default);
+      font-size: 12px; font-family: inherit;
+      background: #fff url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 9px center;
+    }
+    .rp-perm-search:focus { outline: none; border-color: var(--color-primary); }
+    .rp-perm-tree { flex: 1; overflow-y: auto; padding: 6px 0 12px; }
+    .rp-tnode { display: flex; align-items: center; gap: 7px; padding: 5px 12px 5px 0; cursor: pointer; position: relative; }
+    .rp-tnode:hover { background: var(--bg-hover); }
+    .rp-tnode.sel { background: var(--color-primary-lighter); }
+    .rp-tnode.sel::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 2px; background: var(--color-primary); }
+    .rp-tnode-label { font-size: 13px; color: var(--text-secondary); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .rp-tnode.d0 .rp-tnode-label { font-weight: 600; color: var(--text-primary); }
+    .rp-tnode.d1 .rp-tnode-label { color: var(--text-primary); }
+    .rp-tnode.sel .rp-tnode-label { color: var(--color-primary); font-weight: 500; }
+    .rp-tnode-cnt { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+    .rp-tnode-toggle {
+      width: 16px; height: 16px; display: flex; align-items: center; justify-content: center;
+      color: var(--text-tertiary); font-size: 10px; flex-shrink: 0; user-select: none;
+    }
+    .rp-tnode-cb {
+      width: 15px; height: 15px; flex-shrink: 0; border: 1.5px solid var(--border-strong);
+      border-radius: 3px; background: #fff; position: relative; cursor: pointer;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rp-tnode-cb.checked { background: var(--color-primary); border-color: var(--color-primary); }
+    .rp-tnode-cb.checked::after {
+      content: ''; width: 4px; height: 8px; border: solid #fff;
+      border-width: 0 1.8px 1.8px 0; transform: rotate(45deg) translate(-1px, -1px);
+    }
+    .rp-tnode-cb.partial { background: var(--color-primary); border-color: var(--color-primary); }
+    .rp-tnode-cb.partial::after {
+      content: ''; width: 8px; height: 2px; background: #fff; border-radius: 1px;
+    }
+    .rp-tnode.disabled { opacity: .45; }
+
+    .rp-perm-right { flex: 1; display: flex; flex-direction: column; min-width: 0; }
+    .rp-perm-right-head {
+      padding: 10px 14px; border-bottom: 1px solid var(--border-light);
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .rp-perm-right-title { font-size: 13px; font-weight: 600; color: var(--text-primary); }
+    .rp-perm-right-path { font-size: 11px; color: var(--text-tertiary); }
+    .rp-perm-right-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; }
+    .rp-mini-btn {
+      font-size: 12px; color: var(--color-primary); cursor: pointer;
+      background: none; border: none; padding: 2px 4px; font-family: inherit;
+    }
+    .rp-mini-btn:hover { text-decoration: underline; }
+    .rp-perm-body { flex: 1; overflow-y: auto; padding: 14px; }
+    .rp-op-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(215px, 1fr)); gap: 8px; }
+    .rp-op-item {
+      display: flex; align-items: flex-start; gap: 8px;
+      padding: 8px 10px; border: 1px solid var(--border-default);
+      border-radius: var(--radius-default); cursor: pointer; background: #fff;
+      transition: all .12s;
+    }
+    .rp-op-item:hover { border-color: var(--color-primary-light); background: #FAFBFF; }
+    .rp-op-item.on { border-color: var(--color-primary); background: var(--color-primary-lighter); }
+    .rp-op-item input { margin: 2px 0 0; width: 14px; height: 14px; accent-color: var(--color-primary); flex-shrink: 0; }
+    .rp-op-label { font-size: 12.5px; color: var(--text-primary); line-height: 1.5; word-break: break-all; }
+    .rp-op-code {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      font-size: 10.5px; color: var(--text-tertiary); margin-top: 3px; word-break: break-all;
+    }
+    .rp-empty { padding: 48px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+    .rp-empty-ico { font-size: 36px; opacity: .35; margin-bottom: 10px; }
+    .rp-dir-tip {
+      background: var(--color-info-light); border-radius: var(--radius-default);
+      padding: 10px 12px; font-size: 12px; color: #1E40AF; margin-bottom: 12px; line-height: 1.6;
+    }
+    .rp-child-jump { display: flex; flex-wrap: wrap; gap: 8px; }
+    .rp-jump-chip {
+      padding: 5px 11px; border: 1px solid var(--border-default); border-radius: var(--radius-full);
+      font-size: 12px; color: var(--text-secondary); cursor: pointer; background: #fff;
+    }
+    .rp-jump-chip:hover { border-color: var(--color-primary); color: var(--color-primary); background: var(--color-primary-lighter); }
+
+    /* ===== 右侧抽屉（角色权限详情） ===== */
+    .rp-drawer-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.4);
+      display: none; z-index: 9998;
+    }
+    .rp-drawer-mask.show { display: block; }
+    .rp-drawer {
+      position: fixed; top: 0; right: 0; bottom: 0;
+      width: 760px; max-width: 94vw; background: #fff;
+      box-shadow: -6px 0 28px rgba(15, 23, 42, 0.16);
+      display: flex; flex-direction: column;
+      transform: translateX(100%); transition: transform .22s ease;
+      z-index: 9999;
+    }
+    .rp-drawer-mask.show .rp-drawer { transform: translateX(0); }
+    .rp-drawer-head {
+      padding: 16px 22px; border-bottom: 1px solid var(--border-default);
+      display: flex; align-items: flex-start; justify-content: space-between; flex-shrink: 0;
+    }
+    .rp-drawer-title { font-size: 16px; font-weight: 600; color: var(--text-primary); }
+    .rp-drawer-sub { font-size: 12px; color: var(--text-tertiary); margin-top: 3px; }
+    .rp-icon-btn {
+      width: 28px; height: 28px; border-radius: var(--radius-default);
+      border: none; background: none; cursor: pointer; color: var(--text-tertiary);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .rp-icon-btn:hover { background: var(--bg-page); color: var(--text-primary); }
+    .rp-drawer-body { flex: 1; overflow-y: auto; padding: 18px 22px; }
+    .rp-drawer-foot {
+      padding: 13px 22px; border-top: 1px solid var(--border-default);
+      background: var(--bg-page); display: flex; justify-content: flex-end; gap: 10px; flex-shrink: 0;
+    }
+    .rp-info-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 12px 20px; margin-bottom: 18px; }
+    .rp-info-item { display: flex; gap: 8px; font-size: 13px; }
+    .rp-info-label { color: var(--text-tertiary); width: 72px; flex-shrink: 0; }
+    .rp-info-value { color: var(--text-primary); }
+    .rp-granted-list { display: flex; flex-wrap: wrap; gap: 7px; }
+    .rp-granted-chip {
+      font-size: 12px; padding: 3px 9px; border-radius: var(--radius-full);
+      background: var(--bg-page); border: 1px solid var(--border-light); color: var(--text-secondary);
+    }
+
+    /* ===== 确认弹窗 ===== */
+    .rp-confirm-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px;
+    }
+    .rp-confirm-mask.show { display: flex; }
+    .rp-confirm {
+      background: #fff; border-radius: var(--radius-lg); width: 420px; max-width: 100%;
+      box-shadow: 0 20px 50px rgba(15,23,42,.22); overflow: hidden;
+    }
+    .rp-confirm-body { padding: 24px 24px 8px; display: flex; gap: 14px; }
+    .rp-confirm-ico {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: var(--color-danger-light); color: var(--color-danger);
+      display: flex; align-items: center; justify-content: center; font-size: 18px;
+    }
+    .rp-confirm-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .rp-confirm-text { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .rp-confirm-foot { padding: 14px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
+    .rp-toast {
+      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+      background: rgba(31, 41, 55, 0.92); color: #fff; padding: 10px 20px;
+      border-radius: 4px; font-size: 13px; z-index: 10001; opacity: 0;
+      transition: opacity .2s; pointer-events: none;
+    }
+    .rp-toast.show { opacity: 1; }
+  </style>
+</head>
+<body>
+  <div class="topbar">
+    <div class="topbar-logo">
+      <div style="width: 36px; height: 36px; background: linear-gradient(135deg, #1E40AF 0%, #3B82F6 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 16px;">豫</div>
+      <span>豫港通</span>
+    </div>
+    <div class="topbar-menu">
+      <a class="topbar-menu-item" href="./workbench.html" data-menu-key="工作台">工作台</a>
+      <a class="topbar-menu-item" href="./project-list.html" data-menu-key="准入管理">准入管理</a>
+      <a class="topbar-menu-item" href="./contract-purchase.html" data-menu-key="数字供应链">数字供应链</a>
+      <a class="topbar-menu-item" href="./warehouse-inbound.html" data-menu-key="仓储管理">仓储管理</a>
+      <a class="topbar-menu-item" href="./cockpit.html" data-menu-key="数据中心">数据中心</a>
+      <a class="topbar-menu-item" href="./warning-list.html" data-menu-key="预警中心">预警中心</a>
+      <a class="topbar-menu-item active" href="./account-personal.html" data-menu-key="账户中心">账户中心</a>
+      <button class="topbar-changelog-btn" onclick="window.open('./changelog.html', '_blank')" title="查看高保真原型版本变更记录">📋 版本变更记录</button>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-icon-btn">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0"/></svg>
+        <span class="badge"></span>
+      </div>
+      <div class="topbar-user">
+        <div class="topbar-user-avatar">张</div>
+        <div>
+          <div class="topbar-user-name">张爽</div>
+          <div class="topbar-user-org">港通供应链</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex;">
+    <div class="sidemenu" id="leftSidemenu"></div>
+
+    <div class="main-content" style="flex: 1; min-width: 0; display: flex; flex-direction: column;">
+      <div class="page-body" style="flex: 1; overflow-y: auto; background: var(--bg-page);">
+
+        <!-- 面包屑 -->
+        <div class="breadcrumb-inline">
+          <a href="./account-personal.html">账户中心</a>
+          <span class="sep">/</span>
+          <a href="./account-company.html">企业管理</a>
+          <span class="sep">/</span>
+          <span class="current">角色权限管理</span>
+        </div>
+
+        <!-- 标题 -->
+        <div style="display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 14px;">
+          <div>
+            <h1 class="page-h1" style="margin: 0 0 4px;">角色权限管理</h1>
+            <div style="font-size: 12px; color: var(--text-tertiary);">
+              按角色配置菜单访问范围、页面操作权限与数据隔离范围
+            </div>
+          </div>
+          <button class="btn btn-primary" onclick="openRoleModal(null)">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 5v14M5 12h14"/></svg>
+            新增角色
+          </button>
+        </div>
+
+        <!-- 统计卡 -->
+        <div class="rp-stat-grid" id="rpStatGrid"></div>
+
+        <!-- 主面板 -->
+        <div class="cp-panel">
+          <div class="cp-block">
+            <div class="cp-filter-summary">
+              <div class="cp-filter-summary-left">
+                当前搜索：<span class="filter-chips" id="rpFilterChips"></span><span class="filter-empty-hint" id="rpFilterEmpty">（无筛选条件）</span>
+                <button type="button" class="clear-all-btn" id="rpClearAll" style="display:none;" onclick="clearRoleFilters()">清除全部</button>
+              </div>
+              <div style="font-size: 12px; color: var(--text-tertiary);" id="rpResultHint"></div>
+            </div>
+            <div class="cp-filter">
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">角色名称 / 编码</span>
+                <input class="rp-input" id="fltName" placeholder="输入角色名称或编码关键字" oninput="renderRoleTable()">
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">数据权限</span>
+                <select class="rp-select" id="fltScope" onchange="renderRoleTable()">
+                  <option value="">全部</option>
+                  <option value="all">全部数据（全局）</option>
+                  <option value="own">仅本人创建的数据</option>
+                </select>
+              </div>
+              <div class="cp-filter-item">
+                <span class="cp-filter-label">状态</span>
+                <select class="rp-select" id="fltStatus" onchange="renderRoleTable()">
+                  <option value="">全部</option>
+                  <option value="enabled">启用</option>
+                  <option value="disabled">停用</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="cp-block">
+            <div class="cp-table-wrap">
+              <table class="cp-table">
+                <thead>
+                  <tr>
+                    <th style="width: 20%;">角色名称</th>
+                    <th style="width: 15%;">角色编码</th>
+                    <th style="width: 14%;">数据权限</th>
+                    <th style="width: 9%; text-align: center;">权限项</th>
+                    <th style="width: 9%; text-align: center;">关联用户</th>
+                    <th style="width: 8%;">状态</th>
+                    <th style="width: 12%;">更新时间</th>
+                    <th class="col-action" style="width: 190px; text-align: right;">操作</th>
+                  </tr>
+                </thead>
+                <tbody id="rpTbody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="cp-block" style="display:flex; align-items:center; justify-content:space-between;">
+            <div id="rpPaginationInfo" style="font-size:13px; color:var(--text-secondary);"></div>
+            <div style="display:flex; align-items:center; gap:14px;">
+              <div class="cp-pagination-pages" id="rpPaginationPages"></div>
+              <select class="cp-pagination-size" id="rpPageSize">
+                <option>10 条/页</option>
+                <option>20 条/页</option>
+                <option>50 条/页</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 居中弹窗：新增 / 编辑角色 ===== -->
+  <div class="rp-modal-mask" id="roleModalMask" onclick="if(event.target===this)closeRoleModal()">
+    <div class="rp-modal" onclick="event.stopPropagation()">
+      <div class="rp-modal-head">
+        <div>
+          <div class="rp-modal-title" id="roleModalTitle">新增角色</div>
+          <div class="rp-modal-sub" id="roleModalSub">配置角色基本信息、数据隔离范围与菜单/操作权限</div>
+        </div>
+        <button class="rp-icon-btn" onclick="closeRoleModal()" title="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+
+      <div class="rp-modal-body">
+        <!-- 基本信息 -->
+        <div class="rp-sec">
+          <div class="rp-sec-title">基本信息</div>
+          <div class="rp-form-grid">
+            <div class="rp-field" id="fldName">
+              <label class="rp-label"><span class="req">*</span>角色名称</label>
+              <input class="rp-input" id="inpName" maxlength="20" placeholder="如：业务操作员" oninput="autoGenCode()">
+              <span class="rp-field-err">请输入角色名称</span>
+            </div>
+            <div class="rp-field" id="fldCode">
+              <label class="rp-label"><span class="req">*</span>角色编码</label>
+              <input class="rp-input" id="inpCode" maxlength="32" placeholder="如：ROLE_OPERATOR" oninput="markCodeDirty()">
+              <span class="rp-field-err">请输入角色编码（仅支持字母、数字、下划线）</span>
+              <span class="rp-field-hint" id="codeHint">用于系统内部识别，创建后不建议修改</span>
+            </div>
+            <div class="rp-field full">
+              <label class="rp-label">角色描述</label>
+              <textarea class="rp-textarea" id="inpDesc" maxlength="100" placeholder="简要说明该角色的职责范围与适用人员"></textarea>
+            </div>
+            <div class="rp-field">
+              <label class="rp-label">状态</label>
+              <select class="rp-select" id="inpStatus">
+                <option value="enabled">启用</option>
+                <option value="disabled">停用</option>
+              </select>
+              <span class="rp-field-hint">停用后该角色成员将无法登录系统</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- 数据隔离权限 -->
+        <div class="rp-sec">
+          <div class="rp-sec-title">数据隔离权限<span class="rp-sec-note">决定该角色成员在业务列表中能看到的数据范围</span></div>
+          <div class="rp-scope-opts">
+            <div class="rp-scope-opt" data-scope="all" onclick="pickScope('all')">
+              <input type="radio" name="scope" value="all">
+              <div class="rp-scope-opt-head">
+                <span class="rp-scope-radio"></span>
+                <span class="rp-scope-opt-title">全部数据（全局）</span>
+              </div>
+              <div class="rp-scope-opt-desc">
+                可查看并操作本企业下的<b>全部</b>业务数据，包括其他成员创建的单据。
+                适用于管理员、主管、财务等需要统筹全量数据的岗位。
+              </div>
+            </div>
+            <div class="rp-scope-opt" data-scope="own" onclick="pickScope('own')">
+              <input type="radio" name="scope" value="own">
+              <div class="rp-scope-opt-head">
+                <span class="rp-scope-radio"></span>
+                <span class="rp-scope-opt-title">仅本人创建的数据</span>
+              </div>
+              <div class="rp-scope-opt-desc">
+                仅可查看并操作<b>自己创建</b>的业务数据，其他成员创建的单据在列表中不可见。
+                适用于业务经办人、仓库操作员等岗位。
+              </div>
+            </div>
+          </div>
+          <div class="rp-scope-tip">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="flex-shrink:0; margin-top:2px;"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            <span id="scopeTipText">当前：全部数据（全局）。该角色成员可访问本企业全部业务数据。</span>
+          </div>
+        </div>
+
+        <!-- 权限配置 -->
+        <div class="rp-sec">
+          <div class="rp-sec-title">权限配置<span class="rp-sec-note">勾选该角色可访问的菜单，以及菜单内可执行的操作按钮</span></div>
+          <div class="rp-perm-box">
+            <!-- 左：菜单树 -->
+            <div class="rp-perm-left">
+              <div class="rp-perm-left-head">
+                <input class="rp-perm-search" id="treeSearch" placeholder="搜索菜单名称" oninput="renderTree()">
+              </div>
+              <div class="rp-perm-tree" id="permTree"></div>
+            </div>
+            <!-- 右：操作按钮 -->
+            <div class="rp-perm-right">
+              <div class="rp-perm-right-head">
+                <div>
+                  <div class="rp-perm-right-title" id="opTitle">操作权限</div>
+                  <div class="rp-perm-right-path" id="opPath"></div>
+                </div>
+                <div class="rp-perm-right-tools">
+                  <span style="font-size:12px; color:var(--text-tertiary);" id="opCount"></span>
+                  <button class="rp-mini-btn" onclick="toggleAllOps(true)">全选</button>
+                  <button class="rp-mini-btn" onclick="toggleAllOps(false)">清空</button>
+                </div>
+              </div>
+              <div class="rp-perm-body" id="opBody"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="rp-modal-foot">
+        <div class="rp-foot-tip" id="roleFootTip"></div>
+        <button class="btn btn-secondary" onclick="closeRoleModal()">取消</button>
+        <button class="btn btn-primary" onclick="saveRole()">保存</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 右侧抽屉：角色权限详情 ===== -->
+  <div class="rp-drawer-mask" id="roleDrawerMask" onclick="closeRoleDrawer()">
+    <div class="rp-drawer" onclick="event.stopPropagation()">
+      <div class="rp-drawer-head">
+        <div>
+          <div class="rp-drawer-title" id="drawerTitle">角色权限详情</div>
+          <div class="rp-drawer-sub" id="drawerSub"></div>
+        </div>
+        <button class="rp-icon-btn" onclick="closeRoleDrawer()" title="关闭">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
+      </div>
+      <div class="rp-drawer-body" id="drawerBody"></div>
+      <div class="rp-drawer-foot">
+        <button class="btn btn-secondary" onclick="closeRoleDrawer()">关闭</button>
+        <button class="btn btn-primary" onclick="editFromDrawer()">编辑该角色</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 确认弹窗 ===== -->
+  <div class="rp-confirm-mask" id="confirmMask">
+    <div class="rp-confirm">
+      <div class="rp-confirm-body">
+        <div class="rp-confirm-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </div>
+        <div>
+          <div class="rp-confirm-title" id="confirmTitle">确认删除角色？</div>
+          <div class="rp-confirm-text" id="confirmText"></div>
+        </div>
+      </div>
+      <div class="rp-confirm-foot">
+        <button class="btn btn-secondary" onclick="closeConfirm()">取消</button>
+        <button class="btn btn-danger" id="confirmOkBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="rp-toast" id="rpToast"></div>
+
+  <script src="../shared/js/topnav-drawer.js"></script>
+  <script src="../shared/js/left-sidemenu.js"></script>
+  <script src="../shared/js/permission-tree.js"></script>
+  <script>
+  // ==========================================================================
+  // 角色权限管理（v1.23.0）
+  // - 角色列表：新增 / 编辑 / 查看权限（抽屉）/ 删除
+  // - 权限配置：左侧一/二/三级菜单树（父子联动 + 半选态），右侧页面操作按钮
+  // - 数据隔离权限：全部数据（全局） / 仅本人创建的数据
+  // ==========================================================================
+  (function () {
+    'use strict';
+
+    var LS_KEY = 'rp_roles_v1';
+    var TREE = window.PERMISSION_TREE || [];
+
+    // ---------- 扁平化权限树 ----------
+    var FLAT = [];      // 所有菜单节点（含一级模块）
+    var BY_ID = {};
+    var seq = 0;
+
+    function buildFlat() {
+      FLAT = []; BY_ID = {};
+      TREE.forEach(function (mod) {
+        var modId = 'n' + (++seq);
+        var modNode = {
+          id: modId, label: mod.label, icon: mod.icon, depth: 0,
+          parentId: null, code: 'menu:' + mod.label,
+          ops: [], children: []
+        };
+        FLAT.push(modNode); BY_ID[modId] = modNode;
+        (mod.subMenus || []).forEach(function (sm) {
+          var smId = 'n' + (++seq);
+          var smNode = {
+            id: smId, label: sm.label, file: sm.file, depth: 1,
+            parentId: modId, code: sm.code, ops: sm.ops || [], children: []
+          };
+          FLAT.push(smNode); BY_ID[smId] = smNode; modNode.children.push(smId);
+          (sm.children || []).forEach(function (ch) {
+            var chId = 'n' + (++seq);
+            var chNode = {
+              id: chId, label: ch.label, file: ch.file, depth: 2,
+              parentId: smId, code: ch.code, ops: ch.ops || [], children: []
+            };
+            FLAT.push(chNode); BY_ID[chId] = chNode; smNode.children.push(chId);
+            (ch.children || []).forEach(function (g) {
+              var gId = 'n' + (++seq);
+              var gNode = {
+                id: gId, label: g.label, file: g.file, depth: 3,
+                parentId: chId, code: g.code, ops: g.ops || [], children: []
+              };
+              FLAT.push(gNode); BY_ID[gId] = gNode; chNode.children.push(gId);
+            });
+          });
+        });
+      });
+    }
+    buildFlat();
+
+    // 节点下所有权限编码（含自身 + 全部子孙菜单 + 全部操作按钮）
+    var allCodesCache = {};
+    function allCodes(nodeId) {
+      if (allCodesCache[nodeId]) return allCodesCache[nodeId];
+      var out = [];
+      (function walk(id) {
+        var n = BY_ID[id];
+        if (!n) return;
+        out.push(n.code);
+        (n.ops || []).forEach(function (o) { out.push(o.code); });
+        (n.children || []).forEach(walk);
+      })(nodeId);
+      allCodesCache[nodeId] = out;
+      return out;
+    }
+    function moduleOf(nodeId) {
+      var n = BY_ID[nodeId];
+      while (n && n.depth > 0) n = BY_ID[n.parentId];
+      return n;
+    }
+    function pathOf(nodeId) {
+      var parts = [], n = BY_ID[nodeId];
+      while (n) { parts.unshift(n.label); n = n.parentId ? BY_ID[n.parentId] : null; }
+      return parts;
+    }
+
+    // ---------- 角色数据 ----------
+    var ROLES = [];
+
+    function allCodesList() {
+      var out = [];
+      FLAT.forEach(function (n) {
+        out.push(n.code);
+        (n.ops || []).forEach(function (o) { out.push(o.code); });
+      });
+      return out;
+    }
+
+    function seedRoles() {
+      var all = allCodesList();
+      var byMod = {};
+      FLAT.forEach(function (n) {
+        var mod = moduleOf(n.id);
+        var key = mod.label;
+        byMod[key] = byMod[key] || [];
+        byMod[key].push(n.code);
+        (n.ops || []).forEach(function (o) { byMod[key].push(o.code); });
+      });
+
+      function pick(pred) { return all.filter(pred); }
+
+      function isViewCode(code) {
+        return /#(view|view-transfer|export|column-config|preview)$/.test(code);
+      }
+      function isDestructive(code) {
+        return /#(delete|void|withdraw|reject|replace)$/.test(code);
+      }
+
+      var roleAdmin = {
+        id: 'r1', name: '系统管理员', code: 'ROLE_ADMIN', desc: '拥有系统全部功能与全部数据，可配置角色与流程',
+        scope: 'all', status: 'enabled', users: 3, updatedAt: '2026-11-05 14:22',
+        perms: all.slice()
+      };
+      var roleEntAdmin = {
+        id: 'r2', name: '企业管理员', code: 'ROLE_ENT_ADMIN', desc: '负责本企业日常业务管理与单据审核',
+        scope: 'all', status: 'enabled', users: 8, updatedAt: '2026-11-03 09:41',
+        perms: pick(function (c) { return !isDestructive(c); })
+      };
+      var roleOperator = {
+        id: 'r3', name: '业务操作员', code: 'ROLE_OPERATOR', desc: '负责项目准入与合同发运的日常录入，仅处理本人创建的数据',
+        scope: 'own', status: 'enabled', users: 26, updatedAt: '2026-10-29 17:05',
+        perms: pick(function (c) {
+          var inMod = /^(准入管理|数字供应链\/合同管理|数字供应链\/收发货管理)/.test(c);
+          if (!inMod) return false;
+          return !isDestructive(c);
+        })
+      };
+      var roleFinance = {
+        id: 'r4', name: '财务专员', code: 'ROLE_FINANCE', desc: '负责收付款、保证金、结算与发票等资金类业务',
+        scope: 'all', status: 'enabled', users: 6, updatedAt: '2026-10-27 10:12',
+        perms: pick(function (c) {
+          var inMod = /^(数字供应链\/资金管理|数字供应链\/结算单管理|数字供应链\/发票管理|数据中心\/资金占压表|数据中心\/应收应付表)/.test(c);
+          if (!inMod) return false;
+          return !isDestructive(c);
+        })
+      };
+      var roleViewer = {
+        id: 'r5', name: '只读查看员', code: 'ROLE_VIEWER', desc: '仅可浏览各模块数据，不能新增、修改或提交',
+        scope: 'all', status: 'disabled', users: 42, updatedAt: '2026-10-21 16:38',
+        perms: pick(function (c) { return isViewCode(c); })
+      };
+
+      return [roleAdmin, roleEntAdmin, roleOperator, roleFinance, roleViewer];
+    }
+
+    function loadRoles() {
+      try {
+        var raw = localStorage.getItem(LS_KEY);
+        if (raw) {
+          var parsed = JSON.parse(raw);
+          if (Array.isArray(parsed) && parsed.length) return parsed;
+        }
+      } catch (e) { /* ignore */ }
+      var seeded = seedRoles();
+      try { localStorage.setItem(LS_KEY, JSON.stringify(seeded)); } catch (e) {}
+      return seeded;
+    }
+    function saveRoles() {
+      try { localStorage.setItem(LS_KEY, JSON.stringify(ROLES)); } catch (e) {}
+    }
+
+    // ---------- 工具 ----------
+    function toast(msg) {
+      var t = document.getElementById('rpToast');
+      t.textContent = msg;
+      t.classList.add('show');
+      clearTimeout(window.__rpToastTimer);
+      window.__rpToastTimer = setTimeout(function () { t.classList.remove('show'); }, 2200);
+    }
+    function esc(s) {
+      return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+        return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+      });
+    }
+    function scopeText(s) { return s === 'own' ? '仅本人创建的数据' : '全部数据（全局）'; }
+    function scopeClass(s) { return s === 'own' ? 'own' : 'all'; }
+    function today() {
+      var d = new Date();
+      function p(n) { return n < 10 ? '0' + n : '' + n; }
+      return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate()) + ' ' + p(d.getHours()) + ':' + p(d.getMinutes());
+    }
+    function permsOf(role) {
+      var set = {};
+      (role.perms || []).forEach(function (c) { set[c] = 1; });
+      return set;
+    }
+
+    // ==========================================================================
+    // 列表页
+    // ==========================================================================
+    var page = 1, pageSize = 10;
+
+    function filteredRoles() {
+      var kw = (document.getElementById('fltName').value || '').trim().toLowerCase();
+      var sc = document.getElementById('fltScope').value;
+      var st = document.getElementById('fltStatus').value;
+      return ROLES.filter(function (r) {
+        if (kw && (r.name + ' ' + r.code + ' ' + (r.desc || '')).toLowerCase().indexOf(kw) < 0) return false;
+        if (sc && r.scope !== sc) return false;
+        if (st && r.status !== st) return false;
+        return true;
+      });
+    }
+
+    function renderStats() {
+      var total = ROLES.length;
+      var enabled = ROLES.filter(function (r) { return r.status === 'enabled'; }).length;
+      var users = ROLES.reduce(function (a, r) { return a + (r.users || 0); }, 0);
+      var own = ROLES.filter(function (r) { return r.scope === 'own'; }).length;
+      var items = [
+        { ico: '👥', cls: 'blue', num: total, label: '角色总数' },
+        { ico: '✅', cls: 'green', num: enabled, label: '启用中角色' },
+        { ico: '👤', cls: 'orange', num: users, label: '已关联用户' },
+        { ico: '🔒', cls: 'purple', num: own, label: '仅本人数据角色' }
+      ];
+      document.getElementById('rpStatGrid').innerHTML = items.map(function (it) {
+        return '<div class="rp-stat-card">'
+          + '<div class="rp-stat-icon ' + it.cls + '">' + it.ico + '</div>'
+          + '<div><div class="rp-stat-num">' + it.num + '</div><div class="rp-stat-label">' + it.label + '</div></div>'
+          + '</div>';
+      }).join('');
+    }
+
+    function renderFilterChips() {
+      var chips = [];
+      var kw = (document.getElementById('fltName').value || '').trim();
+      var sc = document.getElementById('fltScope').value;
+      var st = document.getElementById('fltStatus').value;
+      if (kw) chips.push({ k: '名称/编码', v: kw });
+      if (sc) chips.push({ k: '数据权限', v: scopeText(sc) });
+      if (st) chips.push({ k: '状态', v: st === 'enabled' ? '启用' : '停用' });
+      var box = document.getElementById('rpFilterChips');
+      var empty = document.getElementById('rpFilterEmpty');
+      var clear = document.getElementById('rpClearAll');
+      if (!chips.length) {
+        box.innerHTML = ''; empty.style.display = ''; clear.style.display = 'none';
+      } else {
+        box.innerHTML = chips.map(function (c) {
+          return '<span class="filter-chip"><span class="filter-chip-key">' + esc(c.k) + '</span>'
+            + '<span class="filter-chip-val">' + esc(c.v) + '</span></span>';
+        }).join('');
+        empty.style.display = 'none'; clear.style.display = '';
+      }
+    }
+
+    function renderRoleTable() {
+      var list = filteredRoles();
+      renderFilterChips();
+
+      var totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+      if (page > totalPages) page = totalPages;
+      var start = (page - 1) * pageSize;
+      var rows = list.slice(start, start + pageSize);
+
+      document.getElementById('rpTbody').innerHTML = rows.length ? rows.map(function (r, i) {
+        var permCount = (r.perms || []).length;
+        var colorIdx = ['#1E40AF', '#0891B2', '#7C3AED', '#059669', '#D97706'][start + i % 5] || '#1E40AF';
+        var initial = r.name.slice(0, 1);
+        return '<tr>'
+          + '<td><div class="rp-role-cell">'
+          + '<div class="rp-role-ico" style="background:' + colorIdx + '">' + esc(initial) + '</div>'
+          + '<div><div class="rp-role-name">' + esc(r.name) + '</div>'
+          + '<div class="rp-role-desc">' + esc(r.desc || '—') + '</div></div>'
+          + '</div></td>'
+          + '<td><span class="rp-code">' + esc(r.code) + '</span></td>'
+          + '<td><span class="rp-scope-badge ' + scopeClass(r.scope) + '">'
+          + (r.scope === 'own' ? '🔒' : '🌐') + ' ' + scopeText(r.scope) + '</span></td>'
+          + '<td style="text-align:center;"><span class="rp-perm-count">' + permCount + '</span> 项</td>'
+          + '<td style="text-align:center;"><span class="rp-user-count">👤 ' + (r.users || 0) + '</span></td>'
+          + '<td>' + (r.status === 'enabled'
+            ? '<span style="color:var(--color-success); font-size:13px;">● 启用</span>'
+            : '<span style="color:var(--text-tertiary); font-size:13px;">○ 停用</span>') + '</td>'
+          + '<td style="font-size:12px; color:var(--text-secondary);">' + esc(r.updatedAt || '—') + '</td>'
+          + '<td class="col-action" style="text-align:right;">'
+          + '<span class="rp-act-link" onclick="viewRoleDrawer(\'' + r.id + '\')">查看权限</span>'
+          + '<span class="rp-act-link" onclick="openRoleModal(\'' + r.id + '\')">编辑</span>'
+          + '<span class="rp-act-link danger" onclick="askDeleteRole(\'' + r.id + '\')">删除</span>'
+          + '</td></tr>';
+      }).join('') : '<tr><td colspan="8" style="text-align:center; padding:56px 0; color:var(--text-tertiary);">'
+        + '<div style="font-size:34px; opacity:.35; margin-bottom:10px;">🔍</div>没有符合条件的角色</td></tr>';
+
+      document.getElementById('rpPaginationInfo').innerHTML =
+        '共 ' + list.length + ' 条角色记录 · 第 ' + page + ' / ' + totalPages + ' 页';
+      document.getElementById('rpResultHint').textContent = list.length === ROLES.length ? '' : '命中 ' + list.length + ' / ' + ROLES.length + ' 个角色';
+
+      var pg = document.getElementById('rpPaginationPages');
+      var html = '<div class="cp-pagination-page' + (page === 1 ? ' disabled' : '') + '" onclick="goPage(' + (page - 1) + ')">‹</div>';
+      var from = Math.max(1, page - 2), to = Math.min(totalPages, from + 4);
+      from = Math.max(1, to - 4);
+      for (var p = from; p <= to; p++) {
+        html += '<div class="cp-pagination-page' + (p === page ? ' active' : '') + '" onclick="goPage(' + p + ')">' + p + '</div>';
+      }
+      html += '<div class="cp-pagination-page' + (page === totalPages ? ' disabled' : '') + '" onclick="goPage(' + (page + 1) + ')">›</div>';
+      pg.innerHTML = html;
+
+      renderStats();
+    }
+
+    function goPage(p) {
+      var list = filteredRoles();
+      var totalPages = Math.max(1, Math.ceil(list.length / pageSize));
+      if (p < 1 || p > totalPages) return;
+      page = p;
+      renderRoleTable();
+    }
+    function clearRoleFilters() {
+      document.getElementById('fltName').value = '';
+      document.getElementById('fltScope').value = '';
+      document.getElementById('fltStatus').value = '';
+      page = 1;
+      renderRoleTable();
+    }
+
+    // ==========================================================================
+    // 弹窗：新增 / 编辑角色
+    // ==========================================================================
+    var draft = null;       // 正在编辑的角色草稿
+    var editingId = null;
+    var selNodeId = null;   // 左侧树当前选中节点
+    var treeKeyword = '';
+    var codeTouched = false;
+
+    function openRoleModal(roleId) {
+      editingId = roleId;
+      codeTouched = false;
+      var role = roleId ? ROLES.filter(function (r) { return r.id === roleId; })[0] : null;
+
+      document.getElementById('roleModalTitle').textContent = role ? '编辑角色' : '新增角色';
+      document.getElementById('roleModalSub').textContent = role
+        ? '修改「' + role.name + '」的权限配置，保存后立即对该角色成员生效'
+        : '配置角色基本信息、数据隔离范围与菜单/操作权限';
+
+      document.getElementById('inpName').value = role ? role.name : '';
+      document.getElementById('inpCode').value = role ? role.code : '';
+      document.getElementById('inpDesc').value = role ? (role.desc || '') : '';
+      document.getElementById('inpStatus').value = role ? role.status : 'enabled';
+      document.getElementById('codeHint').textContent = role
+        ? '创建后不建议修改，修改可能影响已关联的系统配置'
+        : '用于系统内部识别，创建后不建议修改';
+      document.getElementById('fldName').classList.remove('has-err');
+      document.getElementById('fldCode').classList.remove('has-err');
+
+      draft = {
+        scope: role ? role.scope : 'all',
+        perms: role ? (role.perms || []).slice() : []
+      };
+      pickScope(draft.scope, true);
+      // 自动定位到一个「有内容的」菜单：编辑时优先定位到已授权的菜单，
+      // 新建时定位到第一个带操作按钮的菜单 —— 否则右侧面板一片空白，用户不知道从哪看起
+      selNodeId = role ? findFirstGrantedNode(draft.perms) : findFirstNodeWithOps();
+      renderTree();
+      renderOps();
+      updateFootTip();
+
+      document.getElementById('roleModalMask').classList.add('show');
+    }
+
+    function closeRoleModal() {
+      document.getElementById('roleModalMask').classList.remove('show');
+      draft = null; editingId = null; selNodeId = null; treeKeyword = '';
+      document.getElementById('treeSearch').value = '';
+    }
+
+    function autoGenCode() {
+      if (codeTouched) return;
+      var name = (document.getElementById('inpName').value || '').trim();
+      var en = {
+        '管理员': 'ADMIN', '操作员': 'OPERATOR', '专员': 'SPECIALIST', '查看员': 'VIEWER',
+        '主管': 'MANAGER', '财务': 'FINANCE', '仓管': 'WAREHOUSE', '审核': 'AUDITOR',
+        '业务': 'BIZ', '管理': 'MGR'
+      };
+      var suffix = '';
+      Object.keys(en).forEach(function (k) { if (name.indexOf(k) >= 0) suffix = en[k]; });
+      if (!suffix) {
+        // 中文名取不到英文语义时，退化成可用的 ASCII 片段（编码只允许字母数字下划线）
+        var ascii = name.replace(/[^A-Za-z0-9]/g, '').toUpperCase();
+        suffix = ascii ? ascii.slice(0, 12) : ('C' + String(Date.now()).slice(-6));
+      }
+      document.getElementById('inpCode').value = 'ROLE_' + suffix;
+    }
+    function markCodeDirty() { codeTouched = true; }
+
+    /** 找到第一个「已授权且有操作按钮」的菜单节点（编辑回显时自动定位） */
+    function findFirstGrantedNode(perms) {
+      var set = {};
+      (perms || []).forEach(function (c) { set[c] = 1; });
+      for (var i = 0; i < FLAT.length; i++) {
+        var n = FLAT[i];
+        if (!n.ops || !n.ops.length) continue;
+        for (var j = 0; j < n.ops.length; j++) {
+          if (set[n.ops[j].code]) return n.id;
+        }
+      }
+      for (var k = 0; k < FLAT.length; k++) {
+        if (set[FLAT[k].code]) return FLAT[k].id;
+      }
+      return null;
+    }
+
+    /** 找到第一个带操作按钮的菜单节点（新建时默认定位） */
+    function findFirstNodeWithOps() {
+      for (var i = 0; i < FLAT.length; i++) {
+        if (FLAT[i].ops && FLAT[i].ops.length) return FLAT[i].id;
+      }
+      return null;
+    }
+
+    function pickScope(scope, silent) {
+      if (!draft) draft = { scope: scope, perms: [] };
+      draft.scope = scope;
+      var opts = document.querySelectorAll('.rp-scope-opt');
+      for (var i = 0; i < opts.length; i++) {
+        opts[i].classList.toggle('on', opts[i].getAttribute('data-scope') === scope);
+        var radio = opts[i].querySelector('input');
+        if (radio) radio.checked = opts[i].getAttribute('data-scope') === scope;
+      }
+      var tip = document.getElementById('scopeTipText');
+      if (scope === 'own') {
+        tip.textContent = '当前：仅本人创建的数据。该角色成员在列表中只能看到自己创建的单据，其他成员数据不可见、不可操作。';
+      } else {
+        tip.textContent = '当前：全部数据（全局）。该角色成员可访问本企业全部业务数据，包括他人创建的单据。';
+      }
+      if (!silent) toast('数据权限已切换为「' + scopeText(scope) + '」');
+    }
+
+    // ---------- 左树 ----------
+    function renderTree() {
+      treeKeyword = (document.getElementById('treeSearch').value || '').trim();
+      var perms = permsOf({ perms: draft ? draft.perms : [] });
+      var container = document.getElementById('permTree');
+
+      var visible = FLAT.filter(function (n) {
+        if (!treeKeyword) return true;
+        return n.label.indexOf(treeKeyword) >= 0 || (n.code || '').indexOf(treeKeyword) >= 0;
+      });
+      if (treeKeyword) {
+        // 命中项的祖先一并保留，保证树结构完整
+        var keep = {};
+        visible.forEach(function (n) {
+          keep[n.id] = true;
+          var p = n.parentId;
+          while (p) { keep[p] = true; p = BY_ID[p].parentId; }
+        });
+        visible = FLAT.filter(function (n) { return keep[n.id]; });
+      }
+
+      var html = visible.map(function (n) {
+        var codes = allCodes(n.id);
+        var checked = codes.length > 0 && codes.every(function (c) { return perms[c]; });
+        var partial = !checked && codes.some(function (c) { return perms[c]; });
+        var indent = 12 + n.depth * 15;
+        var hasChildren = (n.children || []).length > 0;
+        var toggle = hasChildren
+          ? '<span class="rp-tnode-toggle" data-toggle="' + n.id + '">▸</span>'
+          : '<span class="rp-tnode-toggle"></span>';
+        var cbCls = 'rp-tnode-cb' + (checked ? ' checked' : (partial ? ' partial' : ''));
+        var cnt = codes.length;
+        return '<div class="rp-tnode d' + n.depth + (selNodeId === n.id ? ' sel' : '') + '"'
+          + ' style="padding-left:' + indent + 'px"'
+          + ' data-node="' + n.id + '" data-label="' + esc(n.label) + '" data-depth="' + n.depth + '">'
+          + toggle
+          + '<span class="' + cbCls + '" data-check="' + n.id + '" title="勾选/取消该菜单及其全部下级权限"></span>'
+          + '<span class="rp-tnode-label" data-pick="' + n.id + '">'
+          + (n.depth === 0 ? (n.icon ? n.icon + ' ' : '') : '') + esc(n.label) + '</span>'
+          + '<span class="rp-tnode-cnt">' + cnt + '</span>'
+          + '</div>';
+      }).join('');
+
+      container.innerHTML = html || '<div class="rp-empty"><div class="rp-empty-ico">🔍</div>没有匹配的菜单</div>';
+    }
+
+    // 树交互（事件委托）
+    document.getElementById('permTree').addEventListener('click', function (e) {
+      var cb = e.target.closest('[data-check]');
+      if (cb) {
+        e.stopPropagation();
+        toggleNodePerms(cb.getAttribute('data-check'));
+        return;
+      }
+      var tg = e.target.closest('[data-toggle]');
+      if (tg) {
+        e.stopPropagation();
+        var id = tg.getAttribute('data-toggle');
+        var node = BY_ID[id];
+        var open = tg.textContent === '▾';
+        tg.textContent = open ? '▸' : '▾';
+        (node.children || []).forEach(function (cid) {
+          var row = document.querySelector('.rp-tnode[data-node="' + cid + '"]');
+          if (row) row.style.display = open ? 'none' : '';
+        });
+        return;
+      }
+      var pick = e.target.closest('[data-pick]');
+      if (pick) {
+        selNodeId = pick.getAttribute('data-pick');
+        renderTree();
+        renderOps();
+      }
+    });
+
+    function toggleNodePerms(nodeId) {
+      var codes = allCodes(nodeId);
+      var set = {};
+      draft.perms.forEach(function (c) { set[c] = 1; });
+      var allOn = codes.length > 0 && codes.every(function (c) { return set[c]; });
+      var next = {};
+      draft.perms.forEach(function (c) { if (codes.indexOf(c) < 0) next[c] = 1; });
+      if (!allOn) codes.forEach(function (c) { next[c] = 1; });
+      draft.perms = Object.keys(next);
+      renderTree();
+      renderOps();
+      updateFootTip();
+    }
+
+    // ---------- 右侧操作按钮 ----------
+    function renderOps() {
+      var body = document.getElementById('opBody');
+      var titleEl = document.getElementById('opTitle');
+      var pathEl = document.getElementById('opPath');
+      var countEl = document.getElementById('opCount');
+
+      if (!selNodeId || !BY_ID[selNodeId]) {
+        titleEl.textContent = '操作权限';
+        pathEl.textContent = '请在左侧选择菜单';
+        countEl.textContent = '';
+        body.innerHTML = '<div class="rp-empty"><div class="rp-empty-ico">👈</div>'
+          + '请选择左侧菜单节点<br>这里会列出该菜单页面中可配置的操作按钮</div>';
+        return;
+      }
+
+      var node = BY_ID[selNodeId];
+      var path = pathOf(selNodeId);
+      titleEl.textContent = node.label;
+      pathEl.textContent = path.join(' / ');
+      var set = permsOf({ perms: draft.perms });
+
+      if ((node.children || []).length) {
+        countEl.textContent = '';
+        body.innerHTML = '<div class="rp-dir-tip">「' + esc(node.label) + '」是目录菜单，操作权限配置在其下级菜单中，勾选目录本身即表示该角色可访问全部下级菜单。</div>'
+          + '<div class="rp-child-jump">' + (node.children || []).map(function (cid) {
+            var c = BY_ID[cid];
+            return '<span class="rp-jump-chip" data-jump="' + cid + '">' + esc(c.label) + ' · ' + allCodes(cid).length + ' 项</span>';
+          }).join('') + '</div>';
+        body.querySelectorAll('[data-jump]').forEach(function (el) {
+          el.addEventListener('click', function () {
+            selNodeId = el.getAttribute('data-jump');
+            renderTree();
+            renderOps();
+          });
+        });
+        return;
+      }
+
+      if (!node.ops || !node.ops.length) {
+        countEl.textContent = '';
+        body.innerHTML = '<div class="rp-empty"><div class="rp-empty-ico">📄</div>'
+          + '该菜单为纯展示页面，暂无可配置的操作按钮权限项</div>';
+        return;
+      }
+
+      var onCount = node.ops.filter(function (o) { return set[o.code]; }).length;
+      countEl.textContent = '已选 ' + onCount + ' / ' + node.ops.length + ' 项';
+
+      body.innerHTML = '<div class="rp-op-grid">' + node.ops.map(function (o) {
+        var on = !!set[o.code];
+        return '<label class="rp-op-item' + (on ? ' on' : '') + '">'
+          + '<input type="checkbox" data-op="' + esc(o.code) + '"' + (on ? ' checked' : '') + '>'
+          + '<div><div class="rp-op-label">' + esc(o.label) + '</div>'
+          + '<div class="rp-op-code">' + esc(o.code) + '</div></div>'
+          + '</label>';
+      }).join('') + '</div>';
+
+      body.querySelectorAll('[data-op]').forEach(function (cb) {
+        cb.addEventListener('change', function () {
+          var code = cb.getAttribute('data-op');
+          var idx = draft.perms.indexOf(code);
+          if (cb.checked) { if (idx < 0) draft.perms.push(code); }
+          else if (idx >= 0) draft.perms.splice(idx, 1);
+          renderTree();
+          renderOps();
+          updateFootTip();
+        });
+      });
+    }
+
+    function toggleAllOps(on) {
+      if (!selNodeId || !BY_ID[selNodeId]) return;
+      var node = BY_ID[selNodeId];
+      if (!node.ops || !node.ops.length) return;
+      var set = permsOf({ perms: draft.perms });
+      node.ops.forEach(function (o) {
+        var idx = draft.perms.indexOf(o.code);
+        if (on && idx < 0) draft.perms.push(o.code);
+        if (!on && idx >= 0) draft.perms.splice(idx, 1);
+      });
+      renderTree();
+      renderOps();
+      updateFootTip();
+    }
+
+    function updateFootTip() {
+      var menuCount = 0, opCount = 0;
+      FLAT.forEach(function (n) {
+        var set = permsOf({ perms: draft ? draft.perms : [] });
+        if (set[n.code]) menuCount++;
+        (n.ops || []).forEach(function (o) { if (set[o.code]) opCount++; });
+      });
+      document.getElementById('roleFootTip').textContent =
+        '已选 ' + menuCount + ' 个菜单 · ' + opCount + ' 个操作按钮';
+    }
+
+    // ---------- 保存 ----------
+    function saveRole() {
+      var name = (document.getElementById('inpName').value || '').trim();
+      var code = (document.getElementById('inpCode').value || '').trim();
+      var desc = (document.getElementById('inpDesc').value || '').trim();
+      var status = document.getElementById('inpStatus').value;
+
+      var ok = true;
+      document.getElementById('fldName').classList.toggle('has-err', !name);
+      if (!name) ok = false;
+      var codeValid = /^[A-Za-z][A-Za-z0-9_]{1,31}$/.test(code);
+      document.getElementById('fldCode').classList.toggle('has-err', !codeValid);
+      if (!codeValid) ok = false;
+
+      var dup = ROLES.filter(function (r) { return r.code === code && r.id !== editingId; })[0];
+      if (dup) {
+        document.getElementById('fldCode').classList.add('has-err');
+        document.getElementById('fldCode').querySelector('.rp-field-err').textContent = '角色编码已存在：' + dup.name;
+        ok = false;
+      } else {
+        document.getElementById('fldCode').querySelector('.rp-field-err').textContent = '请输入角色编码（仅支持字母、数字、下划线）';
+      }
+
+      if (!ok) { toast('请完善必填项'); return; }
+      if (!draft.perms.length) { toast('请至少勾选一项权限'); return; }
+
+      if (editingId) {
+        var r = ROLES.filter(function (x) { return x.id === editingId; })[0];
+        r.name = name; r.code = code; r.desc = desc; r.status = status;
+        r.scope = draft.scope; r.perms = draft.perms.slice(); r.updatedAt = today();
+        toast('角色「' + name + '」已更新');
+      } else {
+        ROLES.unshift({
+          id: 'r' + Date.now(), name: name, code: code, desc: desc,
+          scope: draft.scope, status: status, users: 0,
+          updatedAt: today(), perms: draft.perms.slice()
+        });
+        toast('角色「' + name + '」创建成功');
+      }
+      saveRoles();
+      closeRoleModal();
+      page = 1;
+      renderRoleTable();
+    }
+
+    // ==========================================================================
+    // 抽屉：角色权限详情
+    // ==========================================================================
+    var drawerRoleId = null;
+    function viewRoleDrawer(roleId) {
+      var r = ROLES.filter(function (x) { return x.id === roleId; })[0];
+      if (!r) return;
+      drawerRoleId = roleId;
+      document.getElementById('drawerTitle').textContent = r.name + ' · 权限详情';
+      document.getElementById('drawerSub').textContent = r.code + '　|　更新于 ' + (r.updatedAt || '—');
+
+      var set = permsOf(r);
+      var menuCount = 0, opCount = 0;
+      FLAT.forEach(function (n) {
+        if (set[n.code]) menuCount++;
+        (n.ops || []).forEach(function (o) { if (set[o.code]) opCount++; });
+      });
+
+      var grantedOps = [];
+      FLAT.forEach(function (n) {
+        (n.ops || []).forEach(function (o) { if (set[o.code]) grantedOps.push(o.label); });
+      });
+
+      var treeHtml = FLAT.map(function (n) {
+        var codes = allCodes(n.id);
+        var checked = codes.length > 0 && codes.every(function (c) { return set[c]; });
+        var partial = !checked && codes.some(function (c) { return set[c]; });
+        var cbCls = 'rp-tnode-cb' + (checked ? ' checked' : (partial ? ' partial' : ''));
+        var indent = 12 + n.depth * 15;
+        return '<div class="rp-tnode d' + n.depth + '" style="padding-left:' + indent + 'px; cursor:default;">'
+          + '<span class="rp-tnode-toggle"></span>'
+          + '<span class="' + cbCls + '" style="cursor:default;"></span>'
+          + '<span class="rp-tnode-label">' + (n.depth === 0 ? (n.icon ? n.icon + ' ' : '') : '') + esc(n.label) + '</span>'
+          + '<span class="rp-tnode-cnt">' + codes.length + '</span>'
+          + '</div>';
+      }).join('');
+
+      document.getElementById('drawerBody').innerHTML =
+        '<div class="rp-info-grid">'
+        + '<div class="rp-info-item"><span class="rp-info-label">角色名称</span><span class="rp-info-value">' + esc(r.name) + '</span></div>'
+        + '<div class="rp-info-item"><span class="rp-info-label">角色编码</span><span class="rp-info-value"><span class="rp-code">' + esc(r.code) + '</span></span></div>'
+        + '<div class="rp-info-item"><span class="rp-info-label">状态</span><span class="rp-info-value">' + (r.status === 'enabled' ? '启用' : '停用') + '</span></div>'
+        + '<div class="rp-info-item"><span class="rp-info-label">关联用户</span><span class="rp-info-value">' + (r.users || 0) + ' 人</span></div>'
+        + '<div class="rp-info-item" style="grid-column:1/-1;"><span class="rp-info-label">数据权限</span><span class="rp-info-value">'
+        + '<span class="rp-scope-badge ' + scopeClass(r.scope) + '">' + (r.scope === 'own' ? '🔒' : '🌐') + ' ' + scopeText(r.scope) + '</span>'
+        + '<span style="font-size:12px; color:var(--text-tertiary); margin-left:8px;">'
+        + (r.scope === 'own' ? '仅能查看与操作本人创建的业务数据' : '可查看与操作本企业全部业务数据') + '</span></span></div>'
+        + '<div class="rp-info-item" style="grid-column:1/-1;"><span class="rp-info-label">角色描述</span><span class="rp-info-value">' + esc(r.desc || '—') + '</span></div>'
+        + '</div>'
+        + '<div class="rp-sec"><div class="rp-sec-title">权限概览</div>'
+        + '<div style="display:flex; gap:10px; flex-wrap:wrap; margin-bottom:14px;">'
+        + '<span class="rp-scope-badge all">菜单权限 ' + menuCount + ' 项</span>'
+        + '<span class="rp-scope-badge own">操作按钮 ' + opCount + ' 项</span>'
+        + '</div>'
+        + '<div class="rp-dir-tip">下方灰色为未授权项，蓝色勾选为已授权项。半选表示该菜单下仅部分操作被授权。</div>'
+        + '<div class="rp-perm-box" style="height:300px;">'
+        + '<div class="rp-perm-left" style="width:100%; border-right:none;">'
+        + '<div class="rp-perm-tree">' + treeHtml + '</div></div></div>'
+        + '</div>'
+        + '<div class="rp-sec"><div class="rp-sec-title">已授权操作按钮<span class="rp-sec-note">共 ' + grantedOps.length + ' 项</span></div>'
+        + '<div class="rp-granted-list">' + (grantedOps.length
+          ? grantedOps.map(function (g) { return '<span class="rp-granted-chip">' + esc(g) + '</span>'; }).join('')
+          : '<span style="font-size:12px;color:var(--text-tertiary);">暂无</span>') + '</div>'
+        + '</div>';
+
+      document.getElementById('roleDrawerMask').classList.add('show');
+    }
+    function closeRoleDrawer() {
+      document.getElementById('roleDrawerMask').classList.remove('show');
+      drawerRoleId = null;
+    }
+    function editFromDrawer() {
+      var id = drawerRoleId;
+      closeRoleDrawer();
+      setTimeout(function () { openRoleModal(id); }, 120);
+    }
+
+    // ==========================================================================
+    // 删除确认
+    // ==========================================================================
+    var pendingDeleteId = null;
+    function askDeleteRole(roleId) {
+      var r = ROLES.filter(function (x) { return x.id === roleId; })[0];
+      if (!r) return;
+      pendingDeleteId = roleId;
+      document.getElementById('confirmTitle').textContent = '确认删除角色「' + r.name + '」？';
+      document.getElementById('confirmText').innerHTML =
+        '删除后该角色的 <b>' + (r.perms || []).length + '</b> 项权限配置将一并清除'
+        + (r.users ? '，已关联的 <b>' + r.users + '</b> 名成员将变为无角色状态' : '')
+        + '。<br>此操作不可撤销，如只是暂时停用，建议改为「停用」。';
+      document.getElementById('confirmMask').classList.add('show');
+    }
+    function closeConfirm() {
+      document.getElementById('confirmMask').classList.remove('show');
+      pendingDeleteId = null;
+    }
+    document.getElementById('confirmOkBtn').addEventListener('click', function () {
+      if (!pendingDeleteId) return;
+      var r = ROLES.filter(function (x) { return x.id === pendingDeleteId; })[0];
+      ROLES = ROLES.filter(function (x) { return x.id !== pendingDeleteId; });
+      saveRoles();
+      closeConfirm();
+      renderRoleTable();
+      toast(r ? '角色「' + r.name + '」已删除' : '角色已删除');
+    });
+
+    // ---------- 事件绑定 ----------
+    document.getElementById('rpPageSize').addEventListener('change', function () {
+      pageSize = parseInt(this.value, 10);
+      page = 1;
+      renderRoleTable();
+    });
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape') {
+        if (document.getElementById('confirmMask').classList.contains('show')) { closeConfirm(); return; }
+        if (document.getElementById('roleModalMask').classList.contains('show')) { closeRoleModal(); return; }
+        if (document.getElementById('roleDrawerMask').classList.contains('show')) { closeRoleDrawer(); return; }
+      }
+    });
+
+    // 暴露到全局，供 HTML 内联 onclick 调用
+    window.openRoleModal = openRoleModal;
+    window.closeRoleModal = closeRoleModal;
+    window.pickScope = pickScope;
+    window.renderTree = renderTree;
+    window.toggleAllOps = toggleAllOps;
+    window.saveRole = saveRole;
+    window.renderRoleTable = renderRoleTable;
+    window.clearRoleFilters = clearRoleFilters;
+    window.goPage = goPage;
+    window.viewRoleDrawer = viewRoleDrawer;
+    window.closeRoleDrawer = closeRoleDrawer;
+    window.editFromDrawer = editFromDrawer;
+    window.askDeleteRole = askDeleteRole;
+    window.closeConfirm = closeConfirm;
+    // ↓ 内联 oninput 用得到，必须挂到 window（写在 IIFE 里内联处理器取不到）
+    window.autoGenCode = autoGenCode;
+    window.markCodeDirty = markCodeDirty;
+
+    // ---------- 初始化 ----------
+    ROLES = loadRoles();
+    renderRoleTable();
+    renderStats();
+  })();
+  </script>
+  <script src="../assets/js/pin-annotation.js"></script>
+</body>
+</html>

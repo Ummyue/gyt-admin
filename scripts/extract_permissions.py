@@ -1,0 +1,389 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+权限配置项数据抽取器
+====================
+从 shared/js/topnav-drawer.js 的 window.TOPNAV_MENU 解析出
+「一级菜单 → 二级菜单 → 三级菜单 → 页面」结构，
+再逐页扫描该页面里的操作按钮（<button> / <a class="btn"> / 操作列链接），
+输出供「角色权限管理」页使用的权限树 JSON。
+
+用法:
+    python3 scripts/extract_permissions.py            # 输出 JSON 到 stdout
+    python3 scripts/extract_permissions.py -o out.json # 写文件
+"""
+
+import json
+import os
+import re
+import sys
+from datetime import datetime
+from html.parser import HTMLParser
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+PAGES_DIR = os.path.join(ROOT, "pages")
+MENU_JS = os.path.join(ROOT, "shared", "js", "topnav-drawer.js")
+NOW = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+
+# 操作按钮 → 权限 scope（找不到就退化成 op<N>）
+SCOPE_MAP = [
+    (("查看", "详情", "查看报告", "查看补协", "补协详情", "入库明细", "出库明细", "货位",
+      "监控信息", "列设置", "恢复默认", "查看状态机说明", "查看额度", "查看未关联业务线的合同(0)",
+      "全部标记已读", "流程图预览"), "view"),
+    (("新增", "新增立项申请", "新增客户", "新增黑名单企业", "新增补充协议", "登记保证金",
+      "开具货转", "新增入库", "新增出库", "提货申请", "新增放货指令", "新增追保函",
+      "新增发票", "新增合同", "新增付款", "新增退款", "新增回款", "新增采购结算单",
+      "新增销售结算单", "新增仓房", "新增品类", "新增视频监控", "新增系统监控",
+      "登记订单发货数据", "登记采购订单发运数据", "登记销售订单发运数据",
+      "新增采购框架合同框架", "新增销售框架合同框架"), "create"),
+    (("编辑", "修改", "设置等比例冲抵货款比例"), "edit"),
+    (("删除", "批量删除"), "delete"),
+    (("作废", "失效"), "void"),
+    (("撤回", "撤回申请"), "withdraw"),
+    (("提交", "确认提交", "确认收货", "确认上传", "确认删除", "确认进入", "发起完结", "重新提交"), "submit"),
+    (("保存",), "save"),
+    (("导出", "数据导出", "Excel 导出", "导出 Excel", "批量下载", "下载", "一键下载", "下载模板"), "export"),
+    (("审批通过", "审核", "通过"), "approve"),
+    (("驳回", "驳回审批"), "reject"),
+    (("立即催办", "催办"), "urge"),
+    (("上传", "+ 上传", "上传附件", "上传双签附件", "上传客户准入报告", "上传决议文件",
+      "上传已生效单据", "↑ 上传上游货转"), "upload"),
+    (("批量导入", "开始导入", "导入"), "import"),
+    (("复制",), "copy"),
+    (("打印",), "print"),
+    (("发起货转", "↓ 新增下游货转", "+ 选择销售订单（贸易）合同"), "transfer"),
+    (("查看货转",), "view-transfer"),
+    (("按比例分摊", "全部现金"), "allocate"),
+    (("替换",), "replace"),
+    (("新增行",), "add-row"),
+]
+
+
+def _slug(fname):
+    """contract-purchase.html → contract-purchase"""
+    return (fname or "").replace(".html", "")
+
+
+def _scope(text, idx):
+    for keys, scope in SCOPE_MAP:
+        if text in keys:
+            return scope
+    for keys, scope in SCOPE_MAP:
+        for k in keys:
+            if k and k in text:
+                return scope
+    return "op%d" % idx
+
+
+def _stamp(node, path):
+    """给菜单节点补 code / ops 明细。
+
+    code 用「菜单路径」生成，保证可读且唯一：
+        menu:数字供应链/合同管理/采购合同
+    只有叶子节点（没有下级菜单）才挂操作按钮，
+    中间层是纯目录，它的页面就是第一个子节点的落地页，重复列会让人困惑。
+    """
+    node["code"] = "menu:" + path
+    kids = node.get("children") or []
+    if kids:
+        node["ops"] = []
+    else:
+        used = set()
+        ops = []
+        for i, b in enumerate(node.get("buttons", [])):
+            scope = _scope(b, i + 1)
+            if scope in used:
+                scope = "%s%d" % (scope, i + 1)
+            used.add(scope)
+            ops.append({"label": b, "code": "%s#%s" % (path, scope)})
+        node["ops"] = ops
+    for i, child in enumerate(kids):
+        _stamp(child, path + "/" + child["label"])
+
+# 页面外壳（顶栏/分页/导航）按钮不算业务操作权限
+CHROME_TEXT = {
+    "版本变更记录", "查询", "重置", "刷新", "新建", "更多", "展开",
+    "全部", "上一页", "下一页", "确定", "取消", "关闭", "返回",
+}
+
+# 明显属于页面外壳的元素 class
+CHROME_CLASS_HINT = (
+    "topbar", "pagination", "page-num", "breadcrumb", "sidemenu",
+    "topnav", "pin-annotation", "chat-float", "ai-float",
+)
+
+
+# --------------------------------------------------------------------------
+# 1. 解析 TOPNAV_MENU
+# --------------------------------------------------------------------------
+def parse_topnav_menu():
+    """从 topnav-drawer.js 里抠出 window.TOPNAV_MENU = { ... }; 的字面量并求值。"""
+    src = open(MENU_JS, encoding="utf-8").read()
+    # 注意：文件头注释里也提到 window.TOPNAV_MENU，必须匹配「赋值 + {」的那一处
+    m = re.search(r"window\.TOPNAV_MENU\s*=\s*\{", src)
+    if not m:
+        raise SystemExit("未在 %s 中找到 window.TOPNAV_MENU 定义" % MENU_JS)
+    start = m.end() - 1
+    depth = 0
+    end = None
+    for i in range(start, len(src)):
+        c = src[i]
+        if c == "{":
+            depth += 1
+        elif c == "}":
+            depth -= 1
+            if depth == 0:
+                end = i + 1
+                break
+    literal = src[start:end]
+    # JS 字面量 → Python：键统一加引号即可（值都是字符串/数组/对象）
+    literal = re.sub(r"([{,]\s*)([A-Za-z_][\w\-]*)\s*:", r'\1"\2":', literal)
+    literal = literal.replace("true", "True").replace("false", "False").replace("null", "None")
+    # 去掉行尾注释
+    literal = re.sub(r"//[^\n]*", "", literal)
+    return eval(literal)  # noqa: S307 - 数据来自本仓库自有的静态文件
+
+
+# --------------------------------------------------------------------------
+# 2. 抽取页面里的操作按钮
+# --------------------------------------------------------------------------
+class ButtonScanner(HTMLParser):
+    """收集 <button> / <a> 的可见文本，按 class 过滤掉页面外壳。"""
+
+    def __init__(self):
+        super().__init__(convert_charrefs=True)
+        self.buttons = []          # [(text, is_link, classes)]
+        self._stack = []           # 当前未闭合的标签栈
+        self._capture = None       # 正在收集文本的标签
+        self._buf = []
+        self._classes = ""
+        self._is_link = False
+        self._skip_depth = 0
+
+    def handle_starttag(self, tag, attrs):
+        a = dict(attrs)
+        classes = a.get("class") or ""
+        if self._skip_depth:
+            self._skip_depth += 1
+            return
+        if tag in ("script", "style"):
+            self._skip_depth = 1
+            return
+        # 图标/角标文字不是按钮文案（+ ico、desc 描述标签）
+        if self._capture and re.search(r"\b(ico|desc|badge|caret)\b", classes):
+            self._skip_depth = 1
+            return
+        if tag in ("button", "a"):
+            self._stack.append(tag)
+            self._capture = tag
+            self._buf = []
+            self._classes = classes
+            self._is_link = (tag == "a")
+            return
+        if self._capture:
+            self._stack.append(tag)
+
+    def handle_endtag(self, tag):
+        if self._skip_depth:
+            self._skip_depth -= 1
+            return
+        if self._capture and tag == self._capture:
+            text = re.sub(r"\s+", " ", "".join(self._buf)).strip()
+            self.buttons.append((text, self._is_link, self._classes))
+            self._capture = None
+            self._buf = []
+            self._classes = ""
+            self._is_link = False
+            self._stack = []
+            return
+        if self._stack and self._stack[-1] == tag:
+            self._stack.pop()
+
+    def handle_data(self, data):
+        if self._capture and not self._skip_depth:
+            self._buf.append(data)
+
+
+JS_BTN_RE = re.compile(
+    r"['\"]\s*<(button|a)\b[^>]*>(.*?)</\1\s*>",
+    re.S,
+)
+
+
+def extract_js_buttons(html):
+    """抓 script 里动态拼接的操作按钮（行内操作列就是这种）。"""
+    out = []
+    for m in JS_BTN_RE.finditer(html):
+        inner = re.sub(r"<[^>]*>", "", m.group(2))
+        inner = re.sub(r"\s+", " ", inner).strip()
+        if inner:
+            out.append(inner)
+    return out
+
+
+NOISE_EXACT = {
+    "清除全部", "查看全部 →", "查看全部", "确认", "取消", "关闭", "确定",
+    "<", ">", "×", "+ 新增行", "‹ 返回列表", "↩ 返回列表", "🔄 刷新", "刷新",
+    "‹ 返回", "↩ 返回", "修改", "复制", "调整", "解冻", "冻结", "解除",
+    "更多 ▾", "更多", "我知道了", "暂不关联",
+}
+NOISE_PREFIX = ("‹ ", "↩ ", "🔄 ", "业务线号：", "合同编号：", "回款凭证", "查看未关联")
+NOISE_SUFFIX = (".pdf", ".PDF", ".jpg", ".jpeg", ".png", ".docx", ".xlsx", ".zip", "×", ">>")
+
+
+def normalize(text):
+    """'取 消' → '取消'（按钮文案常被 letter-spacing 拆开）。"""
+    t = re.sub(r"(?<=[一-鿿])\s+(?=[一-鿿])", "", text)
+    return t.strip()
+
+
+def is_noise(text):
+    if text in NOISE_EXACT:
+        return True
+    if "' +" in text or "+ '" in text:        # JS 拼接片段
+        return True
+    if any(text.startswith(p) for p in NOISE_PREFIX):
+        return True
+    if any(text.endswith(s) for s in NOISE_SUFFIX):
+        return True
+    if re.search(r"[：:]", text) and len(text) > 8:   # 数据标签不是按钮
+        return True
+    if re.fullmatch(r"[A-Za-z]{2,}[-–][A-Za-z0-9\-]{3,}", text):   # 单据号
+        return True
+    if re.fullmatch(r"[A-Z]{3,}[0-9]{6,}", text):                 # 业务号 SKYWX202607050001
+        return True
+    if re.fullmatch(r"[\d.\-/]{1,14}", text):
+        return True
+    if len(text) <= 2 and not re.fullmatch(r"[一-鿿]{2}", text):
+        return True
+    return False
+
+
+def extract_buttons(html_path, menu_labels=None):
+    """返回该页面去重后的操作按钮文本列表（保持出现顺序）。"""
+    html = open(html_path, encoding="utf-8", errors="ignore").read()
+
+    # 先整块剥掉页面外壳：顶栏 / 面包屑 / 左侧菜单容器 / 分页
+    html = re.sub(r'<div class="topbar"[^>]*>.*?</div>\s*</div>', "", html, flags=re.S)
+    html = re.sub(r'<div class="breadcrumb-inline"[^>]*>.*?</div>', "", html, flags=re.S)
+    html = re.sub(r'<div class="sidemenu"[^>]*>.*?</div>', "", html, flags=re.S)
+    html = re.sub(r'<div class="[^"]*pagination[^"]*"[^>]*>.*?</div>', "", html, flags=re.S)
+
+    scanner = ButtonScanner()
+    try:
+        scanner.feed(html)
+    except Exception:
+        pass
+
+    menu_labels = menu_labels or set()
+    seen = set()
+    out = []
+    for text, is_link, classes in scanner.buttons + [(t, False, "") for t in extract_js_buttons(html)]:
+        text = normalize(text)
+        if not text or len(text) > 24:
+            continue
+        if any(hint in classes for hint in CHROME_CLASS_HINT):
+            continue
+        if text in CHROME_TEXT or text in menu_labels:
+            continue
+        if is_noise(text):
+            continue
+        if text in seen:
+            continue
+        seen.add(text)
+        out.append(text)
+    return out
+
+
+# --------------------------------------------------------------------------
+# 3. 组装权限树
+# --------------------------------------------------------------------------
+def build_tree():
+    menu = parse_topnav_menu()
+
+    # 收集所有菜单标签（面包屑里会出现，需从按钮里剔除）
+    menu_labels = set(menu.keys())
+    for mod in menu.values():
+        menu_labels.add(mod.get("label", ""))
+        for sub in mod.get("subMenus", []):
+            menu_labels.add(sub["label"])
+            for ch in sub.get("children") or []:
+                menu_labels.add(ch["label"])
+                for g in ch.get("children") or []:
+                    menu_labels.add(g["label"])
+
+    def bt(fname):
+        if not fname:
+            return []
+        p = os.path.join(PAGES_DIR, fname)
+        if not os.path.exists(p):
+            return []
+        return extract_buttons(p, menu_labels)
+
+    modules = []
+    for mod_key, mod in menu.items():
+        sub_menus = []
+        for sub in mod.get("subMenus", []):
+            children = sub.get("children") or []
+            grand_children = []
+            for ch in children:
+                gchildren = ch.get("children") or []
+                grand_children.append({
+                    "label": ch["label"],
+                    "file": ch.get("file", ""),
+                    "buttons": bt(ch.get("file")),
+                    "children": [
+                        {
+                            "label": g["label"],
+                            "file": g.get("file", ""),
+                            "buttons": bt(g.get("file")),
+                        }
+                        for g in gchildren
+                    ],
+                })
+            sub_menus.append({
+                "label": sub["label"],
+                "file": sub.get("file", ""),
+                "buttons": bt(sub.get("file")),
+                "children": grand_children,
+            })
+        modules.append({
+            "key": mod_key,
+            "label": mod.get("label", mod_key),
+            "icon": mod.get("icon", ""),
+            "subMenus": sub_menus,
+        })
+    return modules
+
+
+if __name__ == "__main__":
+    tree = build_tree()
+
+    # 生成权限编码（菜单节点用菜单路径，操作按钮用 语义 scope）
+    for mod in tree:
+        for sub in mod["subMenus"]:
+            _stamp(sub, mod["label"] + "/" + sub["label"])
+            for ch in sub["children"]:
+                _stamp(ch, mod["label"] + "/" + sub["label"] + "/" + ch["label"])
+                for g in ch["children"]:
+                    _stamp(g, mod["label"] + "/" + sub["label"] + "/" + ch["label"] + "/" + g["label"])
+
+    if "-j" in sys.argv:
+        out = sys.argv[sys.argv.index("-j") + 1]
+        with open(out, "w", encoding="utf-8") as f:
+            f.write("// 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑\n")
+            f.write("// 生成时间：%s\n" % NOW)
+            f.write("// 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）\n\n")
+            f.write("window.PERMISSION_TREE = ")
+            f.write(json.dumps(tree, ensure_ascii=False, indent=2))
+            f.write(";\n")
+        print("written -> %s" % out)
+    else:
+        out = sys.argv[sys.argv.index("-o") + 1] if "-o" in sys.argv else None
+        data = json.dumps(tree, ensure_ascii=False, indent=2)
+        if out:
+            with open(out, "w", encoding="utf-8") as f:
+                f.write(data)
+            print(f"written -> {out}")
+        else:
+            print(data)
