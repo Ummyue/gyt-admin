@@ -78,6 +78,19 @@ def main():
           [m["label"] for m in _pc["mergedMenus"]]
           == ["新增采购框架合同", "新增采购订单/单批次合同"],
           str([m["label"] for m in _pc["mergedMenus"]]))
+    # 真实系统菜单口径：预警中心改名 + 账户中心结构重建
+    _warn = [sm["label"] for m in _d if m["label"] == "预警中心" for sm in m["subMenus"]]
+    check("预警中心 二级为 预警查询 / 预警设置",
+          _warn == ["预警查询", "预警设置"], str(_warn))
+    _acct = [m for m in _d if m["label"] == "账户中心"][0]
+    _a_sub = {sm["label"]: [c["label"] for c in sm.get("children", [])] for sm in _acct["subMenus"]}
+    check("账户中心 结构 = 个人管理[个人信息,安全设置] / 企业管理[我的企业,企业账号管理,企业资料管理,密码管理,角色权限管理]",
+          _a_sub == {
+              "个人管理": ["个人信息", "安全设置"],
+              "企业管理": ["我的企业", "企业账号管理", "企业资料管理", "密码管理", "角色权限管理"],
+          }, str(_a_sub))
+    _ea = [c for c in _acct["subMenus"][1]["children"] if c["label"] == "企业账号管理"][0]
+    check("企业账号管理 操作权限 10 项", len(_ea["ops"]) == 10, str(len(_ea["ops"])))
 
     # ---------- 3. 浏览器端回归 ----------
     from playwright.sync_api import sync_playwright

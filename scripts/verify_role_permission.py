@@ -75,8 +75,8 @@ def main():
         drawer_txt = page.locator("#drawerBody").inner_text()
         check("抽屉显示数据权限说明", "全部数据" in drawer_txt or "仅本人创建" in drawer_txt)
         check("抽屉显示权限概览统计", "菜单权限" in drawer_txt and "操作按钮" in drawer_txt)
-        check("抽屉渲染权限树节点（7 一级 + 62 子节点）",
-              page.locator("#drawerBody .rp-tnode").count() == 69,
+        check("抽屉渲染权限树节点（7 一级 + 67 子节点）",
+              page.locator("#drawerBody .rp-tnode").count() == 74,
               f"实际 {page.locator('#drawerBody .rp-tnode').count()}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
@@ -88,8 +88,8 @@ def main():
         check("新增角色弹窗打开", page.locator(".rp-modal").is_visible())
         check("弹窗标题为新增角色",
               page.locator("#roleModalTitle").inner_text() == "新增角色")
-        check("左树渲染 69 个菜单节点（7 一级 + 62 子节点）",
-              page.locator("#permTree .rp-tnode").count() == 69,
+        check("左树渲染 74 个菜单节点（7 一级 + 67 子节点）",
+              page.locator("#permTree .rp-tnode").count() == 74,
               f"实际 {page.locator('#permTree .rp-tnode').count()}")
         check("左树一级菜单 7 个",
               page.locator('#permTree .rp-tnode[data-depth="0"]').count() == 7)
@@ -248,6 +248,46 @@ def main():
             "els => els.map(e => e.getAttribute('data-label'))")
         check("左树不再单列「流程编排画布」菜单节点",
               "流程编排画布" not in tree_labels3, str(tree_labels3))
+
+        # ===== 预警中心改名 + 账户中心按真实系统结构重建 =====
+        warn = page.locator('#permTree .rp-tnode[data-depth="1"]').evaluate_all(
+            "els => els.map(e => e.getAttribute('data-label'))")
+        check("预警中心 二级改为 预警查询 / 预警设置",
+              "预警查询" in warn and "预警设置" in warn and "预警管理" not in warn, str(warn))
+        check("旧名 预警规则配置 已不再出现", "预警规则配置" not in warn, str(warn))
+
+        acct = page.locator('#permTree .rp-tnode[data-label="账户中心"]').count()
+        check("账户中心 一级节点存在", acct == 1)
+        pmg = page.locator('#permTree .rp-tnode[data-label="个人管理"]').count()
+        emg = page.locator('#permTree .rp-tnode[data-label="企业管理"]').count()
+        check("账户中心 下有 个人管理 / 企业管理 两个二级", pmg == 1 and emg == 1)
+        for leaf in ["个人信息", "安全设置", "我的企业", "企业账号管理",
+                     "企业资料管理", "密码管理", "角色权限管理"]:
+            n = page.locator('#permTree .rp-tnode[data-label="%s"]' % leaf).count()
+            check(f"账户中心 下有「{leaf}」节点", n == 1, f"实际 {n}")
+
+        # 右侧操作项同步构建
+        page.click('.rp-tnode[data-label="企业账号管理"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        ea = page.locator(".rp-op-label").all_inner_texts()
+        check("企业账号管理 操作权限 10 项",
+              len(ea) == 10, str(ea))
+        for keep in ["新增账号", "编辑账号", "删除账号", "重置密码", "分配角色",
+                     "审核入职申请", "审批邀请", "导出账号列表"]:
+            check(f"企业账号管理 含「{keep}」权限项", keep in ea, str(ea))
+
+        page.click('.rp-tnode[data-label="安全设置"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        ss = page.locator(".rp-op-label").all_inner_texts()
+        check("安全设置 操作权限 5 项", len(ss) == 5, str(ss))
+
+        page.click('.rp-tnode[data-label="角色权限管理"] .rp-tnode-label')
+        page.wait_for_timeout(300)
+        rp = page.locator(".rp-op-label").all_inner_texts()
+        check("角色权限管理 操作权限 4 项", len(rp) == 4, str(rp))
+        rp_codes = page.locator(".rp-op-code").all_inner_texts()
+        check("角色权限管理「确认删除」权限码为 delete",
+              any(c.endswith("#delete") for c in rp_codes), str(rp_codes))
 
         # 树搜索
         page.fill("#treeSearch", "保证金")

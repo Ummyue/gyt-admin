@@ -1,5 +1,5 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-09 17:50:02
+// 生成时间：2026-11-09 17:54:34
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
 
 window.PERMISSION_TREE = [
@@ -1568,28 +1568,28 @@ window.PERMISSION_TREE = [
     "icon": "🔔",
     "subMenus": [
       {
-        "label": "预警管理",
+        "label": "预警查询",
         "file": "warning-list.html",
         "buttons": [
           "导出",
           "详情"
         ],
         "children": [],
-        "code": "menu:预警中心/预警管理",
+        "code": "menu:预警中心/预警查询",
         "mergedMenus": [],
         "ops": [
           {
             "label": "导出",
-            "code": "预警中心/预警管理#export"
+            "code": "预警中心/预警查询#export"
           },
           {
             "label": "详情",
-            "code": "预警中心/预警管理#view"
+            "code": "预警中心/预警查询#view"
           }
         ]
       },
       {
-        "label": "预警规则配置",
+        "label": "预警设置",
         "file": "warning-config.html",
         "buttons": [
           "添加规则",
@@ -1598,24 +1598,24 @@ window.PERMISSION_TREE = [
           "提交"
         ],
         "children": [],
-        "code": "menu:预警中心/预警规则配置",
+        "code": "menu:预警中心/预警设置",
         "mergedMenus": [],
         "ops": [
           {
             "label": "添加规则",
-            "code": "预警中心/预警规则配置#op1"
+            "code": "预警中心/预警设置#op1"
           },
           {
             "label": "编辑",
-            "code": "预警中心/预警规则配置#edit"
+            "code": "预警中心/预警设置#edit"
           },
           {
             "label": "合同配置",
-            "code": "预警中心/预警规则配置#op3"
+            "code": "预警中心/预警设置#op3"
           },
           {
             "label": "提交",
-            "code": "预警中心/预警规则配置#submit"
+            "code": "预警中心/预警设置#submit"
           }
         ]
       }
@@ -1628,53 +1628,354 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "个人管理",
-        "file": "account-personal.html",
-        "buttons": [
-          "新增个人中心"
-        ],
-        "children": [],
-        "code": "menu:账户中心/个人管理",
-        "mergedMenus": [],
-        "ops": [
-          {
-            "label": "新增个人中心",
-            "code": "账户中心/个人管理#create"
-          }
-        ]
-      },
-      {
-        "label": "企业管理",
-        "file": "account-company.html",
-        "buttons": [
-          "新增企业中心"
-        ],
+        "file": "",
+        "buttons": [],
+        "explicit_ops": null,
         "children": [
           {
-            "label": "企业中心",
-            "file": "account-company.html",
-            "buttons": [
-              "新增企业中心"
+            "label": "个人信息",
+            "file": "account-personal.html",
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "编辑资料",
+                "edit"
+              ],
+              [
+                "保存",
+                "save"
+              ],
+              [
+                "上传头像",
+                "upload"
+              ]
             ],
             "children": [],
-            "code": "menu:账户中心/企业管理/企业中心",
+            "code": "menu:账户中心/个人管理/个人信息",
             "mergedMenus": [],
             "ops": [
               {
-                "label": "新增企业中心",
-                "code": "账户中心/企业管理/企业中心#create"
+                "label": "编辑资料",
+                "code": "账户中心/个人管理/个人信息#edit"
+              },
+              {
+                "label": "保存",
+                "code": "账户中心/个人管理/个人信息#save"
+              },
+              {
+                "label": "上传头像",
+                "code": "账户中心/个人管理/个人信息#upload"
+              }
+            ]
+          },
+          {
+            "label": "安全设置",
+            "file": "",
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "修改登录密码",
+                "update-password"
+              ],
+              [
+                "更换绑定手机号",
+                "bind-phone"
+              ],
+              [
+                "更换绑定邮箱",
+                "bind-email"
+              ],
+              [
+                "查看登录设备",
+                "view-device"
+              ],
+              [
+                "退出其他设备",
+                "logout-others"
+              ]
+            ],
+            "children": [],
+            "code": "menu:账户中心/个人管理/安全设置",
+            "mergedMenus": [],
+            "ops": [
+              {
+                "label": "修改登录密码",
+                "code": "账户中心/个人管理/安全设置#update-password"
+              },
+              {
+                "label": "更换绑定手机号",
+                "code": "账户中心/个人管理/安全设置#bind-phone"
+              },
+              {
+                "label": "更换绑定邮箱",
+                "code": "账户中心/个人管理/安全设置#bind-email"
+              },
+              {
+                "label": "查看登录设备",
+                "code": "账户中心/个人管理/安全设置#view-device"
+              },
+              {
+                "label": "退出其他设备",
+                "code": "账户中心/个人管理/安全设置#logout-others"
+              }
+            ]
+          }
+        ],
+        "code": "menu:账户中心/个人管理",
+        "mergedMenus": [],
+        "ops": []
+      },
+      {
+        "label": "企业管理",
+        "file": "",
+        "buttons": [],
+        "explicit_ops": null,
+        "children": [
+          {
+            "label": "我的企业",
+            "file": "",
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "查看企业信息",
+                "view"
+              ],
+              [
+                "编辑企业信息",
+                "edit"
+              ],
+              [
+                "切换企业",
+                "switch"
+              ],
+              [
+                "提交认证",
+                "submit-cert"
+              ]
+            ],
+            "children": [],
+            "code": "menu:账户中心/企业管理/我的企业",
+            "mergedMenus": [],
+            "ops": [
+              {
+                "label": "查看企业信息",
+                "code": "账户中心/企业管理/我的企业#view"
+              },
+              {
+                "label": "编辑企业信息",
+                "code": "账户中心/企业管理/我的企业#edit"
+              },
+              {
+                "label": "切换企业",
+                "code": "账户中心/企业管理/我的企业#switch"
+              },
+              {
+                "label": "提交认证",
+                "code": "账户中心/企业管理/我的企业#submit-cert"
+              }
+            ]
+          },
+          {
+            "label": "企业账号管理",
+            "file": "",
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "新增账号",
+                "create"
+              ],
+              [
+                "编辑账号",
+                "edit"
+              ],
+              [
+                "删除账号",
+                "delete"
+              ],
+              [
+                "重置密码",
+                "reset-password"
+              ],
+              [
+                "分配角色",
+                "assign-role"
+              ],
+              [
+                "启用账号",
+                "enable"
+              ],
+              [
+                "停用账号",
+                "disable"
+              ],
+              [
+                "审核入职申请",
+                "approve"
+              ],
+              [
+                "审批邀请",
+                "approve-invite"
+              ],
+              [
+                "导出账号列表",
+                "export"
+              ]
+            ],
+            "children": [],
+            "code": "menu:账户中心/企业管理/企业账号管理",
+            "mergedMenus": [],
+            "ops": [
+              {
+                "label": "新增账号",
+                "code": "账户中心/企业管理/企业账号管理#create"
+              },
+              {
+                "label": "编辑账号",
+                "code": "账户中心/企业管理/企业账号管理#edit"
+              },
+              {
+                "label": "删除账号",
+                "code": "账户中心/企业管理/企业账号管理#delete"
+              },
+              {
+                "label": "重置密码",
+                "code": "账户中心/企业管理/企业账号管理#reset-password"
+              },
+              {
+                "label": "分配角色",
+                "code": "账户中心/企业管理/企业账号管理#assign-role"
+              },
+              {
+                "label": "启用账号",
+                "code": "账户中心/企业管理/企业账号管理#enable"
+              },
+              {
+                "label": "停用账号",
+                "code": "账户中心/企业管理/企业账号管理#disable"
+              },
+              {
+                "label": "审核入职申请",
+                "code": "账户中心/企业管理/企业账号管理#approve"
+              },
+              {
+                "label": "审批邀请",
+                "code": "账户中心/企业管理/企业账号管理#approve-invite"
+              },
+              {
+                "label": "导出账号列表",
+                "code": "账户中心/企业管理/企业账号管理#export"
+              }
+            ]
+          },
+          {
+            "label": "企业资料管理",
+            "file": "account-company.html",
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "编辑企业资料",
+                "edit"
+              ],
+              [
+                "上传资质文件",
+                "upload"
+              ],
+              [
+                "替换附件",
+                "replace"
+              ],
+              [
+                "删除附件",
+                "delete"
+              ],
+              [
+                "提交审核",
+                "submit"
+              ]
+            ],
+            "children": [],
+            "code": "menu:账户中心/企业管理/企业资料管理",
+            "mergedMenus": [],
+            "ops": [
+              {
+                "label": "编辑企业资料",
+                "code": "账户中心/企业管理/企业资料管理#edit"
+              },
+              {
+                "label": "上传资质文件",
+                "code": "账户中心/企业管理/企业资料管理#upload"
+              },
+              {
+                "label": "替换附件",
+                "code": "账户中心/企业管理/企业资料管理#replace"
+              },
+              {
+                "label": "删除附件",
+                "code": "账户中心/企业管理/企业资料管理#delete"
+              },
+              {
+                "label": "提交审核",
+                "code": "账户中心/企业管理/企业资料管理#submit"
+              }
+            ]
+          },
+          {
+            "label": "密码管理",
+            "file": "",
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "修改密码策略",
+                "edit-policy"
+              ],
+              [
+                "重置成员密码",
+                "reset-password"
+              ],
+              [
+                "强制成员下线",
+                "force-logout"
+              ]
+            ],
+            "children": [],
+            "code": "menu:账户中心/企业管理/密码管理",
+            "mergedMenus": [],
+            "ops": [
+              {
+                "label": "修改密码策略",
+                "code": "账户中心/企业管理/密码管理#edit-policy"
+              },
+              {
+                "label": "重置成员密码",
+                "code": "账户中心/企业管理/密码管理#reset-password"
+              },
+              {
+                "label": "强制成员下线",
+                "code": "账户中心/企业管理/密码管理#force-logout"
               }
             ]
           },
           {
             "label": "角色权限管理",
             "file": "account-role-permission.html",
-            "buttons": [
-              "新增角色",
-              "全选",
-              "清空",
-              "保存",
-              "编辑该角色",
-              "确认删除"
+            "buttons": [],
+            "explicit_ops": [
+              [
+                "新增角色",
+                "create"
+              ],
+              [
+                "保存",
+                "save"
+              ],
+              [
+                "编辑该角色",
+                "edit"
+              ],
+              [
+                "确认删除",
+                "delete"
+              ]
             ],
             "children": [],
             "code": "menu:账户中心/企业管理/角色权限管理",
@@ -1694,7 +1995,7 @@ window.PERMISSION_TREE = [
               },
               {
                 "label": "确认删除",
-                "code": "账户中心/企业管理/角色权限管理#submit"
+                "code": "账户中心/企业管理/角色权限管理#delete"
               }
             ]
           }

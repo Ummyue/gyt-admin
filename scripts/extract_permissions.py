@@ -84,6 +84,62 @@ EXCLUDE_OPS = {
 }
 
 
+# ===== 真实系统菜单口径（v1.28.0，2026-11-09，user 提供线上截图）=====
+# 权限配置树的**菜单结构与命名以真实系统为准**，与原型自身页面导航（TOPNAV_MENU）
+# 不完全一致是正常的 —— 原型里账户中心只有 2 个占位页，真实系统是 6 个子菜单。
+
+# 一）节点改名：真实系统里的叫法
+MENU_RENAME = {
+    "预警管理": "预警查询",
+    "预警规则配置": "预警设置",
+}
+
+# 二）菜单结构重建：key = 一级菜单，value = {二级菜单: [三级菜单定义]}
+#    ops 用 (按钮名, 权限scope) 二元组声明；不给 ops 但给 file 时仍按页面自动抽取
+MENU_STRUCTURE_OVERRIDE = {
+    "账户中心": {
+        "个人管理": [
+            {"label": "个人信息", "file": "account-personal.html", "ops": [
+                ("编辑资料", "edit"), ("保存", "save"), ("上传头像", "upload"),
+            ]},
+            {"label": "安全设置", "ops": [
+                ("修改登录密码", "update-password"), ("更换绑定手机号", "bind-phone"),
+                ("更换绑定邮箱", "bind-email"), ("查看登录设备", "view-device"),
+                ("退出其他设备", "logout-others"),
+            ]},
+        ],
+        "企业管理": [
+            {"label": "我的企业", "ops": [
+                ("查看企业信息", "view"), ("编辑企业信息", "edit"),
+                ("切换企业", "switch"), ("提交认证", "submit-cert"),
+            ]},
+            {"label": "企业账号管理", "ops": [
+                ("新增账号", "create"), ("编辑账号", "edit"), ("删除账号", "delete"),
+                ("重置密码", "reset-password"), ("分配角色", "assign-role"),
+                ("启用账号", "enable"), ("停用账号", "disable"),
+                ("审核入职申请", "approve"), ("审批邀请", "approve-invite"),
+                ("导出账号列表", "export"),
+            ]},
+            {"label": "企业资料管理", "file": "account-company.html", "ops": [
+                ("编辑企业资料", "edit"), ("上传资质文件", "upload"),
+                ("替换附件", "replace"), ("删除附件", "delete"),
+                ("提交审核", "submit"),
+            ]},
+            {"label": "密码管理", "ops": [
+                ("修改密码策略", "edit-policy"), ("重置成员密码", "reset-password"),
+                ("强制成员下线", "force-logout"),
+            ]},
+            # 原型新增页（真实系统截图里没有，属于企业级配置，挂在企业管理下）
+            # 显式声明 ops：页面行内「删除」是 span 不是 a/button，自动抽取抓不到
+            {"label": "角色权限管理", "file": "account-role-permission.html", "ops": [
+                ("新增角色", "create"), ("保存", "save"),
+                ("编辑该角色", "edit"), ("确认删除", "delete"),
+            ]},
+        ],
+    },
+}
+
+
 def _slug(fname):
     """contract-purchase.html → contract-purchase"""
     return (fname or "").replace(".html", "")
@@ -195,7 +251,18 @@ def _stamp(node, path, merged=None):
         merged_ops.extend(mops)
     node["mergedMenus"] = merged_info
 
-    if kids:
+    if node.get("explicit_ops") is not None:
+        # 真实系统菜单口径下显式声明的操作权限项
+        used = set()
+        ops = []
+        for o in node["explicit_ops"]:
+            scope = o[1]
+            if scope in used:
+                scope = "%s%d" % (scope, len(ops) + 1)
+            used.add(scope)
+            ops.append({"label": o[0], "code": "%s#%s" % (path, scope)})
+        node["ops"] = ops + merged_ops
+    elif kids:
         node["ops"] = []
     else:
         node["ops"] = _build_ops(node.get("buttons", []), path) + merged_ops
@@ -432,12 +499,12 @@ def build_tree():
             for ch in children:
                 gchildren = ch.get("children") or []
                 grand_children.append({
-                    "label": ch["label"],
+                    "label": MENU_RENAME.get(ch["label"], ch["label"]),
                     "file": ch.get("file", ""),
                     "buttons": bt(ch.get("file")),
                     "children": [
                         {
-                            "label": g["label"],
+                            "label": MENU_RENAME.get(g["label"], g["label"]),
                             "file": g.get("file", ""),
                             "buttons": bt(g.get("file")),
                         }
@@ -445,11 +512,34 @@ def build_tree():
                     ],
                 })
             sub_menus.append({
-                "label": sub["label"],
+                "label": MENU_RENAME.get(sub["label"], sub["label"]),
                 "file": sub.get("file", ""),
                 "buttons": bt(sub.get("file")),
                 "children": grand_children,
             })
+
+        # ===== 真实系统菜单口径：按截图重建该一级菜单的子树 =====
+        override = MENU_STRUCTURE_OVERRIDE.get(mod.get("label"))
+        if override:
+            sub_menus = []
+            for sub_label, spec in override.items():
+                kids = []
+                for k in spec:
+                    fname = k.get("file", "")
+                    kids.append({
+                        "label": k["label"],
+                        "file": fname,
+                        "buttons": [] if k.get("ops") is not None else bt(fname),
+                        "explicit_ops": k.get("ops"),
+                        "children": [],
+                    })
+                sub_menus.append({
+                    "label": sub_label,
+                    "file": "",
+                    "buttons": [],
+                    "explicit_ops": None,
+                    "children": kids,
+                })
         modules.append({
             "key": mod_key,
             "label": mod.get("label", mod_key),
