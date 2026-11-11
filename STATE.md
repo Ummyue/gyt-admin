@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-11-11 v1.30.0 发货管理「查看货转」货转台账弹窗
+最后更新: 2026-11-11 v1.30.1 IP 直连在现代 Chrome 下不可用，正式入口改用 https://www.yf9.club
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -178,6 +178,22 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 - 新增/编辑角色 = **居中弹窗**（1180px，两栏：左菜单树 + 右操作按钮）
 - 查看角色权限 = **右侧抽屉**（760px，只读）
 - 删除 = 居中二次确认弹窗
+
+### v1.30.1 ⚠️ IP 直连在现代 Chrome 下不可用 → 正式入口是 https://www.yf9.club（2026-11-11）
+
+**现象**：用系统 Chrome 访问 `http://192.144.175.203/...` → `net::ERR_BLOCKED_BY_CLIENT`，
+但 curl 全部 200、Playwright 自带 Chromium 也正常。
+
+**根因**：Chrome 的 **HTTPS 自动升级（HTTPS-First）**把 `http://192.144.175.203` 升级成
+`https://192.144.175.203`（Playwright 日志里能直接看到请求的 URL 变成了 https），
+而该 IP **没有 443 证书** → 升级后握手失败 → Chrome 报 BLOCKED_BY_CLIENT。
+（服务器本身没问题：nginx 443 只有 `server_name www.yf9.club`，IP 直连 443 落到默认块 → 证书不匹配。）
+
+**结论**：`yf9club.conf` 注释里写的「唯一正式入口 https://www.yf9.club」是对的 ——
+**给用户的地址一律用域名**，IP 直连只作服务器侧自检用。
+
+**连带**：4 个验证脚本从 `chromium.launch(channel="chrome")` 改为 Playwright 自带 Chromium
+（自带 Chromium 不做 HTTPS 升级，能直连 IP 做内容自检）。注释已写明原因。
 
 ### v1.30.0 发货管理「查看货转」货转台账弹窗（2026-11-11）
 

@@ -94,9 +94,13 @@ def main():
 
     # ---------- 3. 浏览器端回归 ----------
     from playwright.sync_api import sync_playwright
+        # 用 Playwright 自带 Chromium 而非系统 Chrome：
+        # 系统 Chrome 会把 http:// 自动升级成 https://（HTTPS-First），
+        # 而 192.144.175.203 没有 443 证书 → 直连 IP 报 ERR_BLOCKED_BY_CLIENT。
+        # 真实用户请走正式入口 https://www.yf9.club。
 
     with sync_playwright() as p:
-        br = p.chromium.launch(channel="chrome")
+        br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1560, "height": 950})
         page = ctx.new_page()
         errs = []

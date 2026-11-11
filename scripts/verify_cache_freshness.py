@@ -52,6 +52,10 @@ def tree_labels(page):
 
 def main():
     from playwright.sync_api import sync_playwright
+        # 用 Playwright 自带 Chromium 而非系统 Chrome：
+        # 系统 Chrome 会把 http:// 自动升级成 https://（HTTPS-First），
+        # 而 192.144.175.203 没有 443 证书 → 直连 IP 报 ERR_BLOCKED_BY_CLIENT。
+        # 真实用户请走正式入口 https://www.yf9.club。
 
     profile = tempfile.mkdtemp(prefix="pb-cache-profile-")
     backup = "/tmp/permission-tree.js.bak-cache-test"
@@ -61,7 +65,7 @@ def main():
 
         with sync_playwright() as p:
             ctx = p.chromium.launch_persistent_context(
-                profile, channel="chrome", viewport={"width": 1500, "height": 950})
+                profile, viewport={"width": 1500, "height": 950})
             page = ctx.pages[0] if ctx.pages else ctx.new_page()
             page.goto(f"{BASE}/pages/account-role-permission.html", wait_until="networkidle")
             page.wait_for_timeout(800)

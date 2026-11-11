@@ -9,6 +9,10 @@
 import sys
 import os
 from playwright.sync_api import sync_playwright
+        # 用 Playwright 自带 Chromium 而非系统 Chrome：
+        # 系统 Chrome 会把 http:// 自动升级成 https://（HTTPS-First），
+        # 而 192.144.175.203 没有 443 证书 → 直连 IP 报 ERR_BLOCKED_BY_CLIENT。
+        # 真实用户请走正式入口 https://www.yf9.club。
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8899"
 PAGE_URL = f"{BASE}/pages/account-role-permission.html"
@@ -24,7 +28,7 @@ def check(name, cond, detail=""):
 
 def main():
     with sync_playwright() as p:
-        browser = p.chromium.launch(channel="chrome")
+        browser = p.chromium.launch()
         ctx = browser.new_context(viewport={"width": 1600, "height": 950})
         page = ctx.new_page()
         errors = []
