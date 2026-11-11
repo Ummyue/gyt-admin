@@ -253,6 +253,65 @@
       font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
       font-size: 10.5px; color: var(--text-tertiary); margin-top: 3px; word-break: break-all;
     }
+
+    /* ===== 已授权权限树（v1.35.0：按菜单分组折叠，替代摊平 chip 列表）===== */
+    .rp-gt-toolbar {
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin-bottom: 10px;
+    }
+    .rp-gt-search {
+      flex: 1; min-width: 190px; height: 30px; padding: 0 10px 0 28px;
+      border: 1px solid var(--border-default); border-radius: var(--radius-default);
+      font-size: 12px; font-family: inherit; color: var(--text-primary);
+      background: #fff url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%2394A3B8' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cline x1='21' y1='21' x2='16.65' y2='16.65'/%3E%3C/svg%3E") no-repeat 9px center;
+    }
+    .rp-gt-search:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(30,64,175,.1); }
+    .rp-gt-mini {
+      font-size: 12px; color: var(--color-primary); cursor: pointer;
+      background: none; border: none; padding: 2px 4px; font-family: inherit;
+    }
+    .rp-gt-mini:hover { text-decoration: underline; }
+    .rp-gt-mini.dis { color: var(--text-tertiary); cursor: default; text-decoration: none; }
+    .rp-gt-sum { display: flex; flex-wrap: wrap; gap: 7px; margin-bottom: 12px; }
+    .rp-gt-sum-item {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 3px 10px; border-radius: var(--radius-full);
+      font-size: 12px; cursor: pointer; border: 1px solid var(--border-default);
+      background: #fff; color: var(--text-secondary);
+    }
+    .rp-gt-sum-item:hover { border-color: var(--color-primary); color: var(--color-primary); }
+    .rp-gt-sum-item.on { background: var(--color-primary-lighter); border-color: var(--color-primary); color: var(--color-primary); }
+    .rp-gt-sum-item b { font-weight: 600; }
+    .rp-gt-sum-item i { font-style: normal; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+    .rp-gt-tree { border: 1px solid var(--border-default); border-radius: var(--radius-default); overflow: hidden; }
+    .rp-gt-node { border-bottom: 1px solid var(--border-light); }
+    .rp-gt-node:last-child { border-bottom: none; }
+    .rp-gt-head {
+      display: flex; align-items: center; gap: 7px; padding: 7px 10px;
+      cursor: pointer; user-select: none; border-radius: var(--radius-sm);
+    }
+    .rp-gt-head:hover { background: var(--bg-hover); }
+    .rp-gt-caret {
+      width: 14px; height: 14px; display: inline-flex; align-items: center; justify-content: center;
+      color: var(--text-tertiary); font-size: 10px; flex-shrink: 0; transition: transform .15s;
+    }
+    .rp-gt-node.open > .rp-gt-head .rp-gt-caret { transform: rotate(90deg); }
+    .rp-gt-label { font-size: 13px; color: var(--text-primary); flex: 1; min-width: 0;
+      overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .rp-gt-node.lv0 > .rp-gt-head .rp-gt-label { font-weight: 600; }
+    .rp-gt-node.lv1 > .rp-gt-head .rp-gt-label { font-weight: 500; }
+    .rp-gt-count { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; flex-shrink: 0; }
+    .rp-gt-kids { display: none; padding-bottom: 4px; }
+    .rp-gt-node.open > .rp-gt-kids { display: block; }
+    .rp-gt-ops { display: flex; flex-wrap: wrap; gap: 6px; padding: 2px 10px 10px 40px; }
+    .rp-gt-op {
+      display: inline-flex; align-items: center;
+      padding: 3px 10px; border-radius: var(--radius-full);
+      background: var(--color-primary-lighter); border: 1px solid var(--color-primary-light);
+      color: var(--color-primary); font-size: 12px; line-height: 1.4;
+    }
+    .rp-gt-op.hit { background: #FEF3C7; border-color: #FCD34D; color: #92400E; }
+    .rp-gt-empty { padding: 34px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
+    .rp-gt-hint { font-size: 12px; color: var(--text-tertiary); margin-bottom: 10px; line-height: 1.7; }
     .rp-empty { padding: 48px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px; }
     .rp-empty-ico { font-size: 36px; opacity: .35; margin-bottom: 10px; }
     .rp-dir-tip {
@@ -1315,6 +1374,150 @@
     // 抽屉：角色权限详情
     // ==========================================================================
     var drawerRoleId = null;
+
+    // ===== 已授权权限树（v1.35.0）=====
+    // 把 FLAT（扁平节点表）拼成树，并统计每个节点下「已授权操作项」的数量
+    function buildGrantedTree(set) {
+      var map = {}, roots = [];
+      FLAT.forEach(function (n) {
+        map[n.id] = {
+          id: n.id, label: n.label, icon: n.icon, depth: n.depth,
+          parentId: n.parentId, children: [], ops: [], own: 0, total: 0
+        };
+      });
+      FLAT.forEach(function (n) {
+        var node = map[n.id];
+        (n.ops || []).forEach(function (o) {
+          if (set[o.code]) { node.ops.push(o); node.own++; }
+        });
+        if (n.parentId && map[n.parentId]) map[n.parentId].children.push(node);
+        else roots.push(node);
+      });
+      function rollup(node) {
+        var sum = node.own;
+        node.children.forEach(function (c) { sum += rollup(c); });
+        node.total = sum;
+        return sum;
+      }
+      roots.forEach(rollup);
+      return roots;
+    }
+
+    // 搜索过滤：保留 ① 菜单名命中 ② 权限名命中 ③ 含命中后代的祖先
+    // ⚠️ 统计条与树必须用**同一份**过滤结果，否则两者会指向不同节点
+    function filterGrantedTree(nodes, kw) {
+      var out = [];
+      nodes.forEach(function (n) {
+        var labelHit = !!kw && n.label.indexOf(kw) >= 0;
+        var ops;
+        if (!kw || labelHit) {
+          ops = n.ops.slice();                       // 菜单名命中 → 展示该菜单全部操作
+        } else {
+          ops = n.ops.filter(function (o) { return o.label.indexOf(kw) >= 0; });
+        }
+        var kids = filterGrantedTree(n.children, kw);
+        var keep = kw
+          ? (labelHit || ops.length > 0 || kids.length > 0)
+          : (n.total > 0 || kids.length > 0);
+        if (!keep) return;
+        out.push({
+          id: n.id, label: n.label, icon: n.icon, depth: n.depth,
+          children: kids, ops: ops, own: ops.length,
+          total: ops.length + kids.reduce(function (a, c) { return a + c.total; }, 0)
+        });
+      });
+      return out;
+    }
+
+    function renderGrantedNode(node, level, kw) {
+      if (!node.total && !node.children.length) return '';
+      var hasKids = node.children.length > 0;
+      var open = kw ? ' open' : (level === 0 ? ' open' : '');
+      var head = '<div class="rp-gt-head" data-gt-toggle="' + node.id + '"'
+        + ' style="padding-left:' + (10 + level * 18) + 'px">'
+        + '<span class="rp-gt-caret">' + (hasKids ? '▸' : '') + '</span>'
+        + '<span class="rp-gt-label">'
+        + (level === 0 && node.icon ? node.icon + ' ' : '')
+        + esc(node.label) + '</span>'
+        + '<span class="rp-gt-count">' + (node.total || node.own) + ' 项</span>'
+        + '</div>';
+      var kids = node.children.map(function (c) {
+        return renderGrantedNode(c, level + 1, kw);
+      }).join('');
+      var ops = '';
+      if (node.ops.length) {
+        ops = '<div class="rp-gt-ops">' + node.ops.map(function (o) {
+          var hit = kw && o.label.indexOf(kw) >= 0;
+          return '<span class="rp-gt-op' + (hit ? ' hit' : '') + '">' + esc(o.label) + '</span>';
+        }).join('') + '</div>';
+      }
+      return '<div class="rp-gt-node lv' + level + (open ? ' open' : '') + '"'
+        + ' data-gt-node="' + node.id + '">'
+        + head + '<div class="rp-gt-kids">' + kids + ops + '</div></div>';
+    }
+
+    // 顶部统计胶囊（按一级模块）
+    function renderGrantedSummary(roots) {
+      return roots.map(function (n) {
+        return '<span class="rp-gt-sum-item" data-gt-sum="' + n.id + '">'
+          + '<b>' + esc(n.label) + '</b><i>' + n.total + ' 项</i></span>';
+      }).join('');
+    }
+
+    // 已授权权限区块的骨架（只渲染一次；搜索时只重绘统计条 + 树）
+    function grantedSectionSkeleton(total) {
+      return '<div class="rp-sec">'
+        + '<div class="rp-sec-title">已授权权限'
+        + '<span class="rp-sec-note" id="rpGtNote">共 ' + total + ' 项操作权限，按菜单分组</span></div>'
+        + '<div class="rp-gt-hint">按菜单层级分组折叠：先看模块汇总，再逐级展开到具体操作；'
+        + '搜索可跨层级过滤并高亮命中项。</div>'
+        + '<div class="rp-gt-toolbar">'
+        + '<input class="rp-gt-search" id="rpGtSearch" placeholder="搜索权限名称，如 导出 / 作废 / 上传">'
+        + '<button class="rp-gt-mini" id="rpGtExpand">全部展开</button>'
+        + '<button class="rp-gt-mini" id="rpGtCollapse">全部收起</button>'
+        + '<span class="rp-gt-mini dis" id="rpGtHit"></span>'
+        + '</div>'
+        + '<div class="rp-gt-sum" id="rpGtSum"></div>'
+        + '<div class="rp-gt-tree" id="rpGtTree"></div>'
+        + '</div>';
+    }
+
+    // 只重绘统计条 + 树（不动工具条 → 输入框焦点不丢）
+    function updateGrantedTree(set) {
+      var roots = buildGrantedTree(set);
+      var input = document.getElementById('rpGtSearch');
+      var kw = input ? (input.value || '').trim() : '';
+      var shown = filterGrantedTree(roots, kw);
+      var hitCount = 0;
+      if (kw) {
+        shown.forEach(function (n) {
+          n.ops.forEach(function (o) { if (o.label.indexOf(kw) >= 0) hitCount++; });
+        });
+      } else {
+        shown.forEach(function (n) { hitCount += n.total; });
+      }
+      var total = roots.reduce(function (a, n) { return a + n.total; }, 0);
+
+      var sumEl = document.getElementById('rpGtSum');
+      var treeEl = document.getElementById('rpGtTree');
+      var noteEl = document.getElementById('rpGtNote');
+      var hitEl = document.getElementById('rpGtHit');
+      if (!sumEl || !treeEl) return;
+
+      var sumHtml = renderGrantedSummary(shown);
+      sumEl.innerHTML = sumHtml;
+      sumEl.style.display = sumHtml ? '' : 'none';
+      treeEl.innerHTML = shown.length
+        ? shown.map(function (n) { return renderGrantedNode(n, 0, kw); }).join('')
+        : '<div class="rp-gt-empty">没有匹配的权限项</div>';
+      if (noteEl) {
+        noteEl.textContent = kw
+          ? ('命中 ' + hitCount + ' / 共 ' + total + ' 项操作权限')
+          : ('共 ' + total + ' 项操作权限，按菜单分组');
+      }
+      if (hitEl) hitEl.textContent = kw ? ('命中 ' + hitCount + ' 项') : '';
+    }
+
     function viewRoleDrawer(roleId) {
       var r = ROLES.filter(function (x) { return x.id === roleId; })[0];
       if (!r) return;
@@ -1327,13 +1530,6 @@
       FLAT.forEach(function (n) {
         if (set[n.code]) menuCount++;
         (n.ops || []).forEach(function (o) { if (set[o.code]) opCount++; });
-      });
-
-      var grantedOps = [];
-      FLAT.forEach(function (n) {
-        (n.ops || []).forEach(function (o) {
-          if (set[o.code]) grantedOps.push({ label: o.label, src: o.src || '' });
-        });
       });
 
       var treeHtml = FLAT.map(function (n) {
@@ -1372,17 +1568,58 @@
         + '<div class="rp-perm-left" style="width:100%; border-right:none;">'
         + '<div class="rp-perm-tree">' + treeHtml + '</div></div></div>'
         + '</div>'
-        + '<div class="rp-sec"><div class="rp-sec-title">已授权操作按钮<span class="rp-sec-note">共 ' + grantedOps.length + ' 项</span></div>'
-        + '<div class="rp-granted-list">' + (grantedOps.length
-          ? grantedOps.map(function (g) {
-              return '<span class="rp-granted-chip">' + esc(g.label)
-                + (g.src ? '<em class="rp-chip-src">' + esc(g.src) + '</em>' : '') + '</span>';
-            }).join('')
-          : '<span style="font-size:12px;color:var(--text-tertiary);">暂无</span>') + '</div>'
-        + '</div>';
+        + grantedSectionSkeleton(opCount)
+        + '';
 
+      window.__rpCurrentSet = set;
       document.getElementById('roleDrawerMask').classList.add('show');
+      updateGrantedTree(set);          // 填充统计条 + 树
     }
+
+    // ===== 已授权权限树：交互 =====
+    // ⚠️ 必须挂在 drawerBody 上：抽屉容器有内联 onclick="event.stopPropagation()"，
+    //    挂在遮罩上的委托监听收不到抽屉内部点击
+    document.getElementById('drawerBody').addEventListener('click', function (e) {
+      var head = e.target.closest('[data-gt-toggle]');
+      if (head) {
+        var node = head.closest('.rp-gt-node');
+        if (node) node.classList.toggle('open');
+        return;
+      }
+      var sum = e.target.closest('[data-gt-sum]');
+      if (sum) {
+        // 只切换该模块自身的展开状态，并把它的二级菜单一并收起
+        var target = document.querySelector('.rp-gt-node[data-gt-node="' + sum.getAttribute('data-gt-sum') + '"]');
+        if (target) {
+          var willOpen = !target.classList.contains('open');
+          target.classList.toggle('open', willOpen);
+          if (!willOpen) {
+            target.querySelectorAll('.rp-gt-node.lv1, .rp-gt-node.lv2, .rp-gt-node.lv3')
+              .forEach(function (n) { n.classList.remove('open'); });
+          }
+          sum.classList.toggle('on', willOpen);
+        }
+        return;
+      }
+      if (e.target.id === 'rpGtExpand') {
+        document.querySelectorAll('.rp-gt-node').forEach(function (n) { n.classList.add('open'); });
+        return;
+      }
+      if (e.target.id === 'rpGtCollapse') {
+        document.querySelectorAll('.rp-gt-node.lv0').forEach(function (n) { n.classList.add('open'); });
+        document.querySelectorAll('.rp-gt-node.lv1, .rp-gt-node.lv2, .rp-gt-node.lv3')
+          .forEach(function (n) { n.classList.remove('open'); });
+      }
+    });
+
+    // 搜索：跨层级过滤 + 高亮
+    // ⚠️ 只重绘「统计条 + 树 + 提示」，**不动工具条**（含 input）→ 焦点不丢，可连续输入
+    document.getElementById('drawerBody').addEventListener('input', function (e) {
+      if (e.target.id !== 'rpGtSearch') return;
+      if (!window.__rpCurrentSet) return;
+      updateGrantedTree(window.__rpCurrentSet);
+    });
+
     function closeRoleDrawer() {
       document.getElementById('roleDrawerMask').classList.remove('show');
       drawerRoleId = null;
