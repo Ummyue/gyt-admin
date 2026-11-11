@@ -85,8 +85,9 @@ def main():
           == ["采购合同", "销售合同", "补充协议"],
           str([c["label"] for c in _cm["children"]] if _cm else None))
     _pc = [c for c in _cm["children"] if c["label"] == "采购合同"][0]
-    check("采购合同 操作权限已并入新增页 5 项（合计 9 项）",
-          len(_pc["ops"]) == 9, str(len(_pc["ops"])))
+    # v1.32.0：采购合同权限项被 user 全量替换为 22 项（框架合同 + 单批次/订单 两套）
+    check("采购合同 操作权限全量替换为 22 项",
+          len(_pc["ops"]) == 22, str(len(_pc["ops"])))
     check("并入的菜单码记在 mergedMenus",
           [m["label"] for m in _pc["mergedMenus"]]
           == ["新增采购框架合同", "新增采购订单/单批次合同"],
