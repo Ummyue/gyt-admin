@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-11-11 v1.30.1 IP 直连在现代 Chrome 下不可用，正式入口改用 https://www.yf9.club
+最后更新: 2026-11-11 v1.31.0 线上托管收敛：只保留 www.yf9.club 的豫港通原型（CF Pages 全清 + 福景堂下线）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -178,6 +178,44 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 - 新增/编辑角色 = **居中弹窗**（1180px，两栏：左菜单树 + 右操作按钮）
 - 查看角色权限 = **右侧抽屉**（760px，只读）
 - 删除 = 居中二次确认弹窗
+
+### v1.31.0 线上托管收敛：只保留 www.yf9.club 的豫港通原型（2026-11-11）
+
+user 要求「除 www.yf9.club 托管的豫港通原型外，其他线上环境的托管都停掉」。
+
+| 项 | 处理 | 结果 |
+|---|---|---|
+| **CF Pages 6 个项目** | 全部删除（yugangtong-prototype / yugangtong-ppt / yugangtong-training-ppt / notebook / ygt-bi-dashboard / dhzl-supply-chain） | ✅ 逐个清空历史部署后删项目 |
+| **福景堂原型** | 关 8080 整站 + 删两个 `/fjt/` 别名（80 与 443）+ 摘守护 A/B 段 | ✅ 数据全留（`/var/www/fujingtang/`、`/srv/git/fjt.git`） |
+| **18099 残留测试 nginx** | 停进程 + 清 `/tmp/nginx-authtest*` | ✅ 端口不再监听 |
+| 8090 协作托管 | 保留（user 未勾选） | `http://192.144.175.203:8090/fjt/` 仍可访问 |
+| 服务器B Dify 1.18.0 | 保留（user 确认） | 无 SSH 权限，本次未动 |
+
+#### ⚠️ `fjt-guard.sh` 是自愈守护，停福景堂必须同时摘它的 A/B 段
+
+服务器有两个机制都跑 `/usr/local/bin/fjt-guard.sh`：
+**cron（每 3 分钟）** + **systemd `fjt-config-watcher.service`（inotify 监听 conf.d）**。
+该脚本管三段：
+
+| 段 | 内容 | 本次处理 |
+|---|---|---|
+| A | 8080 福景堂配置坏了 → 从权威模板恢复 | **已摘**（标记文件存在即跳过） |
+| B | 80 端口 `/fjt/` 别名被覆盖 → `sync_shared_entry.py` 幂等刷回 | **已摘** |
+| C | 80 端口**工作台登录门禁**被部署脚本冲掉 → 补回 | **保留（必须）** |
+
+> ⚠️ C 绝对不能停：豫港通部署脚本每次都用模板 `tee` 覆盖 `yugangtong.conf`，
+> 模板里**没有**门禁 → 部署完主站会裸奔（未登录直接 200），靠 C 兜底。
+
+**开关实现**：新增 `ab_enabled()` + A/B 两段判定加 `|| ! ab_enabled`；
+标记文件 `/etc/nginx/.fjt-guard-ab-disabled`。**C 段判定未动。**
+
+⚠️ 踩坑：脚本 2026-11-11 重写过，变量名从 `c8080/c80/cw` 改成 `r8080/r80/rw`，
+判定改成 `if healthy "$r8080"` —— 按旧变量名匹配会**静默失败**（只插进变量定义，
+条件没改，守护照样刷回 8080）。补丁后必须 `grep` 确认三段判定都符合预期。
+
+**恢复福景堂**：删标记文件 → 恢复 `fujingtang.conf`（备份在 `/var/backups/nginx/`）→ 加回两个 `/fjt/` location → `nginx -t && reload`。
+
+**恢复 CF Pages**：从 GitHub 重新部署即可（`dhzl-supply-chain` 的 GitHub 源码仍在 `Ummyue/dhzl-supply-chain`）。
 
 ### v1.30.1 ⚠️ IP 直连在现代 Chrome 下不可用 → 正式入口是 https://www.yf9.club（2026-11-11）
 
