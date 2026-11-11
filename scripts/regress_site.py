@@ -104,7 +104,8 @@ def main():
               "企业管理": ["我的企业", "企业账号管理", "企业资料管理", "密码管理", "角色权限管理"],
           }, str(_a_sub))
     _ea = [c for c in _acct["subMenus"][1]["children"] if c["label"] == "企业账号管理"][0]
-    check("企业账号管理 操作权限 10 项", len(_ea["ops"]) == 10, str(len(_ea["ops"])))
+    # v1.33.0：企业账号管理删除原权限配置后重建为 6 项
+    check("企业账号管理 操作权限 6 项", len(_ea["ops"]) == 6, str(len(_ea["ops"])))
 
     # ---------- 3. 浏览器端回归 ----------
     from playwright.sync_api import sync_playwright

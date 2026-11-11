@@ -1,5 +1,5 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-11 16:04:22
+// 生成时间：2026-11-11 17:00:48
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
 
 window.PERMISSION_TREE = [
@@ -772,102 +772,30 @@ window.PERMISSION_TREE = [
               "删除",
               "撤回"
             ],
-            "children": [
+            "children": [],
+            "code": "menu:数字供应链/资金管理/回款管理",
+            "ops": [
               {
-                "label": "回款列表",
-                "file": "receipt-list.html",
-                "buttons": [
-                  "新增回款",
-                  "数据导出",
-                  "详情",
-                  "删除",
-                  "撤回"
-                ],
-                "code": "menu:数字供应链/资金管理/回款管理/回款列表",
-                "children": [],
-                "ops": [
-                  {
-                    "label": "新增回款",
-                    "code": "数字供应链/资金管理/回款管理/回款列表#create"
-                  },
-                  {
-                    "label": "数据导出",
-                    "code": "数字供应链/资金管理/回款管理/回款列表#export"
-                  },
-                  {
-                    "label": "详情",
-                    "code": "数字供应链/资金管理/回款管理/回款列表#view"
-                  },
-                  {
-                    "label": "删除",
-                    "code": "数字供应链/资金管理/回款管理/回款列表#delete"
-                  },
-                  {
-                    "label": "撤回",
-                    "code": "数字供应链/资金管理/回款管理/回款列表#withdraw"
-                  },
-                  {
-                    "label": "立即催办",
-                    "code": "数字供应链/资金管理/回款管理/回款审批详情#urge",
-                    "src": "回款审批详情"
-                  },
-                  {
-                    "label": "审批通过",
-                    "code": "数字供应链/资金管理/回款管理/回款审批详情#approve",
-                    "src": "回款审批详情"
-                  },
-                  {
-                    "label": "驳回审批",
-                    "code": "数字供应链/资金管理/回款管理/回款审批详情#reject",
-                    "src": "回款审批详情"
-                  },
-                  {
-                    "label": "上传",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#upload",
-                    "src": "编辑回款"
-                  },
-                  {
-                    "label": "按比例分摊",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#allocate",
-                    "src": "编辑回款"
-                  },
-                  {
-                    "label": "全部现金",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#allocate3",
-                    "src": "编辑回款"
-                  },
-                  {
-                    "label": "删除",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#delete",
-                    "src": "编辑回款"
-                  },
-                  {
-                    "label": "提交",
-                    "code": "数字供应链/资金管理/回款管理/编辑回款#submit",
-                    "src": "编辑回款"
-                  }
-                ],
-                "mergedMenus": [
-                  {
-                    "label": "回款详情",
-                    "code": "menu:数字供应链/资金管理/回款管理/回款详情",
-                    "opCount": 0
-                  },
-                  {
-                    "label": "回款审批详情",
-                    "code": "menu:数字供应链/资金管理/回款管理/回款审批详情",
-                    "opCount": 3
-                  },
-                  {
-                    "label": "编辑回款",
-                    "code": "menu:数字供应链/资金管理/回款管理/编辑回款",
-                    "opCount": 5
-                  }
-                ]
+                "label": "新增回款",
+                "code": "数字供应链/资金管理/回款管理#create"
+              },
+              {
+                "label": "数据导出",
+                "code": "数字供应链/资金管理/回款管理#export"
+              },
+              {
+                "label": "详情",
+                "code": "数字供应链/资金管理/回款管理#view"
+              },
+              {
+                "label": "作废",
+                "code": "数字供应链/资金管理/回款管理#void"
+              },
+              {
+                "label": "撤回",
+                "code": "数字供应链/资金管理/回款管理#withdraw"
               }
             ],
-            "code": "menu:数字供应链/资金管理/回款管理",
-            "ops": [],
             "mergedMenus": []
           },
           {
@@ -878,82 +806,34 @@ window.PERMISSION_TREE = [
               "数据导出",
               "查看"
             ],
-            "children": [
+            "children": [],
+            "code": "menu:数字供应链/资金管理/保证金管理",
+            "ops": [
               {
-                "label": "保证金明细",
-                "file": "margin-pool.html",
-                "buttons": [
-                  "登记保证金",
-                  "数据导出",
-                  "查看"
-                ],
-                "code": "menu:数字供应链/资金管理/保证金管理/保证金明细",
-                "children": [],
-                "ops": [
-                  {
-                    "label": "登记保证金",
-                    "code": "数字供应链/资金管理/保证金管理/保证金明细#create"
-                  },
-                  {
-                    "label": "数据导出",
-                    "code": "数字供应链/资金管理/保证金管理/保证金明细#export"
-                  },
-                  {
-                    "label": "查看",
-                    "code": "数字供应链/资金管理/保证金管理/保证金明细#view"
-                  },
-                  {
-                    "label": "+ 选择销售订单（贸易）合同",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整#transfer",
-                    "src": "保证金调整"
-                  },
-                  {
-                    "label": "+ 上传",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整#upload",
-                    "src": "保证金调整"
-                  },
-                  {
-                    "label": "提交",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整#submit",
-                    "src": "保证金调整"
-                  },
-                  {
-                    "label": "设置等比例冲抵货款比例",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#edit",
-                    "src": "保证金调整记录"
-                  },
-                  {
-                    "label": "一键下载",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#export",
-                    "src": "保证金调整记录"
-                  },
-                  {
-                    "label": "下载",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#export3",
-                    "src": "保证金调整记录"
-                  },
-                  {
-                    "label": "保存",
-                    "code": "数字供应链/资金管理/保证金管理/保证金调整记录#save",
-                    "src": "保证金调整记录"
-                  }
-                ],
-                "mergedMenus": [
-                  {
-                    "label": "保证金调整",
-                    "code": "menu:数字供应链/资金管理/保证金管理/保证金调整",
-                    "opCount": 3
-                  },
-                  {
-                    "label": "保证金调整记录",
-                    "code": "menu:数字供应链/资金管理/保证金管理/保证金调整记录",
-                    "opCount": 4
-                  }
-                ]
+                "label": "登记保证金",
+                "code": "数字供应链/资金管理/保证金管理#create"
+              },
+              {
+                "label": "保证金调整",
+                "code": "数字供应链/资金管理/保证金管理#adjust"
+              },
+              {
+                "label": "配置比例",
+                "code": "数字供应链/资金管理/保证金管理#config-ratio"
+              },
+              {
+                "label": "查看变更记录",
+                "code": "数字供应链/资金管理/保证金管理#view-change-log"
+              },
+              {
+                "label": "查看（详情）",
+                "code": "数字供应链/资金管理/保证金管理#view"
+              },
+              {
+                "label": "数据导出",
+                "code": "数字供应链/资金管理/保证金管理#export"
               }
             ],
-            "code": "menu:数字供应链/资金管理/保证金管理",
-            "ops": [],
             "mergedMenus": []
           }
         ],
@@ -986,6 +866,22 @@ window.PERMISSION_TREE = [
               {
                 "label": "数据导出",
                 "code": "数字供应链/结算单管理/采购结算#export"
+              },
+              {
+                "label": "详情",
+                "code": "数字供应链/结算单管理/采购结算#view"
+              },
+              {
+                "label": "作废",
+                "code": "数字供应链/结算单管理/采购结算#void"
+              },
+              {
+                "label": "上传已生效单据",
+                "code": "数字供应链/结算单管理/采购结算#upload-voucher"
+              },
+              {
+                "label": "修改",
+                "code": "数字供应链/结算单管理/采购结算#edit"
               }
             ],
             "mergedMenus": []
@@ -1007,6 +903,22 @@ window.PERMISSION_TREE = [
               {
                 "label": "数据导出",
                 "code": "数字供应链/结算单管理/销售结算#export"
+              },
+              {
+                "label": "详情",
+                "code": "数字供应链/结算单管理/销售结算#view"
+              },
+              {
+                "label": "作废",
+                "code": "数字供应链/结算单管理/销售结算#void"
+              },
+              {
+                "label": "上传已生效单据",
+                "code": "数字供应链/结算单管理/销售结算#upload-voucher"
+              },
+              {
+                "label": "修改",
+                "code": "数字供应链/结算单管理/销售结算#edit"
               }
             ],
             "mergedMenus": []
@@ -1041,6 +953,26 @@ window.PERMISSION_TREE = [
               {
                 "label": "新增发票",
                 "code": "数字供应链/发票管理/进项发票#create"
+              },
+              {
+                "label": "查看",
+                "code": "数字供应链/发票管理/进项发票#view"
+              },
+              {
+                "label": "编辑",
+                "code": "数字供应链/发票管理/进项发票#edit"
+              },
+              {
+                "label": "冲红",
+                "code": "数字供应链/发票管理/进项发票#red"
+              },
+              {
+                "label": "作废",
+                "code": "数字供应链/发票管理/进项发票#void"
+              },
+              {
+                "label": "删除",
+                "code": "数字供应链/发票管理/进项发票#delete"
               }
             ],
             "mergedMenus": []
@@ -1062,6 +994,26 @@ window.PERMISSION_TREE = [
               {
                 "label": "新增发票",
                 "code": "数字供应链/发票管理/销项发票#create"
+              },
+              {
+                "label": "查看",
+                "code": "数字供应链/发票管理/销项发票#view"
+              },
+              {
+                "label": "编辑",
+                "code": "数字供应链/发票管理/销项发票#edit"
+              },
+              {
+                "label": "冲红",
+                "code": "数字供应链/发票管理/销项发票#red"
+              },
+              {
+                "label": "作废",
+                "code": "数字供应链/发票管理/销项发票#void"
+              },
+              {
+                "label": "删除",
+                "code": "数字供应链/发票管理/销项发票#delete"
               }
             ],
             "mergedMenus": []
@@ -1075,19 +1027,26 @@ window.PERMISSION_TREE = [
         "label": "盯市管理",
         "file": "market-price.html",
         "buttons": [],
-        "children": [
+        "children": [],
+        "code": "menu:数字供应链/盯市管理",
+        "ops": [
           {
-            "label": "盯市价格管理",
-            "file": "market-price.html",
-            "buttons": [],
-            "children": [],
-            "code": "menu:数字供应链/盯市管理/盯市价格管理",
-            "ops": [],
-            "mergedMenus": []
+            "label": "查看",
+            "code": "数字供应链/盯市管理#view"
+          },
+          {
+            "label": "添加数据",
+            "code": "数字供应链/盯市管理#add-data"
+          },
+          {
+            "label": "批量导入",
+            "code": "数字供应链/盯市管理#import"
+          },
+          {
+            "label": "导出",
+            "code": "数字供应链/盯市管理#export"
           }
         ],
-        "code": "menu:数字供应链/盯市管理",
-        "ops": [],
         "mergedMenus": []
       },
       {
@@ -1121,12 +1080,12 @@ window.PERMISSION_TREE = [
             "code": "数字供应链/追保函管理#view"
           },
           {
-            "label": "上传附件",
-            "code": "数字供应链/追保函管理#upload"
+            "label": "上传已生效单据",
+            "code": "数字供应链/追保函管理#upload-voucher"
           },
           {
-            "label": "撤回",
-            "code": "数字供应链/追保函管理#withdraw"
+            "label": "修改",
+            "code": "数字供应链/追保函管理#edit"
           }
         ],
         "mergedMenus": []
@@ -1151,43 +1110,30 @@ window.PERMISSION_TREE = [
             "ops": [
               {
                 "label": "新建流程",
-                "code": "数字供应链/审批管理/审批流程配置#op1"
+                "code": "数字供应链/审批管理/审批流程配置#create"
               },
               {
                 "label": "数据导出",
                 "code": "数字供应链/审批管理/审批流程配置#export"
               },
               {
-                "label": "流程图预览",
-                "code": "数字供应链/审批管理/流程编排画布#view",
-                "src": "流程编排画布"
+                "label": "编排",
+                "code": "数字供应链/审批管理/审批流程配置#canvas"
               },
               {
-                "label": "保存",
-                "code": "数字供应链/审批管理/流程编排画布#save",
-                "src": "流程编排画布"
+                "label": "复制",
+                "code": "数字供应链/审批管理/审批流程配置#copy"
               },
               {
-                "label": "下一步：流程设计",
-                "code": "数字供应链/审批管理/流程编排画布#op3",
-                "src": "流程编排画布"
-              },
-              {
-                "label": "上一步：基础信息",
-                "code": "数字供应链/审批管理/流程编排画布#op4",
-                "src": "流程编排画布"
-              },
-              {
-                "label": "完成",
-                "code": "数字供应链/审批管理/流程编排画布#op5",
-                "src": "流程编排画布"
+                "label": "停用",
+                "code": "数字供应链/审批管理/审批流程配置#disable"
               }
             ],
             "mergedMenus": [
               {
                 "label": "流程编排画布",
                 "code": "menu:数字供应链/审批管理/流程编排画布",
-                "opCount": 5
+                "opCount": 0
               }
             ]
           },
@@ -1258,8 +1204,16 @@ window.PERMISSION_TREE = [
                 "code": "仓储管理/入库管理/入库记录#export"
               },
               {
-                "label": "确认进入",
-                "code": "仓储管理/入库管理/入库记录#submit"
+                "label": "详情",
+                "code": "仓储管理/入库管理/入库记录#view"
+              },
+              {
+                "label": "删除",
+                "code": "仓储管理/入库管理/入库记录#delete"
+              },
+              {
+                "label": "编辑",
+                "code": "仓储管理/入库管理/入库记录#edit"
               }
             ],
             "mergedMenus": []
@@ -1294,6 +1248,18 @@ window.PERMISSION_TREE = [
               {
                 "label": "数据导出",
                 "code": "仓储管理/出库管理/出库记录#export"
+              },
+              {
+                "label": "详情",
+                "code": "仓储管理/出库管理/出库记录#view"
+              },
+              {
+                "label": "编辑",
+                "code": "仓储管理/出库管理/出库记录#edit"
+              },
+              {
+                "label": "删除",
+                "code": "仓储管理/出库管理/出库记录#delete"
               }
             ],
             "mergedMenus": []
@@ -1328,6 +1294,14 @@ window.PERMISSION_TREE = [
               {
                 "label": "数据导出",
                 "code": "仓储管理/提放货管理/提货管理#export"
+              },
+              {
+                "label": "查看",
+                "code": "仓储管理/提放货管理/提货管理#view"
+              },
+              {
+                "label": "作废",
+                "code": "仓储管理/提放货管理/提货管理#void"
               }
             ],
             "mergedMenus": []
@@ -1349,6 +1323,18 @@ window.PERMISSION_TREE = [
               {
                 "label": "数据导出",
                 "code": "仓储管理/提放货管理/放货管理#export"
+              },
+              {
+                "label": "查看",
+                "code": "仓储管理/提放货管理/放货管理#view"
+              },
+              {
+                "label": "作废",
+                "code": "仓储管理/提放货管理/放货管理#void"
+              },
+              {
+                "label": "完结",
+                "code": "仓储管理/提放货管理/放货管理#finish"
               }
             ],
             "mergedMenus": []
@@ -1383,18 +1369,6 @@ window.PERMISSION_TREE = [
               {
                 "label": "数据导出",
                 "code": "仓储管理/库存管理/库存台账#export"
-              },
-              {
-                "label": "入库明细",
-                "code": "仓储管理/库存管理/库存台账#view"
-              },
-              {
-                "label": "出库明细",
-                "code": "仓储管理/库存管理/库存台账#view3"
-              },
-              {
-                "label": "详情",
-                "code": "仓储管理/库存管理/库存台账#view4"
               }
             ],
             "mergedMenus": []
@@ -1419,12 +1393,7 @@ window.PERMISSION_TREE = [
             ],
             "children": [],
             "code": "menu:仓储管理/视频监控/库点监控",
-            "ops": [
-              {
-                "label": "新增视频监控",
-                "code": "仓储管理/视频监控/库点监控#create"
-              }
-            ],
+            "ops": [],
             "mergedMenus": []
           }
         ],
@@ -1479,6 +1448,18 @@ window.PERMISSION_TREE = [
               {
                 "label": "上传合同",
                 "code": "仓储管理/系统管理/库点信息管理#upload"
+              },
+              {
+                "label": "详情",
+                "code": "仓储管理/系统管理/库点信息管理#view3"
+              },
+              {
+                "label": "作废",
+                "code": "仓储管理/系统管理/库点信息管理#void"
+              },
+              {
+                "label": "数据导出",
+                "code": "仓储管理/系统管理/库点信息管理#export"
               }
             ],
             "mergedMenus": []
@@ -1527,10 +1508,6 @@ window.PERMISSION_TREE = [
               {
                 "label": "删除",
                 "code": "仓储管理/系统管理/品类配置#delete"
-              },
-              {
-                "label": "保存",
-                "code": "仓储管理/系统管理/品类配置#save"
               }
             ],
             "mergedMenus": []
@@ -1592,18 +1569,6 @@ window.PERMISSION_TREE = [
           {
             "label": "导出 Excel",
             "code": "数据中心/业务线台账表#export"
-          },
-          {
-            "label": "列设置",
-            "code": "数据中心/业务线台账表#view"
-          },
-          {
-            "label": "恢复默认",
-            "code": "数据中心/业务线台账表#view3"
-          },
-          {
-            "label": "查看",
-            "code": "数据中心/业务线台账表#view4"
           }
         ],
         "mergedMenus": []
@@ -1651,12 +1616,8 @@ window.PERMISSION_TREE = [
         "code": "menu:数据中心/应收应付表",
         "ops": [
           {
-            "label": "导出 Excel",
-            "code": "数据中心/应收应付表#export"
-          },
-          {
             "label": "数据导出",
-            "code": "数据中心/应收应付表#export2"
+            "code": "数据中心/应收应付表#export"
           }
         ],
         "mergedMenus": []
@@ -1678,6 +1639,10 @@ window.PERMISSION_TREE = [
           {
             "label": "查看报告",
             "code": "数据中心/合规验证报告管理#view"
+          },
+          {
+            "label": "下载PDF报告",
+            "code": "数据中心/合规验证报告管理#download-pdf"
           }
         ],
         "mergedMenus": []
@@ -1731,12 +1696,12 @@ window.PERMISSION_TREE = [
             "code": "预警中心/预警设置#edit"
           },
           {
-            "label": "合同配置",
-            "code": "预警中心/预警设置#op3"
+            "label": "风险等级设置",
+            "code": "预警中心/预警设置#risk-level"
           },
           {
-            "label": "提交",
-            "code": "预警中心/预警设置#submit"
+            "label": "状态开关",
+            "code": "预警中心/预警设置#status-switch"
           }
         ],
         "mergedMenus": []
@@ -1762,14 +1727,6 @@ window.PERMISSION_TREE = [
               [
                 "编辑资料",
                 "edit"
-              ],
-              [
-                "保存",
-                "save"
-              ],
-              [
-                "上传头像",
-                "upload"
               ]
             ],
             "children": [],
@@ -1778,14 +1735,6 @@ window.PERMISSION_TREE = [
               {
                 "label": "编辑资料",
                 "code": "账户中心/个人管理/个人信息#edit"
-              },
-              {
-                "label": "保存",
-                "code": "账户中心/个人管理/个人信息#save"
-              },
-              {
-                "label": "上传头像",
-                "code": "账户中心/个人管理/个人信息#upload"
               }
             ],
             "mergedMenus": []
@@ -1796,33 +1745,17 @@ window.PERMISSION_TREE = [
             "buttons": [],
             "explicit_ops": [
               [
-                "修改登录密码",
-                "update-password"
-              ],
-              [
                 "更换绑定手机号",
                 "bind-phone"
               ],
               [
                 "更换绑定邮箱",
                 "bind-email"
-              ],
-              [
-                "查看登录设备",
-                "view-device"
-              ],
-              [
-                "退出其他设备",
-                "logout-others"
               ]
             ],
             "children": [],
             "code": "menu:账户中心/个人管理/安全设置",
             "ops": [
-              {
-                "label": "修改登录密码",
-                "code": "账户中心/个人管理/安全设置#update-password"
-              },
               {
                 "label": "更换绑定手机号",
                 "code": "账户中心/个人管理/安全设置#bind-phone"
@@ -1830,14 +1763,6 @@ window.PERMISSION_TREE = [
               {
                 "label": "更换绑定邮箱",
                 "code": "账户中心/个人管理/安全设置#bind-email"
-              },
-              {
-                "label": "查看登录设备",
-                "code": "账户中心/个人管理/安全设置#view-device"
-              },
-              {
-                "label": "退出其他设备",
-                "code": "账户中心/个人管理/安全设置#logout-others"
               }
             ],
             "mergedMenus": []
@@ -1863,16 +1788,36 @@ window.PERMISSION_TREE = [
                 "view"
               ],
               [
-                "编辑企业信息",
-                "edit"
-              ],
-              [
-                "切换企业",
-                "switch"
+                "编辑企业基本信息",
+                "edit-basic"
               ],
               [
                 "提交认证",
                 "submit-cert"
+              ],
+              [
+                "编辑电子签章",
+                "edit-seal"
+              ],
+              [
+                "编辑银行账户信息",
+                "edit-bank"
+              ],
+              [
+                "编辑开票信息",
+                "edit-invoice-info"
+              ],
+              [
+                "编辑合同签约地",
+                "edit-sign-place"
+              ],
+              [
+                "编辑联系人信息",
+                "edit-contact"
+              ],
+              [
+                "编辑企业员工信息",
+                "edit-employee"
               ]
             ],
             "children": [],
@@ -1883,16 +1828,36 @@ window.PERMISSION_TREE = [
                 "code": "账户中心/企业管理/我的企业#view"
               },
               {
-                "label": "编辑企业信息",
-                "code": "账户中心/企业管理/我的企业#edit"
-              },
-              {
-                "label": "切换企业",
-                "code": "账户中心/企业管理/我的企业#switch"
+                "label": "编辑企业基本信息",
+                "code": "账户中心/企业管理/我的企业#edit-basic"
               },
               {
                 "label": "提交认证",
                 "code": "账户中心/企业管理/我的企业#submit-cert"
+              },
+              {
+                "label": "编辑电子签章",
+                "code": "账户中心/企业管理/我的企业#edit-seal"
+              },
+              {
+                "label": "编辑银行账户信息",
+                "code": "账户中心/企业管理/我的企业#edit-bank"
+              },
+              {
+                "label": "编辑开票信息",
+                "code": "账户中心/企业管理/我的企业#edit-invoice-info"
+              },
+              {
+                "label": "编辑合同签约地",
+                "code": "账户中心/企业管理/我的企业#edit-sign-place"
+              },
+              {
+                "label": "编辑联系人信息",
+                "code": "账户中心/企业管理/我的企业#edit-contact"
+              },
+              {
+                "label": "编辑企业员工信息",
+                "code": "账户中心/企业管理/我的企业#edit-employee"
               }
             ],
             "mergedMenus": []
@@ -1903,88 +1868,56 @@ window.PERMISSION_TREE = [
             "buttons": [],
             "explicit_ops": [
               [
-                "新增账号",
-                "create"
+                "创建企业账号",
+                "create-account"
               ],
               [
-                "编辑账号",
+                "编辑",
                 "edit"
               ],
               [
-                "删除账号",
-                "delete"
+                "解绑",
+                "unbind"
               ],
               [
-                "重置密码",
-                "reset-password"
+                "申请列表操作",
+                "apply-list-op"
               ],
               [
-                "分配角色",
-                "assign-role"
+                "邀请列表操作",
+                "invite-list-op"
               ],
               [
-                "启用账号",
-                "enable"
-              ],
-              [
-                "停用账号",
-                "disable"
-              ],
-              [
-                "审核入职申请",
-                "approve"
-              ],
-              [
-                "审批邀请",
-                "approve-invite"
-              ],
-              [
-                "导出账号列表",
-                "export"
+                "邀请企业员工",
+                "invite-employee"
               ]
             ],
             "children": [],
             "code": "menu:账户中心/企业管理/企业账号管理",
             "ops": [
               {
-                "label": "新增账号",
-                "code": "账户中心/企业管理/企业账号管理#create"
+                "label": "创建企业账号",
+                "code": "账户中心/企业管理/企业账号管理#create-account"
               },
               {
-                "label": "编辑账号",
+                "label": "编辑",
                 "code": "账户中心/企业管理/企业账号管理#edit"
               },
               {
-                "label": "删除账号",
-                "code": "账户中心/企业管理/企业账号管理#delete"
+                "label": "解绑",
+                "code": "账户中心/企业管理/企业账号管理#unbind"
               },
               {
-                "label": "重置密码",
-                "code": "账户中心/企业管理/企业账号管理#reset-password"
+                "label": "申请列表操作",
+                "code": "账户中心/企业管理/企业账号管理#apply-list-op"
               },
               {
-                "label": "分配角色",
-                "code": "账户中心/企业管理/企业账号管理#assign-role"
+                "label": "邀请列表操作",
+                "code": "账户中心/企业管理/企业账号管理#invite-list-op"
               },
               {
-                "label": "启用账号",
-                "code": "账户中心/企业管理/企业账号管理#enable"
-              },
-              {
-                "label": "停用账号",
-                "code": "账户中心/企业管理/企业账号管理#disable"
-              },
-              {
-                "label": "审核入职申请",
-                "code": "账户中心/企业管理/企业账号管理#approve"
-              },
-              {
-                "label": "审批邀请",
-                "code": "账户中心/企业管理/企业账号管理#approve-invite"
-              },
-              {
-                "label": "导出账号列表",
-                "code": "账户中心/企业管理/企业账号管理#export"
+                "label": "邀请企业员工",
+                "code": "账户中心/企业管理/企业账号管理#invite-employee"
               }
             ],
             "mergedMenus": []
@@ -1995,48 +1928,24 @@ window.PERMISSION_TREE = [
             "buttons": [],
             "explicit_ops": [
               [
-                "编辑企业资料",
-                "edit"
+                "新增纳税申报表",
+                "create-tax-decl"
               ],
               [
-                "上传资质文件",
-                "upload"
-              ],
-              [
-                "替换附件",
-                "replace"
-              ],
-              [
-                "删除附件",
-                "delete"
-              ],
-              [
-                "提交审核",
-                "submit"
+                "全量操作",
+                "batch-op"
               ]
             ],
             "children": [],
             "code": "menu:账户中心/企业管理/企业资料管理",
             "ops": [
               {
-                "label": "编辑企业资料",
-                "code": "账户中心/企业管理/企业资料管理#edit"
+                "label": "新增纳税申报表",
+                "code": "账户中心/企业管理/企业资料管理#create-tax-decl"
               },
               {
-                "label": "上传资质文件",
-                "code": "账户中心/企业管理/企业资料管理#upload"
-              },
-              {
-                "label": "替换附件",
-                "code": "账户中心/企业管理/企业资料管理#replace"
-              },
-              {
-                "label": "删除附件",
-                "code": "账户中心/企业管理/企业资料管理#delete"
-              },
-              {
-                "label": "提交审核",
-                "code": "账户中心/企业管理/企业资料管理#submit"
+                "label": "全量操作",
+                "code": "账户中心/企业管理/企业资料管理#batch-op"
               }
             ],
             "mergedMenus": []
@@ -2047,32 +1956,16 @@ window.PERMISSION_TREE = [
             "buttons": [],
             "explicit_ops": [
               [
-                "修改密码策略",
-                "edit-policy"
-              ],
-              [
-                "重置成员密码",
-                "reset-password"
-              ],
-              [
-                "强制成员下线",
-                "force-logout"
+                "修改企业账号密码",
+                "update-account-password"
               ]
             ],
             "children": [],
             "code": "menu:账户中心/企业管理/密码管理",
             "ops": [
               {
-                "label": "修改密码策略",
-                "code": "账户中心/企业管理/密码管理#edit-policy"
-              },
-              {
-                "label": "重置成员密码",
-                "code": "账户中心/企业管理/密码管理#reset-password"
-              },
-              {
-                "label": "强制成员下线",
-                "code": "账户中心/企业管理/密码管理#force-logout"
+                "label": "修改企业账号密码",
+                "code": "账户中心/企业管理/密码管理#update-account-password"
               }
             ],
             "mergedMenus": []
@@ -2087,15 +1980,11 @@ window.PERMISSION_TREE = [
                 "create"
               ],
               [
-                "保存",
-                "save"
-              ],
-              [
                 "编辑该角色",
                 "edit"
               ],
               [
-                "确认删除",
+                "删除",
                 "delete"
               ]
             ],
@@ -2107,15 +1996,11 @@ window.PERMISSION_TREE = [
                 "code": "账户中心/企业管理/角色权限管理#create"
               },
               {
-                "label": "保存",
-                "code": "账户中心/企业管理/角色权限管理#save"
-              },
-              {
                 "label": "编辑该角色",
                 "code": "账户中心/企业管理/角色权限管理#edit"
               },
               {
-                "label": "确认删除",
+                "label": "删除",
                 "code": "账户中心/企业管理/角色权限管理#delete"
               }
             ],

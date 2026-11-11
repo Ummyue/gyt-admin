@@ -84,8 +84,8 @@ def main():
         drawer_txt = page.locator("#drawerBody").inner_text()
         check("抽屉显示数据权限说明", "全部数据" in drawer_txt or "仅本人创建" in drawer_txt)
         check("抽屉显示权限概览统计", "菜单权限" in drawer_txt and "操作按钮" in drawer_txt)
-        check("抽屉渲染权限树节点（7 一级 + 67 子节点）",
-              page.locator("#drawerBody .rp-tnode").count() == 74,
+        check("抽屉渲染权限树节点（7 一级 + 64 子节点）",
+              page.locator("#drawerBody .rp-tnode").count() == 71,
               f"实际 {page.locator('#drawerBody .rp-tnode').count()}")
         page.keyboard.press("Escape")
         page.wait_for_timeout(300)
@@ -97,8 +97,8 @@ def main():
         check("新增角色弹窗打开", page.locator(".rp-modal").is_visible())
         check("弹窗标题为新增角色",
               page.locator("#roleModalTitle").inner_text() == "新增角色")
-        check("左树渲染 74 个菜单节点（7 一级 + 67 子节点）",
-              page.locator("#permTree .rp-tnode").count() == 74,
+        check("左树渲染 71 个菜单节点（7 一级 + 64 子节点，v1.33.0 摘除 3 个子菜单）",
+              page.locator("#permTree .rp-tnode").count() == 71,
               f"实际 {page.locator('#permTree .rp-tnode').count()}")
         check("左树一级菜单 7 个",
               page.locator('#permTree .rp-tnode[data-depth="0"]').count() == 7)
@@ -196,40 +196,18 @@ def main():
         check("采购合同 权限码改用语义 scope（create-framework 等）",
               any(c.endswith("#create-framework") for c in codes), str(codes[:3]))
 
-        # ===== 回款管理 / 保证金管理：详情/编辑页并入列表页 =====
+        # ===== 回款管理 / 保证金管理（v1.33.0：子菜单已摘除，权限项直接落在父节点）=====
         page.click('.rp-tnode[data-label="回款管理"] .rp-tnode-label')
         page.wait_for_timeout(300)
-        rc_dir = page.locator("#opBody .rp-jump-chip").all_inner_texts()
-        check("回款管理 下只保留 回款列表",
-              len(rc_dir) == 1 and "回款列表" in rc_dir[0], str(rc_dir))
-
-        page.click('.rp-tnode[data-label="回款列表"] .rp-tnode-label')
-        page.wait_for_timeout(300)
         rc_ops = page.locator(".rp-op-item").count()
-        check("回款列表 操作权限 = 列表 5 + 审批详情 3 + 编辑回款 5 = 13 项",
-              rc_ops == 13, f"实际 {rc_ops}")
-        tip = page.locator(".rp-merged-tip").inner_text()
-        check("回款列表 提示条列出已并入的子页面",
-              "回款详情" in tip and "回款审批详情" in tip and "编辑回款" in tip, tip)
-        check("并入页面的操作项数在提示条里标明",
-              "3 项操作权限" in tip and "5 项操作权限" in tip, tip)
-        check("并入页操作数已归入本菜单时提示「已并入本菜单的配置项」",
-              "相关操作已并入本菜单的配置项" in tip, tip)
+        check("回款管理 操作权限 = 5 项（新增回款/数据导出/详情/作废/撤回）",
+              rc_ops == 5, f"实际 {rc_ops}")
 
         page.click('.rp-tnode[data-label="保证金管理"] .rp-tnode-label')
         page.wait_for_timeout(300)
-        mc_dir = page.locator("#opBody .rp-jump-chip").all_inner_texts()
-        check("保证金管理 下只保留 保证金明细",
-              len(mc_dir) == 1 and "保证金明细" in mc_dir[0], str(mc_dir))
-
-        page.click('.rp-tnode[data-label="保证金明细"] .rp-tnode-label')
-        page.wait_for_timeout(300)
         mc_ops = page.locator(".rp-op-item").count()
-        check("保证金明细 操作权限 = 明细 3 + 调整 3 + 调整记录 4 = 10 项",
-              mc_ops == 10, f"实际 {mc_ops}")
-        mt = page.locator(".rp-merged-tip").inner_text()
-        check("保证金明细 提示条列出已并入的子页面",
-              "保证金调整" in mt and "保证金调整记录" in mt, mt)
+        check("保证金管理 操作权限 = 6 项（登记保证金/保证金调整/配置比例/查看变更记录/查看（详情）/数据导出）",
+              mc_ops == 6, f"实际 {mc_ops}")
 
         tree_labels2 = page.locator('#permTree .rp-tnode').evaluate_all(
             "els => els.map(e => e.getAttribute('data-label'))")
@@ -246,11 +224,11 @@ def main():
         page.click('.rp-tnode[data-label="审批流程配置"] .rp-tnode-label')
         page.wait_for_timeout(300)
         ap_ops = page.locator(".rp-op-item").count()
-        check("审批流程配置 操作权限 = 配置页 2 + 编排画布 5 = 7 项",
-              ap_ops == 7, f"实际 {ap_ops}")
+        check("审批流程配置 操作权限 = 5 项（v1.33.0 显式重定义）",
+              ap_ops == 5, f"实际 {ap_ops}")
         at = page.locator(".rp-merged-tip").inner_text()
-        check("审批流程配置 提示条列出已并入的流程编排画布（5 项）",
-              "流程编排画布" in at and "5 项操作权限" in at, at)
+        check("审批流程配置 提示条列出已并入的流程编排画布",
+              "流程编排画布" in at, at)
         tree_labels3 = page.locator('#permTree .rp-tnode').evaluate_all(
             "els => els.map(e => e.getAttribute('data-label'))")
         check("左树不再单列「流程编排画布」菜单节点",
@@ -325,6 +303,61 @@ def main():
         check("退款管理 5 项且含 修改 / 作废 / 撤回审批",
               len(got) == 5 and "修改" in got and "作废" in got and "撤回审批" in got, str(got))
 
+        # ===== v1.33.0 权限配置项调整（第 10~37 项）=====
+        # 表驱动：菜单 → (期望项集合 or None=不变, 必须去掉项, 必须新增项)
+        V1330 = {
+            "回款管理":     ({"新增回款", "数据导出", "详情", "作废", "撤回"}, set(), set()),
+            "保证金管理":   ({"登记保证金", "保证金调整", "配置比例", "查看变更记录",
+                          "查看（详情）", "数据导出"}, set(), set()),
+            "采购结算":     (None, set(), {"详情", "作废", "上传已生效单据", "修改"}),
+            "销售结算":     (None, set(), {"详情", "作废", "上传已生效单据", "修改"}),
+            "进项发票":     (None, set(), {"查看", "编辑", "冲红", "作废", "删除"}),
+            "销项发票":     (None, set(), {"查看", "编辑", "冲红", "作废", "删除"}),
+            "盯市管理":     ({"查看", "添加数据", "批量导入", "导出"}, set(), set()),
+            "追保函管理":   (None, {"上传附件", "撤回"}, {"上传已生效单据", "修改"}),
+            "审批流程配置": (None, {"流程图预览", "保存", "下一步：流程设计", "上一步：基础信息", "完成"},
+                          {"编排", "复制", "停用"}),
+            "入库记录":     (None, {"确认进入"}, {"详情", "删除", "编辑"}),
+            "出库记录":     (None, set(), {"详情", "编辑", "删除"}),
+            "提货管理":     (None, set(), {"查看", "作废"}),
+            "放货管理":     (None, set(), {"查看", "作废", "完结"}),
+            "库存台账":     ({"数据导出"}, {"入库明细", "出库明细", "详情"}, set()),
+            "库点监控":     (set(), {"新增视频监控"}, set()),
+            "库点信息管理": (None, set(), {"详情", "作废", "数据导出"}),
+            "品类配置":     (None, {"保存"}, set()),
+            "业务线台账表": ({"导出 Excel"}, {"列设置", "恢复默认", "查看"}, set()),
+            "应收应付表":   ({"数据导出"}, {"导出 Excel"}, set()),
+            "合规验证报告管理": (None, set(), {"下载PDF报告"}),
+            "预警设置":     (None, {"合同配置", "提交"}, {"风险等级设置", "状态开关"}),
+            "个人信息":     ({"编辑资料"}, {"保存", "上传头像"}, set()),
+            "安全设置":     ({"更换绑定手机号", "更换绑定邮箱"},
+                          {"修改登录密码", "查看登录设备", "退出其他设备"}, set()),
+            "我的企业":     (None, {"切换企业", "编辑企业信息"},
+                          {"编辑企业基本信息", "编辑电子签章", "编辑银行账户信息",
+                           "编辑开票信息", "编辑合同签约地", "编辑联系人信息",
+                           "编辑企业员工信息"}),
+            "企业账号管理": (None, set(), {"创建企业账号", "编辑", "解绑",
+                                     "申请列表操作", "邀请列表操作", "邀请企业员工"}),
+            "企业资料管理": (None, set(), {"新增纳税申报表", "全量操作"}),
+            "密码管理":     (None, set(), {"修改企业账号密码"}),
+            "角色权限管理": (None, {"保存", "确认删除"}, {"删除"}),
+        }
+        for lbl, (exact, gone, added) in V1330.items():
+            got = ops_of(lbl)
+            gset = set(got)
+            if exact is not None:
+                check(f"{lbl} 权限项 == {sorted(exact)}", gset == exact, str(got))
+            for g in gone:
+                check(f"{lbl} 已去掉「{g}」", g not in gset, str(got))
+            for a in added:
+                check(f"{lbl} 含「{a}」", a in gset, str(got))
+
+        # 从树上摘除的子菜单
+        tree_all = page.locator('#permTree .rp-tnode').evaluate_all(
+            "els => els.map(e => e.getAttribute('data-label'))")
+        for gone in ["回款列表", "保证金明细", "盯市价格管理"]:
+            check(f"左树不再有「{gone}」菜单节点", gone not in tree_all, str(tree_all[:12]))
+
         # ===== 预警中心改名 + 账户中心按真实系统结构重建 =====
         warn = page.locator('#permTree .rp-tnode[data-depth="1"]').evaluate_all(
             "els => els.map(e => e.getAttribute('data-label'))")
@@ -346,21 +379,22 @@ def main():
         page.click('.rp-tnode[data-label="企业账号管理"] .rp-tnode-label')
         page.wait_for_timeout(300)
         ea = page.locator(".rp-op-label").all_inner_texts()
-        check("企业账号管理 操作权限 10 项",
-              len(ea) == 10, str(ea))
-        for keep in ["新增账号", "编辑账号", "删除账号", "重置密码", "分配角色",
-                     "审核入职申请", "审批邀请", "导出账号列表"]:
+        check("企业账号管理 操作权限 6 项（v1.33.0 删除原配置后重建）",
+              len(ea) == 6, str(ea))
+        for keep in ["创建企业账号", "编辑", "解绑", "申请列表操作",
+                     "邀请列表操作", "邀请企业员工"]:
             check(f"企业账号管理 含「{keep}」权限项", keep in ea, str(ea))
 
         page.click('.rp-tnode[data-label="安全设置"] .rp-tnode-label')
         page.wait_for_timeout(300)
         ss = page.locator(".rp-op-label").all_inner_texts()
-        check("安全设置 操作权限 5 项", len(ss) == 5, str(ss))
+        check("安全设置 操作权限 2 项（v1.33.0 移除 3 项）", len(ss) == 2, str(ss))
 
         page.click('.rp-tnode[data-label="角色权限管理"] .rp-tnode-label')
         page.wait_for_timeout(300)
         rp = page.locator(".rp-op-label").all_inner_texts()
-        check("角色权限管理 操作权限 4 项", len(rp) == 4, str(rp))
+        check("角色权限管理 操作权限 3 项（v1.33.0 移除 保存/确认删除，新增 删除）",
+              len(rp) == 3, str(rp))
         rp_codes = page.locator(".rp-op-code").all_inner_texts()
         check("角色权限管理「确认删除」权限码为 delete",
               any(c.endswith("#delete") for c in rp_codes), str(rp_codes))
