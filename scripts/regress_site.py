@@ -11,6 +11,9 @@ import os
 import glob
 import urllib.request
 import urllib.error
+import sys as _sys, os as _os
+_sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+from pb_auth import add_gate_cookie, host_of, get_session_token
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8899"
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -23,10 +26,18 @@ def check(name, cond, detail=""):
     print(f"{'✅' if cond else '❌'} {name}" + (f"  — {detail}" if detail and not cond else ""))
 
 
+# ⚠️ 必须：① 不走本机代理（FlClash 的代理会把请求转走）
+#          ② 带门禁 cookie（2026-11-10 起站点要登录，未登录拿到的是登录页）
+_opener = urllib.request.build_opener(urllib.request.ProxyHandler({}))
+_COOKIE = {"v": ""}
+
+
 def http_status(url):
     try:
         req = urllib.request.Request(url, method="GET")
-        with urllib.request.urlopen(req, timeout=20) as r:
+        if _COOKIE["v"]:
+            req.add_header("Cookie", "pb_session=" + _COOKIE["v"])
+        with _opener.open(req, timeout=20) as r:
             return r.status, r.read()
     except urllib.error.HTTPError as e:
         return e.code, b""
@@ -35,6 +46,8 @@ def http_status(url):
 
 
 def main():
+    _COOKIE["v"] = get_session_token()   # 门禁 cookie（静态资源抓取也要）
+
     # ---------- 1. 静态页全部可达 ----------
     pages = sorted(glob.glob(os.path.join(ROOT, "pages", "*.html")))
     bad = []
@@ -94,14 +107,15 @@ def main():
 
     # ---------- 3. 浏览器端回归 ----------
     from playwright.sync_api import sync_playwright
-        # 用 Playwright 自带 Chromium 而非系统 Chrome：
-        # 系统 Chrome 会把 http:// 自动升级成 https://（HTTPS-First），
-        # 而 192.144.175.203 没有 443 证书 → 直连 IP 报 ERR_BLOCKED_BY_CLIENT。
-        # 真实用户请走正式入口 https://www.yf9.club。
+    # 用 Playwright 自带 Chromium 而非系统 Chrome：
+    # 系统 Chrome 会把 http:// 自动升级成 https://（HTTPS-First），
+    # 而 192.144.175.203 没有 443 证书 → 直连 IP 报 ERR_BLOCKED_BY_CLIENT。
+    # 真实用户请走正式入口 https://www.yf9.club。
 
     with sync_playwright() as p:
         br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1560, "height": 950})
+        add_gate_cookie(ctx, host_of(BASE))
         page = ctx.new_page()
         errs = []
         page.on("pageerror", lambda e: errs.append(str(e)))

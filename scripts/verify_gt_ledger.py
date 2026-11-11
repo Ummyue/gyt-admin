@@ -20,6 +20,10 @@ def check(name, cond, detail=""):
 
 def main():
     from playwright.sync_api import sync_playwright
+    import sys as _sys, os as _os
+    _sys.path.insert(0, _os.path.dirname(_os.path.abspath(__file__)))
+
+    from pb_auth import add_gate_cookie, host_of
         # 用 Playwright 自带 Chromium 而非系统 Chrome：
         # 系统 Chrome 会把 http:// 自动升级成 https://（HTTPS-First），
         # 而 192.144.175.203 没有 443 证书 → 直连 IP 报 ERR_BLOCKED_BY_CLIENT。
@@ -28,6 +32,7 @@ def main():
     with sync_playwright() as p:
         br = p.chromium.launch()
         ctx = br.new_context(viewport={"width": 1600, "height": 950})
+        add_gate_cookie(ctx, host_of(BASE))
         page = ctx.new_page()
         errs = []
         page.on("pageerror", lambda e: errs.append(str(e)))

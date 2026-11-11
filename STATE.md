@@ -1,5 +1,5 @@
 # 豫港通数字供应链管理平台 — 当前状态快照
-最后更新: 2026-11-11 v1.31.0 线上托管收敛：只保留 www.yf9.club 的豫港通原型（CF Pages 全清 + 福景堂下线）
+最后更新: 2026-11-11 v1.31.1 自动化回归适配工作台门禁（pb_session cookie 注入）
 
 ## 当前部署
 - **apex URL**: https://yugangtong-prototype.pages.dev/ (永远指向最新)
@@ -178,6 +178,27 @@ curl -s -D - -o /dev/null -H "Authorization: Bearer $TOKEN" https://api.cloudfla
 - 新增/编辑角色 = **居中弹窗**（1180px，两栏：左菜单树 + 右操作按钮）
 - 查看角色权限 = **右侧抽屉**（760px，只读）
 - 删除 = 居中二次确认弹窗
+
+### v1.31.1 自动化回归适配工作台门禁（2026-11-11）
+
+2026-11-10 起原型工作台加了**统一口令门禁**（nginx `auth_request` + `pb_session` cookie），
+**IP 直连和域名都要登录**，未登录访问被 302 到 `/workbench/login.html`。
+→ 之前 4 个 Playwright 验证脚本直连会被重定向到登录页，断言全挂。
+
+**解法**（不接触用户口令）：
+1. 服务器加 `/srv/git/_auth/mint_session.py`（root 运行）：import `auth_server` 复用其
+   `_make_token` 签发一个会话 token，**不改任何账号数据**
+2. 仓库加 `scripts/pb_auth.py`：`get_session_token()` / `add_gate_cookie(ctx, host)`，
+   通过 SSH 拿 token → 注入 `pb_session` cookie
+3. 4 个验证脚本统一接入（`regress_site.py` 的静态资源抓取也走 **不走代理** + 带 cookie）
+
+⚠️ **账号必须挑 `mustChangePass=False` 的**：`auth_server._check_token` 规定
+「初始密码未改」的账号（`sysadmin` / `js_user` / `qa-user01` / `rd_user01`）会话令牌一律不认。
+默认用 `yjj_user`。
+
+⚠️ 静态资源抓取必须**显式绕过本机代理**（FlClash 代理会把 192.144.175.203 的请求转走）。
+
+验证：线上 货转台账 **22/22**、角色权限 **119/119**、全站回归 **37/37**。
 
 ### v1.31.0 线上托管收敛：只保留 www.yf9.club 的豫港通原型（2026-11-11）
 
