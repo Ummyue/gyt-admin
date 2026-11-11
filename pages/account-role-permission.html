@@ -629,7 +629,7 @@
 
   <script src="../shared/js/topnav-drawer.js"></script>
   <script src="../shared/js/left-sidemenu.js"></script>
-  <script src="../shared/js/permission-tree.js?v=dc0375d8"></script>
+  <script src="../shared/js/permission-tree.js?v=06da9802"></script>
   <script>
   // ==========================================================================
   // 角色权限管理（v1.23.0）
@@ -1210,7 +1210,9 @@
           + '<span class="rp-merged-ico">⤵</span>'
           + '<span>已并入子页面（不单列为菜单节点，勾选对应操作即放行其访问）：'
           + node.mergedMenus.map(function (m) {
-              return '<b>' + esc(m.label) + '</b>（' + (m.opCount || 0) + ' 项操作权限）';
+              // opCount = 0 表示该子页的操作已由本节点的显式配置项覆盖，不再重复计数
+              return '<b>' + esc(m.label) + '</b>'
+                + (m.opCount ? '（' + m.opCount + ' 项操作权限）' : '（相关操作已并入本菜单的配置项）');
             }).join('、')
           + '</span></div>';
       }

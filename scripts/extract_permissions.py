@@ -81,6 +81,116 @@ EXCLUDE_OPS = {
     "账户中心/企业管理/角色权限管理": {
         "全选", "清空",
     },
+    # 发货管理：删「登记订单发货数据」（下拉按钮项）
+    #   （保留「登记采购订单发运数据」「登记销售订单发运数据」两个具体项）
+    "数字供应链/收发货管理/发货管理": {
+        "登记订单发货数据",
+    },
+    # 收货管理：删「删除」、「确认删除」
+    #   ⚠️ user 原话写的是「发货管理」，但「删除 / 确认删除」这两项只存在于**收货管理**，
+    #   发货管理本来就没有 → 按收货管理处理
+    "数字供应链/收发货管理/收货管理": {
+        "删除", "确认删除",
+    },
+    # 货转管理：删 开具货转 / 批量下载 / + 上传 / 确认上传 / 下载
+    # （「↑ 上传上游货转」「上传已生效单据」是不同按钮，保留）
+    "数字供应链/货转管理": {
+        "开具货转", "批量下载", "+ 上传", "确认上传", "下载",
+    },
+}
+
+
+# ===== 显式权限项（全量替换，不再用页面自动抽取）=====
+# key = 菜单路径，value = [(按钮名, 权限scope)]
+EXPLICIT_OPS = {
+    "数字供应链/合同管理/采购合同": [
+        ("新增框架合同", "create-framework"),
+        ("新增单批次或订单合同", "create-order"),
+        ("数据导出（框架合同）", "export-framework"),
+        ("数据导出（单批次或订单合同）", "export-order"),
+        ("合同详情（框架合同）", "view-framework"),
+        ("合同详情（单批次或订单合同）", "view-order"),
+        ("新增补充协议（框架合同）", "create-supp-framework"),
+        ("新增补充协议（单批次或订单合同）", "create-supp-order"),
+        ("发起合同完结（框架合同）", "finish-framework"),
+        ("发起合同完结（单批次或订单合同）", "finish-order"),
+        ("合同修改（框架合同）", "edit-framework"),
+        ("合同修改（单批次或订单合同）", "edit-order"),
+        ("合同作废（框架合同）", "void-framework"),
+        ("合同作废（单批次或订单合同）", "void-order"),
+        ("撤回审批（框架合同）", "withdraw-framework"),
+        ("撤回审批（单批次或订单合同）", "withdraw-order"),
+        ("上传双签合同（框架合同）", "upload-sign-framework"),
+        ("上传双签合同（单批次或订单合同）", "upload-sign-order"),
+        ("关联合同（订单或单批次）", "relate"),
+        ("开票申请（单批次或订单合同）", "invoice-apply"),
+        ("发起结算（单批次或订单合同）", "settle-apply"),
+        ("开具货转（单批次或订单合同）", "transfer-issue"),
+    ],
+    "数字供应链/合同管理/销售合同": [
+        ("新增框架合同", "create-framework"),
+        ("新增单批次或订单合同", "create-order"),
+        ("数据导出（框架合同）", "export-framework"),
+        ("数据导出（单批次或订单合同）", "export-order"),
+        ("合同详情（框架合同）", "view-framework"),
+        ("合同详情（单批次或订单合同）", "view-order"),
+        ("新增补充协议（框架合同）", "create-supp-framework"),
+        ("新增补充协议（单批次或订单合同）", "create-supp-order"),
+        ("发起合同完结（框架合同）", "finish-framework"),
+        ("发起合同完结（单批次或订单合同）", "finish-order"),
+        ("合同修改（框架合同）", "edit-framework"),
+        ("合同修改（单批次或订单合同）", "edit-order"),
+        ("合同作废（框架合同）", "void-framework"),
+        ("合同作废（单批次或订单合同）", "void-order"),
+        ("撤回审批（框架合同）", "withdraw-framework"),
+        ("撤回审批（单批次或订单合同）", "withdraw-order"),
+        ("上传双签合同（框架合同）", "upload-sign-framework"),
+        ("上传双签合同（单批次或订单合同）", "upload-sign-order"),
+        ("关联合同（订单或单批次）", "relate"),
+        ("开票申请（单批次或订单合同）", "invoice-apply"),
+        ("发起结算（单批次或订单合同）", "settle-apply"),
+        ("开具货转（单批次或订单合同）", "transfer-issue"),
+    ],
+    "数字供应链/合同管理/补充协议": [
+        ("新增补充协议（框架合同补充协议）", "create-framework"),
+        ("新增补充协议（订单或单批次合同补充协议）", "create-order"),
+        ("补协详情（框架合同补充协议）", "view-framework"),
+        ("补协详情（订单或单批次合同补充协议）", "view-order"),
+        ("修改补协（框架合同补充协议）", "edit-framework"),
+        ("修改补协（订单或单批次合同补充协议）", "edit-order"),
+        ("上传双签协议（框架合同补充协议）", "upload-sign-framework"),
+        ("上传双签协议（订单或单批次合同补充协议）", "upload-sign-order"),
+        ("作废补协（框架合同补充协议）", "void-framework"),
+        ("作废补协（订单或单批次合同补充协议）", "void-order"),
+        ("数据导出（框架合同补充协议）", "export-framework"),
+        ("数据导出（订单或单批次合同补充协议）", "export-order"),
+    ],
+}
+
+
+# ===== 追加权限项（保留原有项，在后面补）=====
+ADD_OPS = {
+    # 黑名单管理：增加 修改 / 移入-解除（移入与解除合并为一个权限项）
+    "准入管理/黑名单管理": [
+        ("修改", "edit"), ("移入/解除", "move"),
+    ],
+    # 业务线管理：增加 解除业务线 / 申请业务完结 / 一键下载附件 / 监控查看
+    "数字供应链/业务线管理": [
+        ("解除业务线", "unbind"), ("申请业务完结", "finish"),
+        ("一键下载附件", "download-attach"), ("监控查看", "monitor"),
+    ],
+    # 付款管理：增加 修改 / 作废 / 撤回审批
+    "数字供应链/资金管理/付款管理": [
+        ("修改", "edit"), ("作废", "void"), ("撤回审批", "withdraw"),
+    ],
+    # 退款管理：增加 修改 / 作废 / 撤回审批
+    "数字供应链/资金管理/退款管理": [
+        ("修改", "edit"), ("作废", "void"), ("撤回审批", "withdraw"),
+    ],
+    # 货转管理：新增 上传货权转让协议
+    "数字供应链/货转管理": [
+        ("上传货权转让协议", "upload-transfer-agreement"),
+    ],
 }
 
 
@@ -238,34 +348,55 @@ def _stamp(node, path, merged=None):
     kids = [c for c in raw_children if c["label"] not in consumed]
     node["children"] = kids          # ← 被并入的子节点要从树里移除，必须回写
 
-    # 并入菜单的元信息（含它贡献了几个操作权限项）+ 它带的操作权限项
-    merged_info = []
+    # 并入子页带的操作权限项（其 mergedMenus 元信息在算出最终 ops 后再统计）
     merged_ops = []
     for m in merged:
-        mops = _build_ops(m["buttons"], m["path"], m["label"])
-        merged_info.append({
-            "label": m["label"],
-            "code": "menu:" + m["path"],
-            "opCount": len(mops),
-        })
-        merged_ops.extend(mops)
-    node["mergedMenus"] = merged_info
+        merged_ops.extend(_build_ops(m["buttons"], m["path"], m["label"]))
 
-    if node.get("explicit_ops") is not None:
-        # 真实系统菜单口径下显式声明的操作权限项
+    # 显式权限项来源有两处：① EXPLICIT_OPS 表（本文件的人工调整）
+    #                      ② node["explicit_ops"]（MENU_STRUCTURE_OVERRIDE 重建菜单时声明的）
+    explicit = EXPLICIT_OPS.get(path)
+    if explicit is None and node.get("explicit_ops") is not None:
+        explicit = node["explicit_ops"]
+    if explicit is not None:
+        # 人工显式声明 → **全量替换**（不用页面自动抽取，也不再追加并入子页的 ops）
         used = set()
         ops = []
-        for o in node["explicit_ops"]:
+        for o in explicit:
             scope = o[1]
             if scope in used:
                 scope = "%s%d" % (scope, len(ops) + 1)
             used.add(scope)
             ops.append({"label": o[0], "code": "%s#%s" % (path, scope)})
-        node["ops"] = ops + merged_ops
+        node["ops"] = ops
     elif kids:
         node["ops"] = []
     else:
-        node["ops"] = _build_ops(node.get("buttons", []), path) + merged_ops
+        ops = _build_ops(node.get("buttons", []), path) + merged_ops
+        # 人工追加项（scope 与已有项去重，避免撞码）
+        used = set()
+        for o in ops:
+            used.add(o["code"].rsplit("#", 1)[-1])
+        for label, scope in ADD_OPS.get(path, []):
+            s = scope
+            i = len(ops) + 1
+            while s in used:
+                s = "%s%d" % (scope, i)
+                i += 1
+            used.add(s)
+            ops.append({"label": label, "code": "%s#%s" % (path, s)})
+        node["ops"] = ops
+
+    # mergedMenus 的 opCount 按**最终 ops**统计（显式替换时并入子页的项已不在列）
+    node["mergedMenus"] = [
+        {
+            "label": m["label"],
+            "code": "menu:" + m["path"],
+            "opCount": sum(1 for o in node["ops"]
+                           if o["code"].startswith(m["path"] + "#")),
+        }
+        for m in merged
+    ]
 
     for c in kids:
         _stamp(c, path + "/" + c["label"], child_merged.get(c["label"], []))

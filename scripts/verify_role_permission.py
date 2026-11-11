@@ -144,9 +144,9 @@ def main():
         page.click('.rp-tnode[data-label="准入管理"] [data-check]')
         page.wait_for_timeout(300)
         foot = page.locator("#roleFootTip").inner_text()
-        # 准入管理 = 1 个一级 + 3 个二级；操作按钮 10 + 6 + 4 = 20（user 审核收敛后）
-        check("勾选一级菜单联动全部下级（4 菜单 / 20 按钮）",
-              "已选 4 个菜单 · 20 个操作按钮" in foot, foot)
+        # 准入管理 = 1 个一级 + 3 个二级；操作按钮 10 + 6 + 6 = 22（v1.32.0 黑名单 +2 后）
+        check("勾选一级菜单联动全部下级（4 菜单 / 22 按钮）",
+              "已选 4 个菜单 · 22 个操作按钮" in foot, foot)
 
         # 客户准入 / 黑名单管理 也按 user 图2 / 图3 收敛
         page.click('.rp-tnode[data-label="客户准入"] .rp-tnode-label')
@@ -158,7 +158,8 @@ def main():
         page.click('.rp-tnode[data-label="黑名单管理"] .rp-tnode-label')
         page.wait_for_timeout(250)
         bl = page.locator(".rp-op-label").all_inner_texts()
-        check("黑名单管理权限项收敛为 4 项（user 图3 审核结果）", len(bl) == 4, str(bl))
+        check("黑名单管理权限项收敛为 6 项（v1.24.0 4 项 + v1.32.0 增加 2 项）",
+              len(bl) == 6, str(bl))
         for gone in ["批量删除", "下载模板", "开始导入"]:
             check(f"黑名单管理已剔除「{gone}」权限项", gone not in bl, str(bl))
 
@@ -190,15 +191,10 @@ def main():
         page.click('.rp-tnode[data-label="采购合同"] .rp-tnode-label')
         page.wait_for_timeout(300)
         cm_ops = page.locator(".rp-op-item").count()
-        check("采购合同 操作权限 = 列表页 4 项 + 新增页 5 项 = 9 项", cm_ops == 9, f"实际 {cm_ops}")
-        srcs = page.locator(".rp-op-src").all_inner_texts()
-        check("并入的操作项标注来源「新增采购框架合同」",
-              any("新增采购框架合同" in x for x in srcs), str(srcs))
-        check("并入的操作项标注来源「新增采购订单/单批次合同」",
-              any("新增采购订单/单批次合同" in x for x in srcs), str(srcs))
+        check("采购合同 操作权限 = 22 项（v1.32.0 user 全量替换）", cm_ops == 22, f"实际 {cm_ops}")
         codes = page.locator(".rp-op-code").all_inner_texts()
-        check("并入的操作项保留原页面权限码",
-              any("数字供应链/合同管理/新增采购框架合同#upload" == c for c in codes), str(codes))
+        check("采购合同 权限码改用语义 scope（create-framework 等）",
+              any(c.endswith("#create-framework") for c in codes), str(codes[:3]))
 
         # ===== 回款管理 / 保证金管理：详情/编辑页并入列表页 =====
         page.click('.rp-tnode[data-label="回款管理"] .rp-tnode-label')
@@ -216,7 +212,9 @@ def main():
         check("回款列表 提示条列出已并入的子页面",
               "回款详情" in tip and "回款审批详情" in tip and "编辑回款" in tip, tip)
         check("并入页面的操作项数在提示条里标明",
-              "0 项操作权限" in tip and "3 项操作权限" in tip and "5 项操作权限" in tip, tip)
+              "3 项操作权限" in tip and "5 项操作权限" in tip, tip)
+        check("并入页操作数已归入本菜单时提示「已并入本菜单的配置项」",
+              "相关操作已并入本菜单的配置项" in tip, tip)
 
         page.click('.rp-tnode[data-label="保证金管理"] .rp-tnode-label')
         page.wait_for_timeout(300)
@@ -257,6 +255,75 @@ def main():
             "els => els.map(e => e.getAttribute('data-label'))")
         check("左树不再单列「流程编排画布」菜单节点",
               "流程编排画布" not in tree_labels3, str(tree_labels3))
+
+        # ===== v1.32.0 权限配置项调整（9 项）=====
+        def ops_of(label):
+            page.click('.rp-tnode[data-label="%s"] .rp-tnode-label' % label)
+            page.wait_for_timeout(220)
+            return page.locator(".rp-op-label").all_inner_texts()
+
+        # 1) 黑名单管理：+ 修改 / 移入-解除
+        bl = ops_of("黑名单管理")
+        check("黑名单管理 6 项且含 修改 / 移入-解除",
+              len(bl) == 6 and "修改" in bl and "移入/解除" in bl, str(bl))
+        # 2) 采购合同 / 销售合同：全量替换为 22 项
+        expect_contract = [
+            "新增框架合同", "新增单批次或订单合同", "数据导出（框架合同）", "数据导出（单批次或订单合同）",
+            "合同详情（框架合同）", "合同详情（单批次或订单合同）",
+            "新增补充协议（框架合同）", "新增补充协议（单批次或订单合同）",
+            "发起合同完结（框架合同）", "发起合同完结（单批次或订单合同）",
+            "合同修改（框架合同）", "合同修改（单批次或订单合同）",
+            "合同作废（框架合同）", "合同作废（单批次或订单合同）",
+            "撤回审批（框架合同）", "撤回审批（单批次或订单合同）",
+            "上传双签合同（框架合同）", "上传双签合同（单批次或订单合同）",
+            "关联合同（订单或单批次）", "开票申请（单批次或订单合同）",
+            "发起结算（单批次或订单合同）", "开具货转（单批次或订单合同）",
+        ]
+        for node_label in ("采购合同", "销售合同"):
+            got = ops_of(node_label)
+            check(f"{node_label} 权限项全量替换为 22 项", got == expect_contract, str(got))
+        # 3) 补充协议：全量替换为 12 项
+        expect_supp = [
+            "新增补充协议（框架合同补充协议）", "新增补充协议（订单或单批次合同补充协议）",
+            "补协详情（框架合同补充协议）", "补协详情（订单或单批次合同补充协议）",
+            "修改补协（框架合同补充协议）", "修改补协（订单或单批次合同补充协议）",
+            "上传双签协议（框架合同补充协议）", "上传双签协议（订单或单批次合同补充协议）",
+            "作废补协（框架合同补充协议）", "作废补协（订单或单批次合同补充协议）",
+            "数据导出（框架合同补充协议）", "数据导出（订单或单批次合同补充协议）",
+        ]
+        got = ops_of("补充协议")
+        check("补充协议 权限项全量替换为 12 项", got == expect_supp, str(got))
+        # 4) 业务线管理：+ 解除业务线 / 申请业务完结 / 一键下载附件 / 监控查看
+        got = ops_of("业务线管理")
+        check("业务线管理 5 项且含 4 个新增项",
+              len(got) == 5 and "解除业务线" in got and "申请业务完结" in got
+              and "一键下载附件" in got and "监控查看" in got, str(got))
+        # 5)(6) 发货管理：删 登记订单发货数据 / 删除 / 确认删除
+        got = ops_of("发货管理")
+        check("发货管理 7 项，已去掉 登记订单发货数据 / 删除 / 确认删除",
+              len(got) == 7 and "登记订单发货数据" not in got
+              and "删除" not in got and "确认删除" not in got, str(got))
+        check("发货管理 保留 登记采购/销售订单发运数据",
+              "登记采购订单发运数据" in got and "登记销售订单发运数据" in got, str(got))
+        # 6b) 收货管理：去掉 删除 / 确认删除
+        got = ops_of("收货管理")
+        check("收货管理 4 项，已去掉 删除 / 确认删除",
+              len(got) == 4 and "删除" not in got and "确认删除" not in got, str(got))
+        # 7) 货转管理：删 5 项 + 新增 上传货权转让协议
+        got = ops_of("货转管理")
+        check("货转管理 7 项，新增 上传货权转让协议",
+              len(got) == 7 and "上传货权转让协议" in got, str(got))
+        for gone in ("开具货转", "批量下载", "+ 上传", "确认上传", "下载"):
+            check(f"货转管理 已去掉「{gone}」", gone not in got, str(got))
+        check("货转管理 保留 上传上游货转 / 上传已生效单据",
+              "↑ 上传上游货转" in got and "上传已生效单据" in got, str(got))
+        # 8) 付款管理 / 9) 退款管理：+ 修改 / 作废 / 撤回审批
+        got = ops_of("付款管理")
+        check("付款管理 6 项且含 修改 / 作废 / 撤回审批",
+              len(got) == 6 and "修改" in got and "作废" in got and "撤回审批" in got, str(got))
+        got = ops_of("退款管理")
+        check("退款管理 5 项且含 修改 / 作废 / 撤回审批",
+              len(got) == 5 and "修改" in got and "作废" in got and "撤回审批" in got, str(got))
 
         # ===== 预警中心改名 + 账户中心按真实系统结构重建 =====
         warn = page.locator('#permTree .rp-tnode[data-depth="1"]').evaluate_all(
