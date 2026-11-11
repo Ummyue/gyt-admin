@@ -1411,10 +1411,10 @@
           ops = n.ops.filter(function (o) { return o.label.indexOf(kw) >= 0; });
         }
         var kids = filterGrantedTree(n.children, kw);
-        var keep = kw
-          ? (labelHit || ops.length > 0 || kids.length > 0)
-          : (n.total > 0 || kids.length > 0);
-        if (!keep) return;
+        // 保留条件统一：自身有展示出来的操作项，或有保留下来的后代
+        // ⚠️ 不能单看 labelHit —— 菜单名命中但该菜单下没有任何已授权操作时，
+        //    会留下一颗「0 项」胶囊，树里却找不到对应节点
+        if (ops.length === 0 && kids.length === 0) return;
         out.push({
           id: n.id, label: n.label, icon: n.icon, depth: n.depth,
           children: kids, ops: ops, own: ops.length,
@@ -1459,6 +1459,18 @@
       }).join('');
     }
 
+    // 递归统计一棵（过滤后的）树里实际展示的操作项数量
+    // ⚠️ 必须递归：模块节点的 ops 恒为空，操作项都在二级/三级菜单节点上，
+    //    只遍历顶层会把命中数算成 0
+    function countShownOps(nodes) {
+      var c = 0;
+      nodes.forEach(function (n) {
+        c += n.ops.length;
+        c += countShownOps(n.children);
+      });
+      return c;
+    }
+
     // 已授权权限区块的骨架（只渲染一次；搜索时只重绘统计条 + 树）
     function grantedSectionSkeleton(total) {
       return '<div class="rp-sec">'
@@ -1483,15 +1495,9 @@
       var input = document.getElementById('rpGtSearch');
       var kw = input ? (input.value || '').trim() : '';
       var shown = filterGrantedTree(roots, kw);
-      var hitCount = 0;
-      if (kw) {
-        shown.forEach(function (n) {
-          n.ops.forEach(function (o) { if (o.label.indexOf(kw) >= 0) hitCount++; });
-        });
-      } else {
-        shown.forEach(function (n) { hitCount += n.total; });
-      }
-      var total = roots.reduce(function (a, n) { return a + n.total; }, 0);
+      // 当前展示的操作项数（递归统计，与统计胶囊的项数之和一致）
+      var hitCount = countShownOps(shown);
+      var total = countShownOps(roots);
 
       var sumEl = document.getElementById('rpGtSum');
       var treeEl = document.getElementById('rpGtTree');

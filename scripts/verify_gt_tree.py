@@ -6,6 +6,7 @@
 """
 import sys
 import os
+import re
 
 BASE = sys.argv[1] if len(sys.argv) > 1 else "http://127.0.0.1:8899"
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
@@ -86,14 +87,48 @@ def main():
         page.wait_for_timeout(500)
         hits = page.locator(".rp-gt-op.hit")
         check("搜索可跨层级过滤并高亮命中项", hits.count() > 0, f"实际 {hits.count()}")
-        check("搜索时提示命中数量",
-              "命中" in page.locator(".rp-gt-toolbar").inner_text())
+
+        # ⚠️ 命中数必须**递归统计到子节点**且与统计胶囊之和一致
+        #    （此前只遍历顶层节点，导致命中数恒为 0）
+        def parse_hit(text):
+            m = re.search(r"命中\s*(\d+)\s*项", text)
+            return int(m.group(1)) if m else -1
+
+        def pill_sum():
+            # 胶囊文案形如 "3 项"
+            total = 0
+            for t in page.locator(".rp-gt-sum-item i").all_inner_texts():
+                m = re.search(r"(\d+)", t)
+                if m:
+                    total += int(m.group(1))
+            return total
+
+        tool_txt = page.locator(".rp-gt-toolbar").inner_text()
+        hit_n = parse_hit(tool_txt)
+        check("搜索时提示命中数量且大于 0", hit_n > 0, f"工具条文本: {tool_txt!r}")
+        check("命中数与统计胶囊项数之和一致", hit_n == pill_sum(),
+              f"命中 {hit_n} vs 胶囊和 {pill_sum()}")
+        note_txt = page.locator("#rpGtNote").inner_text()
+        check("区块标题的命中数与工具条一致", f"命中 {hit_n} /" in note_txt,
+              f"标题文本: {note_txt!r}")
+
         check("搜索后未命中模块被隐藏",
               page.locator(".rp-gt-sum-item").count() < 6,
               f"实际 {page.locator('.rp-gt-sum-item').count()}")
+
+        # 无关键字时：总数应等于当前权限项总数，且胶囊之和 == 标题总数
         page.fill("#rpGtSearch", "")
         page.wait_for_timeout(400)
         check("清空搜索后恢复完整树", page.locator(".rp-gt-sum-item").count() >= 5)
+        full_note = page.locator("#rpGtNote").inner_text()
+        m = re.search(r"共\s*(\d+)\s*项操作权限", full_note)
+        total_n = int(m.group(1)) if m else -1
+        check("清空搜索后标题显示总项数", total_n > 0, f"标题文本: {full_note!r}")
+        check("清空搜索后胶囊项数之和 == 标题总数", pill_sum() == total_n,
+              f"胶囊和 {pill_sum()} vs 标题 {total_n}")
+        check("清空搜索后总数 == 全部展开后的 chip 数",
+              total_n == page.locator(".rp-gt-op").count(),
+              f"标题 {total_n} vs chip {page.locator('.rp-gt-op').count()}")
 
         # 8) 旧版摊平 chip 列表已移除
         check("旧的摊平 chip 列表已移除", page.locator(".rp-granted-list").count() == 0)
