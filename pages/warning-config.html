@@ -63,6 +63,37 @@
     .wc-table .col-action { text-align: right; }
     .wc-table .col-action a { color: var(--color-primary); margin-left: 8px; text-decoration: none; }
     .wc-table .col-action a:hover { text-decoration: underline; }
+    /* v1.36.0：删除操作用危险色，与「编辑」等中性操作区分 */
+    .wc-table .col-action a.wc-del { color: var(--color-danger); }
+    .wc-table .col-action a.wc-del:hover { color: var(--color-danger); }
+
+    /* ===== 二次确认弹窗（v1.36.0：删除规则）===== */
+    .wc-confirm-mask {
+      position: fixed; inset: 0; background: rgba(15, 23, 42, 0.45);
+      display: none; align-items: center; justify-content: center; z-index: 10000; padding: 24px;
+    }
+    .wc-confirm-mask.show { display: flex; }
+    .wc-confirm {
+      background: #fff; border-radius: 12px; width: 420px; max-width: 100%;
+      box-shadow: 0 20px 50px rgba(15,23,42,.22); overflow: hidden;
+    }
+    .wc-confirm-body { padding: 24px 24px 8px; display: flex; gap: 14px; }
+    .wc-confirm-ico {
+      width: 38px; height: 38px; border-radius: 50%; flex-shrink: 0;
+      background: var(--color-danger-light); color: var(--color-danger);
+      display: flex; align-items: center; justify-content: center;
+    }
+    .wc-confirm-title { font-size: 15px; font-weight: 600; color: var(--text-primary); margin-bottom: 6px; }
+    .wc-confirm-text { font-size: 13px; color: var(--text-secondary); line-height: 1.65; }
+    .wc-confirm-text b { color: var(--text-primary); }
+    .wc-confirm-foot { padding: 14px 24px 20px; display: flex; justify-content: flex-end; gap: 10px; }
+    .wc-toast {
+      position: fixed; bottom: 40px; left: 50%; transform: translateX(-50%);
+      background: rgba(31, 41, 55, 0.92); color: #fff; padding: 10px 20px;
+      border-radius: 4px; font-size: 13px; z-index: 10001; opacity: 0;
+      transition: opacity .2s; pointer-events: none;
+    }
+    .wc-toast.show { opacity: 1; }
     .wc-table .col-num { font-family: var(--font-mono); color: var(--color-primary); }
     .wc-table select.risk-select {
       width: 60px; height: 24px; padding: 0 4px;
@@ -186,8 +217,9 @@
           <div class="wc-table-wrap">
             <table class="wc-table">
               <colgroup>
-                <col style="width: 12%;"><col style="width: 14%;"><col style="width: 10%;"><col style="width: 28%;">
-                <col style="width: 9%;"><col style="width: 9%;"><col style="width: 9%;"><col style="width: 11%;">
+                <col style="width: 11%;"><col style="width: 13%;"><col style="width: 9%;"><col style="width: 26%;">
+                <col style="width: 8%;"><col style="width: 8%;"><col style="width: 8%;"><col style="width: 9%;">
+                <col style="width: 10%;">
               </colgroup>
               <thead>
                 <tr>
@@ -199,6 +231,7 @@
                   <th>状态</th>
                   <th>最后操作人员</th>
                   <th>最后操作时间</th>
+                  <th class="col-action">操作</th>
                 </tr>
               </thead>
               <tbody>
@@ -212,6 +245,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>取操作人用名</td>
                   <td>取最新操作时间</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJGS0002</td>
@@ -222,6 +256,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJGS0003</td>
@@ -232,6 +267,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJGS0004</td>
@@ -242,6 +278,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJGS0005</td>
@@ -252,6 +289,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <!-- 司法诉讼 3 行 -->
                 <tr>
@@ -263,6 +301,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJSS0002</td>
@@ -273,6 +312,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJSS0003</td>
@@ -283,6 +323,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <!-- 经营风险 2 行 -->
                 <tr>
@@ -294,6 +335,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">YJSS0005</td>
@@ -304,6 +346,7 @@
                   <td><label class="ios-switch"><input type="checkbox" checked><span class="slider"></span></label></td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
+                                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
               </tbody>
             </table>
@@ -414,7 +457,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -429,7 +472,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -444,7 +487,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -459,7 +502,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -474,7 +517,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -489,7 +532,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -504,7 +547,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -519,7 +562,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -534,7 +577,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">自动生成规则编号</td>
@@ -549,7 +592,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
               </tbody>
             </table>
@@ -658,7 +701,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -674,7 +717,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -690,7 +733,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -706,7 +749,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -722,7 +765,7 @@
                   <td>此处是备注</td>
                   <td>张三</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -738,7 +781,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -754,7 +797,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -770,7 +813,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -786,7 +829,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
                 <tr>
                   <td class="col-num">DSYJGZ0000010</td>
@@ -802,7 +845,7 @@
                   <td>此处是备注</td>
                   <td>李四</td>
                   <td>2023-03-22 23:33:22</td>
-                  <td class="col-action"><a href="#">编辑</a><a href="./warning-price-contract-config.html">合同配置</a></td>
+                  <td class="col-action"><a href="#" class="wc-row-op">编辑</a><a href="./warning-price-contract-config.html" class="wc-row-op">合同配置</a><a href="#" class="wc-row-op wc-del">删除</a></td>
                 </tr>
               </tbody>
             </table>
@@ -1178,6 +1221,25 @@
     </div>
   </div>
 
+  <!-- v1.36.0 删除预警规则 · 二次确认弹窗（居中） -->
+  <div class="wc-confirm-mask" id="wcConfirmMask">
+    <div class="wc-confirm">
+      <div class="wc-confirm-body">
+        <div class="wc-confirm-ico">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/></svg>
+        </div>
+        <div>
+          <div class="wc-confirm-title">确认删除该预警规则？</div>
+          <div class="wc-confirm-text" id="wcConfirmText"></div>
+        </div>
+      </div>
+      <div class="wc-confirm-foot">
+        <button type="button" class="btn btn-secondary" onclick="closeWcConfirm()">取消</button>
+        <button type="button" class="btn btn-danger" id="wcConfirmOkBtn">确认删除</button>
+      </div>
+    </div>
+  </div>
+  <div class="wc-toast" id="wcToast"></div>
 
   <style>
     /* v1.7.99.245 新建预警规则弹窗（右侧 drawer 风格） */
@@ -2011,6 +2073,84 @@
         if (pMask && pMask.style.display !== 'none') { closeAddRulePriceModal(); return; }
         var mask = document.getElementById('addRuleModalMask');
         if (mask && mask.style.display !== 'none') closeAddRuleModal();
+      }
+    });
+
+    // ================================================================
+    // v1.36.0 删除预警规则（三个 tab 统一）
+    // ================================================================
+    var wcPendingRow = null;   // 待确认删除的 <tr>
+
+    // 取行内的规则名称（第 2 列），用于确认文案
+    function wcRuleName(tr) {
+      var tds = tr.querySelectorAll('td');
+      return (tds[1] && tds[1].textContent || '').trim() || '该规则';
+    }
+
+    function openWcConfirm(tr) {
+      wcPendingRow = tr;
+      var name = wcRuleName(tr);
+      var codeEl = tr.querySelector('td.col-num');
+      var code = codeEl ? codeEl.textContent.trim() : '';
+      var text = '确定删除预警规则「<b>' + name + '</b>」？'
+        + (code ? '（' + code + '）' : '')
+        + '。删除后该规则不再触发预警，且不可恢复。';
+      document.getElementById('wcConfirmText').innerHTML = text;
+      document.getElementById('wcConfirmMask').classList.add('show');
+    }
+
+    function closeWcConfirm() {
+      document.getElementById('wcConfirmMask').classList.remove('show');
+      wcPendingRow = null;
+    }
+
+    function confirmWcDelete() {
+      if (!wcPendingRow) { closeWcConfirm(); return; }
+      var name = wcRuleName(wcPendingRow);
+      var tbody = wcPendingRow.parentNode;
+      wcPendingRow.remove();
+      closeWcConfirm();
+      // 整表删空时给出空态
+      if (tbody && tbody.querySelectorAll('tr').length === 0) {
+        var table = tbody.closest('table');
+        var colCount = table ? table.querySelectorAll('thead th').length : 1;
+        tbody.innerHTML = '<tr><td colspan="' + colCount + '" '
+          + 'style="text-align:center;color:var(--text-tertiary);padding:40px 0;">'
+          + '暂无预警规则</td></tr>';
+      }
+      wcToast('已删除预警规则「' + name + '」');
+    }
+
+    // toast（页面内的轻提示，区别于 Utils.toast 的 console mock）
+    var wcToastTimer = null;
+    function wcToast(msg) {
+      var el = document.getElementById('wcToast');
+      if (!el) return;
+      el.textContent = msg;
+      el.classList.add('show');
+      clearTimeout(wcToastTimer);
+      wcToastTimer = setTimeout(function () { el.classList.remove('show'); }, 2400);
+    }
+
+    // 事件委托：三个 tab 的列表统一走 .wc-del
+    document.addEventListener('click', function (e) {
+      var del = e.target.closest && e.target.closest('.wc-del');
+      if (del) {
+        e.preventDefault();
+        var tr = del.closest('tr');
+        if (tr) openWcConfirm(tr);
+        return;
+      }
+      if (e.target.id === 'wcConfirmOkBtn') { confirmWcDelete(); return; }
+      // 点遮罩关闭（点弹窗本体不关）
+      if (e.target.id === 'wcConfirmMask') closeWcConfirm();
+    });
+
+    // ESC 关闭确认弹窗
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape') {
+        var mask = document.getElementById('wcConfirmMask');
+        if (mask && mask.classList.contains('show')) { closeWcConfirm(); return; }
       }
     });
   </script>

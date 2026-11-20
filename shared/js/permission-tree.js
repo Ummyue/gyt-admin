@@ -1,5 +1,5 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-11 17:00:48
+// 生成时间：2026-11-20 14:43:01
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
 
 window.PERMISSION_TREE = [
@@ -602,8 +602,7 @@ window.PERMISSION_TREE = [
               "查看",
               "作废",
               "确认收货",
-              "删除",
-              "确认删除"
+              "删除"
             ],
             "children": [],
             "code": "menu:数字供应链/收发货管理/收货管理",
@@ -1680,8 +1679,6 @@ window.PERMISSION_TREE = [
         "file": "warning-config.html",
         "buttons": [
           "添加规则",
-          "编辑",
-          "合同配置",
           "提交"
         ],
         "children": [],
@@ -1692,16 +1689,20 @@ window.PERMISSION_TREE = [
             "code": "预警中心/预警设置#op1"
           },
           {
-            "label": "编辑",
-            "code": "预警中心/预警设置#edit"
-          },
-          {
             "label": "风险等级设置",
             "code": "预警中心/预警设置#risk-level"
           },
           {
             "label": "状态开关",
             "code": "预警中心/预警设置#status-switch"
+          },
+          {
+            "label": "编辑",
+            "code": "预警中心/预警设置#edit"
+          },
+          {
+            "label": "删除",
+            "code": "预警中心/预警设置#delete"
           }
         ],
         "mergedMenus": []

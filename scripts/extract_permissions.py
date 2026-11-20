@@ -311,8 +311,12 @@ ADD_OPS = {
         ("下载PDF报告", "download-pdf"),
     ],
     # 预警设置：+ 风险等级设置 / 状态开关（同时 EXCLUDE_OPS 移除 合同配置 / 提交）
+    # v1.36.0：三个 tab 的列表操作列统一加了「删除」，并给操作列按钮加了
+    #          EXCLUDE_BTN_CLASS(wc-row-op) → 不走自动抽取，在这里显式声明。
+    #          「编辑」原本是自动抽取出来的（scope=edit），这里补声明以保持权限码不变。
     "预警中心/预警设置": [
         ("风险等级设置", "risk-level"), ("状态开关", "status-switch"),
+        ("编辑", "edit"), ("删除", "delete"),
     ],
 }
 
@@ -534,12 +538,24 @@ def _stamp(node, path, merged=None):
 CHROME_TEXT = {
     "版本变更记录", "查询", "重置", "刷新", "新建", "更多", "展开",
     "全部", "上一页", "下一页", "确定", "取消", "关闭", "返回",
+    # v1.36.0：二次确认弹窗的确认键是弹窗外壳动作，不是业务操作
+    # （v1.33.0 第 37 项已把「角色权限管理」的「确认删除」移除，口径一致）
+    "确认删除",
 }
 
 # 明显属于页面外壳的元素 class
 CHROME_CLASS_HINT = (
     "topbar", "pagination", "page-num", "breadcrumb", "sidemenu",
     "topnav", "pin-annotation", "chat-float", "ai-float",
+)
+
+# 列表**操作列**里的按钮：不走自动抽取，改由人工配置表显式声明
+# ⚠️ 原因：自动抽取用「按钮在列表中的绝对位置」给无语义按钮编 opN，
+#    在列表操作列里新增一个按钮（如 v1.36.0 预警设置的「删除」）会把
+#    后面匿名按钮的 opN 整体后移 → 已保存角色的权限码漂移、勾选失效。
+#    排除掉操作列按钮后，opN 编号只由页面其他区域的按钮决定，保持稳定。
+EXCLUDE_BTN_CLASS = (
+    "wc-row-op",
 )
 
 
@@ -713,6 +729,8 @@ def extract_buttons(html_path, menu_labels=None):
         if not text or len(text) > 24:
             continue
         if any(hint in classes for hint in CHROME_CLASS_HINT):
+            continue
+        if any(hint in classes for hint in EXCLUDE_BTN_CLASS):
             continue
         if text in CHROME_TEXT or text in menu_labels:
             continue
