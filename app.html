@@ -474,8 +474,12 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+  <!-- v1.36.0：marked / mermaid 由外部 CDN 改为本地化 -->
+  <!-- ⚠️ 原因：CDN 抖动导致 marked 拉不到 → 下方 inline script 抛
+  「marked is not defined」→ 整页 JS 中断 → 左侧导航树不渲染；
+  mermaid 单文件 3.3MB，走 CDN 平均要 2~20 秒，阻塞首屏 -->
+  <script src="./assets/vendor/marked.min.js"></script>
+  <script src="./assets/vendor/mermaid.min.js"></script>
   <script src="./assets/js/pin-annotation.js"></script>
   <script>
     // ===== 页面树（83 个页面，1:1 路由映射，3 级 group→sub→page）=====
