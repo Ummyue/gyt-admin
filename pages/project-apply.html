@@ -1277,7 +1277,8 @@
         category: '上游客户',
         icon: '🏢',
         basic: {
-          '国家': '中国', '省份': '河南省', '客户类别': '上游企业',
+          '国家': '中国', '省份': '河南省', '项目角色': '上游企业',
+        '企业类型': '资源型企业 / 贸易流通型企业',
           '企业名称': '河南军牧原国际贸易有限公司',
           '注册地址': '河南省郑州市金水区花园路 88 号',
           '注册资本': '5,000 万人民币',
@@ -1362,7 +1363,8 @@
         category: '第三方物流',
         icon: '🚚',
         basic: {
-          '国家': '中国', '省份': '河南省', '客户类别': '第三方物流',
+          '国家': '中国', '省份': '河南省', '项目角色': '第三方物流',
+        '企业类型': '贸易流通型企业',
           '企业名称': '郑州铁龙物流有限公司',
           '注册地址': '河南省郑州市二七区解放路 100 号',
           '注册资本': '1,000 万人民币',
@@ -1445,7 +1447,8 @@
         category: '第三方物流',
         icon: '🚢',
         basic: {
-          '国家': '中国', '省份': '河南省', '客户类别': '第三方物流',
+          '国家': '中国', '省份': '河南省', '项目角色': '第三方物流',
+        '企业类型': '贸易流通型企业',
           '企业名称': '郑州铁龙国际货运代理有限公司',
           '注册地址': '河南省郑州市管城区航海东路 88 号',
           '注册资本': '500 万人民币',
@@ -1528,7 +1531,10 @@
     function renderCompany(c, key) {
       // 基础信息字段（按 3 列 grid 排列）
       const basicFields = [
-        ['国家', c.basic['国家'], 1], ['省份', c.basic['省份'], 1], ['客户类别', c.basic['客户类别'], 1],
+        ['国家', c.basic['国家'], 1], ['省份', c.basic['省份'], 1],
+        ['项目角色', c.basic['项目角色'] || c.basic['客户类别'] || '—', 1],
+        // v1.37.0：企业类型（可多选，采集自关联企业信息弹窗）
+        ['企业类型', c.basic['企业类型'] || '—', 1],
         ['企业名称', c.basic['企业名称'], 1], ['注册地址', c.basic['注册地址'], 2],
         ['注册资本', c.basic['注册资本'], 1], ['企业性质', c.basic['企业性质'], 1], ['统一社会信用代码', c.basic['统一社会信用代码'], 1],
         ['成立日期', c.basic['成立日期'], 1], ['经营期限（止）', c.basic['经营期限（止）'], 1], ['法定代表人', c.basic['法定代表人'], 1],
@@ -2306,7 +2312,7 @@
       renderCmMaterialFiles(key);
     }
 
-    // 把弹窗暂存材料按"客户类别+企业名称"维度存到 localStorage
+    // 把弹窗暂存材料按"项目角色+企业名称"维度存到 localStorage
     function saveCmMaterials(category, companyName) {
       CUSTOMER_MATERIALS.forEach(function(m) {
         var files = _cmMaterials[m.key] || [];
@@ -2375,7 +2381,7 @@
 
     // ===== v1.7.99.31 已完成准入企业完整 17 字段自动带入 =====
     function fillCompanyFull(c) {
-      // 客户类别
+      // 项目角色
       const catSelect = document.getElementById('cmProjectRole');
       const catMap = { '上游客户': 0, '下游客户': 1, '第三方物流': 2, '第三方仓储': 3 };
       if (catMap[c.customerCategory] !== undefined) catSelect.selectedIndex = catMap[c.customerCategory];
@@ -2411,7 +2417,7 @@
           <p style="margin: 0 0 12px;">企业 <b>${c.name}</b>（流程状态：<b style="color: #16A34A;">执行中</b>）已由本平台完成项目准入。</p>
           <p style="margin: 0 0 8px;">系统已自动带入：</p>
           <ul style="margin: 0 0 12px; padding-left: 24px; color: var(--text-secondary); font-size: 13px;">
-            <li>全部 17 项企业基础信息（客户类别/工商信息/联系人/负责人/银行账户）</li>
+            <li>全部 17 项企业基础信息（项目角色/工商信息/联系人/负责人/银行账户）</li>
             <li>企业风险报告（首次录入时数据，<b>${greenCount}</b> 项绿 / <b style="color: #D97706;">${yellowCount}</b> 项黄）</li>
           </ul>
           <p style="margin: 0; color: var(--text-tertiary); font-size: 12px;">字段已自动填入下方表单，可继续核对/修改后点击「确认添加」。</p>
@@ -2625,7 +2631,7 @@
         if (firstRow) firstRow.scrollIntoView({ behavior: 'smooth', block: 'center' });
         return;
       }
-      // v1.7.99.298 保存材料到 localStorage（按"客户类别+企业名称"维度）
+      // v1.7.99.298 保存材料到 localStorage（按"项目角色+企业名称"维度）
       saveCmMaterials(category, name);
       if (_editingCard) {
         // 编辑模式：替换原卡片内容

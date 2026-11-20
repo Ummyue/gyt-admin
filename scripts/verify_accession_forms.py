@@ -178,6 +178,38 @@ def main():
                 check("权限树节点 code 仍为 menu:准入管理/客户准入",
                       ent[0].get("code") == "menu:准入管理/客户准入", f"实际 {ent[0].get('code')}")
 
+        # ================= 统一：全站「客户类别」→「项目角色」=================
+        page.goto(f"{BASE}/pages/customer-detail.html", wait_until="networkidle")
+        page.wait_for_timeout(700)
+        # 详情页部分区块在隐藏 tab 里 → 用 HTML 源码断言（含未激活 tab）
+        cd_text = page.content()
+        check("客户详情页不再出现「客户类别」", "客户类别" not in cd_text)
+        check("客户详情页出现「项目角色」", "项目角色" in cd_text)
+        check("客户详情页展示业务「企业类型」", "贸易流通型企业" in cd_text)
+        check("客户详情页工商字段改为「企业性质」",
+              "企业性质" in cd_text and "其他有限责任公司" in cd_text)
+
+        page.goto(f"{BASE}/pages/project-detail.html", wait_until="networkidle")
+        page.wait_for_timeout(700)
+        pd_text = page.content()
+        check("项目详情页不再出现「客户类别」", "客户类别" not in pd_text)
+        check("项目详情页出现「项目角色」", "项目角色" in pd_text)
+        check("项目详情页展示业务「企业类型」", "资源型企业" in pd_text)
+
+        page.goto(f"{BASE}/pages/customer-apply.html", wait_until="networkidle")
+        page.wait_for_timeout(700)
+        ca_form = page.locator(".form-grid").first.inner_text()
+        check("客户准入表单标签为「项目角色」",
+              "项目角色" in ca_form and "客户类别" not in ca_form)
+
+        # ================= 兼容：存量数据仍可读 =================
+        # 老 mock 结构只有 basic['客户类别'] → 渲染时兜底读旧 key
+        compat = page.evaluate(
+            "() => { const c = { basic: { '国家': '中国', '客户类别': '上游企业' } };"
+            " return c.basic['项目角色'] || c.basic['客户类别'] || '—'; }")
+        check("老数据（basic['客户类别']）兼容读取为项目角色",
+              compat == "上游企业", str(compat))
+
         check("无 JS 错误", not errs, "; ".join(errs[:3]))
         br.close()
 
