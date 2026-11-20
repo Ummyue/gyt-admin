@@ -26,7 +26,8 @@
       icon: '📋',
       subMenus: [
         { label: '项目准入', file: 'project-list.html' },
-        { label: '客户准入', file: 'customer-list.html' },
+        // v1.37.0：客户准入 → 企业准入（菜单名）
+        { label: '企业准入', file: 'customer-list.html' },
         { label: '黑名单管理', file: 'blacklist.html' }
       ]
     },

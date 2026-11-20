@@ -471,7 +471,7 @@
         <div class="breadcrumb">
           <span>准入管理</span>
           <span class="separator">/</span>
-          <span>客户管理</span>
+          <span>企业准入</span>
           <span class="separator">/</span>
           <span class="current">新增客户申请</span>
         </div>
@@ -576,13 +576,18 @@
                   <label class="form-label">负责人电话 <span class="required">*</span></label>
                   <input type="text" class="input" id="custOwnerPhone" placeholder="请输入负责人电话">
                 </div>
-                <div class="form-field">
-                  <label class="form-label">企业开户行信息 <span class="required">*</span></label>
-                  <input type="text" class="input" id="custBankName" placeholder="如：中国工商银行郑州金水支行" value="中国工商银行郑州金水支行">
-                </div>
-                <div class="form-field">
-                  <label class="form-label">企业银行账号 <span class="required">*</span></label>
-                  <input type="text" class="input" id="custBankAccount" placeholder="请输入企业银行账号" value="6222 XXXX XXXX XXXX XXXX" style="font-family: var(--font-mono); font-size: 13px;">
+                <!-- v1.37.0：企业开户行信息 + 企业银行账号 合并为「企业银行账户」子表，可添加多个 -->
+                <div class="form-field" style="grid-column: 1 / -1;">
+                  <div class="sub-table">
+                    <div class="sub-table-head">
+                      <span class="sub-table-title">企业银行账户 <span class="required">*</span></span>
+                      <span class="sub-table-hint">可添加多个开户行及对应银行账号，至少填写一组</span>
+                    </div>
+                    <div class="sub-table-list" id="custBankList"></div>
+                    <div class="sub-table-foot">
+                      <button type="button" class="btn btn-secondary btn-sm" onclick="custAddBankRow()">+ 添加银行账户</button>
+                    </div>
+                  </div>
                 </div>
                 <div class="form-field" style="grid-column: 1 / -1;">
                   <label class="form-label">企业简称</label>
@@ -1278,8 +1283,6 @@
           { id: 'custContactPhone', label: '联系人电话' },
           { id: 'custOwnerName', label: '负责人姓名' },
           { id: 'custOwnerPhone', label: '负责人电话' },
-          { id: 'custBankName', label: '企业开户行信息' },
-          { id: 'custBankAccount', label: '企业银行账号' },
         ];
         for (const f of requiredFields) {
           const v = document.getElementById(f.id).value.trim();
@@ -1288,6 +1291,16 @@
             document.getElementById(f.id).focus();
             return;
           }
+        }
+        // v1.37.0：企业银行账户子表校验（至少一组，每组开户行 + 账号都必填）
+        const custBanks = custGetBankAccounts();
+        if (custBanks.length === 0) {
+          alert('请至少填写一组企业银行账户');
+          return;
+        }
+        for (let i = 0; i < custBanks.length; i++) {
+          if (!custBanks[i].name) { alert(`请填写第 ${i + 1} 组的企业开户行信息`); return; }
+          if (!custBanks[i].account) { alert(`请填写第 ${i + 1} 组的企业银行账号`); return; }
         }
         // v1.7.99.26：项目小组成员必填
         if (selectedMembers.length === 0) {
@@ -1326,6 +1339,70 @@
       { id: 'U0016', name: '徐丽',   pinyin: 'xuli',         abbr: 'xl',  dept: '财务部',     role: '出纳' },
     ];
     const selectedMembers = [];
+
+    // ===== v1.37.0 企业银行账户子表（可添加多个开户行 + 账号）=====
+    function custAddBankRow(bankName, bankAccount) {
+      var list = document.getElementById('custBankList');
+      if (!list) return;
+      var row = document.createElement('div');
+      row.className = 'sub-table-row';
+      row.innerHTML =
+        '<div class="form-field">'
+        + '<label class="form-label">企业开户行信息 <span class="required">*</span></label>'
+        + '<input type="text" class="input" data-role="bank-name" placeholder="如：中国工商银行郑州金水支行" value="'
+        + String(bankName || '').replace(/"/g, '&quot;') + '">'
+        + '</div>'
+        + '<div class="form-field">'
+        + '<label class="form-label">企业银行账号 <span class="required">*</span></label>'
+        + '<input type="text" class="input" data-role="bank-account" placeholder="请输入企业银行账号" value="'
+        + String(bankAccount || '').replace(/"/g, '&quot;') + '" style="font-family: var(--font-mono); font-size: 13px;">'
+        + '</div>'
+        + '<button type="button" class="sub-table-del" title="删除该银行账户" onclick="custRemoveBankRow(this)">×</button>';
+      list.appendChild(row);
+      custSyncBankDelState();
+    }
+
+    function custRemoveBankRow(btn) {
+      var list = document.getElementById('custBankList');
+      if (!list) return;
+      if (list.querySelectorAll('.sub-table-row').length <= 1) return;  // 至少保留一组
+      var row = btn.closest('.sub-table-row');
+      if (row) row.remove();
+      custSyncBankDelState();
+    }
+
+    function custSyncBankDelState() {
+      var list = document.getElementById('custBankList');
+      if (!list) return;
+      var rows = list.querySelectorAll('.sub-table-row');
+      var onlyOne = rows.length <= 1;
+      rows.forEach(function (r) {
+        var del = r.querySelector('.sub-table-del');
+        if (del) del.disabled = onlyOne;
+      });
+    }
+
+    function custGetBankAccounts() {
+      var out = [];
+      var list = document.getElementById('custBankList');
+      if (!list) return out;
+      list.querySelectorAll('.sub-table-row').forEach(function (r) {
+        var n = r.querySelector('[data-role="bank-name"]');
+        var a = r.querySelector('[data-role="bank-account"]');
+        var name = n ? n.value.trim() : '';
+        var acct = a ? a.value.trim() : '';
+        if (name || acct) out.push({ name: name, account: acct });
+      });
+      return out;
+    }
+
+    function custResetBankRows(bankName, bankAccount) {
+      var list = document.getElementById('custBankList');
+      if (!list) return;
+      list.innerHTML = '';
+      custAddBankRow(bankName !== undefined ? bankName : '中国工商银行郑州金水支行',
+                     bankAccount !== undefined ? bankAccount : '6222 XXXX XXXX XXXX XXXX');
+    }
 
     function renderMemberChips() {
       const wrap = document.getElementById('memberChips');
@@ -1389,6 +1466,8 @@
         suggest.classList.remove('show');
       }
     });
+    // v1.37.0：企业银行账户子表初始化（默认一行）
+    custResetBankRows();
   </script>
   </div>
   <!-- /main-content -->

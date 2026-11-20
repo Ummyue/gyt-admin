@@ -1012,16 +1012,26 @@
         </div>
 
         <div class="form-grid form-grid-3">
+          <!-- v1.37.0：首行 = 项目角色 + 企业类型（可多选）；第二行 = 企业名称独占整行 -->
           <div class="form-field">
-            <label class="form-label">客户类别 <span class="required">*</span></label>
-            <select class="select" id="cmCustomerCategory">
+            <label class="form-label">项目角色 <span class="required">*</span></label>
+            <select class="select" id="cmProjectRole">
               <option>上游客户</option>
               <option>下游客户</option>
               <option>第三方物流</option>
               <option>第三方仓储</option>
             </select>
           </div>
-          <div class="form-field company-search" style="grid-column: 2 / -1;">
+          <div class="form-field" style="grid-column: 2 / -1;">
+            <label class="form-label">企业类型</label>
+            <div class="multi-select-group" id="cmCompanyTypes">
+              <label class="multi-select-item"><input type="checkbox" value="资源型企业"><span>资源型企业</span></label>
+              <label class="multi-select-item"><input type="checkbox" value="生产加工型企业"><span>生产加工型企业</span></label>
+              <label class="multi-select-item"><input type="checkbox" value="贸易流通型企业"><span>贸易流通型企业</span></label>
+            </div>
+            <div class="form-help">可多选，如同时具备资源与贸易属性可勾选两项</div>
+          </div>
+          <div class="form-field company-search" style="grid-column: 1 / -1;">
             <label class="form-label">企业名称 <span class="required">*</span></label>
             <input type="text" class="input" placeholder="请输入企业全称" id="cmCompanyName" autocomplete="off">
             <!-- 模糊匹配下拉 -->
@@ -1075,13 +1085,18 @@
             <label class="form-label">负责人电话 <span class="required">*</span></label>
             <input type="text" class="input" placeholder="请输入负责人电话" id="cmOwnerPhone">
           </div>
-          <div class="form-field">
-            <label class="form-label">企业开户行信息 <span class="required">*</span></label>
-            <input type="text" class="input" placeholder="如：中国工商银行郑州金水支行" id="cmBankName" value="中国工商银行郑州金水支行">
-          </div>
-          <div class="form-field">
-            <label class="form-label">企业银行账号 <span class="required">*</span></label>
-            <input type="text" class="input" placeholder="请输入企业银行账号" id="cmBankAccount" value="6222 XXXX XXXX XXXX XXXX" style="font-family: var(--font-mono); font-size: 13px;">
+          <!-- v1.37.0：企业开户行信息 + 企业银行账号 合并为「企业银行账户」子表，可添加多个 -->
+          <div class="form-field" style="grid-column: 1 / -1;">
+            <div class="sub-table">
+              <div class="sub-table-head">
+                <span class="sub-table-title">企业银行账户 <span class="required">*</span></span>
+                <span class="sub-table-hint">可添加多个开户行及对应银行账号，至少填写一组</span>
+              </div>
+              <div class="sub-table-list" id="cmBankList"></div>
+              <div class="sub-table-foot">
+                <button type="button" class="btn btn-secondary btn-sm" onclick="cmAddBankRow()">+ 添加银行账户</button>
+              </div>
+            </div>
           </div>
           <div class="form-field" style="grid-column: 1 / -1;">
             <label class="form-label">企业简称</label>
@@ -2333,6 +2348,9 @@
       }
       document.getElementById('companyModal').style.display = 'flex';
       renderCmMaterials();  // v1.7.99.298 重渲染材料上传列表
+      // v1.37.0：银行账户子表初始化为一行（clearModal 在关闭时已重置，这里兜底）
+      var bankList = document.getElementById('cmBankList');
+      if (bankList && !bankList.querySelector('.sub-table-row')) cmResetBankRows();
       document.getElementById('cmCompanyName').focus();
     }
     function closeCompanyModal() {
@@ -2344,6 +2362,13 @@
        'cmContactName', 'cmContactPhone', 'cmContactEmail', 'cmOwnerName', 'cmOwnerPhone', 'cmShortName'].forEach(id => {
         document.getElementById(id).value = '';
       });
+      // v1.37.0：银行账户子表重置为默认一组；企业类型多选清空
+      cmResetBankRows();
+      var typeBox = document.getElementById('cmCompanyTypes');
+      if (typeBox) {
+        typeBox.querySelectorAll('input[type="checkbox"]').forEach(function (cb) { cb.checked = false; });
+        cmSyncMultiSelect(typeBox);
+      }
       document.getElementById('companySuggest').classList.remove('show');
       document.getElementById('cmHint').textContent = '输入 ≥ 1 字符触发模糊匹配';
     }
@@ -2351,7 +2376,7 @@
     // ===== v1.7.99.31 已完成准入企业完整 17 字段自动带入 =====
     function fillCompanyFull(c) {
       // 客户类别
-      const catSelect = document.getElementById('cmCustomerCategory');
+      const catSelect = document.getElementById('cmProjectRole');
       const catMap = { '上游客户': 0, '下游客户': 1, '第三方物流': 2, '第三方仓储': 3 };
       if (catMap[c.customerCategory] !== undefined) catSelect.selectedIndex = catMap[c.customerCategory];
       // 工商信息 5 字段
@@ -2368,8 +2393,8 @@
       document.getElementById('cmContactAddress').value = c.contactAddress;
       document.getElementById('cmOwnerName').value = c.ownerName;
       document.getElementById('cmOwnerPhone').value = c.ownerPhone;
-      document.getElementById('cmBankName').value = c.bankName;
-      document.getElementById('cmBankAccount').value = c.bankAccount;
+      // v1.37.0：开户行/账号改为子表 → 带入到第一组
+      cmResetBankRows(c.bankName, c.bankAccount);
       document.getElementById('cmShortName').value = c.shortName;
       // 显示"天眼查"标签
       document.getElementById('cmAutoTag1').style.display = 'inline';
@@ -2400,6 +2425,11 @@
     }
 
     // ===== 模糊匹配 =====
+    // v1.37.0：企业类型多选组 → 选中态高亮
+    document.getElementById('cmCompanyTypes').addEventListener('change', function () {
+      cmSyncMultiSelect(this);
+    });
+
     document.getElementById('cmCompanyName').addEventListener('input', e => {
       const kw = e.target.value.trim();
       const suggest = document.getElementById('companySuggest');
@@ -2460,15 +2490,89 @@
 
     // ===== 确认添加 / 替换 =====
     let _editingCard = null;  // 编辑模式：保存被编辑的卡片
+
+    // ===== v1.37.0 企业银行账户子表（可添加多个开户行 + 账号）=====
+    function cmAddBankRow(bankName, bankAccount) {
+      var list = document.getElementById('cmBankList');
+      if (!list) return;
+      var row = document.createElement('div');
+      row.className = 'sub-table-row';
+      row.innerHTML =
+        '<div class="form-field">'
+        + '<label class="form-label">企业开户行信息 <span class="required">*</span></label>'
+        + '<input type="text" class="input" data-role="bank-name" placeholder="如：中国工商银行郑州金水支行" value="'
+        + String(bankName || '').replace(/"/g, '&quot;') + '">'
+        + '</div>'
+        + '<div class="form-field">'
+        + '<label class="form-label">企业银行账号 <span class="required">*</span></label>'
+        + '<input type="text" class="input" data-role="bank-account" placeholder="请输入企业银行账号" value="'
+        + String(bankAccount || '').replace(/"/g, '&quot;') + '" style="font-family: var(--font-mono); font-size: 13px;">'
+        + '</div>'
+        + '<button type="button" class="sub-table-del" title="删除该银行账户" onclick="cmRemoveBankRow(this)">×</button>';
+      list.appendChild(row);
+      cmSyncBankDelState();
+    }
+
+    function cmRemoveBankRow(btn) {
+      var list = document.getElementById('cmBankList');
+      if (!list) return;
+      if (list.querySelectorAll('.sub-table-row').length <= 1) return;  // 至少保留一组
+      var row = btn.closest('.sub-table-row');
+      if (row) row.remove();
+      cmSyncBankDelState();
+    }
+
+    function cmSyncBankDelState() {
+      var list = document.getElementById('cmBankList');
+      if (!list) return;
+      var rows = list.querySelectorAll('.sub-table-row');
+      var onlyOne = rows.length <= 1;
+      rows.forEach(function (r) {
+        var del = r.querySelector('.sub-table-del');
+        if (del) del.disabled = onlyOne;
+      });
+    }
+
+    // 收集已填写的银行账户（跳过全空的行）
+    function cmGetBankAccounts() {
+      var out = [];
+      var list = document.getElementById('cmBankList');
+      if (!list) return out;
+      list.querySelectorAll('.sub-table-row').forEach(function (r) {
+        var n = r.querySelector('[data-role="bank-name"]');
+        var a = r.querySelector('[data-role="bank-account"]');
+        var name = n ? n.value.trim() : '';
+        var acct = a ? a.value.trim() : '';
+        if (name || acct) out.push({ name: name, account: acct });
+      });
+      return out;
+    }
+
+    // 重置为默认一行
+    function cmResetBankRows(bankName, bankAccount) {
+      var list = document.getElementById('cmBankList');
+      if (!list) return;
+      list.innerHTML = '';
+      cmAddBankRow(bankName !== undefined ? bankName : '中国工商银行郑州金水支行',
+                   bankAccount !== undefined ? bankAccount : '6222 XXXX XXXX XXXX XXXX');
+    }
+
+    // 多选组：选中态高亮
+    function cmSyncMultiSelect(box) {
+      box.querySelectorAll('.multi-select-item').forEach(function (item) {
+        var cb = item.querySelector('input[type="checkbox"]');
+        item.classList.toggle('on', !!(cb && cb.checked));
+      });
+    }
+
     function confirmAddCompany() {
-      // v1.7.99.23：校验 6 必填（联系人姓名/电话/负责人姓名/电话/企业开户行/银行账号）
+      // v1.37.0：开户行/银行账号合并为「企业银行账户」子表 → 改为校验子表
+      // v1.7.99.23：校验 4 必填（联系人姓名/电话/负责人姓名/电话）
       const requiredFields = [
         { id: 'cmContactName', label: '联系人姓名' },
         { id: 'cmContactPhone', label: '联系人电话' },
         { id: 'cmOwnerName', label: '负责人姓名' },
         { id: 'cmOwnerPhone', label: '负责人电话' },
-        { id: 'cmBankName', label: '企业开户行信息' },
-        { id: 'cmBankAccount', label: '企业银行账号' },
       ];
       for (const f of requiredFields) {
         const v = document.getElementById(f.id).value.trim();
@@ -2478,17 +2582,33 @@
           return;
         }
       }
+      // 企业银行账户：至少一组，且每组的开户行 + 账号都要填
+      const banks = cmGetBankAccounts();
+      if (banks.length === 0) {
+        alert('请至少填写一组企业银行账户');
+        return;
+      }
+      for (let i = 0; i < banks.length; i++) {
+        if (!banks[i].name) { alert(`请填写第 ${i + 1} 组的企业开户行信息`); return; }
+        if (!banks[i].account) { alert(`请填写第 ${i + 1} 组的企业银行账号`); return; }
+      }
       const name = document.getElementById('cmCompanyName').value.trim();
       if (!name) {
         alert('请输入企业名称');
         return;
       }
-      const category = document.getElementById('cmCustomerCategory').value;
+      const category = document.getElementById('cmProjectRole').value;
+      // v1.37.0：企业类型（可多选）
+      const companyTypes = Array.prototype.slice
+        .call(document.querySelectorAll('#cmCompanyTypes input[type="checkbox"]:checked'))
+        .map(function (cb) { return cb.value; });
       const categoryMap = { '上游客户': '上游企业', '下游客户': '下游企业', '第三方物流': '第三方物流', '第三方仓储': '第三方仓储' };
       const iconMap = { '上游客户': '🏢', '下游客户': '🏪', '第三方物流': '🚚', '第三方仓储': '🏭' };
       const credit = document.getElementById('cmCreditCode').value || '—';
       const icon = iconMap[category] || '🏢';
-      const sub = `${categoryMap[category] || category} · ${credit}`;
+      // v1.37.0：企业类型（可多选）并入卡片副标题
+      const typesText = companyTypes.length ? ' · ' + companyTypes.join('/') : '';
+      const sub = `${categoryMap[category] || category} · ${credit}${typesText}`;
 
       // v1.7.99.298 客户准入材料必填校验（6 项：营业执照/税务登记证/特殊经营许可证/纳税申报表/完税证明/财务报表）
       // v1.22.0：必填判定只认**材料本体**；「无此附件说明」不计入（说明不能替代本体）
@@ -2511,6 +2631,7 @@
         // 编辑模式：替换原卡片内容
         _editingCard.dataset.category = category;
         _editingCard.dataset.credit = credit;
+        _editingCard.dataset.types = companyTypes.join(',');
         _editingCard.querySelector('.tag-card-icon').textContent = icon;
         _editingCard.querySelector('.tag-card-title').textContent = name;
         _editingCard.querySelector('.tag-card-sub').textContent = sub;
@@ -2527,6 +2648,7 @@
         card.className = 'tag-card';
         card.dataset.category = category;
         card.dataset.credit = credit;
+        card.dataset.types = companyTypes.join(',');
         card.innerHTML = `
           <div class="tag-card-icon">${icon}</div>
           <div style="flex: 1; min-width: 0;">
@@ -2558,11 +2680,20 @@
       const name = card.querySelector('.tag-card-title').textContent;
       const category = card.dataset.category || '上游客户';
       const credit = card.dataset.credit || '';
+      const savedTypes = (card.dataset.types || '').split(',').filter(Boolean);
       // 打开弹窗（v1.21.0：带上企业与类别上下文，用于载入已保存的自定义附件条目）
       openCompanyModal(category, name);
       // 预填
-      document.getElementById('cmCustomerCategory').value = category;
+      document.getElementById('cmProjectRole').value = category;
       document.getElementById('cmCompanyName').value = name;
+      // v1.37.0：回填企业类型多选
+      var typeBox = document.getElementById('cmCompanyTypes');
+      if (typeBox) {
+        typeBox.querySelectorAll('input[type="checkbox"]').forEach(function (cb) {
+          cb.checked = savedTypes.indexOf(cb.value) >= 0;
+        });
+        cmSyncMultiSelect(typeBox);
+      }
       // 天眼查自动带入逻辑
       const matched = mockCompanies.find(c => c.name === name);
       if (matched) {

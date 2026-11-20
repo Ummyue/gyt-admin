@@ -148,13 +148,13 @@ def main():
         check("勾选一级菜单联动全部下级（4 菜单 / 22 按钮）",
               "已选 4 个菜单 · 22 个操作按钮" in foot, foot)
 
-        # 客户准入 / 黑名单管理 也按 user 图2 / 图3 收敛
-        page.click('.rp-tnode[data-label="客户准入"] .rp-tnode-label')
+        # 企业准入（原「客户准入」，v1.37.0 菜单改名）/ 黑名单管理 按 user 图2 / 图3 收敛
+        page.click('.rp-tnode[data-label="企业准入"] .rp-tnode-label')
         page.wait_for_timeout(250)
         cl = page.locator(".rp-op-label").all_inner_texts()
-        check("客户准入权限项收敛为 6 项（user 图2 审核结果）", len(cl) == 6, str(cl))
+        check("企业准入权限项收敛为 6 项（user 图2 审核结果）", len(cl) == 6, str(cl))
         for gone in ["查看状态机说明", "查看额度", "发起完结"]:
-            check(f"客户准入已剔除「{gone}」权限项", gone not in cl, str(cl))
+            check(f"企业准入已剔除「{gone}」权限项", gone not in cl, str(cl))
         page.click('.rp-tnode[data-label="黑名单管理"] .rp-tnode-label')
         page.wait_for_timeout(250)
         bl = page.locator(".rp-op-label").all_inner_texts()

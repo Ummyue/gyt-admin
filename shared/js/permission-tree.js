@@ -1,6 +1,8 @@
 // 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑
-// 生成时间：2026-11-20 14:43:01
+// 生成时间：2026-11-20 15:29:18
 // 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）
+// 注：path_label = 该菜单在**权限码**里沿用的路径片段；
+//     与 label 不一致说明菜单改过名，但权限码保持旧路径（老角色不掉勾）
 
 window.PERMISSION_TREE = [
   {
@@ -10,6 +12,7 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "工作台",
+        "path_label": "工作台",
         "file": "workbench.html",
         "buttons": [],
         "children": [],
@@ -26,6 +29,7 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "项目准入",
+        "path_label": "项目准入",
         "file": "project-list.html",
         "buttons": [
           "新增立项申请",
@@ -91,7 +95,8 @@ window.PERMISSION_TREE = [
         "mergedMenus": []
       },
       {
-        "label": "客户准入",
+        "label": "企业准入",
+        "path_label": "客户准入",
         "file": "customer-list.html",
         "buttons": [
           "新增客户",
@@ -136,6 +141,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "黑名单管理",
+        "path_label": "黑名单管理",
         "file": "blacklist.html",
         "buttons": [
           "新增黑名单企业",
@@ -185,6 +191,7 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "合同管理",
+        "path_label": "合同管理",
         "file": "contract-purchase.html",
         "buttons": [
           "新增合同",
@@ -195,6 +202,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "采购合同",
+            "path_label": "采购合同",
             "file": "contract-purchase.html",
             "buttons": [
               "新增合同",
@@ -309,6 +317,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "销售合同",
+            "path_label": "销售合同",
             "file": "contract-sales.html",
             "buttons": [
               "新增合同",
@@ -423,6 +432,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "补充协议",
+            "path_label": "补充协议",
             "file": "contract-supplement.html",
             "buttons": [
               "新增补充协议",
@@ -503,6 +513,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "业务线管理",
+        "path_label": "业务线管理",
         "file": "business-line.html",
         "buttons": [
           "数据导出"
@@ -535,6 +546,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "收发货管理",
+        "path_label": "收发货管理",
         "file": "shipment-out.html",
         "buttons": [
           "登记订单发货数据",
@@ -549,6 +561,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "发货管理",
+            "path_label": "发货管理",
             "file": "shipment-out.html",
             "buttons": [
               "登记订单发货数据",
@@ -596,6 +609,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "收货管理",
+            "path_label": "收货管理",
             "file": "shipment-in.html",
             "buttons": [
               "数据导出",
@@ -633,6 +647,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "货转管理",
+        "path_label": "货转管理",
         "file": "goods-transfer.html",
         "buttons": [
           "开具货转",
@@ -683,6 +698,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "资金管理",
+        "path_label": "资金管理",
         "file": "payment-list.html",
         "buttons": [
           "新增付款",
@@ -692,6 +708,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "付款管理",
+            "path_label": "付款管理",
             "file": "payment-list.html",
             "buttons": [
               "新增付款",
@@ -730,6 +747,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "退款管理",
+            "path_label": "退款管理",
             "file": "refund-list.html",
             "buttons": [
               "新增退款",
@@ -763,6 +781,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "回款管理",
+            "path_label": "回款管理",
             "file": "receipt-list.html",
             "buttons": [
               "新增回款",
@@ -799,6 +818,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "保证金管理",
+            "path_label": "保证金管理",
             "file": "margin-pool.html",
             "buttons": [
               "登记保证金",
@@ -842,6 +862,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "结算单管理",
+        "path_label": "结算单管理",
         "file": "settlement-purchase.html",
         "buttons": [
           "新增采购结算单",
@@ -850,6 +871,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "采购结算",
+            "path_label": "采购结算",
             "file": "settlement-purchase.html",
             "buttons": [
               "新增采购结算单",
@@ -887,6 +909,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "销售结算",
+            "path_label": "销售结算",
             "file": "settlement-sales.html",
             "buttons": [
               "新增销售结算单",
@@ -929,6 +952,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "发票管理",
+        "path_label": "发票管理",
         "file": "invoice.html",
         "buttons": [
           "Excel 导出",
@@ -937,6 +961,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "进项发票",
+            "path_label": "进项发票",
             "file": "invoice.html",
             "buttons": [
               "Excel 导出",
@@ -978,6 +1003,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "销项发票",
+            "path_label": "销项发票",
             "file": "invoice-out.html",
             "buttons": [
               "Excel 导出",
@@ -1024,6 +1050,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "盯市管理",
+        "path_label": "盯市管理",
         "file": "market-price.html",
         "buttons": [],
         "children": [],
@@ -1050,6 +1077,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "追保函管理",
+        "path_label": "追保函管理",
         "file": "bond-letter.html",
         "buttons": [
           "数据导出",
@@ -1091,6 +1119,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "审批管理",
+        "path_label": "审批管理",
         "file": "approval-flow-list.html",
         "buttons": [
           "新建流程",
@@ -1099,6 +1128,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "审批流程配置",
+            "path_label": "审批流程配置",
             "file": "approval-flow-list.html",
             "buttons": [
               "新建流程",
@@ -1138,6 +1168,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "审批流程监控",
+            "path_label": "审批流程监控",
             "file": "approval-monitor.html",
             "buttons": [
               "数据导出",
@@ -1176,6 +1207,7 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "入库管理",
+        "path_label": "入库管理",
         "file": "warehouse-inbound.html",
         "buttons": [
           "新增入库",
@@ -1185,6 +1217,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "入库记录",
+            "path_label": "入库记录",
             "file": "warehouse-inbound.html",
             "buttons": [
               "新增入库",
@@ -1224,6 +1257,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "出库管理",
+        "path_label": "出库管理",
         "file": "warehouse-outbound.html",
         "buttons": [
           "新增出库",
@@ -1232,6 +1266,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "出库记录",
+            "path_label": "出库记录",
             "file": "warehouse-outbound.html",
             "buttons": [
               "新增出库",
@@ -1270,6 +1305,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "提放货管理",
+        "path_label": "提放货管理",
         "file": "warehouse-pickup.html",
         "buttons": [
           "提货申请",
@@ -1278,6 +1314,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "提货管理",
+            "path_label": "提货管理",
             "file": "warehouse-pickup.html",
             "buttons": [
               "提货申请",
@@ -1307,6 +1344,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "放货管理",
+            "path_label": "放货管理",
             "file": "warehouse-release.html",
             "buttons": [
               "新增放货指令",
@@ -1345,6 +1383,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "库存管理",
+        "path_label": "库存管理",
         "file": "warehouse-inventory.html",
         "buttons": [
           "数据导出",
@@ -1355,6 +1394,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "库存台账",
+            "path_label": "库存台账",
             "file": "warehouse-inventory.html",
             "buttons": [
               "数据导出",
@@ -1379,6 +1419,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "视频监控",
+        "path_label": "视频监控",
         "file": "warehouse-video.html",
         "buttons": [
           "新增视频监控"
@@ -1386,6 +1427,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "库点监控",
+            "path_label": "库点监控",
             "file": "warehouse-video.html",
             "buttons": [
               "新增视频监控"
@@ -1402,11 +1444,13 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "巡库管理",
+        "path_label": "巡库管理",
         "file": "warehouse-patrol.html",
         "buttons": [],
         "children": [
           {
             "label": "巡库记录",
+            "path_label": "巡库记录",
             "file": "warehouse-patrol.html",
             "buttons": [],
             "children": [],
@@ -1421,6 +1465,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "系统管理",
+        "path_label": "系统管理",
         "file": "warehouse-system.html",
         "buttons": [
           "新增系统监控",
@@ -1432,6 +1477,7 @@ window.PERMISSION_TREE = [
         "children": [
           {
             "label": "库点信息管理",
+            "path_label": "库点信息管理",
             "file": "warehouse-point.html",
             "buttons": [
               "监控信息",
@@ -1465,6 +1511,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "仓房管理",
+            "path_label": "仓房管理",
             "file": "warehouse-warehouse.html",
             "buttons": [
               "新增仓房",
@@ -1491,6 +1538,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "品类配置",
+            "path_label": "品类配置",
             "file": "warehouse-category.html",
             "buttons": [
               "新增品类",
@@ -1525,6 +1573,7 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "驾驶舱",
+        "path_label": "驾驶舱",
         "file": "cockpit.html",
         "buttons": [],
         "children": [],
@@ -1534,6 +1583,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "项目台账表",
+        "path_label": "项目台账表",
         "file": "report-project.html",
         "buttons": [
           "导出 Excel",
@@ -1555,6 +1605,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "业务线台账表",
+        "path_label": "业务线台账表",
         "file": "report-bizline.html",
         "buttons": [
           "导出 Excel",
@@ -1574,6 +1625,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "资金占压表",
+        "path_label": "资金占压表",
         "file": "report-fund.html",
         "buttons": [
           "数据导出"
@@ -1590,6 +1642,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "库存明细表",
+        "path_label": "库存明细表",
         "file": "report-inventory.html",
         "buttons": [
           "数据导出"
@@ -1606,6 +1659,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "应收应付表",
+        "path_label": "应收应付表",
         "file": "report-ar-ap.html",
         "buttons": [
           "导出 Excel",
@@ -1623,6 +1677,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "合规验证报告管理",
+        "path_label": "合规验证报告管理",
         "file": "report-compliance.html",
         "buttons": [
           "数据导出",
@@ -1655,6 +1710,7 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "预警查询",
+        "path_label": "预警查询",
         "file": "warning-list.html",
         "buttons": [
           "导出",
@@ -1676,6 +1732,7 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "预警设置",
+        "path_label": "预警设置",
         "file": "warning-config.html",
         "buttons": [
           "添加规则",
@@ -1716,12 +1773,14 @@ window.PERMISSION_TREE = [
     "subMenus": [
       {
         "label": "个人管理",
+        "path_label": "个人管理",
         "file": "",
         "buttons": [],
         "explicit_ops": null,
         "children": [
           {
             "label": "个人信息",
+            "path_label": "个人信息",
             "file": "account-personal.html",
             "buttons": [],
             "explicit_ops": [
@@ -1742,6 +1801,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "安全设置",
+            "path_label": "安全设置",
             "file": "",
             "buttons": [],
             "explicit_ops": [
@@ -1775,12 +1835,14 @@ window.PERMISSION_TREE = [
       },
       {
         "label": "企业管理",
+        "path_label": "企业管理",
         "file": "",
         "buttons": [],
         "explicit_ops": null,
         "children": [
           {
             "label": "我的企业",
+            "path_label": "我的企业",
             "file": "",
             "buttons": [],
             "explicit_ops": [
@@ -1865,6 +1927,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "企业账号管理",
+            "path_label": "企业账号管理",
             "file": "",
             "buttons": [],
             "explicit_ops": [
@@ -1925,6 +1988,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "企业资料管理",
+            "path_label": "企业资料管理",
             "file": "account-company.html",
             "buttons": [],
             "explicit_ops": [
@@ -1953,6 +2017,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "密码管理",
+            "path_label": "密码管理",
             "file": "",
             "buttons": [],
             "explicit_ops": [
@@ -1973,6 +2038,7 @@ window.PERMISSION_TREE = [
           },
           {
             "label": "角色权限管理",
+            "path_label": "角色权限管理",
             "file": "account-role-permission.html",
             "buttons": [],
             "explicit_ops": [

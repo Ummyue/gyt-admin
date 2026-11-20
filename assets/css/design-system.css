@@ -2865,3 +2865,55 @@ input, select, textarea {
   font-weight: 500;
   border-left-color: var(--color-primary);
 }
+
+/* ===== v1.37.0 表单组件：多选组 + 可增行子表 ===== */
+/* 用途：准入表单的「企业类型」多选、「企业银行账户」多条开户行/账号 */
+
+/* --- 多选复选组 --- */
+.multi-select-group {
+  display: flex; flex-wrap: wrap; gap: 8px;
+  min-height: 34px; align-items: center;
+}
+.multi-select-item {
+  display: inline-flex; align-items: center; gap: 6px;
+  padding: 5px 12px; border-radius: var(--radius-full);
+  border: 1px solid var(--border-default); background: #fff;
+  font-size: 13px; color: var(--text-secondary); cursor: pointer;
+  user-select: none; transition: all .15s;
+}
+.multi-select-item:hover { border-color: var(--color-primary); color: var(--color-primary); }
+.multi-select-item input { margin: 0; accent-color: var(--color-primary); cursor: pointer; }
+.multi-select-item.on {
+  background: var(--color-primary-lighter); border-color: var(--color-primary);
+  color: var(--color-primary);
+}
+.multi-select-empty { font-size: 12px; color: var(--text-tertiary); }
+
+/* --- 可增行子表（企业银行账户）--- */
+.sub-table {
+  border: 1px solid var(--border-default); border-radius: var(--radius-default);
+  overflow: hidden; background: #fff;
+}
+.sub-table-head {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 12px; background: #F8FAFC; border-bottom: 1px solid var(--border-light);
+}
+.sub-table-title { font-size: 13px; font-weight: 500; color: var(--text-primary); }
+.sub-table-hint { font-size: 12px; color: var(--text-tertiary); }
+.sub-table-list { padding: 0; }
+.sub-table-row {
+  display: grid; grid-template-columns: 1fr 1fr 32px;
+  gap: 12px; align-items: end;
+  padding: 12px; border-bottom: 1px solid var(--border-light);
+}
+.sub-table-row:last-child { border-bottom: none; }
+.sub-table-row .form-label { display: block; margin-bottom: 6px; }
+.sub-table-del {
+  width: 28px; height: 30px; border: 1px solid var(--border-default);
+  background: #fff; color: var(--text-tertiary); border-radius: var(--radius-default);
+  cursor: pointer; font-size: 16px; line-height: 1; display: inline-flex;
+  align-items: center; justify-content: center; transition: all .15s;
+}
+.sub-table-del:hover:not(:disabled) { border-color: var(--color-danger); color: var(--color-danger); }
+.sub-table-del:disabled { opacity: .35; cursor: not-allowed; }
+.sub-table-foot { padding: 10px 12px; border-top: 1px solid var(--border-light); background: #F8FAFC; }

@@ -331,6 +331,15 @@ MENU_RENAME = {
     "预警规则配置": "预警设置",
 }
 
+# 一.b）菜单改名后，**权限码仍沿用旧路径**（保证已保存角色不掉勾）
+#     key = 改名后的菜单名，value = 权限码里继续使用的旧路径片段
+#     ⚠️ 权限码 = 「菜单路径#scope」，菜单一改名，路径就变 → 老角色的勾选全部失效。
+#     所以「显示名」和「权限路径」必须分开：显示用新名，权限码用旧名。
+MENU_PATH_ALIAS = {
+    # v1.37.0：客户准入 → 企业准入（显示名改，权限码仍为 准入管理/客户准入#xxx）
+    "企业准入": "客户准入",
+}
+
 # 二）菜单结构重建：key = 一级菜单，value = {二级菜单: [三级菜单定义]}
 #    ops 用 (按钮名, 权限scope) 二元组声明；不给 ops 但给 file 时仍按页面自动抽取
 MENU_STRUCTURE_OVERRIDE = {
@@ -532,7 +541,8 @@ def _stamp(node, path, merged=None):
     ]
 
     for c in kids:
-        _stamp(c, path + "/" + c["label"], child_merged.get(c["label"], []))
+        _stamp(c, path + "/" + c.get("path_label", c["label"]),
+               child_merged.get(c["label"], []))
 
 # 页面外壳（顶栏/分页/导航）按钮不算业务操作权限
 CHROME_TEXT = {
@@ -776,21 +786,28 @@ def build_tree():
             grand_children = []
             for ch in children:
                 gchildren = ch.get("children") or []
+                _ch_label = MENU_RENAME.get(ch["label"], ch["label"])
                 grand_children.append({
-                    "label": MENU_RENAME.get(ch["label"], ch["label"]),
+                    "label": _ch_label,
+                    "path_label": MENU_PATH_ALIAS.get(_ch_label, _ch_label),
                     "file": ch.get("file", ""),
                     "buttons": bt(ch.get("file")),
                     "children": [
                         {
                             "label": MENU_RENAME.get(g["label"], g["label"]),
+                            "path_label": MENU_PATH_ALIAS.get(
+                                MENU_RENAME.get(g["label"], g["label"]),
+                                MENU_RENAME.get(g["label"], g["label"])),
                             "file": g.get("file", ""),
                             "buttons": bt(g.get("file")),
                         }
                         for g in gchildren
                     ],
                 })
+            _sub_label = MENU_RENAME.get(sub["label"], sub["label"])
             sub_menus.append({
-                "label": MENU_RENAME.get(sub["label"], sub["label"]),
+                "label": _sub_label,
+                "path_label": MENU_PATH_ALIAS.get(_sub_label, _sub_label),
                 "file": sub.get("file", ""),
                 "buttons": bt(sub.get("file")),
                 "children": grand_children,
@@ -806,6 +823,7 @@ def build_tree():
                     fname = k.get("file", "")
                     kids.append({
                         "label": k["label"],
+                        "path_label": MENU_PATH_ALIAS.get(k["label"], k["label"]),
                         "file": fname,
                         "buttons": [] if k.get("ops") is not None else bt(fname),
                         "explicit_ops": k.get("ops"),
@@ -813,6 +831,7 @@ def build_tree():
                     })
                 sub_menus.append({
                     "label": sub_label,
+                    "path_label": MENU_PATH_ALIAS.get(sub_label, sub_label),
                     "file": "",
                     "buttons": [],
                     "explicit_ops": None,
@@ -858,14 +877,16 @@ if __name__ == "__main__":
     # ⚠️ _stamp 内部已递归子节点，这里**只能调一级**，否则会把合并结果覆盖掉
     for mod in tree:
         for sub in mod["subMenus"]:
-            _stamp(sub, mod["label"] + "/" + sub["label"])
+            _stamp(sub, mod["label"] + "/" + sub.get("path_label", sub["label"]))
 
     if "-j" in sys.argv:
         out = sys.argv[sys.argv.index("-j") + 1]
         with open(out, "w", encoding="utf-8") as f:
             f.write("// 本文件由 scripts/extract_permissions.py 自动生成，请勿手工编辑\n")
             f.write("// 生成时间：%s\n" % NOW)
-            f.write("// 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）\n\n")
+            f.write("// 用途：角色权限管理页的权限配置项（一/二/三级菜单 + 页面操作按钮）\n")
+            f.write("// 注：path_label = 该菜单在**权限码**里沿用的路径片段；\n")
+            f.write("//     与 label 不一致说明菜单改过名，但权限码保持旧路径（老角色不掉勾）\n\n")
             f.write("window.PERMISSION_TREE = ")
             f.write(json.dumps(tree, ensure_ascii=False, indent=2))
             f.write(";\n")
