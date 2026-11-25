@@ -2019,7 +2019,14 @@
     var totEl = document.getElementById('riskScanTotal');
     var warnEl = document.getElementById('riskScanWarn');
     if (stEl) stEl.textContent = c.scanTime || '';
-    if (totEl) totEl.textContent = c.scanTotal || 0;
+    // v1.38.0：扫描总项数按 5 个 tab 的实际项数动态计算（合并后不再用静态 scanTotal）
+    var totalScan = ['subject','business','judicial','relation','personnel'].reduce(function(s, k) {
+      var items = (k === 'subject')
+        ? buildSubjectRiskItems()
+        : (c[k] ? c[k].items : []);
+      return s + (items ? items.length : 0);
+    }, 0);
+    if (totEl) totEl.textContent = totalScan;
     // 总风险数 = 5 个 tap 之和（v1.38.0：主体风险为合并 tab）
     var totalWarn = ['subject','business','judicial','relation','personnel'].reduce(function(s, k) {
       var items = (k === 'subject')
