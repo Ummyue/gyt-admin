@@ -99,6 +99,13 @@ def verify_page(page, label, tab_sel, panel_sel):
     check(f"{label}：17 项校验项与需求清单逐条一致", names == EXPECT_NAMES,
           f"实际前 3 项 {names[:3]}")
     check(f"{label}：未匹配到原型的检查过程留空（4 项）", blanks == 4, f"实际留空 {blanks} 项")
+    # 检查规则列不得出现无意义的兜底占位文案
+    ph = 0
+    for i in range(n):
+        rule = rows.nth(i).locator("td.risk-td-rule").inner_text().strip()
+        if "按风险模型规则校验" in rule:
+            ph += 1
+    check(f"{label}：检查规则列无兜底占位文案", ph == 0, f"实际 {ph} 行含占位文案")
 
     # ---- 自动结论备注交互 ----
     sel = rows.first.locator(".risk-remark-select")

@@ -57,6 +57,21 @@
   };
 
   /**
+   * 规则占位文案：原型里 getRiskMeta 找不到映射时的兜底，
+   * 不算「匹配到的检查规则」→ 按未匹配处理（留空）
+   */
+  var PLACEHOLDER_RULE = '按风险模型规则校验';
+
+  function realRule(r) {
+    if (!r) return '';
+    if (Array.isArray(r)) {
+      var keep = r.filter(function (x) { return x && x !== PLACEHOLDER_RULE; });
+      return keep.length ? keep : '';
+    }
+    return r === PLACEHOLDER_RULE ? '' : r;
+  }
+
+  /**
    * 按 4 分类清单构建「主体风险」tab 的条目
    * @param {Object} lookup  旧项索引：{ 旧校验项名: { desc, status, rule } }
    * @returns {Array} items
@@ -82,8 +97,8 @@
           name: it.name,
           category: cat.label,
           from: hitName,
-          // 未匹配到原型的检查过程 → 留空
-          rule: hit && hit.rule ? hit.rule : '',
+          // 未匹配到原型的检查过程 / 占位规则 → 留空
+          rule: hit ? realRule(hit.rule) : '',
           desc: hit && hit.desc ? hit.desc : '',
           status: isWarn ? 'warn' : (hit && hit.status ? hit.status : 'ok'),
           // 源项位置：改「系统诊断结论」时要写回原来的 trade / internal 条目
