@@ -2917,3 +2917,30 @@ input, select, textarea {
 .sub-table-del:hover:not(:disabled) { border-color: var(--color-danger); color: var(--color-danger); }
 .sub-table-del:disabled { opacity: .35; cursor: not-allowed; }
 .sub-table-foot { padding: 10px 12px; border-top: 1px solid var(--border-light); background: #F8FAFC; }
+
+/* ===== v1.38.0 风险扫描 · 自动结论备注列 ===== */
+/* 「校验结果」→「系统诊断结论」后新增的一列：低风险 / 中风险 / 高风险 / 自定义描述（≤24 字） */
+.risk-table thead th.risk-th-remark { width: 168px; }
+.risk-td-remark { vertical-align: middle; }
+.risk-remark-box { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
+.risk-remark-select {
+  display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500;
+  white-space: nowrap; border: 1px solid transparent; cursor: pointer; font-family: inherit;
+  transition: all .15s; appearance: none; -webkit-appearance: none;
+  background-repeat: no-repeat; background-position: right 6px center; padding-right: 22px;
+  background-image: url("data:image/svg+xml;charset=utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748B' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
+}
+.risk-remark-select:hover { filter: brightness(.96); border-color: rgba(0,0,0,.1); }
+.risk-remark-select:focus { outline: 2px solid rgba(91,155,213,.4); outline-offset: 1px; }
+.risk-remark-low  { background-color: rgba(16,185,129,.12); color: #047857; }
+.risk-remark-mid  { background-color: rgba(245,158,11,.14); color: #B45309; }
+.risk-remark-high { background-color: rgba(220,38,38,.12); color: #B91C1C; }
+.risk-remark-custom { background-color: rgba(30,64,175,.1); color: var(--color-primary); }
+.risk-remark-input {
+  width: 100%; max-width: 150px; padding: 4px 8px; font-size: 12px; font-family: inherit;
+  color: var(--text-primary); background: #fff;
+  border: 1px solid var(--border-default); border-radius: 4px; line-height: 1.5;
+}
+.risk-remark-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(30,64,175,.1); }
+.risk-remark-count { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
+.risk-remark-count.over { color: var(--color-danger); }

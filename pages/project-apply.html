@@ -1186,6 +1186,9 @@
       </div>
     </div>
   </div>
+  <!-- v1.38.0：主体风险 tab 共享清单（必须在主脚本之前加载） -->
+  <script src="../shared/js/risk-scan-subject.js"></script>
+
   <script>
     // ===== Mock 模糊匹配数据 =====
     const mockCompanies = [
@@ -1547,13 +1550,14 @@
 
       // 风险项 v1.7.99.282：6 tab + 5 列表格（与 project-detail 一致）
       const riskGroups = applyGroupRisksByTab(c.risks);
-      const riskTabsHtml = ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].map(t => {
-        const labels = { trade: '贸易风险', internal: '主体风险', business: '经营风险', judicial: '司法风险', relation: '关系发现', personnel: '关键人风险' };
+      // v1.38.0：贸易风险 + 主体风险 合并为单一「主体风险」tab（6 tab → 5 tab）
+      const riskTabsHtml = ['subject', 'business', 'judicial', 'relation', 'personnel'].map(t => {
+        const labels = { subject: '主体风险', business: '经营风险', judicial: '司法风险', relation: '关系发现', personnel: '关键人风险' };
         const count = riskGroups[t].length;
-        return `<div class="risk-tab ${t === 'trade' ? 'active' : ''}" data-apply-risk-tab="${t}" onclick="switchApplyRiskTab('${key}', '${t}')">${labels[t]} <span class="count">${count}</span></div>`;
+        return `<div class="risk-tab ${t === 'subject' ? 'active' : ''}" data-apply-risk-tab="${t}" onclick="switchApplyRiskTab('${key}', '${t}')">${labels[t]} <span class="count">${count}</span></div>`;
       }).join('');
-      const riskPanelHtml = ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].map(t => {
-        return `<div class="apply-risk-panel" data-apply-company="${key}" data-apply-tab="${t}" ${t === 'trade' ? '' : 'hidden'}></div>`;
+      const riskPanelHtml = ['subject', 'business', 'judicial', 'relation', 'personnel'].map(t => {
+        return `<div class="apply-risk-panel" data-apply-company="${key}" data-apply-tab="${t}" ${t === 'subject' ? '' : 'hidden'}></div>`;
       }).join('');
       const riskTotal = c.risks.length;
       const riskWarn = c.risks.filter(r => r.status === 'warn').length;
@@ -1689,20 +1693,24 @@
       const groups = window.__applyRiskGroups || {};
       Object.keys(groups).forEach(function(key) {
         const riskGroups = groups[key];
-        ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(function(t) {
+        ['subject', 'business', 'judicial', 'relation', 'personnel'].forEach(function(t) {
           const el = document.querySelector(`.apply-risk-panel[data-apply-company="${key}"][data-apply-tab="${t}"]`);
           if (!el) return;
           const items = riskGroups[t] || [];
           const rows = items.map((r, i) => {
             const isWarn = r.status === 'warn';
-            const meta = applyGetRiskMeta(r.name);
+            // v1.38.0：主体风险的检查分类 / 检查规则取自共享清单（未匹配的 rule 为空 → 留白）
+            const meta = (t === 'subject')
+              ? { category: r.category, rule: r.rule }
+              : applyGetRiskMeta(r.name);
+            // v1.38.0：主体风险项若未匹配到原型检查过程 → **留空**（不给默认兜底文案）
             const descText = r.desc
               ? r.desc.replace(/(\d{4}-\d{2}-\d{2})/g, m => `<mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">${m}</mark>`)
-              : '截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。';
+              : (t === 'subject' ? '' : '截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。');
             const ruleHtml = Array.isArray(meta.rule)
               ? '<ol class="risk-rule-list">' + meta.rule.map(x => '<li>' + x + '</li>').join('') + '</ol>'
               : meta.rule;
-            const tag = `<select class="risk-result-select risk-result-${isWarn ? 'warn' : 'ok'}" onchange="toggleApplyRiskResult('${key}', '${r.name}', this)">
+            const tag = `<select class="risk-result-select risk-result-${isWarn ? 'warn' : 'ok'}" onchange="toggleApplyRiskResult('${key}', '${r.name}', this, '${r.from || ''}')">
               <option value="ok"${isWarn ? '' : ' selected'}>✓ 无风险</option>
               <option value="warn"${isWarn ? ' selected' : ''}>⚠ 存在风险</option>
             </select>`;
@@ -1712,6 +1720,7 @@
               <td class="risk-td-rule">${ruleHtml}</td>
               <td class="risk-td-desc"><div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div></td>
               <td class="risk-td-result">${tag}</td>
+              <td class="risk-td-remark">${buildApplyRiskRemarkCell(key, t, i)}</td>
             </tr>`;
           }).join('');
           el.innerHTML = rows
@@ -1721,7 +1730,8 @@
                   <th class="risk-th-name">校验项</th>
                   <th class="risk-th-rule">检查规则（负面清单）</th>
                   <th>检查过程</th>
-                  <th class="risk-th-result">校验结果</th>
+                  <th class="risk-th-result">系统诊断结论</th>
+                  <th class="risk-th-remark">自动结论备注</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
               </table></div>`
@@ -1734,18 +1744,77 @@
       window.__step2State.opinions[key] = val;
     }
 
+    // ===== v1.38.0 自动结论备注（apply 流程）=====
+    // 低风险 / 中风险 / 高风险 / 自定义描述（≤24 字）；存内存，切换 tab / 重渲染不丢
+    function applyRiskRemarkStore() {
+      if (!window.__applyRiskRemarks) window.__applyRiskRemarks = {};
+      return window.__applyRiskRemarks;
+    }
+    function applyRiskRemarkKey(companyKey, tab, idx) {
+      return companyKey + '::' + tab + '::' + idx;
+    }
+    function buildApplyRiskRemarkCell(companyKey, tab, idx) {
+      var saved = applyRiskRemarkStore()[applyRiskRemarkKey(companyKey, tab, idx)] || { value: '', text: '' };
+      var opts = window.RISK_SCAN_SUBJECT.remarkOptions;
+      var max = window.RISK_SCAN_SUBJECT.remarkMaxLength;
+      var optsHtml = '<option value="">未选择</option>' + opts.map(function (o) {
+        return '<option value="' + o.value + '"' + (saved.value === o.value ? ' selected' : '') + '>' + o.label + '</option>';
+      }).join('');
+      var cls = saved.value ? ('risk-remark-' + saved.value) : '';
+      var isCustom = saved.value === 'custom';
+      var count = (saved.text || '').length;
+      return '<div class="risk-remark-box">'
+        + '<select class="risk-remark-select ' + cls + '" data-rk="' + tab + '" data-ri="' + idx + '" data-rc="' + companyKey + '" onchange="toggleApplyRiskRemark(this)">' + optsHtml + '</select>'
+        + '<input class="risk-remark-input" data-rk="' + tab + '" data-ri="' + idx + '" data-rc="' + companyKey + '" maxlength="' + max + '" '
+        + 'placeholder="请输入结论描述（' + max + ' 字以内）" value="' + String(saved.text || '').replace(/"/g, '&quot;') + '"'
+        + (isCustom ? '' : ' hidden') + ' oninput="updateApplyRiskRemark(this)">'
+        + '<span class="risk-remark-count' + (count > max ? ' over' : '') + '"' + (isCustom ? '' : ' hidden') + '>' + count + '/' + max + '</span>'
+        + '</div>';
+    }
+    function toggleApplyRiskRemark(selectEl) {
+      var companyKey = selectEl.getAttribute('data-rc');
+      var tab = selectEl.getAttribute('data-rk');
+      var idx = selectEl.getAttribute('data-ri');
+      var box = selectEl.closest('.risk-remark-box');
+      var input = box.querySelector('.risk-remark-input');
+      var countEl = box.querySelector('.risk-remark-count');
+      var v = selectEl.value;
+      selectEl.className = 'risk-remark-select' + (v ? ' risk-remark-' + v : '');
+      var isCustom = v === 'custom';
+      input.hidden = !isCustom;
+      countEl.hidden = !isCustom;
+      var store = applyRiskRemarkStore();
+      var rk = applyRiskRemarkKey(companyKey, tab, idx);
+      if (!v) { delete store[rk]; }
+      else { store[rk] = { value: v, text: isCustom ? (input.value || '') : '' }; }
+    }
+    function updateApplyRiskRemark(inputEl) {
+      var companyKey = inputEl.getAttribute('data-rc');
+      var tab = inputEl.getAttribute('data-rk');
+      var idx = inputEl.getAttribute('data-ri');
+      var max = window.RISK_SCAN_SUBJECT.remarkMaxLength;
+      if (inputEl.value.length > max) inputEl.value = inputEl.value.slice(0, max);
+      var box = inputEl.closest('.risk-remark-box');
+      var countEl = box.querySelector('.risk-remark-count');
+      var n = inputEl.value.length;
+      countEl.textContent = n + '/' + max;
+      countEl.classList.toggle('over', n > max);
+      applyRiskRemarkStore()[applyRiskRemarkKey(companyKey, tab, idx)] = { value: 'custom', text: inputEl.value };
+    }
+
     // v1.7.99.300 用户手动调整风险校验结果（apply 流程）
-    function toggleApplyRiskResult(companyKey, riskName, selectEl) {
+    function toggleApplyRiskResult(companyKey, riskName, selectEl, srcName) {
       var newStatus = selectEl.value;  // 'ok' | 'warn'
       var c = APPLY_SURVEY_COMPANIES[companyKey];
       if (!c || !c.risks) return;
-      // 在 6 个 tab 中查找匹配的风险条目
+      // v1.38.0：主体风险的条目是共享清单重建的 → 按**源校验项名**写回原数据
+      var targetName = srcName || riskName;
       var changed = false;
       Object.keys(c.risks).forEach(function(tab) {
         var items = c.risks[tab];
         if (!Array.isArray(items)) return;
         items.forEach(function(r) {
-          if (r.name === riskName) {
+          if (r.name === targetName) {
             r.status = newStatus;
             changed = true;
           }
@@ -2942,12 +3011,25 @@
     };
 
     // 把 c.risks 扁平数组按 6 tab 分组
+    // ===== v1.38.0：贸易风险 + 主体风险 合并为单一「主体风险」tab =====
+    // 主体风险按共享清单（4 检查分类 / 17 校验项）重建；
+    // 检查过程沿用原型现有同义校验项，匹配不到的留空
     function applyGroupRisksByTab(risks) {
-      var groups = { trade: [], internal: [], business: [], judicial: [], relation: [], personnel: [] };
+      var groups = { subject: [], business: [], judicial: [], relation: [], personnel: [] };
+      var raw = { trade: [], internal: [] };
       risks.forEach(function(r) {
         var tab = APPLY_RISK_TAB_BY_NAME[r.name] || 'trade';
-        groups[tab].push(r);
+        if (tab === 'trade' || tab === 'internal') raw[tab].push(r);
+        else groups[tab].push(r);
       });
+      var lookup = {};
+      ['trade', 'internal'].forEach(function(k) {
+        raw[k].forEach(function(r, i) {
+          var meta = applyGetRiskMeta(r.name);
+          lookup[r.name] = { desc: r.desc, status: r.status, rule: meta.rule, tab: k, idx: i };
+        });
+      });
+      groups.subject = window.RISK_SCAN_SUBJECT.buildItems(lookup);
       return groups;
     }
 

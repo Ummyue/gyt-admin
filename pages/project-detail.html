@@ -499,18 +499,16 @@
           </div>
         </div>
         <div class="card-body" style="padding: 0;">
-          <!-- 6 个分类 tap -->
+          <!-- v1.38.0：贸易风险 + 主体风险 合并为单一「主体风险」tab（5 个分类 tap） -->
           <div class="risk-tabs" id="riskTabs">
-            <div class="risk-tab active" data-tab="trade" onclick="switchRiskTab('trade')">贸易风险 <span class="count" id="riskCountTrade">0</span></div>
-            <div class="risk-tab" data-tab="internal" onclick="switchRiskTab('internal')">主体风险 <span class="count" id="riskCountInternal">0</span></div>
+            <div class="risk-tab active" data-tab="subject" onclick="switchRiskTab('subject')">主体风险 <span class="count" id="riskCountSubject">0</span></div>
             <div class="risk-tab" data-tab="business" onclick="switchRiskTab('business')">经营风险 <span class="count" id="riskCountBusiness">0</span></div>
             <div class="risk-tab" data-tab="judicial" onclick="switchRiskTab('judicial')">司法风险 <span class="count" id="riskCountJudicial">0</span></div>
             <div class="risk-tab" data-tab="relation" onclick="switchRiskTab('relation')">关系发现 <span class="count" id="riskCountRelation">0</span></div>
             <div class="risk-tab" data-tab="personnel" onclick="switchRiskTab('personnel')">关键人风险 <span class="count" id="riskCountPersonnel">0</span></div>
           </div>
-          <!-- 6 个 panel（默认全部 hidden，由 JS 切换显示） -->
-          <div class="risk-panel" id="riskPanelTrade"></div>
-            <div class="risk-panel" id="riskPanelInternal" hidden></div>
+          <!-- 5 个 panel（默认全部 hidden，由 JS 切换显示） -->
+          <div class="risk-panel" id="riskPanelSubject"></div>
             <div class="risk-panel" id="riskPanelBusiness" hidden></div>
             <div class="risk-panel" id="riskPanelJudicial" hidden></div>
             <div class="risk-panel" id="riskPanelRelation" hidden></div>
@@ -1010,6 +1008,9 @@
     </div>
   </div>
 
+  <!-- v1.38.0：主体风险 tab 共享清单（必须在主脚本之前加载） -->
+  <script src="../shared/js/risk-scan-subject.js"></script>
+
   <script>
     // ===== v1.7.99.274 步骤条点击切换 panel（v1.7.99.299 扩展为 5 步） =====
     function switchEntryStep(n) {
@@ -1489,9 +1490,9 @@
     document.getElementById('equityInfoContainer').innerHTML = html;
   }
 
-    // ===== v1.7.99.274.6 重新渲染 6 个风控 panel =====
+    // ===== v1.38.0：贸易风险 + 主体风险 合并 → 5 个风控 panel =====
   function renderAllRiskPanels() {
-    ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
+    ['subject', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
   }
 
     // 切换风险分类 tap
@@ -1821,15 +1822,35 @@
     '合作方频繁变更风险':     { category: '关联关系类', rule: '合作方是否稳定' }
   };
 
-    // 渲染单个 panel（v1.7.99.280：表格 5 列）
+    // ===== v1.38.0 主体风险 tab：按共享清单（4 分类 / 17 项）重建 =====
+    // 检查过程沿用原型现有 trade + internal 的同义校验项；匹配不到的留空
+  function buildSubjectRiskItems() {
+    var c = COMPANIES[currentCompanyId];
+    var lookup = {};
+    ['trade', 'internal'].forEach(function (k) {
+      var d = c[k];
+      if (!d || !d.items) return;
+      d.items.forEach(function (it, ii) {
+        var meta = getRiskMeta(k, it);
+        lookup[it.name] = { desc: it.desc, status: it.status, rule: meta.rule, tab: k, idx: ii };
+      });
+    });
+    return window.RISK_SCAN_SUBJECT.buildItems(lookup);
+  }
+
+    // 渲染单个 panel（v1.38.0：表格 6 列 = 检查分类/校验项/检查规则/检查过程/系统诊断结论/自动结论备注）
   function renderRiskPanel(key) {
     var data = COMPANIES[currentCompanyId][key];
-    if (!data) return;
-    var rows = data.items.map(function(item, i) {
+    var items = (key === 'subject') ? buildSubjectRiskItems() : (data ? data.items : null);
+    if (!items) return;
+    var rows = items.map(function(item, i) {
       var isWarn = item.status === 'warn';
       var hasCases = Array.isArray(item.cases) && item.cases.length > 0;
       var itemId = key + '_item_' + i;
-      var meta = getRiskMeta(key, item);
+      // v1.38.0：主体风险的检查分类/检查规则直接取共享清单（未匹配的 rule 为空 → 留白）
+      var meta = (key === 'subject')
+        ? { category: item.category, rule: item.rule }
+        : getRiskMeta(key, item);
         // 司法案件明细（嵌入「检查过程」列下方，保留可展开）
       var casesHtml = '';
       if (hasCases) {
@@ -1881,6 +1902,7 @@
           + casesHtml
         + '</td>'
         + '<td class="risk-td-result">' + resultTag + '</td>'
+        + '<td class="risk-td-remark">' + buildRiskRemarkCell(key, i) + '</td>'
         + '</tr>';
     }).join('');
     var html = '<div class="risk-table-wrap">'
@@ -1890,12 +1912,72 @@
       + '<th class="risk-th-name">校验项</th>'
       + '<th class="risk-th-rule">检查规则（负面清单）</th>'
       + '<th class="risk-th-desc">检查过程</th>'
-      + '<th class="risk-th-result">校验结果</th>'
+      + '<th class="risk-th-result">系统诊断结论</th>'
+      + '<th class="risk-th-remark">自动结论备注</th>'
       + '</tr></thead>'
       + '<tbody>' + rows + '</tbody>'
       + '</table>'
       + '</div>';
     document.getElementById('riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)).innerHTML = html;
+  }
+
+    // ===== v1.38.0 自动结论备注 =====
+    // 低风险 / 中风险 / 高风险 / 自定义描述（≤24 字）
+    // 备注存在内存里（window.__riskRemarks），切换 tab / 重渲染后不丢
+  function riskRemarkStore() {
+    if (!window.__riskRemarks) window.__riskRemarks = {};
+    return window.__riskRemarks;
+  }
+  function riskRemarkKey(key, idx) {
+    return currentCompanyId + '::' + key + '::' + idx;
+  }
+  function buildRiskRemarkCell(key, idx) {
+    var saved = riskRemarkStore()[riskRemarkKey(key, idx)] || { value: '', text: '' };
+    var opts = window.RISK_SCAN_SUBJECT.remarkOptions;
+    var optsHtml = '<option value="">未选择</option>' + opts.map(function (o) {
+      return '<option value="' + o.value + '"' + (saved.value === o.value ? ' selected' : '') + '>' + o.label + '</option>';
+    }).join('');
+    var cls = saved.value ? ('risk-remark-' + saved.value) : '';
+    var isCustom = saved.value === 'custom';
+    var count = (saved.text || '').length;
+    return '<div class="risk-remark-box">'
+      + '<select class="risk-remark-select ' + cls + '" data-rk="' + key + '" data-ri="' + idx + '" onchange="toggleRiskRemark(this)">' + optsHtml + '</select>'
+      + '<input class="risk-remark-input" data-rk="' + key + '" data-ri="' + idx + '" maxlength="' + window.RISK_SCAN_SUBJECT.remarkMaxLength + '" '
+      + 'placeholder="请输入结论描述（' + window.RISK_SCAN_SUBJECT.remarkMaxLength + ' 字以内）" value="' + String(saved.text || '').replace(/"/g, '&quot;') + '"'
+      + (isCustom ? '' : ' hidden') + ' oninput="updateRiskRemark(this)">'
+      + '<span class="risk-remark-count' + (count > window.RISK_SCAN_SUBJECT.remarkMaxLength ? ' over' : '') + '"'
+      + (isCustom ? '' : ' hidden') + '>' + count + '/' + window.RISK_SCAN_SUBJECT.remarkMaxLength + '</span>'
+      + '</div>';
+  }
+  function toggleRiskRemark(selectEl) {
+    var key = selectEl.getAttribute('data-rk');
+    var idx = selectEl.getAttribute('data-ri');
+    var box = selectEl.closest('.risk-remark-box');
+    var input = box.querySelector('.risk-remark-input');
+    var countEl = box.querySelector('.risk-remark-count');
+    var v = selectEl.value;
+    selectEl.className = 'risk-remark-select' + (v ? ' risk-remark-' + v : '');
+    var isCustom = v === 'custom';
+    input.hidden = !isCustom;
+    countEl.hidden = !isCustom;
+    var store = riskRemarkStore();
+    var rk = riskRemarkKey(key, idx);
+    if (!v) { delete store[rk]; }
+    else { store[rk] = { value: v, text: isCustom ? (input.value || '') : '' }; }
+  }
+  function updateRiskRemark(inputEl) {
+    var key = inputEl.getAttribute('data-rk');
+    var idx = inputEl.getAttribute('data-ri');
+    var max = window.RISK_SCAN_SUBJECT.remarkMaxLength;
+    if (inputEl.value.length > max) inputEl.value = inputEl.value.slice(0, max);
+    var box = inputEl.closest('.risk-remark-box');
+    var countEl = box.querySelector('.risk-remark-count');
+    var n = inputEl.value.length;
+    countEl.textContent = n + '/' + max;
+    countEl.classList.toggle('over', n > max);
+    var store = riskRemarkStore();
+    var rk = riskRemarkKey(key, idx);
+    store[rk] = { value: 'custom', text: inputEl.value };
   }
 
     // 展开/收起 单个 item 的 cases 明细
@@ -1916,10 +1998,13 @@
 
     // 更新 6 个 tap 的计数
   function updateRiskTabCounts() {
-    ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(function(key) {
-      var data = COMPANIES[currentCompanyId][key];
-      if (!data) return;
-      var count = data.items.filter(function(x) { return x.status === 'warn'; }).length;
+    // v1.38.0：主体风险为合并 tab，计数取「共享清单 17 项」里的风险数
+    ['subject', 'business', 'judicial', 'relation', 'personnel'].forEach(function(key) {
+      var items = (key === 'subject')
+        ? buildSubjectRiskItems()
+        : (COMPANIES[currentCompanyId][key] || {}).items;
+      if (!items) return;
+      var count = items.filter(function(x) { return x.status === 'warn'; }).length;
       var el = document.getElementById('riskCount' + key.charAt(0).toUpperCase() + key.slice(1));
       if (el) {
         el.textContent = count;
@@ -1935,9 +2020,12 @@
     var warnEl = document.getElementById('riskScanWarn');
     if (stEl) stEl.textContent = c.scanTime || '';
     if (totEl) totEl.textContent = c.scanTotal || 0;
-    // 总风险数 = 6 个 tap 之和
-    var totalWarn = ['trade','internal','business','judicial','relation','personnel'].reduce(function(s, k) {
-      var d = c[k]; return s + (d ? d.items.filter(function(x){return x.status==='warn'}).length : 0);
+    // 总风险数 = 5 个 tap 之和（v1.38.0：主体风险为合并 tab）
+    var totalWarn = ['subject','business','judicial','relation','personnel'].reduce(function(s, k) {
+      var items = (k === 'subject')
+        ? buildSubjectRiskItems()
+        : (c[k] ? c[k].items : []);
+      return s + (items ? items.filter(function(x){return x.status==='warn'}).length : 0);
     }, 0);
     if (warnEl) warnEl.textContent = totalWarn;
   }
@@ -2336,7 +2424,7 @@
       if (scanNameEl && curCompany) scanNameEl.textContent = curCompany.shortName || curCompany.name || currentCompanyId;
       // v1.7.99.300 设置案件关联人员默认值（用当前企业的法定代表人）
       window.__currentRiskLegalRep = (curCompany && curCompany.basic && curCompany.basic[1] && curCompany.basic[1][0]) ? curCompany.basic[1][0].value : '—';
-      ['trade', 'internal', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
+      ['subject', 'business', 'judicial', 'relation', 'personnel'].forEach(renderRiskPanel);
       updateRiskTabCounts();
     }
     initRiskPanel();
@@ -2345,8 +2433,18 @@
     function toggleRiskResult(tab, itemIdx, selectEl) {
       var newStatus = selectEl.value;  // 'ok' | 'warn'
       var c = COMPANIES[currentCompanyId];
-      if (!c || !c[tab] || !c[tab].items) return;
-      var item = c[tab].items[itemIdx];
+      if (!c) return;
+      var item = null;
+      if (tab === 'subject') {
+        // v1.38.0：主体风险项来自共享清单 → 状态写回源项（trade / internal）
+        var cur = buildSubjectRiskItems()[itemIdx];
+        if (!cur || !cur.srcTab || cur.srcIdx < 0) return;
+        var srcItems = c[cur.srcTab] && c[cur.srcTab].items;
+        item = srcItems ? srcItems[cur.srcIdx] : null;
+      } else {
+        if (!c[tab] || !c[tab].items) return;
+        item = c[tab].items[itemIdx];
+      }
       if (!item) return;
       item.status = newStatus;
       // 同步更新 select 样式
