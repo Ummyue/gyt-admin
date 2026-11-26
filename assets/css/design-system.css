@@ -2922,6 +2922,8 @@ input, select, textarea {
 /* 「校验结果」→「系统诊断结论」后新增的一列：低风险 / 中风险 / 高风险 / 自定义描述（≤24 字） */
 .risk-table thead th.risk-th-remark { width: 168px; }
 .risk-td-remark { vertical-align: middle; }
+/* v1.38.1：同一「检查分类」的连续行 → 首列合并单元格 */
+.risk-table tbody td.risk-td-cat-merged { vertical-align: middle; }
 .risk-remark-box { display: flex; flex-direction: column; gap: 6px; align-items: flex-start; }
 .risk-remark-select {
   display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500;

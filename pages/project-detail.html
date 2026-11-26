@@ -1843,14 +1843,27 @@
     var data = COMPANIES[currentCompanyId][key];
     var items = (key === 'subject') ? buildSubjectRiskItems() : (data ? data.items : null);
     if (!items) return;
-    var rows = items.map(function(item, i) {
-      var isWarn = item.status === 'warn';
-      var hasCases = Array.isArray(item.cases) && item.cases.length > 0;
-      var itemId = key + '_item_' + i;
+    // ===== v1.38.1：按「检查分类」分组排序 → 相同分类相邻 → 首列合并单元格 =====
+    var rowModels = items.map(function(item, i) {
       // v1.38.0：主体风险的检查分类/检查规则直接取共享清单（未匹配的 rule 为空 → 留白）
       var meta = (key === 'subject')
         ? { category: item.category, rule: item.rule }
         : getRiskMeta(key, item);
+      return { item: item, meta: meta, origIdx: i, cat: meta.category || '—' };
+    });
+    // 稳定分组：同名分类按首次出现顺序聚拢，组内保持原有次序
+    var catOrder = [], catMap = {};
+    rowModels.forEach(function (rm) {
+      if (!catMap[rm.cat]) { catMap[rm.cat] = { cat: rm.cat, rows: [] }; catOrder.push(catMap[rm.cat]); }
+      catMap[rm.cat].rows.push(rm);
+    });
+    var rows = catOrder.map(function (g) {
+      return g.rows.map(function (rm, gi) {
+      var item = rm.item, i = rm.origIdx;
+      var isWarn = item.status === 'warn';
+      var hasCases = Array.isArray(item.cases) && item.cases.length > 0;
+      var itemId = key + '_item_' + i;
+      var meta = rm.meta;
         // 司法案件明细（嵌入「检查过程」列下方，保留可展开）
       var casesHtml = '';
       if (hasCases) {
@@ -1889,8 +1902,12 @@
         + '<option value="ok"' + (isWarn ? '' : ' selected') + '>✓ 无风险</option>'
         + '<option value="warn"' + (isWarn ? ' selected' : '') + '>⚠ 存在风险</option>'
         + '</select>';
+      // v1.38.1：同组首行输出 rowspan 合并单元格，其余行不输出该格
+      var catCell = (gi === 0)
+        ? '<td class="risk-td-category risk-td-cat-merged" rowspan="' + g.rows.length + '">' + g.cat + '</td>'
+        : '';
       return '<tr class="risk-row' + (isWarn ? ' risk-row-warn' : '') + '">'
-        + '<td class="risk-td-category">' + meta.category + '</td>'
+        + catCell
         + '<td class="risk-td-name">'
           + item.name
           + (hasCases ? ' <span class="risk-cases-count">' + item.cases.length + ' 条</span>' : '')
@@ -1904,6 +1921,7 @@
         + '<td class="risk-td-result">' + resultTag + '</td>'
         + '<td class="risk-td-remark">' + buildRiskRemarkCell(key, i) + '</td>'
         + '</tr>';
+      }).join('');
     }).join('');
     var html = '<div class="risk-table-wrap">'
       + '<table class="risk-table">'

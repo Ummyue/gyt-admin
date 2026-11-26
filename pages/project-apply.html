@@ -1697,12 +1697,24 @@
           const el = document.querySelector(`.apply-risk-panel[data-apply-company="${key}"][data-apply-tab="${t}"]`);
           if (!el) return;
           const items = riskGroups[t] || [];
-          const rows = items.map((r, i) => {
-            const isWarn = r.status === 'warn';
+          // ===== v1.38.1：按「检查分类」分组排序 → 相同分类相邻 → 首列合并单元格 =====
+          const rowModels = items.map((r, i) => {
             // v1.38.0：主体风险的检查分类 / 检查规则取自共享清单（未匹配的 rule 为空 → 留白）
             const meta = (t === 'subject')
               ? { category: r.category, rule: r.rule }
               : applyGetRiskMeta(r.name);
+            return { r: r, meta: meta, origIdx: i, cat: meta.category || '—' };
+          });
+          const catOrder = [], catMap = {};
+          rowModels.forEach(function (rm) {
+            if (!catMap[rm.cat]) { catMap[rm.cat] = { cat: rm.cat, rows: [] }; catOrder.push(catMap[rm.cat]); }
+            catMap[rm.cat].rows.push(rm);
+          });
+          const rows = catOrder.map(function (g) {
+            return g.rows.map(function (rm, gi) {
+            const r = rm.r, i = rm.origIdx;
+            const isWarn = r.status === 'warn';
+            const meta = rm.meta;
             // v1.38.0：主体风险项若未匹配到原型检查过程 → **留空**（不给默认兜底文案）
             const descText = r.desc
               ? r.desc.replace(/(\d{4}-\d{2}-\d{2})/g, m => `<mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">${m}</mark>`)
@@ -1714,14 +1726,19 @@
               <option value="ok"${isWarn ? '' : ' selected'}>✓ 无风险</option>
               <option value="warn"${isWarn ? ' selected' : ''}>⚠ 存在风险</option>
             </select>`;
+            // v1.38.1：同组首行输出 rowspan 合并单元格，其余行不输出该格
+            const catCell = (gi === 0)
+              ? `<td class="risk-td-category risk-td-cat-merged" rowspan="${g.rows.length}">${g.cat}</td>`
+              : '';
             return `<tr class="risk-row ${isWarn ? 'risk-row-warn' : ''}">
-              <td class="risk-td-category">${meta.category}</td>
+              ${catCell}
               <td class="risk-td-name">${r.name}</td>
               <td class="risk-td-rule">${ruleHtml}</td>
               <td class="risk-td-desc"><div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div></td>
               <td class="risk-td-result">${tag}</td>
               <td class="risk-td-remark">${buildApplyRiskRemarkCell(key, t, i)}</td>
             </tr>`;
+            }).join('');
           }).join('');
           el.innerHTML = rows
             ? `<div class="risk-table-wrap"><table class="risk-table">

@@ -59,7 +59,7 @@ def check(name, cond, detail=""):
     print(f"{'✅' if cond else '❌'} {name}" + (f"  — {detail}" if detail and not cond else ""))
 
 
-def verify_page(page, label, tab_sel, panel_sel):
+def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     """在已切到风险扫描所在 step 的页面上校验主体风险 tab。"""
     all_tabs = [t.split()[0] for t in page.locator(tab_sel).all_inner_texts()]
     # apply 页每个企业一套 tab（多套）→ 按 5 个一组切分，逐组校验
@@ -85,9 +85,14 @@ def verify_page(page, label, tab_sel, panel_sel):
     check(f"{label}：主体风险共 17 项", n == 17, f"实际 {n} 项")
 
     cats, names, blanks = [], [], 0
+    cur_cat = None
     for i in range(n):
         r = rows.nth(i)
-        cats.append(r.locator("td.risk-td-category").inner_text().strip())
+        # v1.38.1：分类列已合并 → 被覆盖的行没有该 td，按 rowspan 语义继承上一行的分类
+        ct = r.locator("td.risk-td-category")
+        if ct.count():
+            cur_cat = ct.first.inner_text().strip()
+        cats.append(cur_cat)
         names.append(r.locator("td.risk-td-name").inner_text().strip())
         rule = r.locator("td.risk-td-rule").inner_text().strip()
         desc = r.locator("td.risk-td-desc").inner_text().strip()
@@ -106,6 +111,20 @@ def verify_page(page, label, tab_sel, panel_sel):
         if "按风险模型规则校验" in rule:
             ph += 1
     check(f"{label}：检查规则列无兜底占位文案", ph == 0, f"实际 {ph} 行含占位文案")
+
+    # ---- v1.38.1：相同「检查分类」合并单元格 ----
+    cat_tds = panel.locator("tbody td.risk-td-category")
+    check(f"{label}：同一检查分类合并为 1 个单元格", cat_tds.count() == len(EXPECT_COUNT),
+          f"实际 {cat_tds.count()} 个")
+    spans = [t.get_attribute("rowspan") for t in cat_tds.all()]
+    check(f"{label}：合并行数与各分类项数一致",
+          spans == [str(v) for v in EXPECT_COUNT.values()], f"实际 {spans}")
+    cat_names = [t.inner_text().strip() for t in cat_tds.all()]
+    check(f"{label}：合并单元格内容为 4 个分类名",
+          cat_names == [c for c, _ in SPEC], f"实际 {cat_names}")
+    # 排序：同名分类必须相邻（首列 td 数 == 分类数即说明已聚拢）
+    check(f"{label}：相同名称的检查分类已排在一起",
+          len(cat_tds.all()) == len(set(cat_names)), f"实际 {cat_names}")
 
     # ---- 自动结论备注交互 ----
     sel = rows.first.locator(".risk-remark-select")
@@ -142,6 +161,27 @@ def verify_page(page, label, tab_sel, panel_sel):
     check(f"{label}：切换 tab 后备注保留", sel2.input_value() == "custom",
           f"实际 {sel2.input_value()!r}")
 
+    # ---- v1.38.1：排序后「系统诊断结论」写回与备注不错位 ----
+    # 给第 5 行（空壳企业风险组内）打备注，再切走切回，确认仍落在同一行
+    r5 = panel.locator("tbody tr").nth(5)
+    r5.locator(".risk-remark-select").select_option("high")
+    page.wait_for_timeout(300)
+    page.locator(tab_sel).nth(1).click()
+    page.wait_for_timeout(400)
+    page.locator(tab_sel).nth(0).click()
+    page.wait_for_timeout(500)
+    v5 = panel.locator("tbody tr").nth(5).locator(".risk-remark-select").input_value()
+    check(f"{label}：排序后备注不错位（仍在第 5 行）", v5 == "high", f"实际 {v5!r}")
+
+    # 改第 5 行的系统诊断结论 → 源项状态应同步变化
+    if warn_expr:
+        before = page.evaluate(warn_expr)
+        panel.locator("tbody tr").nth(5).locator("td.risk-td-result select").select_option("warn")
+        page.wait_for_timeout(700)
+        after = page.evaluate(warn_expr)
+        check(f"{label}：排序后改系统诊断结论能写回源项", after == before + 1,
+              f"warn 数 {before} → {after}")
+
 
 def main():
     from playwright.sync_api import sync_playwright
@@ -163,7 +203,9 @@ def main():
         page.click('.step-label[data-step="2"]')
         page.wait_for_timeout(800)
         verify_page(page, "项目详情",
-                    "#riskTabs .risk-tab", "#riskPanelSubject")
+                    "#riskTabs .risk-tab", "#riskPanelSubject",
+                    warn_expr="() => { const c = (window.COMPANIES||{})[window.currentCompanyId];"
+                              " return c && c.internal ? c.internal.items.filter(x => x.status === 'warn').length : -1; }")
 
         # ---------- 项目准入 ----------
         page.goto(f"{BASE}/pages/project-apply.html", wait_until="networkidle")
