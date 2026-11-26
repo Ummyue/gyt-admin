@@ -126,6 +126,24 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     check(f"{label}：相同名称的检查分类已排在一起",
           len(cat_tds.all()) == len(set(cat_names)), f"实际 {cat_names}")
 
+    # ---- v1.38.3：合并格之间的横向分隔线必须**看得见** ----
+    # 坑：合并格背景曾与行分隔线同色(#F1F5F9) → 线画了但隐形，第一列像一整块
+    m1 = panel.locator('tbody td.risk-td-cat-merged').first
+    line_vis = m1.evaluate("e => { const c = getComputedStyle(e);"
+                            ' return { w: c.borderBottomWidth, c: c.borderBottomColor, bg: c.backgroundColor }; }')
+    check(f"{label}：合并格底边线可见（与背景不同色且有宽度）",
+          line_vis['w'] != '0px' and line_vis['c'] != line_vis['bg'],
+          f"实际 {line_vis}")
+    sep2 = panel.evaluate("(el) => { const tds = [...el.querySelectorAll('td.risk-td-cat-merged')]; return tds.map(t => getComputedStyle(t).borderBottomWidth).join(',');}")
+    check(f"{label}：每个合并格都有底边线",
+          all(v == '1px' for v in sep2.split(',') if v), f"实际 {sep2}")
+
+    # ---- v1.38.3：两模块的控件不能挤在一起 ----
+    gap = panel.evaluate("(el) => { const r = el.querySelector('td.risk-td-result select'); const m = el.querySelector('td.risk-td-remark select'); if (!r || !m) return -1; return Math.round(m.getBoundingClientRect().left - r.getBoundingClientRect().right);}")
+    check(f"{label}：两模块控件间距 ≥ 30px（箭头不粘连）", gap >= 30, f"实际 {gap}px")
+    clipped = panel.evaluate("(el) => { const s = el.querySelector('td.risk-td-result select'); if (!s) return true; return s.scrollWidth > s.clientWidth + 1;}")
+    check(f"{label}：系统诊断结论文案未被截断", not clipped)
+
     # ---- v1.38.2：合并单元格线框 + 两模块视觉区分 ----
     merged = panel.locator("tbody td.risk-td-cat-merged").first
     bl = merged.evaluate("e => getComputedStyle(e).borderLeftWidth + '/' + getComputedStyle(e).borderRightWidth")

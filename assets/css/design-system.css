@@ -2948,28 +2948,46 @@ input, select, textarea {
 .risk-remark-count.over { color: var(--color-danger); }
 
 /* ===== v1.38.2 风险扫描表格：线框补齐 + 「系统诊断结论」与「备注」两模块区分 ===== */
-/* 合并单元格的四周线框（避免与相邻列视觉混同） */
+/* v1.38.3 修正：合并格背景原为 #F1F5F9，与行分隔线 #F1F5F9 **同色** → 线画了但看不见，
+   相邻两个合并格之间没有横向分隔，看起来像一整块灰色。
+   → 上下边框改用更深的 --border-default，背景改浅一档 #FAFBFC，横线才显出来。 */
 .risk-table tbody td.risk-td-cat-merged {
   vertical-align: middle;
+  /* 只画底边线：separate 模式下上下相邻边框不合并，
+     同时画 top+bottom 会叠成 2px 粗线；顶部线由表头 border-bottom 提供 */
+  border-bottom: 1px solid var(--border-default);
   border-left: 1px solid var(--border-default);
   border-right: 1px solid var(--border-default);
-  background: #F1F5F9;
+  background: #FAFBFC;
   font-weight: 600;
   color: var(--text-primary);
 }
 /* 两个模块之间加竖向分隔 + 备注列用淡蓝底区分 */
-.risk-table thead th.risk-th-result { border-left: 1px solid var(--border-default); }
-.risk-table tbody td.risk-td-result { border-left: 1px solid var(--border-default); }
+/* v1.38.3：两列间距从 12px 拉到 24px，并给 select 设最小宽度，
+   否则两个下拉箭头几乎贴在一起，看不出箭头归哪一列 */
+.risk-table thead th.risk-th-result {
+  border-left: 1px solid var(--border-default);
+  padding-right: 24px;
+}
+.risk-table tbody td.risk-td-result {
+  border-left: 1px solid var(--border-default);
+  padding-right: 24px;
+}
 .risk-table thead th.risk-th-remark {
   border-left: 1px solid var(--border-default);
+  padding-left: 24px;
   background: #E8EFF9;
   color: var(--color-primary);
   font-weight: 600;
 }
 .risk-table tbody td.risk-td-remark {
   border-left: 1px solid var(--border-default);
+  padding-left: 24px;
   background: #F8FAFE;
 }
+/* v1.38.3：select 撑满单元格内容区（min-width 会把 select 撑出列宽 → 两列箭头贴到一起） */
+.risk-table .risk-result-select,
+.risk-table .risk-remark-select { width: 100%; min-width: 0; }
 /* 备注下的操作人 / 操作时间 */
 .risk-remark-op {
   font-size: 11px; color: var(--text-tertiary); line-height: 1.5;
