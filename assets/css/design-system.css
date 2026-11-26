@@ -2951,49 +2951,53 @@ input, select, textarea {
 /* v1.38.3 修正：合并格背景原为 #F1F5F9，与行分隔线 #F1F5F9 **同色** → 线画了但看不见，
    相邻两个合并格之间没有横向分隔，看起来像一整块灰色。
    → 上下边框改用更深的 --border-default，背景改浅一档 #FAFBFC，横线才显出来。 */
-.risk-table tbody td.risk-td-cat-merged {
-  vertical-align: middle;
-  /* 只画底边线：separate 模式下上下相邻边框不合并，
-     同时画 top+bottom 会叠成 2px 粗线；顶部线由表头 border-bottom 提供 */
-  border-bottom: 1px solid var(--border-default);
-  border-left: 1px solid var(--border-default);
-  border-right: 1px solid var(--border-default);
+/* ===== v1.38.8 风险扫描表格：内容合并（保留全部分割线）=====
+   ⚠️ 不用 rowspan：rowspan 会把合并区域内的**横向分割线一起吃掉**，
+   用户反馈「把分割线给合并没了」。
+   → 改为：同类项的内容只在组首行显示（视觉上仍是合并），
+     但**每行都保留独立单元格**，横向分割线一条不少。 */
+/* 两列统一浅底 → 视觉上仍是一个「合并块」，但每行横线都在 */
+.risk-table tbody td.risk-td-category {
   background: #FAFBFC;
+  border-left: 1px solid var(--border-strong);
+}
+.risk-table tbody td.risk-td-cat-first {
+  vertical-align: middle;
+  border-top: 1px solid var(--border-strong);
   font-weight: 600;
   color: var(--text-primary);
 }
+.risk-table tbody td.risk-td-cat-last { border-bottom: 1px solid var(--border-strong); }
 /* 两个模块之间加竖向分隔 + 备注列用淡蓝底区分 */
 /* v1.38.3：两列间距从 12px 拉到 24px，并给 select 设最小宽度，
    否则两个下拉箭头几乎贴在一起，看不出箭头归哪一列 */
 .risk-table thead th.risk-th-result {
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--border-strong);
   padding-right: 24px;
 }
 .risk-table tbody td.risk-td-result {
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--border-strong);
   padding-right: 24px;
 }
 .risk-table thead th.risk-th-remark {
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--border-strong);
   padding-left: 24px;
   background: #E8EFF9;
   color: var(--color-primary);
   font-weight: 600;
 }
 .risk-table tbody td.risk-td-remark {
-  border-left: 1px solid var(--border-default);
+  border-left: 1px solid var(--border-strong);
   padding-left: 24px;
   background: #F8FAFE;
 }
 /* v1.38.7：风险逻辑（对应合规要求）列的合并单元格 —— 与「检查分类」合并格同一逻辑 */
-.risk-table tbody td.risk-td-rule-merged {
+.risk-table tbody td.risk-td-rule { background: #FAFBFC; color: var(--text-primary); }
+.risk-table tbody td.risk-td-rule-first {
   vertical-align: middle;
-  border-bottom: 1px solid var(--border-default);
-  border-left: 1px solid var(--border-default);
-  border-right: 1px solid var(--border-default);
-  background: #FAFBFC;
-  color: var(--text-secondary);
+  border-top: 1px solid var(--border-strong);
 }
+.risk-table tbody td.risk-td-rule-last { border-bottom: 1px solid var(--border-strong); }
 
 /* v1.38.4：补齐中间两列的竖向分隔线
    校验项 | 检查规则 | 检查过程 三个列块之间要有明确分界，
@@ -3003,12 +3007,14 @@ input, select, textarea {
 /* v1.38.6：列顺序改为 检查分类 │ 风险逻辑 │ 校验项 │ 检查过程 │ 系统诊断结论 │ 备注
    → 三个左列各自加 border-right（category 之前只给 th 加，
    非合并行的 td 缺线；这里统一 th + td 都加） */
+/* v1.38.8：列分隔线加深到 --border-strong（#CBD5E1）——
+   #E2E8F0 在浅底上几乎看不见，用户反馈「分割线没了」 */
 .risk-table thead th.risk-th-category,
-.risk-table tbody td.risk-td-category { border-right: 1px solid var(--border-default); }
+.risk-table tbody td.risk-td-category { border-right: 1px solid var(--border-strong); }
 .risk-table thead th.risk-th-rule,
-.risk-table tbody td.risk-td-rule { border-right: 1px solid var(--border-default); }
+.risk-table tbody td.risk-td-rule { border-right: 1px solid var(--border-strong); }
 .risk-table thead th.risk-th-name,
-.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-default); }
+.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-strong); }
 
 /* v1.38.3：select 撑满单元格内容区（min-width 会把 select 撑出列宽 → 两列箭头贴到一起） */
 .risk-table .risk-result-select,

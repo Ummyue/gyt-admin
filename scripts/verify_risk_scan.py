@@ -94,8 +94,8 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
         "   const out = []; let carry = null, remain = 0;"
         "   rows.forEach(r => {"
         "     const td = r.querySelector('td.' + cls);"
-        "     if (td) { carry = (td.textContent || '').trim().replace(/\\s+/g, ' ');"
-        "              remain = parseInt(td.getAttribute('rowspan') || '1', 10) - 1; }"
+        "     if (td) { const txt = (td.textContent || '').trim().replace(/\\s+/g, ' ');"
+        "              if (txt) { carry = txt; remain = parseInt(td.getAttribute('rowspan') || '1', 10) - 1; } }"
         "     else if (remain > 0) { remain--; }"
         "     else { carry = null; }"
         "     out.push(carry); });"
@@ -103,16 +103,15 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
         " return { cat: pick('risk-td-category'), rule: pick('risk-td-rule'), name: pick('risk-td-name') };"
         " }")
 
-    cats, names, blanks = [], [], 0
-    cur_cat = None
+    # v1.38.8：内容合并 → 分类/风险逻辑只在组首行有内容，ROW_TEXTS 已按「空值继承」还原
+    cats = list(ROW_TEXTS['cat'])
+    names = list(ROW_TEXTS['name'])
+    blanks = 0
     for i in range(n):
         r = rows.nth(i)
-        # v1.38.1：分类列已合并 → 被覆盖的行没有该 td，按 rowspan 语义继承上一行的分类
-        ct = r.locator("td.risk-td-category")
-        if ct.count():
-            cur_cat = ct.first.inner_text().strip()
-        cats.append(cur_cat)
-        names.append(r.locator("td.risk-td-name").inner_text().strip())
+        desc = r.locator("td.risk-td-desc").inner_text().strip()
+        if not desc:
+            blanks += 1
         rule = ROW_TEXTS['rule'][i] or ''
         desc = r.locator("td.risk-td-desc").inner_text().strip()
         if not rule and not desc:
@@ -120,16 +119,29 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     check(f"{label}：检查分类只含 4 类", set(cats) <= set(EXPECT_COUNT), f"实际 {sorted(set(cats))}")
     check(f"{label}：4 类数量正确（4/6/5/2）",
           Counter(cats) == EXPECT_COUNT, f"实际 {dict(Counter(cats))}")
-    # ---- v1.38.7：风险逻辑列与「检查分类」同样的合并逻辑 ----
-    logic_merged = panel.evaluate(
+    # ---- v1.38.8：内容合并 —— 同类项内容只在组首行出现，其余行该单元格为空 ----
+    first_rule_text = panel.evaluate(
+        "(el) => { const t = el.querySelector('tbody td.risk-td-rule-first');"
+        " return t ? t.textContent.trim() : ''; }")
+    empty_rule_cells = panel.evaluate(
         "(el) => [...el.querySelectorAll('tbody td.risk-td-rule')]"
-        ".map(t => t.getAttribute('rowspan') || '1').join(',')")
-    check(f"{label}：风险逻辑列同类项已合并为单元格",
-          len(logic_merged.split(',')) < len(ROW_TEXTS['rule']),
-          f"实际合并 {len(logic_merged.split(','))} 格 / 共 {len(ROW_TEXTS['rule'])} 行")
-    if label == "项目详情":
-        check(f"{label}：主体风险的风险逻辑合并为 4 格且 rowspan=4/6/5/2",
-              logic_merged == "4,6,5,2", f"实际 {logic_merged}")
+        ".filter(t => !t.textContent.trim()).length")
+    check(f"{label}：风险逻辑列同类项内容已合并（只在组首行显示）",
+          bool(first_rule_text) and empty_rule_cells > 0,
+          f"首行有内容={bool(first_rule_text)} 空单元格={empty_rule_cells}")
+    # 每行都保留独立单元格（不再用 rowspan）→ 横向分割线一条不少
+    no_rowspan = panel.evaluate(
+        "(el) => [...el.querySelectorAll('tbody td.risk-td-rule, tbody td.risk-td-category')]"
+        ".filter(t => t.getAttribute('rowspan')).length")
+    check(f"{label}：分类/风险逻辑列未使用 rowspan（横线不被吃掉）", no_rowspan == 0,
+          f"实际 {no_rowspan} 个带 rowspan")
+    bottom_ratio = panel.evaluate(
+        "(el) => { const rows = [...el.querySelectorAll('tbody tr')];"
+        " const tds = rows.slice(0, -1).map(r => r.querySelector('td.risk-td-category'));"
+        " const ok = tds.filter(t => t && getComputedStyle(t).borderBottomWidth !== '0px').length;"
+        " return tds.length + '/' + ok; }")
+    check(f"{label}：分类列每行都有横向分割线",
+          bottom_ratio.split('/')[0] == bottom_ratio.split('/')[1], f"有线/总数 {bottom_ratio}")
 
     # ---- v1.38.6：风险逻辑（对应合规要求）按检查分类给固定合规要求 ----
     LOGIC = {
@@ -178,28 +190,34 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
 
     # ---- v1.38.1：相同「检查分类」合并单元格 ----
     cat_tds = panel.locator("tbody td.risk-td-category")
-    check(f"{label}：同一检查分类合并为 1 个单元格", cat_tds.count() == len(EXPECT_COUNT),
-          f"实际 {cat_tds.count()} 个")
-    spans = [t.get_attribute("rowspan") for t in cat_tds.all()]
-    check(f"{label}：合并行数与各分类项数一致",
-          spans == [str(v) for v in EXPECT_COUNT.values()], f"实际 {spans}")
-    cat_names = [t.inner_text().strip() for t in cat_tds.all()]
-    check(f"{label}：合并单元格内容为 4 个分类名",
-          cat_names == [c for c, _ in SPEC], f"实际 {cat_names}")
-    # 排序：同名分类必须相邻（首列 td 数 == 分类数即说明已聚拢）
+    # v1.38.8 内容合并：同一分类只有组首行显示内容，其余行该单元格为空
+    filled = sum(1 for t in cat_tds.all() if t.inner_text().strip())
+    check(f"{label}：同一检查分类内容合并（只有组首行有内容）",
+          filled == len(EXPECT_COUNT), f"实际有内容 {filled} 个 / 共 {cat_tds.count()} 格")
+    firsts = panel.evaluate("(el) => [...el.querySelectorAll('tbody td.risk-td-cat-first')]"
+                            ".map(t => t.textContent.trim())")
+    check(f"{label}：4 个分类各有 1 个首行标记",
+          firsts == [c for c, _ in SPEC], f"实际 {firsts}")
+    # v1.38.8 内容合并：非空分类名去重后应为 4 类，且每类只出现一次（组首行）
+    filled_cats = [t.inner_text().strip() for t in cat_tds.all() if t.inner_text().strip()]
+    check(f"{label}：合并内容为 4 个分类名",
+          filled_cats == [c for c, _ in SPEC], f"实际 {filled_cats}")
+    # 排序：同名分类必须相邻 → 每类只出现一次即说明已聚拢
     check(f"{label}：相同名称的检查分类已排在一起",
-          len(cat_tds.all()) == len(set(cat_names)), f"实际 {cat_names}")
+          len(filled_cats) == len(set(filled_cats)), f"实际 {filled_cats}")
 
     # ---- v1.38.3：合并格之间的横向分隔线必须**看得见** ----
     # 坑：合并格背景曾与行分隔线同色(#F1F5F9) → 线画了但隐形，第一列像一整块
-    m1 = panel.locator('tbody td.risk-td-cat-merged').first
+    m1 = panel.locator('tbody td.risk-td-category').first
     line_vis = m1.evaluate("e => { const c = getComputedStyle(e);"
                             ' return { w: c.borderBottomWidth, c: c.borderBottomColor, bg: c.backgroundColor }; }')
-    check(f"{label}：合并格底边线可见（与背景不同色且有宽度）",
+    check(f"{label}：分类列分组线可见（与背景不同色且有宽度）",
           line_vis['w'] != '0px' and line_vis['c'] != line_vis['bg'],
           f"实际 {line_vis}")
-    sep2 = panel.evaluate("(el) => { const tds = [...el.querySelectorAll('td.risk-td-cat-merged')]; return tds.map(t => getComputedStyle(t).borderBottomWidth).join(',');}")
-    check(f"{label}：每个合并格都有底边线",
+    sep2 = panel.evaluate("(el) => { const rows = [...el.querySelectorAll('tbody tr')];"
+                " return rows.slice(0, -1).map(r => { const t = r.querySelector('td.risk-td-category');"
+                " return t ? getComputedStyle(t).borderBottomWidth : '0px'; }).join(','); }")
+    check(f"{label}：分类列每行都有底边线",
           all(v == '1px' for v in sep2.split(',') if v), f"实际 {sep2}")
 
     # ---- v1.38.4：所有列块之间都要有竖向分隔线 ----
@@ -251,10 +269,13 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
                     "}")
     check(f"{label}：系统诊断结论文案未被截断", not clipped)
 
-    # ---- v1.38.2：合并单元格线框 + 两模块视觉区分 ----
-    merged = panel.locator("tbody td.risk-td-cat-merged").first
+    # ---- v1.38.2：列线框 + 两模块视觉区分 ----
+    merged = panel.locator("tbody td.risk-td-category").first
     bl = merged.evaluate("e => getComputedStyle(e).borderLeftWidth + '/' + getComputedStyle(e).borderRightWidth")
-    check(f"{label}：合并单元格左右有线框", bl == "1px/1px", f"实际 {bl}")
+    check(f"{label}：分类列左右有线框", bl == "1px/1px", f"实际 {bl}")
+    div_color = merged.evaluate("e => getComputedStyle(e).borderRightColor")
+    check(f"{label}：列分隔线为加深色（#CBD5E1）",
+          div_color == "rgb(203, 213, 225)", f"实际 {div_color}")
     th_res = panel.locator("thead th.risk-th-result").first
     th_rem = panel.locator("thead th.risk-th-remark").first
     sep = th_rem.evaluate("e => getComputedStyle(e).borderLeftWidth")
