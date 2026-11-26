@@ -460,8 +460,9 @@
     .risk-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 13px; table-layout: fixed; }
     .risk-table thead th { background: #F1F5F9; color: var(--text-secondary); font-weight: 500; font-size: 12px; padding: 10px 12px; text-align: left; border-bottom: 1px solid var(--border-light); white-space: nowrap; }
     .risk-table thead th.risk-th-category { width: 96px; }
-    .risk-table thead th.risk-th-name { width: 130px; }
-    .risk-table thead th.risk-th-rule { width: 200px; text-align: left; }
+    .risk-table thead th.risk-th-name { width: 180px; }
+    /* v1.38.6：风险逻辑（对应合规要求）列内容较长 → 加宽 */
+    .risk-table thead th.risk-th-rule { width: 320px; text-align: left; }
     .risk-table thead th.risk-th-result { width: 116px; text-align: center; }
     .risk-table tbody td { padding: 12px 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-primary); vertical-align: top; line-height: 1.65; }
     .risk-table tbody tr:last-child td { border-bottom: none; }
@@ -1708,9 +1709,11 @@
             const descText = r.desc
               ? r.desc.replace(/(\d{4}-\d{2}-\d{2})/g, m => `<mark style="background: #FEF3C7; color: #92400E; padding: 0 4px; border-radius: 2px; font-weight: 500;">${m}</mark>`)
               : (t === 'subject' ? '' : '截至 2026-07-17 15:46:04，该企业不存在上述负面信息。不排除因信息公开来源尚未公开、公开形式存在差异等情况导致的信息与客观事实不完全一致的情形。');
-            const ruleHtml = Array.isArray(meta.rule)
-              ? '<ol class="risk-rule-list">' + meta.rule.map(x => '<li>' + x + '</li>').join('') + '</ol>'
-              : meta.rule;
+            // v1.38.6：风险逻辑（对应合规要求）—— 4 个主体风险分类按分类给固定合规要求
+            const logicText = window.RISK_SCAN_SUBJECT.logicOf(meta.category) || meta.rule;
+            const ruleHtml = Array.isArray(logicText)
+              ? '<ol class="risk-rule-list">' + logicText.map(x => '<li>' + x + '</li>').join('') + '</ol>'
+              : logicText;
             // v1.38.5：系统诊断结论为**系统自动判定** → 改为只读标签，不可手工修改
             // 人工补充判断请用右侧「备注」列（低/中/高风险 + 自定义描述）
             const tag = `<span class="risk-result-tag risk-result-${isWarn ? 'warn' : 'ok'}" title="系统自动判定，不可手工修改；如需补充判断请填写右侧备注">${isWarn ? '⚠ 存在风险' : '✓ 无风险'}</span>`;
@@ -1720,8 +1723,8 @@
               : '';
             return `<tr class="risk-row ${isWarn ? 'risk-row-warn' : ''}">
               ${catCell}
-              <td class="risk-td-name">${r.name}</td>
               <td class="risk-td-rule">${ruleHtml}</td>
+              <td class="risk-td-name">${r.name}</td>
               <td class="risk-td-desc"><div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div></td>
               <td class="risk-td-result">${tag}</td>
               <td class="risk-td-remark">${buildApplyRiskRemarkCell(key, t, r.name)}</td>
@@ -1732,8 +1735,8 @@
             ? `<div class="risk-table-wrap"><table class="risk-table">
                 <thead><tr>
                   <th class="risk-th-category">检查分类</th>
+                  <th class="risk-th-rule">风险逻辑（对应合规要求）</th>
                   <th class="risk-th-name">校验项</th>
-                  <th class="risk-th-rule">检查规则（负面清单）</th>
                   <th>检查过程</th>
                   <th class="risk-th-result">系统诊断结论</th>
                   <th class="risk-th-remark">备注</th>

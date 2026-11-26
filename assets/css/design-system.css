@@ -2990,12 +2990,15 @@ input, select, textarea {
    与已有的「系统诊断结论 | 备注」分隔线口径一致（--border-default 1px）。
    ⚠️ separate 模式下相邻边框不合并 → 只给左列加 border-right，不要两侧都加。 */
 /* 表头「检查分类 | 校验项」也要有线，与数据行的合并格右边框对齐 */
+/* v1.38.6：列顺序改为 检查分类 │ 风险逻辑 │ 校验项 │ 检查过程 │ 系统诊断结论 │ 备注
+   → 三个左列各自加 border-right（category 之前只给 th 加，
+   非合并行的 td 缺线；这里统一 th + td 都加） */
 .risk-table thead th.risk-th-category,
-.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-default); }
-.risk-table thead th.risk-th-name,
-.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-default); }
+.risk-table tbody td.risk-td-category { border-right: 1px solid var(--border-default); }
 .risk-table thead th.risk-th-rule,
 .risk-table tbody td.risk-td-rule { border-right: 1px solid var(--border-default); }
+.risk-table thead th.risk-th-name,
+.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-default); }
 
 /* v1.38.3：select 撑满单元格内容区（min-width 会把 select 撑出列宽 → 两列箭头贴到一起） */
 .risk-table .risk-result-select,

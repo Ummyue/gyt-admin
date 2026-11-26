@@ -77,8 +77,8 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
           len(heads) >= 5 and heads[4] == "系统诊断结论", f"实际 {heads}")
     check(f"{label}：表头第 6 列是「备注」",
           len(heads) >= 6 and heads[5] == "备注", f"实际 {heads}")
-    check(f"{label}：表头前 3 列未变",
-          heads[:3] == ["检查分类", "校验项", "检查规则（负面清单）"], f"实际 {heads[:3]}")
+    check(f"{label}：表头前 3 列 = 检查分类 / 风险逻辑（对应合规要求）/ 校验项",
+          heads[:3] == ["检查分类", "风险逻辑（对应合规要求）", "校验项"], f"实际 {heads[:3]}")
 
     rows = panel.locator("tbody tr")
     n = rows.count()
@@ -101,9 +101,43 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     check(f"{label}：检查分类只含 4 类", set(cats) <= set(EXPECT_COUNT), f"实际 {sorted(set(cats))}")
     check(f"{label}：4 类数量正确（4/6/5/2）",
           Counter(cats) == EXPECT_COUNT, f"实际 {dict(Counter(cats))}")
+    # ---- v1.38.6：风险逻辑（对应合规要求）按检查分类给固定合规要求 ----
+    LOGIC = {
+        "主责主业合规": "违反「不准开展背离主业的贸易业务」，非主业贸易无审批，易形成无效资产",
+        "空壳企业风险": "违反「不准与无实际经营能力的企业交易」，空壳企业易引发虚开发票、资金流失",
+        "资质缺失风险": "违反「不准开展需特许资质但无资质的贸易」，无证经营易触发行政追责；"
+                        "或违反「不准开展对交易标的没有控制权的空转、走单等贸易业务」，不具备资质的仓储企业无法保障货权清晰",
+        "客户产业链定位": "违反「不准开展无商业实质的循环贸易」，交易对手生产型企业占比较低或变动频繁，"
+                          "难以核实贸易背景，无法确定货物流转是否创造价值",
+    }
+    logic_by_cat = {}
+    for i in range(n):
+        r = rows.nth(i)
+        ct = r.locator("td.risk-td-category")
+        cat = ct.first.inner_text().strip() if ct.count() else (cats[i] if i < len(cats) else "")
+        logic = r.locator("td.risk-td-rule").inner_text().strip().replace("\n", "")
+        logic_by_cat.setdefault(cat, logic)
+    for cat, expect in LOGIC.items():
+        check(f"{label}：{cat} 的风险逻辑为对应合规要求",
+              logic_by_cat.get(cat, "") == expect, f"实际 {logic_by_cat.get(cat)!r}")
+    # 列顺序：风险逻辑必须在校验项之前
+    order = panel.evaluate("(el) => { const r = el.querySelector('tbody tr');"
+                    " if (!r) return '';"
+                    " return [...r.children].map(c => { const m = c.className.match(/risk-td-([a-z]+)/);"
+                    " return m ? m[1] : '?'; }).join(','); }")
+    check(f"{label}：列顺序为 检查分类 │ 风险逻辑 │ 校验项 │ 检查过程 │ 系统诊断结论 │ 备注",
+          order.startswith("category,rule,name,desc,result,remark"), f"实际 {order}")
+
     check(f"{label}：17 项校验项与需求清单逐条一致", names == EXPECT_NAMES,
           f"实际前 3 项 {names[:3]}")
-    check(f"{label}：未匹配到原型的检查过程留空（4 项）", blanks == 4, f"实际留空 {blanks} 项")
+    # v1.38.6：风险逻辑列改为按分类给固定合规要求（不再随匹配留空）
+    # → 只有「检查过程」列对未匹配项留空
+    desc_blanks = 0
+    for i in range(n):
+        d = rows.nth(i).locator("td.risk-td-desc").inner_text().strip()
+        if not d:
+            desc_blanks += 1
+    check(f"{label}：未匹配到原型的检查过程留空（4 项）", desc_blanks == 4, f"实际留空 {desc_blanks} 项")
     # 检查规则列不得出现无意义的兜底占位文案
     ph = 0
     for i in range(n):
