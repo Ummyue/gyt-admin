@@ -1736,7 +1736,7 @@
               <td class="risk-td-rule">${ruleHtml}</td>
               <td class="risk-td-desc"><div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div></td>
               <td class="risk-td-result">${tag}</td>
-              <td class="risk-td-remark">${buildApplyRiskRemarkCell(key, t, i)}</td>
+              <td class="risk-td-remark">${buildApplyRiskRemarkCell(key, t, r.name)}</td>
             </tr>`;
             }).join('');
           }).join('');
@@ -1748,7 +1748,7 @@
                   <th class="risk-th-rule">检查规则（负面清单）</th>
                   <th>检查过程</th>
                   <th class="risk-th-result">系统诊断结论</th>
-                  <th class="risk-th-remark">自动结论备注</th>
+                  <th class="risk-th-remark">备注</th>
                 </tr></thead>
                 <tbody>${rows}</tbody>
               </table></div>`
@@ -1761,17 +1761,48 @@
       window.__step2State.opinions[key] = val;
     }
 
-    // ===== v1.38.0 自动结论备注（apply 流程）=====
-    // 低风险 / 中风险 / 高风险 / 自定义描述（≤24 字）；存内存，切换 tab / 重渲染不丢
+    // ===== v1.38.2 备注（apply 流程）=====
+    // 低风险 / 中风险 / 高风险 / 自定义描述（≤24 字）
+    // · 按「企业名 + tab + 校验项名」存储 → 申请页填写，详情页可回显
+    // · 记录操作人（取顶栏当前用户）+ 操作时间
     function applyRiskRemarkStore() {
       if (!window.__applyRiskRemarks) window.__applyRiskRemarks = {};
       return window.__applyRiskRemarks;
     }
-    function applyRiskRemarkKey(companyKey, tab, idx) {
-      return companyKey + '::' + tab + '::' + idx;
+    // 载入：内存优先，缺则从 localStorage 读（首次进入详情/刷新后仍保留）
+    function applyRiskRemarksFor(companyKey) {
+      var store = applyRiskRemarkStore();
+      var c = APPLY_SURVEY_COMPANIES[companyKey];
+      var companyName = c ? c.name : companyKey;
+      var persisted = window.RISK_SCAN_SUBJECT.loadRemarks(companyName);
+      Object.keys(persisted).forEach(function (tab) {
+        store[tab] = store[tab] || {};
+        Object.keys(persisted[tab]).forEach(function (nm) {
+          if (!store[tab][nm]) store[tab][nm] = persisted[tab][nm];
+        });
+      });
+      return store;
     }
-    function buildApplyRiskRemarkCell(companyKey, tab, idx) {
-      var saved = applyRiskRemarkStore()[applyRiskRemarkKey(companyKey, tab, idx)] || { value: '', text: '' };
+    function applyRiskRemarkKey(tab, name) {
+      return tab + '::' + name;
+    }
+    function applyPersistRemarks(companyKey) {
+      var store = applyRiskRemarkStore();
+      var c = APPLY_SURVEY_COMPANIES[companyKey];
+      var companyName = c ? c.name : companyKey;
+      var out = {};
+      Object.keys(store).forEach(function (tab) {
+        var tabData = store[tab] || {};
+        var keys = Object.keys(tabData);
+        if (!keys.length) return;
+        out[tab] = {};
+        keys.forEach(function (nm) { out[tab][nm] = tabData[nm]; });
+      });
+      window.RISK_SCAN_SUBJECT.saveRemarks(companyName, out);
+    }
+    function buildApplyRiskRemarkCell(companyKey, tab, name) {
+      var store = applyRiskRemarksFor(companyKey);
+      var saved = (store[tab] || {})[name] || { value: '', text: '' };
       var opts = window.RISK_SCAN_SUBJECT.remarkOptions;
       var max = window.RISK_SCAN_SUBJECT.remarkMaxLength;
       var optsHtml = '<option value="">未选择</option>' + opts.map(function (o) {
@@ -1780,18 +1811,22 @@
       var cls = saved.value ? ('risk-remark-' + saved.value) : '';
       var isCustom = saved.value === 'custom';
       var count = (saved.text || '').length;
+      var opHtml = '<div class="risk-remark-op">' + (saved.operator
+        ? window.RISK_SCAN_SUBJECT.esc(saved.operator) + (saved.time ? ' · ' + window.RISK_SCAN_SUBJECT.esc(saved.time) : '')
+        : '') + '</div>';
       return '<div class="risk-remark-box">'
-        + '<select class="risk-remark-select ' + cls + '" data-rk="' + tab + '" data-ri="' + idx + '" data-rc="' + companyKey + '" onchange="toggleApplyRiskRemark(this)">' + optsHtml + '</select>'
-        + '<input class="risk-remark-input" data-rk="' + tab + '" data-ri="' + idx + '" data-rc="' + companyKey + '" maxlength="' + max + '" '
+        + '<select class="risk-remark-select ' + cls + '" data-rk="' + tab + '" data-rn="' + window.RISK_SCAN_SUBJECT.esc(name) + '" data-rc="' + companyKey + '" onchange="toggleApplyRiskRemark(this)">' + optsHtml + '</select>'
+        + '<input class="risk-remark-input" data-rk="' + tab + '" data-rn="' + window.RISK_SCAN_SUBJECT.esc(name) + '" data-rc="' + companyKey + '" maxlength="' + max + '" '
         + 'placeholder="请输入结论描述（' + max + ' 字以内）" value="' + String(saved.text || '').replace(/"/g, '&quot;') + '"'
         + (isCustom ? '' : ' hidden') + ' oninput="updateApplyRiskRemark(this)">'
         + '<span class="risk-remark-count' + (count > max ? ' over' : '') + '"' + (isCustom ? '' : ' hidden') + '>' + count + '/' + max + '</span>'
+        + opHtml
         + '</div>';
     }
     function toggleApplyRiskRemark(selectEl) {
       var companyKey = selectEl.getAttribute('data-rc');
       var tab = selectEl.getAttribute('data-rk');
-      var idx = selectEl.getAttribute('data-ri');
+      var name = selectEl.getAttribute('data-rn');
       var box = selectEl.closest('.risk-remark-box');
       var input = box.querySelector('.risk-remark-input');
       var countEl = box.querySelector('.risk-remark-count');
@@ -1801,14 +1836,23 @@
       input.hidden = !isCustom;
       countEl.hidden = !isCustom;
       var store = applyRiskRemarkStore();
-      var rk = applyRiskRemarkKey(companyKey, tab, idx);
-      if (!v) { delete store[rk]; }
-      else { store[rk] = { value: v, text: isCustom ? (input.value || '') : '' }; }
+      store[tab] = store[tab] || {};
+      var rk = applyRiskRemarkKey(tab, name);
+      if (!v) {
+        delete store[tab][name];
+      } else {
+        store[tab][name] = window.RISK_SCAN_SUBJECT.remarkRecord(v, isCustom ? (input.value || '') : '');
+      }
+      // 回写操作人 / 操作时间（无需整表重渲染，避免输入焦点丢失）
+      var opEl = box.querySelector('.risk-remark-op');
+      var rec = store[tab][name];
+      if (opEl) opEl.textContent = rec ? (rec.operator + (rec.time ? ' · ' + rec.time : '')) : '';
+      applyPersistRemarks(companyKey);
     }
     function updateApplyRiskRemark(inputEl) {
       var companyKey = inputEl.getAttribute('data-rc');
       var tab = inputEl.getAttribute('data-rk');
-      var idx = inputEl.getAttribute('data-ri');
+      var name = inputEl.getAttribute('data-rn');
       var max = window.RISK_SCAN_SUBJECT.remarkMaxLength;
       if (inputEl.value.length > max) inputEl.value = inputEl.value.slice(0, max);
       var box = inputEl.closest('.risk-remark-box');
@@ -1816,7 +1860,13 @@
       var n = inputEl.value.length;
       countEl.textContent = n + '/' + max;
       countEl.classList.toggle('over', n > max);
-      applyRiskRemarkStore()[applyRiskRemarkKey(companyKey, tab, idx)] = { value: 'custom', text: inputEl.value };
+      var store = applyRiskRemarkStore();
+      store[tab] = store[tab] || {};
+      store[tab][name] = window.RISK_SCAN_SUBJECT.remarkRecord('custom', inputEl.value);
+      var opEl = box.querySelector('.risk-remark-op');
+      var rec = store[tab][name];
+      if (opEl) opEl.textContent = rec.operator + (rec.time ? ' · ' + rec.time : '');
+      applyPersistRemarks(companyKey);
     }
 
     // v1.7.99.300 用户手动调整风险校验结果（apply 流程）

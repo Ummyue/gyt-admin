@@ -2946,3 +2946,33 @@ input, select, textarea {
 .risk-remark-input:focus { outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px rgba(30,64,175,.1); }
 .risk-remark-count { font-size: 11px; color: var(--text-tertiary); font-variant-numeric: tabular-nums; }
 .risk-remark-count.over { color: var(--color-danger); }
+
+/* ===== v1.38.2 风险扫描表格：线框补齐 + 「系统诊断结论」与「备注」两模块区分 ===== */
+/* 合并单元格的四周线框（避免与相邻列视觉混同） */
+.risk-table tbody td.risk-td-cat-merged {
+  vertical-align: middle;
+  border-left: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-default);
+  background: #F1F5F9;
+  font-weight: 600;
+  color: var(--text-primary);
+}
+/* 两个模块之间加竖向分隔 + 备注列用淡蓝底区分 */
+.risk-table thead th.risk-th-result { border-left: 1px solid var(--border-default); }
+.risk-table tbody td.risk-td-result { border-left: 1px solid var(--border-default); }
+.risk-table thead th.risk-th-remark {
+  border-left: 1px solid var(--border-default);
+  background: #E8EFF9;
+  color: var(--color-primary);
+  font-weight: 600;
+}
+.risk-table tbody td.risk-td-remark {
+  border-left: 1px solid var(--border-default);
+  background: #F8FAFE;
+}
+/* 备注下的操作人 / 操作时间 */
+.risk-remark-op {
+  font-size: 11px; color: var(--text-tertiary); line-height: 1.5;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 150px;
+}
+.risk-remark-op:empty { display: none; }

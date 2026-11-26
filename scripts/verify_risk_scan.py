@@ -6,7 +6,7 @@
 1. 贸易风险 + 主体风险 合并，合并后新 tab 为主体风险
 2. 第一列检查分类 = 4 类：主责主业合规 / 空壳企业风险 / 资质缺失风险 / 客户产业链定位
 3. 各分类的校验项按业务清单落地
-4. 「校验结果」→「系统诊断结论」，其后新增「自动结论备注」列
+4. 「校验结果」→「系统诊断结论」，其后新增「备注」列
    （低风险 / 中风险 / 高风险 / 自定义描述，自定义 ≤24 字）
 5. 检查过程沿用原型现有规则，匹配不到的留空
 
@@ -75,8 +75,8 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     heads = panel.locator("thead th").all_inner_texts()
     check(f"{label}：表头第 5 列是「系统诊断结论」",
           len(heads) >= 5 and heads[4] == "系统诊断结论", f"实际 {heads}")
-    check(f"{label}：表头第 6 列是「自动结论备注」",
-          len(heads) >= 6 and heads[5] == "自动结论备注", f"实际 {heads}")
+    check(f"{label}：表头第 6 列是「备注」",
+          len(heads) >= 6 and heads[5] == "备注", f"实际 {heads}")
     check(f"{label}：表头前 3 列未变",
           heads[:3] == ["检查分类", "校验项", "检查规则（负面清单）"], f"实际 {heads[:3]}")
 
@@ -126,9 +126,21 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     check(f"{label}：相同名称的检查分类已排在一起",
           len(cat_tds.all()) == len(set(cat_names)), f"实际 {cat_names}")
 
-    # ---- 自动结论备注交互 ----
+    # ---- v1.38.2：合并单元格线框 + 两模块视觉区分 ----
+    merged = panel.locator("tbody td.risk-td-cat-merged").first
+    bl = merged.evaluate("e => getComputedStyle(e).borderLeftWidth + '/' + getComputedStyle(e).borderRightWidth")
+    check(f"{label}：合并单元格左右有线框", bl == "1px/1px", f"实际 {bl}")
+    th_res = panel.locator("thead th.risk-th-result").first
+    th_rem = panel.locator("thead th.risk-th-remark").first
+    sep = th_rem.evaluate("e => getComputedStyle(e).borderLeftWidth")
+    check(f"{label}：备注列与系统诊断结论列之间有竖向分隔", sep == "1px", f"实际 {sep}")
+    bg1 = th_res.evaluate("e => getComputedStyle(e).backgroundColor")
+    bg2 = th_rem.evaluate("e => getComputedStyle(e).backgroundColor")
+    check(f"{label}：备注列表头底色与系统诊断结论列不同", bg1 != bg2, f"{bg1} vs {bg2}")
+
+    # ---- 备注交互 ----
     sel = rows.first.locator(".risk-remark-select")
-    check(f"{label}：每行都有「自动结论备注」控件",
+    check(f"{label}：每行都有「备注」控件",
           panel.locator("tbody tr td.risk-td-remark .risk-remark-select").count() == n)
     opts = [o.strip() for o in sel.locator("option").all_inner_texts()]
     check(f"{label}：备注选项为 低风险/中风险/高风险/自定义描述",
@@ -215,6 +227,35 @@ def main():
         verify_page(page, "项目准入",
                     ".risk-tab[data-apply-risk-tab]",
                     ".apply-risk-panel[data-apply-tab='subject']")
+
+        # ---------- v1.38.2：备注操作人回显 + 跨页回显 ----------
+        page.goto(f"{BASE}/pages/project-detail.html", wait_until="networkidle")
+        page.wait_for_timeout(1200)
+        page.click('.step-label[data-step="2"]')
+        page.wait_for_timeout(800)
+        # 在第 5 行填备注 → 应立即显示操作人
+        r5 = page.locator("#riskPanelSubject tbody tr").nth(5)
+        r5.locator(".risk-remark-select").select_option("custom")
+        page.wait_for_timeout(300)
+        r5.locator(".risk-remark-input").fill("社保人数异常需人工复核")
+        page.wait_for_timeout(500)
+        op_txt = r5.locator(".risk-remark-op").inner_text()
+        user = page.evaluate("() => { const e = document.querySelector('.topbar-user-name');"
+                             " return e ? e.textContent.trim() : ''; }")
+        check("详情页：备注下方显示操作人姓名", user and user in op_txt,
+              f"操作人={user!r} 显示={op_txt!r}")
+        check("详情页：备注下方显示操作时间", "·" in op_txt and ":" in op_txt, f"实际 {op_txt!r}")
+
+        # 切到申请页（同一企业）→ 备注应已持久化并回显
+        page.goto(f"{BASE}/pages/project-apply.html", wait_until="networkidle")
+        page.wait_for_timeout(1200)
+        page.locator("text=企业尽调报告").first.click()
+        page.wait_for_timeout(1200)
+        ap = page.locator(".apply-risk-panel[data-apply-tab='subject'] tbody tr").nth(5)
+        check("申请页：回显详情页填写的备注", ap.locator(".risk-remark-input").input_value() == "社保人数异常需人工复核",
+              f"实际 {ap.locator('.risk-remark-input').input_value()!r}")
+        ap_op = ap.locator(".risk-remark-op").inner_text()
+        check("申请页：回显操作人姓名", user and user in ap_op, f"实际 {ap_op!r}")
 
         # ---------- 共享清单 ----------
         page.goto(f"{BASE}/pages/project-detail.html", wait_until="networkidle")

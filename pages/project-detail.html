@@ -1838,7 +1838,7 @@
     return window.RISK_SCAN_SUBJECT.buildItems(lookup);
   }
 
-    // 渲染单个 panel（v1.38.0：表格 6 列 = 检查分类/校验项/检查规则/检查过程/系统诊断结论/自动结论备注）
+    // 渲染单个 panel（v1.38.0：表格 6 列 = 检查分类/校验项/检查规则/检查过程/系统诊断结论/备注）
   function renderRiskPanel(key) {
     var data = COMPANIES[currentCompanyId][key];
     var items = (key === 'subject') ? buildSubjectRiskItems() : (data ? data.items : null);
@@ -1919,7 +1919,7 @@
           + casesHtml
         + '</td>'
         + '<td class="risk-td-result">' + resultTag + '</td>'
-        + '<td class="risk-td-remark">' + buildRiskRemarkCell(key, i) + '</td>'
+        + '<td class="risk-td-remark">' + buildRiskRemarkCell(key, item.name) + '</td>'
         + '</tr>';
       }).join('');
     }).join('');
@@ -1931,7 +1931,7 @@
       + '<th class="risk-th-rule">检查规则（负面清单）</th>'
       + '<th class="risk-th-desc">检查过程</th>'
       + '<th class="risk-th-result">系统诊断结论</th>'
-      + '<th class="risk-th-remark">自动结论备注</th>'
+      + '<th class="risk-th-remark">备注</th>'
       + '</tr></thead>'
       + '<tbody>' + rows + '</tbody>'
       + '</table>'
@@ -1939,37 +1939,74 @@
     document.getElementById('riskPanel' + key.charAt(0).toUpperCase() + key.slice(1)).innerHTML = html;
   }
 
-    // ===== v1.38.0 自动结论备注 =====
+    // ===== v1.38.2 备注 =====
     // 低风险 / 中风险 / 高风险 / 自定义描述（≤24 字）
-    // 备注存在内存里（window.__riskRemarks），切换 tab / 重渲染后不丢
+    // · 按「企业名 + tab + 校验项名」存储 → 申请页填写的备注在这里回显
+    // · 记录操作人（取顶栏当前用户）+ 操作时间
   function riskRemarkStore() {
     if (!window.__riskRemarks) window.__riskRemarks = {};
     return window.__riskRemarks;
   }
-  function riskRemarkKey(key, idx) {
-    return currentCompanyId + '::' + key + '::' + idx;
+  // 当前企业的名称（与申请页一致 → 同一份备注）
+  function riskRemarkCompanyName() {
+    var c = COMPANIES[currentCompanyId];
+    return c ? (c.name || currentCompanyId) : currentCompanyId;
   }
-  function buildRiskRemarkCell(key, idx) {
-    var saved = riskRemarkStore()[riskRemarkKey(key, idx)] || { value: '', text: '' };
+  // 载入：内存优先，缺则从 localStorage 读（申请页填写的备注在这里回显）
+  function riskRemarksFor() {
+    var store = riskRemarkStore();
+    var persisted = window.RISK_SCAN_SUBJECT.loadRemarks(riskRemarkCompanyName());
+    Object.keys(persisted).forEach(function (tab) {
+      store[tab] = store[tab] || {};
+      Object.keys(persisted[tab]).forEach(function (nm) {
+        if (!store[tab][nm]) store[tab][nm] = persisted[tab][nm];
+      });
+    });
+    return store;
+  }
+  function riskRemarkKey(tab, name) {
+    return tab + '::' + name;
+  }
+  function riskPersistRemarks() {
+    var store = riskRemarkStore();
+    var out = {};
+    Object.keys(store).forEach(function (tab) {
+      var tabData = store[tab] || {};
+      var keys = Object.keys(tabData);
+      if (!keys.length) return;
+      out[tab] = {};
+      keys.forEach(function (nm) { out[tab][nm] = tabData[nm]; });
+    });
+    window.RISK_SCAN_SUBJECT.saveRemarks(riskRemarkCompanyName(), out);
+  }
+  function buildRiskRemarkCell(key, name) {
+    var store = riskRemarksFor();
+    var saved = (store[key] || {})[name] || { value: '', text: '' };
     var opts = window.RISK_SCAN_SUBJECT.remarkOptions;
+    var ESC = window.RISK_SCAN_SUBJECT.esc;
     var optsHtml = '<option value="">未选择</option>' + opts.map(function (o) {
       return '<option value="' + o.value + '"' + (saved.value === o.value ? ' selected' : '') + '>' + o.label + '</option>';
     }).join('');
     var cls = saved.value ? ('risk-remark-' + saved.value) : '';
     var isCustom = saved.value === 'custom';
     var count = (saved.text || '').length;
+    // v1.38.2：操作人 + 操作时间回显
+    var opHtml = '<div class="risk-remark-op">' + (saved.operator
+      ? ESC(saved.operator) + (saved.time ? ' · ' + ESC(saved.time) : '')
+      : '') + '</div>';
     return '<div class="risk-remark-box">'
-      + '<select class="risk-remark-select ' + cls + '" data-rk="' + key + '" data-ri="' + idx + '" onchange="toggleRiskRemark(this)">' + optsHtml + '</select>'
-      + '<input class="risk-remark-input" data-rk="' + key + '" data-ri="' + idx + '" maxlength="' + window.RISK_SCAN_SUBJECT.remarkMaxLength + '" '
+      + '<select class="risk-remark-select ' + cls + '" data-rk="' + key + '" data-rn="' + ESC(name) + '" onchange="toggleRiskRemark(this)">' + optsHtml + '</select>'
+      + '<input class="risk-remark-input" data-rk="' + key + '" data-rn="' + ESC(name) + '" maxlength="' + window.RISK_SCAN_SUBJECT.remarkMaxLength + '" '
       + 'placeholder="请输入结论描述（' + window.RISK_SCAN_SUBJECT.remarkMaxLength + ' 字以内）" value="' + String(saved.text || '').replace(/"/g, '&quot;') + '"'
       + (isCustom ? '' : ' hidden') + ' oninput="updateRiskRemark(this)">'
       + '<span class="risk-remark-count' + (count > window.RISK_SCAN_SUBJECT.remarkMaxLength ? ' over' : '') + '"'
       + (isCustom ? '' : ' hidden') + '>' + count + '/' + window.RISK_SCAN_SUBJECT.remarkMaxLength + '</span>'
+      + opHtml
       + '</div>';
   }
   function toggleRiskRemark(selectEl) {
     var key = selectEl.getAttribute('data-rk');
-    var idx = selectEl.getAttribute('data-ri');
+    var name = selectEl.getAttribute('data-rn');
     var box = selectEl.closest('.risk-remark-box');
     var input = box.querySelector('.risk-remark-input');
     var countEl = box.querySelector('.risk-remark-count');
@@ -1979,13 +2016,18 @@
     input.hidden = !isCustom;
     countEl.hidden = !isCustom;
     var store = riskRemarkStore();
-    var rk = riskRemarkKey(key, idx);
-    if (!v) { delete store[rk]; }
-    else { store[rk] = { value: v, text: isCustom ? (input.value || '') : '' }; }
+    store[key] = store[key] || {};
+    if (!v) { delete store[key][name]; }
+    else { store[key][name] = window.RISK_SCAN_SUBJECT.remarkRecord(v, isCustom ? (input.value || '') : ''); }
+    // 回写操作人 / 操作时间（无需整表重渲染，避免输入焦点丢失）
+    var opEl = box.querySelector('.risk-remark-op');
+    var rec = store[key][name];
+    if (opEl) opEl.textContent = rec ? (rec.operator + (rec.time ? ' · ' + rec.time : '')) : '';
+    riskPersistRemarks();
   }
   function updateRiskRemark(inputEl) {
     var key = inputEl.getAttribute('data-rk');
-    var idx = inputEl.getAttribute('data-ri');
+    var name = inputEl.getAttribute('data-rn');
     var max = window.RISK_SCAN_SUBJECT.remarkMaxLength;
     if (inputEl.value.length > max) inputEl.value = inputEl.value.slice(0, max);
     var box = inputEl.closest('.risk-remark-box');
@@ -1994,8 +2036,12 @@
     countEl.textContent = n + '/' + max;
     countEl.classList.toggle('over', n > max);
     var store = riskRemarkStore();
-    var rk = riskRemarkKey(key, idx);
-    store[rk] = { value: 'custom', text: inputEl.value };
+    store[key] = store[key] || {};
+    store[key][name] = window.RISK_SCAN_SUBJECT.remarkRecord('custom', inputEl.value);
+    var opEl = box.querySelector('.risk-remark-op');
+    var rec = store[key][name];
+    if (opEl) opEl.textContent = rec.operator + (rec.time ? ' · ' + rec.time : '');
+    riskPersistRemarks();
   }
 
     // 展开/收起 单个 item 的 cases 明细

@@ -121,5 +121,64 @@
   /** 自定义描述字数上限 */
   SUBJECT.remarkMaxLength = 24;
 
+  // ===== 备注持久化（跨页：申请页填写 → 详情页回显）=====
+
+  /** 当前操作人：与顶栏展示的用户一致 */
+  SUBJECT.currentUser = function () {
+    var el = document.querySelector('.topbar-user-name');
+    return el ? (el.textContent || '').trim() || '—' : '—';
+  };
+
+  /** 存储键：按企业名（申请页与详情页的企业名一致，可对齐） */
+  SUBJECT.storeKey = function (companyName) {
+    return 'ygt_risk_remarks_' + (companyName || 'unknown');
+  };
+
+  /**
+   * 读取某企业的全部备注
+   * @returns {Object} { [tab]: { [校验项名]: { value, text, operator, time } } }
+   */
+  SUBJECT.loadRemarks = function (companyName) {
+    try {
+      var raw = localStorage.getItem(SUBJECT.storeKey(companyName));
+      var obj = raw ? JSON.parse(raw) : {};
+      return (obj && typeof obj === 'object') ? obj : {};
+    } catch (e) {
+      return {};
+    }
+  };
+
+  /** 写入某企业的全部备注 */
+  SUBJECT.saveRemarks = function (companyName, data) {
+    try {
+      localStorage.setItem(SUBJECT.storeKey(companyName), JSON.stringify(data || {}));
+    } catch (e) { /* 隐私模式等场景忽略 */ }
+  };
+
+  /** 备注结构规范化（补齐 operator / time） */
+  SUBJECT.remarkRecord = function (value, text, operator, time) {
+    return {
+      value: value || '',
+      text: text || '',
+      operator: operator || SUBJECT.currentUser(),
+      time: time || SUBJECT.now(),
+    };
+  };
+
+  /** HTML 转义（页面内无 esc 工具时用这个） */
+  SUBJECT.esc = function (s) {
+    return String(s == null ? '' : s)
+      .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  };
+
+  /** 当前时间（yyyy-MM-dd HH:mm:ss） */
+  SUBJECT.now = function () {
+    var d = new Date();
+    function p(n) { return n < 10 ? '0' + n : '' + n; }
+    return d.getFullYear() + '-' + p(d.getMonth() + 1) + '-' + p(d.getDate())
+      + ' ' + p(d.getHours()) + ':' + p(d.getMinutes()) + ':' + p(d.getSeconds());
+  };
+
   window.RISK_SCAN_SUBJECT = SUBJECT;
 })();
