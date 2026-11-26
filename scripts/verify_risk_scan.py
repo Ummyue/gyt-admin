@@ -138,6 +138,39 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     check(f"{label}：每个合并格都有底边线",
           all(v == '1px' for v in sep2.split(',') if v), f"实际 {sep2}")
 
+    # ---- v1.38.4：所有列块之间都要有竖向分隔线 ----
+    # 用户标注：校验项↔检查规则、检查规则↔检查过程 两处缺线
+    # ⚠️ 判定要按「列边界」而不是「本列两侧」：线可能画在左列的 border-right，
+    #    也可能画在右列的 border-left（separate 模式下不合并，只画一侧）
+    edges = panel.evaluate("""(el) => {
+      const cols = ['category', 'name', 'rule', 'desc', 'result', 'remark'];
+      const w = c => {
+        const td = el.querySelector('tbody td.risk-td-' + c);
+        const th = el.querySelector('thead th.risk-th-' + c);
+        if (!td) return null;
+        const c1 = getComputedStyle(td), c2 = th ? getComputedStyle(th) : null;
+        return {
+          right: [c1.borderRightWidth, c2 ? c2.borderRightWidth : '0px'],
+          left:  [c1.borderLeftWidth,  c2 ? c2.borderLeftWidth  : '0px'],
+        };
+      };
+      const data = {};
+      cols.forEach(c => { data[c] = w(c); });
+      // 每个边界（i 与 i+1 之间）是否有线
+      const edges = [];
+      for (let i = 0; i < cols.length - 1; i++) {
+        const L = data[cols[i]], R = data[cols[i + 1]];
+        const ok = (L && L.right.some(v => v === '1px')) || (R && R.left.some(v => v === '1px'));
+        edges.push({ between: cols[i] + ' | ' + cols[i + 1], ok: !!ok,
+                     leftRight: L ? L.right.join('/') : '-',
+                     rightLeft: R ? R.left.join('/') : '-' });
+      }
+      return edges;
+    }""")
+    for e in edges:
+        check(f"{label}：{e['between']} 之间有竖向分隔线", e["ok"],
+              f"左列 border-right={e['leftRight']} 右列 border-left={e['rightLeft']}")
+
     # ---- v1.38.3：两模块的控件不能挤在一起 ----
     gap = panel.evaluate("(el) => { const r = el.querySelector('td.risk-td-result select'); const m = el.querySelector('td.risk-td-remark select'); if (!r || !m) return -1; return Math.round(m.getBoundingClientRect().left - r.getBoundingClientRect().right);}")
     check(f"{label}：两模块控件间距 ≥ 30px（箭头不粘连）", gap >= 30, f"实际 {gap}px")

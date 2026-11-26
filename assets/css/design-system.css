@@ -2985,6 +2985,18 @@ input, select, textarea {
   padding-left: 24px;
   background: #F8FAFE;
 }
+/* v1.38.4：补齐中间两列的竖向分隔线
+   校验项 | 检查规则 | 检查过程 三个列块之间要有明确分界，
+   与已有的「系统诊断结论 | 备注」分隔线口径一致（--border-default 1px）。
+   ⚠️ separate 模式下相邻边框不合并 → 只给左列加 border-right，不要两侧都加。 */
+/* 表头「检查分类 | 校验项」也要有线，与数据行的合并格右边框对齐 */
+.risk-table thead th.risk-th-category,
+.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-default); }
+.risk-table thead th.risk-th-name,
+.risk-table tbody td.risk-td-name { border-right: 1px solid var(--border-default); }
+.risk-table thead th.risk-th-rule,
+.risk-table tbody td.risk-td-rule { border-right: 1px solid var(--border-default); }
+
 /* v1.38.3：select 撑满单元格内容区（min-width 会把 select 撑出列宽 → 两列箭头贴到一起） */
 .risk-table .risk-result-select,
 .risk-table .risk-remark-select { width: 100%; min-width: 0; }

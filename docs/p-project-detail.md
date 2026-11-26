@@ -568,3 +568,16 @@ user 截图反馈两个问题仍存在：
    - 修复：select 改 `width: 100%; min-width: 0`（撑满内容区不溢出）
      + 两列 padding 由 12px 提到 24px（实测控件间距 11px → **49px**）
      + result 列宽 96px → **140px**（否则「✓ 无风险」被截断成「✓ 无」）
+
+### v1.38.4 补齐中间两列的竖向分隔线（2026-11-26）
+
+user 截图标注：「校验项 ↔ 检查规则」与「检查规则 ↔ 检查过程」两处缺竖线。
+
+- 表格 6 列的列块边界统一有 1px `--border-default` 竖线：
+  检查分类 │ 校验项 │ 检查规则 │ 检查过程 │ 系统诊断结论 │ 备注
+- 实现：给左列加 `border-right`（separate 模式下相邻边框不合并，**只画一侧**）
+  - `risk-th-name` / `risk-td-name` → border-right
+  - `risk-th-rule` / `risk-td-rule` → border-right
+  - `risk-th-category` / `risk-td-name` → border-right（表头「检查分类│校验项」也要线）
+- ⚠️ 断言要按**列边界**判定（看左列 border-right **或** 右列 border-left），
+  不能只看某一列自身两侧 —— 线可能画在右邻列的左边框上
