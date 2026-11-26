@@ -84,6 +84,25 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     n = rows.count()
     check(f"{label}：主体风险共 17 项", n == 17, f"实际 {n} 项")
 
+    # ===== v1.38.7 助手：按 rowspan 语义还原每行的列文本 =====
+    # 合并单元格覆盖的行**没有**该 td → 逐行 locator 会超时；
+    # 在 JS 侧一次性算好并按 rowspan 继承
+    ROW_TEXTS = panel.evaluate(
+        "(el) => {"
+        " const rows = [...el.querySelectorAll('tbody tr')];"
+        " function pick(cls) {"
+        "   const out = []; let carry = null, remain = 0;"
+        "   rows.forEach(r => {"
+        "     const td = r.querySelector('td.' + cls);"
+        "     if (td) { carry = (td.textContent || '').trim().replace(/\\s+/g, ' ');"
+        "              remain = parseInt(td.getAttribute('rowspan') || '1', 10) - 1; }"
+        "     else if (remain > 0) { remain--; }"
+        "     else { carry = null; }"
+        "     out.push(carry); });"
+        "   return out; }"
+        " return { cat: pick('risk-td-category'), rule: pick('risk-td-rule'), name: pick('risk-td-name') };"
+        " }")
+
     cats, names, blanks = [], [], 0
     cur_cat = None
     for i in range(n):
@@ -94,13 +113,24 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
             cur_cat = ct.first.inner_text().strip()
         cats.append(cur_cat)
         names.append(r.locator("td.risk-td-name").inner_text().strip())
-        rule = r.locator("td.risk-td-rule").inner_text().strip()
+        rule = ROW_TEXTS['rule'][i] or ''
         desc = r.locator("td.risk-td-desc").inner_text().strip()
         if not rule and not desc:
             blanks += 1
     check(f"{label}：检查分类只含 4 类", set(cats) <= set(EXPECT_COUNT), f"实际 {sorted(set(cats))}")
     check(f"{label}：4 类数量正确（4/6/5/2）",
           Counter(cats) == EXPECT_COUNT, f"实际 {dict(Counter(cats))}")
+    # ---- v1.38.7：风险逻辑列与「检查分类」同样的合并逻辑 ----
+    logic_merged = panel.evaluate(
+        "(el) => [...el.querySelectorAll('tbody td.risk-td-rule')]"
+        ".map(t => t.getAttribute('rowspan') || '1').join(',')")
+    check(f"{label}：风险逻辑列同类项已合并为单元格",
+          len(logic_merged.split(',')) < len(ROW_TEXTS['rule']),
+          f"实际合并 {len(logic_merged.split(','))} 格 / 共 {len(ROW_TEXTS['rule'])} 行")
+    if label == "项目详情":
+        check(f"{label}：主体风险的风险逻辑合并为 4 格且 rowspan=4/6/5/2",
+              logic_merged == "4,6,5,2", f"实际 {logic_merged}")
+
     # ---- v1.38.6：风险逻辑（对应合规要求）按检查分类给固定合规要求 ----
     LOGIC = {
         "主责主业合规": "违反「不准开展背离主业的贸易业务」，非主业贸易无审批，易形成无效资产",
@@ -115,7 +145,7 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
         r = rows.nth(i)
         ct = r.locator("td.risk-td-category")
         cat = ct.first.inner_text().strip() if ct.count() else (cats[i] if i < len(cats) else "")
-        logic = r.locator("td.risk-td-rule").inner_text().strip().replace("\n", "")
+        logic = ROW_TEXTS['rule'][i] or ''
         logic_by_cat.setdefault(cat, logic)
     for cat, expect in LOGIC.items():
         check(f"{label}：{cat} 的风险逻辑为对应合规要求",
@@ -141,7 +171,7 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     # 检查规则列不得出现无意义的兜底占位文案
     ph = 0
     for i in range(n):
-        rule = rows.nth(i).locator("td.risk-td-rule").inner_text().strip()
+        rule = ROW_TEXTS['rule'][i] or ''
         if "按风险模型规则校验" in rule:
             ph += 1
     check(f"{label}：检查规则列无兜底占位文案", ph == 0, f"实际 {ph} 行含占位文案")

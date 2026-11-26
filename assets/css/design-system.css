@@ -2985,6 +2985,16 @@ input, select, textarea {
   padding-left: 24px;
   background: #F8FAFE;
 }
+/* v1.38.7：风险逻辑（对应合规要求）列的合并单元格 —— 与「检查分类」合并格同一逻辑 */
+.risk-table tbody td.risk-td-rule-merged {
+  vertical-align: middle;
+  border-bottom: 1px solid var(--border-default);
+  border-left: 1px solid var(--border-default);
+  border-right: 1px solid var(--border-default);
+  background: #FAFBFC;
+  color: var(--text-secondary);
+}
+
 /* v1.38.4：补齐中间两列的竖向分隔线
    校验项 | 检查规则 | 检查过程 三个列块之间要有明确分界，
    与已有的「系统诊断结论 | 备注」分隔线口径一致（--border-default 1px）。

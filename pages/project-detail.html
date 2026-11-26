@@ -1839,13 +1839,37 @@
       var meta = (key === 'subject')
         ? { category: item.category, rule: item.rule }
         : getRiskMeta(key, item);
-      return { item: item, meta: meta, origIdx: i, cat: meta.category || '—' };
+      // v1.38.7：风险逻辑（对应合规要求）—— 4 个主体风险分类按分类给固定合规要求，
+      // 其余分类（经营行为类 / 合规记录类 / 关联关系类 / 人员合规类）沿用原检查规则
+      var logicText = window.RISK_SCAN_SUBJECT.logicOf(meta.category) || meta.rule;
+      return {
+        item: item, meta: meta, origIdx: i,
+        cat: meta.category || '—',
+        logicKey: typeof logicText === 'string' ? logicText : JSON.stringify(logicText || '')
+      };
     });
     // 稳定分组：同名分类按首次出现顺序聚拢，组内保持原有次序
     var catOrder = [], catMap = {};
     rowModels.forEach(function (rm) {
       if (!catMap[rm.cat]) { catMap[rm.cat] = { cat: rm.cat, rows: [] }; catOrder.push(catMap[rm.cat]); }
       catMap[rm.cat].rows.push(rm);
+    });
+    // v1.38.7：风险逻辑列与「检查分类」同样的合并逻辑
+    // → 按「分类 + 风险逻辑文本」分组：同一分类下风险逻辑相同则合并为一个单元格；
+    //   同一分类下风险逻辑不同（如经营行为类里规则各异）则不合并，逐行显示
+    var logicOrder = [], logicMap = {};
+    rowModels.forEach(function (rm) {
+      var lk = rm.cat + '\\u0000' + rm.logicKey;
+      if (!logicMap[lk]) { logicMap[lk] = { rows: [] }; logicOrder.push(logicMap[lk]); }
+      logicMap[lk].rows.push(rm);
+    });
+    catOrder.forEach(function (g) {
+      g.rows[0].__catFirst = true;
+      g.rows[0].__catSpan = g.rows.length;
+    });
+    logicOrder.forEach(function (g) {
+      g.rows[0].__logicFirst = true;
+      g.rows[0].__logicSpan = g.rows.length;
     });
     var rows = catOrder.map(function (g) {
       return g.rows.map(function (rm, gi) {
@@ -1883,8 +1907,7 @@
           + '<span class="toggle-text">展开 ' + item.cases.length + ' 条明细</span>'
           + '</div>';
       }
-      // v1.38.6：风险逻辑（对应合规要求）—— 4 个主体风险分类按分类给固定合规要求，
-      // 其余分类（经营行为类 / 合规记录类 / 关联关系类 / 人员合规类）沿用原检查规则
+      // 风险逻辑文本已在分组阶段算好（rm.logicKey），此处只渲染
       var logicText = window.RISK_SCAN_SUBJECT.logicOf(meta.category) || meta.rule;
       var ruleHtml = Array.isArray(logicText)
         ? '<ol class="risk-rule-list">' + logicText.map(function(r) { return '<li>' + r + '</li>'; }).join('') + '</ol>'
@@ -1895,12 +1918,16 @@
         + 'title="系统自动判定，不可手工修改；如需补充判断请填写右侧备注">'
         + (isWarn ? '⚠ 存在风险' : '✓ 无风险') + '</span>';
       // v1.38.1：同组首行输出 rowspan 合并单元格，其余行不输出该格
-      var catCell = (gi === 0)
-        ? '<td class="risk-td-category risk-td-cat-merged" rowspan="' + g.rows.length + '">' + g.cat + '</td>'
+      var catCell = rm.__catFirst
+        ? '<td class="risk-td-category risk-td-cat-merged" rowspan="' + rm.__catSpan + '">' + g.cat + '</td>'
+        : '';
+      // v1.38.7：风险逻辑列与「检查分类」同样的合并逻辑
+      var logicCell = rm.__logicFirst
+        ? '<td class="risk-td-rule risk-td-rule-merged" rowspan="' + rm.__logicSpan + '">' + ruleHtml + '</td>'
         : '';
       return '<tr class="risk-row' + (isWarn ? ' risk-row-warn' : '') + '">'
         + catCell
-        + '<td class="risk-td-rule">' + ruleHtml + '</td>'
+        + logicCell
         + '<td class="risk-td-name">'
           + item.name
           + (hasCases ? ' <span class="risk-cases-count">' + item.cases.length + ' 条</span>' : '')

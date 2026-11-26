@@ -1693,12 +1693,32 @@
             const meta = (t === 'subject')
               ? { category: r.category, rule: r.rule }
               : applyGetRiskMeta(r.name);
-            return { r: r, meta: meta, origIdx: i, cat: meta.category || '—' };
+            // v1.38.7：风险逻辑（对应合规要求）按分类给固定文本，需参与分组
+            const logicText0 = window.RISK_SCAN_SUBJECT.logicOf(meta.category) || meta.rule;
+            return {
+              r: r, meta: meta, origIdx: i, cat: meta.category || '—',
+              logicKey: typeof logicText0 === 'string' ? logicText0 : JSON.stringify(logicText0 || '')
+            };
           });
           const catOrder = [], catMap = {};
           rowModels.forEach(function (rm) {
             if (!catMap[rm.cat]) { catMap[rm.cat] = { cat: rm.cat, rows: [] }; catOrder.push(catMap[rm.cat]); }
             catMap[rm.cat].rows.push(rm);
+          });
+          // v1.38.7：风险逻辑列与「检查分类」同样的合并逻辑
+          const logicOrder = [], logicMap = {};
+          rowModels.forEach(function (rm) {
+            const lk = rm.cat + '\u0000' + rm.logicKey;
+            if (!logicMap[lk]) { logicMap[lk] = { rows: [] }; logicOrder.push(logicMap[lk]); }
+            logicMap[lk].rows.push(rm);
+          });
+          catOrder.forEach(function (g) {
+            g.rows[0].__catFirst = true;
+            g.rows[0].__catSpan = g.rows.length;
+          });
+          logicOrder.forEach(function (g) {
+            g.rows[0].__logicFirst = true;
+            g.rows[0].__logicSpan = g.rows.length;
           });
           const rows = catOrder.map(function (g) {
             return g.rows.map(function (rm, gi) {
@@ -1718,12 +1738,16 @@
             // 人工补充判断请用右侧「备注」列（低/中/高风险 + 自定义描述）
             const tag = `<span class="risk-result-tag risk-result-${isWarn ? 'warn' : 'ok'}" title="系统自动判定，不可手工修改；如需补充判断请填写右侧备注">${isWarn ? '⚠ 存在风险' : '✓ 无风险'}</span>`;
             // v1.38.1：同组首行输出 rowspan 合并单元格，其余行不输出该格
-            const catCell = (gi === 0)
-              ? `<td class="risk-td-category risk-td-cat-merged" rowspan="${g.rows.length}">${g.cat}</td>`
+            const catCell = rm.__catFirst
+              ? `<td class="risk-td-category risk-td-cat-merged" rowspan="${rm.__catSpan}">${g.cat}</td>`
+              : '';
+            // v1.38.7：风险逻辑列与「检查分类」同样的合并逻辑
+            const logicCell = rm.__logicFirst
+              ? `<td class="risk-td-rule risk-td-rule-merged" rowspan="${rm.__logicSpan}">${ruleHtml}</td>`
               : '';
             return `<tr class="risk-row ${isWarn ? 'risk-row-warn' : ''}">
               ${catCell}
-              <td class="risk-td-rule">${ruleHtml}</td>
+              ${logicCell}
               <td class="risk-td-name">${r.name}</td>
               <td class="risk-td-desc"><div class="risk-desc"${isWarn ? ' style="color: var(--color-danger);"' : ''}>${descText}</div></td>
               <td class="risk-td-result">${tag}</td>
