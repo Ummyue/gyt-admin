@@ -172,9 +172,19 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
               f"左列 border-right={e['leftRight']} 右列 border-left={e['rightLeft']}")
 
     # ---- v1.38.3：两模块的控件不能挤在一起 ----
-    gap = panel.evaluate("(el) => { const r = el.querySelector('td.risk-td-result select'); const m = el.querySelector('td.risk-td-remark select'); if (!r || !m) return -1; return Math.round(m.getBoundingClientRect().left - r.getBoundingClientRect().right);}")
+    # v1.38.5：诊断结论已改为只读标签 → 间距度量对象改为「诊断结论标签 → 备注下拉」
+    gap = panel.evaluate("(el) => {"
+                    " const t = el.querySelector('td.risk-td-result .risk-result-tag');"
+                    " const m = el.querySelector('td.risk-td-remark select');"
+                    " if (!t || !m) return -1;"
+                    " return Math.round(m.getBoundingClientRect().left - t.getBoundingClientRect().right);"
+                    "}")
     check(f"{label}：两模块控件间距 ≥ 30px（箭头不粘连）", gap >= 30, f"实际 {gap}px")
-    clipped = panel.evaluate("(el) => { const s = el.querySelector('td.risk-td-result select'); if (!s) return true; return s.scrollWidth > s.clientWidth + 1;}")
+    clipped = panel.evaluate("(el) => {"
+                    " const t = el.querySelector('td.risk-td-result .risk-result-tag');"
+                    " if (!t) return true;"
+                    " return t.scrollWidth > t.clientWidth + 1;"
+                    "}")
     check(f"{label}：系统诊断结论文案未被截断", not clipped)
 
     # ---- v1.38.2：合并单元格线框 + 两模块视觉区分 ----
@@ -236,14 +246,29 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     v5 = panel.locator("tbody tr").nth(5).locator(".risk-remark-select").input_value()
     check(f"{label}：排序后备注不错位（仍在第 5 行）", v5 == "high", f"实际 {v5!r}")
 
-    # 改第 5 行的系统诊断结论 → 源项状态应同步变化
-    if warn_expr:
-        before = page.evaluate(warn_expr)
-        panel.locator("tbody tr").nth(5).locator("td.risk-td-result select").select_option("warn")
-        page.wait_for_timeout(700)
-        after = page.evaluate(warn_expr)
-        check(f"{label}：排序后改系统诊断结论能写回源项", after == before + 1,
-              f"warn 数 {before} → {after}")
+    # v1.38.5：系统诊断结论 → 只读标签，不可手工修改
+    n_sel = panel.locator("tbody td.risk-td-result select").count()
+    check(f"{label}：系统诊断结论不再是可编辑下拉框", n_sel == 0, f"实际 {n_sel} 个 select")
+    n_tag = panel.locator("tbody td.risk-td-result .risk-result-tag").count()
+    n_rows = panel.locator("tbody tr").count()
+    check(f"{label}：每行都有只读诊断结论标签", n_tag == n_rows, f"标签 {n_tag} / 行 {n_rows}")
+    # 标签文本应为「✓ 无风险」或「⚠ 存在风险」，且无 onchange
+    tag_info = panel.evaluate("""(el) => {
+      const tags = [...el.querySelectorAll('tbody td.risk-td-result .risk-result-tag')];
+      return {
+        texts: [...new Set(tags.map(t => t.textContent.trim()))],
+        withHandler: tags.filter(t => t.getAttribute('onchange') || t.onchange).length,
+        cursor: tags.length ? getComputedStyle(tags[0]).cursor : '-',
+      };
+    }""")
+    check(f"{label}：诊断结论文案正确",
+          set(tag_info["texts"]) <= {"✓ 无风险", "⚠ 存在风险"}, f"实际 {tag_info['texts']}")
+    check(f"{label}：诊断结论无修改事件", tag_info["withHandler"] == 0)
+    check(f"{label}：诊断结论呈只读样式（cursor:default）",
+          tag_info["cursor"] == "default", f"实际 {tag_info['cursor']}")
+    # 备注列仍可编辑
+    check(f"{label}：备注列仍可编辑",
+          panel.locator("tbody td.risk-td-remark .risk-remark-select").count() == n_rows)
 
 
 def main():

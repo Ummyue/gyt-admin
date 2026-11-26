@@ -462,7 +462,7 @@
     .risk-table thead th.risk-th-category { width: 96px; }
     .risk-table thead th.risk-th-name { width: 130px; }
     .risk-table thead th.risk-th-rule { width: 200px; text-align: left; }
-    .risk-table thead th.risk-th-result { width: 140px; text-align: center; }
+    .risk-table thead th.risk-th-result { width: 116px; text-align: center; }
     .risk-table tbody td { padding: 12px 12px; border-bottom: 1px solid #F1F5F9; color: var(--text-primary); vertical-align: top; line-height: 1.65; }
     .risk-table tbody tr:last-child td { border-bottom: none; }
     .risk-table tbody tr.risk-row { transition: background 0.15s; }
@@ -476,21 +476,10 @@
     .risk-rule-list li { margin-bottom: 2px; }
     .risk-td-desc .risk-desc { font-size: 12px; color: var(--text-tertiary); line-height: 1.7; }
     .risk-td-result { text-align: center; }
-    .risk-result-tag { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; white-space: nowrap; }
+    /* v1.38.5：系统诊断结论 = 系统自动判定，只读标签（cursor:default，无下拉箭头） */
+    .risk-result-tag { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; white-space: nowrap; cursor: default; }
     .risk-result-ok { background: rgba(16, 185, 129, 0.12); color: #047857; }
     .risk-result-warn { background: rgba(220, 38, 38, 0.12); color: #B91C1C; }
-    /* v1.7.99.300 风险校验结果可手动调整（select dropdown） */
-    .risk-result-select {
-      display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 12px; font-weight: 500; white-space: nowrap;
-      border: 1px solid transparent; cursor: pointer; font-family: inherit;
-      transition: all 0.15s; appearance: none; -webkit-appearance: none;
-      background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%2364748B' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E");
-      background-repeat: no-repeat; background-position: right 6px center; padding-right: 22px;
-    }
-    .risk-result-select.risk-result-ok { background-color: rgba(16, 185, 129, 0.12); color: #047857; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23047857' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
-    .risk-result-select.risk-result-warn { background-color: rgba(220, 38, 38, 0.12); color: #B91C1C; background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6' viewBox='0 0 10 6'%3E%3Cpath fill='%23B91C1C' d='M0 0l5 6 5-6z'/%3E%3C/svg%3E"); }
-    .risk-result-select:hover { filter: brightness(0.96); border-color: rgba(0,0,0,0.1); }
-    .risk-result-select:focus { outline: 2px solid rgba(91, 155, 213, 0.4); outline-offset: 1px; }
     .risk-tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border-light); background: #F8FAFC; padding: 0 16px; overflow-x: auto; }
     .risk-tab { padding: 10px 16px; font-size: 13px; color: var(--text-secondary); cursor: pointer; border-bottom: 2px solid transparent; transition: all 0.15s; white-space: nowrap; }
     .risk-tab:hover { color: var(--color-primary); }
@@ -1722,10 +1711,9 @@
             const ruleHtml = Array.isArray(meta.rule)
               ? '<ol class="risk-rule-list">' + meta.rule.map(x => '<li>' + x + '</li>').join('') + '</ol>'
               : meta.rule;
-            const tag = `<select class="risk-result-select risk-result-${isWarn ? 'warn' : 'ok'}" onchange="toggleApplyRiskResult('${key}', '${r.name}', this, '${r.from || ''}')">
-              <option value="ok"${isWarn ? '' : ' selected'}>✓ 无风险</option>
-              <option value="warn"${isWarn ? ' selected' : ''}>⚠ 存在风险</option>
-            </select>`;
+            // v1.38.5：系统诊断结论为**系统自动判定** → 改为只读标签，不可手工修改
+            // 人工补充判断请用右侧「备注」列（低/中/高风险 + 自定义描述）
+            const tag = `<span class="risk-result-tag risk-result-${isWarn ? 'warn' : 'ok'}" title="系统自动判定，不可手工修改；如需补充判断请填写右侧备注">${isWarn ? '⚠ 存在风险' : '✓ 无风险'}</span>`;
             // v1.38.1：同组首行输出 rowspan 合并单元格，其余行不输出该格
             const catCell = (gi === 0)
               ? `<td class="risk-td-category risk-td-cat-merged" rowspan="${g.rows.length}">${g.cat}</td>`
@@ -1869,35 +1857,7 @@
       applyPersistRemarks(companyKey);
     }
 
-    // v1.7.99.300 用户手动调整风险校验结果（apply 流程）
-    function toggleApplyRiskResult(companyKey, riskName, selectEl, srcName) {
-      var newStatus = selectEl.value;  // 'ok' | 'warn'
-      var c = APPLY_SURVEY_COMPANIES[companyKey];
-      if (!c || !c.risks) return;
-      // v1.38.0：主体风险的条目是共享清单重建的 → 按**源校验项名**写回原数据
-      var targetName = srcName || riskName;
-      var changed = false;
-      Object.keys(c.risks).forEach(function(tab) {
-        var items = c.risks[tab];
-        if (!Array.isArray(items)) return;
-        items.forEach(function(r) {
-          if (r.name === targetName) {
-            r.status = newStatus;
-            changed = true;
-          }
-        });
-      });
-      if (!changed) return;
-      // 同步更新 select 样式
-      selectEl.classList.remove('risk-result-ok', 'risk-result-warn');
-      selectEl.classList.add('risk-result-' + (newStatus === 'warn' ? 'warn' : 'ok'));
-      // 重新聚合并刷新所有 panel
-      var groups = window.__applyRiskGroups || {};
-      groups[companyKey] = applyGroupRisksByTab(c.risks);
-      window.__applyRiskGroups = groups;
-      renderAllApplyRiskPanels();
-      Utils.toast('已调整校验结果为：' + (newStatus === 'warn' ? '存在风险' : '无风险'), 'success');
-    }
+    // v1.38.5：已移除 toggleApplyRiskResult —— 系统诊断结论为只读（系统自动判定）
 
     // v1.7.99.282 风控合规提醒 tab 切换（apply）
     function switchApplyRiskTab(companyKey, tab) {
