@@ -664,3 +664,22 @@ user 截图反馈：「你怎么合并同类项又把分割线给合并没了」
 改成内容合并后丢了 → 给 `.risk-td-category` 整列补回。
 
 - 验证：专项 **113/113**、全站 **37/37**
+
+### v1.38.9 合并单元格内容垂直居中 + 横线补绘（2026-11-27）
+
+user 反馈：「在单元格中居中展示吧」——内容挤在分组首行顶部，希望在整个分组里垂直居中。
+
+**做法：rowspan 合并 + JS 补画横线**（两者兼得）
+- 恢复 `rowspan`（4/6/5/2）→ 内容真正跨行 → `vertical-align: middle` 即整个分组内居中
+- rowspan 会吃掉合并区域内部的横线 → 新增 `shared/js/risk-merged-separators.js`：
+  渲染后按**各行实际渲染高度**在合并单元格内绝对定位补回横线（数量 = rowspan − 1）
+
+**补线时机（关键）**
+- 渲染时 panel 可能还没显示 → 行高量不到 → 必须在**可见后**再画
+- 因此：`renderRiskPanel` / 面板渲染后 → `requestAnimationFrame` 延迟补画
+  风险 tab 切换后 → 重画；**step 切换后** → 重画；`window.resize` → 重画
+
+**样式**：合并格 `position: relative` + 四周 `border-strong`；补线用 `.merged-row-seps` 绝对定位层
+（`pointer-events: none`，不挡交互），线色 `--border-light` 与普通行分隔线一致。
+
+- 验证：专项 **112/112**、全站 **37/37**

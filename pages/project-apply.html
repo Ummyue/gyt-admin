@@ -1178,6 +1178,8 @@
   </div>
   <!-- v1.38.0：主体风险 tab 共享清单（必须在主脚本之前加载） -->
   <script src="../shared/js/risk-scan-subject.js"></script>
+  <!-- v1.38.9：合并单元格横向分割线补绘 -->
+  <script src="../shared/js/risk-merged-separators.js"></script>
 
   <script>
     // ===== Mock 模糊匹配数据 =====
@@ -1712,15 +1714,15 @@
             if (!logicMap[lk]) { logicMap[lk] = { rows: [] }; logicOrder.push(logicMap[lk]); }
             logicMap[lk].rows.push(rm);
           });
-          // v1.38.8：不再用 rowspan —— rowspan 会把合并区域内的**横向分割线一起吃掉**。
-          // 改为「内容合并」：同类项的内容只在组首行显示，但**每行都保留单元格与横线**
+          // v1.38.9：恢复 rowspan（内容真正跨行 → 垂直居中于整个分组），
+          // 合并区域内部的横向分割线由 paintMergedSeparators() 按各行实际高度**补回**。
           catOrder.forEach(function (g) {
             g.rows[0].__catFirst = true;
-            g.rows[g.rows.length - 1].__catLast = true;
+            g.rows[0].__catSpan = g.rows.length;
           });
           logicOrder.forEach(function (g) {
             g.rows[0].__logicFirst = true;
-            g.rows[g.rows.length - 1].__logicLast = true;
+            g.rows[0].__logicSpan = g.rows.length;
           });
           const rows = catOrder.map(function (g) {
             return g.rows.map(function (rm, gi) {
@@ -1739,19 +1741,13 @@
             // v1.38.5：系统诊断结论为**系统自动判定** → 改为只读标签，不可手工修改
             // 人工补充判断请用右侧「备注」列（低/中/高风险 + 自定义描述）
             const tag = `<span class="risk-result-tag risk-result-${isWarn ? 'warn' : 'ok'}" title="系统自动判定，不可手工修改；如需补充判断请填写右侧备注">${isWarn ? '⚠ 存在风险' : '✓ 无风险'}</span>`;
-            // v1.38.8：内容合并（同类项只显示一次）+ 每行保留单元格与横向分割线
-            const catCls = 'risk-td-category'
-              + (rm.__catFirst ? ' risk-td-cat-first' : '')
-              + (rm.__catLast ? ' risk-td-cat-last' : '');
+            // v1.38.9：rowspan 合并 → 内容在分组内垂直居中；横线由 JS 补回
             const catCell = rm.__catFirst
-              ? `<td class="${catCls}">${g.cat}</td>`
-              : `<td class="${catCls}"></td>`;
-            const logicCls = 'risk-td-rule'
-              + (rm.__logicFirst ? ' risk-td-rule-first' : '')
-              + (rm.__logicLast ? ' risk-td-rule-last' : '');
+              ? `<td class="risk-td-category risk-td-cat-merged" rowspan="${rm.__catSpan}" data-rspan="1">${g.cat}</td>`
+              : '';
             const logicCell = rm.__logicFirst
-              ? `<td class="${logicCls}">${ruleHtml}</td>`
-              : `<td class="${logicCls}"></td>`;
+              ? `<td class="risk-td-rule risk-td-rule-merged" rowspan="${rm.__logicSpan}" data-rspan="1">${ruleHtml}</td>`
+              : '';
             return `<tr class="risk-row ${isWarn ? 'risk-row-warn' : ''}">
               ${catCell}
               ${logicCell}
@@ -1775,6 +1771,8 @@
                 <tbody>${rows}</tbody>
               </table></div>`
             : '<div class="empty-state" style="padding: 40px 20px; text-align: center; color: var(--text-tertiary); font-size: 13px;">本分类暂无风险项</div>';
+          // v1.38.9：补回合并区域内部的横向分割线（rowspan 会吃掉）
+          if (window.paintMergedSeparators) window.paintMergedSeparators(el);
         });
       });
     }
@@ -3438,6 +3436,10 @@
         if (c && !c.dataset.rendered) {
           renderStep2('all');
           c.dataset.rendered = '1';
+        }
+        // v1.38.9：切到可见步骤后重画合并格补线（此前 panel 隐藏时量不到行高）
+        if (window.scheduleMergedSeparators) {
+          window.scheduleMergedSeparators(document.getElementById('step2Content') || document);
         }
         // v1.7.99.281 刷新合规问卷 banner 文案
         if (typeof refreshApplySurveyBanner === 'function') refreshApplySurveyBanner();

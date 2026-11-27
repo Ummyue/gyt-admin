@@ -2951,23 +2951,27 @@ input, select, textarea {
 /* v1.38.3 修正：合并格背景原为 #F1F5F9，与行分隔线 #F1F5F9 **同色** → 线画了但看不见，
    相邻两个合并格之间没有横向分隔，看起来像一整块灰色。
    → 上下边框改用更深的 --border-default，背景改浅一档 #FAFBFC，横线才显出来。 */
-/* ===== v1.38.8 风险扫描表格：内容合并（保留全部分割线）=====
-   ⚠️ 不用 rowspan：rowspan 会把合并区域内的**横向分割线一起吃掉**，
-   用户反馈「把分割线给合并没了」。
-   → 改为：同类项的内容只在组首行显示（视觉上仍是合并），
-     但**每行都保留独立单元格**，横向分割线一条不少。 */
-/* 两列统一浅底 → 视觉上仍是一个「合并块」，但每行横线都在 */
+/* ===== v1.38.9 风险扫描表格：rowspan 合并 + 内容垂直居中 + 横线补绘 =====
+   rowspan 让内容真正跨行 → 垂直居中于整个分组（用户诉求）；
+   合并区域内部丢失的横向分割线由 shared/js/risk-merged-separators.js
+   按各行实际渲染高度绝对定位补回（分割线一条不少）。 */
 .risk-table tbody td.risk-td-category {
   background: #FAFBFC;
   border-left: 1px solid var(--border-strong);
 }
-.risk-table tbody td.risk-td-cat-first {
+.risk-table tbody td.risk-td-cat-merged {
+  position: relative;
   vertical-align: middle;
-  border-top: 1px solid var(--border-strong);
   font-weight: 600;
   color: var(--text-primary);
+  border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  border-left: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border-strong);
 }
-.risk-table tbody td.risk-td-cat-last { border-bottom: 1px solid var(--border-strong); }
+/* 补绘的横线层（不参与交互） */
+.merged-row-seps { position: absolute; left: 0; right: 0; top: 0; bottom: 0; pointer-events: none; }
+.merged-row-sep { position: absolute; left: 0; right: 0; height: 1px; background: var(--border-light); }
 /* 两个模块之间加竖向分隔 + 备注列用淡蓝底区分 */
 /* v1.38.3：两列间距从 12px 拉到 24px，并给 select 设最小宽度，
    否则两个下拉箭头几乎贴在一起，看不出箭头归哪一列 */
@@ -2993,11 +2997,14 @@ input, select, textarea {
 }
 /* v1.38.7：风险逻辑（对应合规要求）列的合并单元格 —— 与「检查分类」合并格同一逻辑 */
 .risk-table tbody td.risk-td-rule { background: #FAFBFC; color: var(--text-primary); }
-.risk-table tbody td.risk-td-rule-first {
+.risk-table tbody td.risk-td-rule-merged {
+  position: relative;
   vertical-align: middle;
   border-top: 1px solid var(--border-strong);
+  border-bottom: 1px solid var(--border-strong);
+  border-left: 1px solid var(--border-strong);
+  border-right: 1px solid var(--border-strong);
 }
-.risk-table tbody td.risk-td-rule-last { border-bottom: 1px solid var(--border-strong); }
 
 /* v1.38.4：补齐中间两列的竖向分隔线
    校验项 | 检查规则 | 检查过程 三个列块之间要有明确分界，
