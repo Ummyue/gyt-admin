@@ -46,8 +46,7 @@ SPEC = [
         "特定货品无有效专项存储设备",
     ]),
     ("客户产业链定位", [
-        "上下游双方是否均为贸易类型企业且过往合作项目中对手为贸易企业占比超过 80%",
-        "该企业连续三个月客户变动率>50%",
+        "该企业为贸易类型企业，且我司目前合作客户中，贸易类企业占比超过80%",
     ]),
 ]
 EXPECT_NAMES = [n for _, items in SPEC for n in items]
@@ -82,7 +81,7 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
 
     rows = panel.locator("tbody tr")
     n = rows.count()
-    check(f"{label}：主体风险共 17 项", n == 17, f"实际 {n} 项")
+    check(f"{label}：主体风险共 16 项", n == 16, f"实际 {n} 项")
 
     # ===== v1.38.7 助手：按 rowspan 语义还原每行的列文本 =====
     # 合并单元格覆盖的行**没有**该 td → 逐行 locator 会超时；
@@ -125,7 +124,7 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
         ".map(t => t.getAttribute('rowspan')).join(',')")
     check(f"{label}：分类列使用 rowspan 合并（内容跨行）", spans != "", f"实际 {spans!r}")
     if label == "项目详情":
-        check(f"{label}：主体风险分类合并 rowspan=4/6/5/2", spans == "4,6,5,2", f"实际 {spans}")
+        check(f"{label}：主体风险分类合并 rowspan=4/6/5/1", spans == "4,6,5,1", f"实际 {spans}")
     # 内容垂直居中
     valign = panel.evaluate(
         "(el) => { const t = el.querySelector('tbody td.risk-td-cat-merged');"
@@ -207,9 +206,10 @@ def verify_page(page, label, tab_sel, panel_sel, warn_expr=None):
     check(f"{label}：分类列分组线可见（与背景不同色且有宽度）",
           line_vis['w'] != '0px' and line_vis['c'] != line_vis['bg'],
           f"实际 {line_vis}")
-    sep2 = panel.evaluate("(el) => [...el.querySelectorAll('tbody td.risk-td-cat-merged')]"
-                ".map(t => getComputedStyle(t).borderBottomWidth).join(',');")
-    check(f"{label}：每个分类合并格都有底边线",
+    sep2 = panel.evaluate("(el) => { const rows = [...el.querySelectorAll('tbody tr')];"
+                " return rows.slice(0, -1).map(r => r.querySelector('td.risk-td-cat-merged'))"
+                " .filter(Boolean).map(t => getComputedStyle(t).borderBottomWidth).join(','); }")
+    check(f"{label}：分类合并格都有底边线（末行除外）",
           all(v == '1px' for v in sep2.split(',') if v), f"实际 {sep2}")
 
     # ---- v1.38.4：所有列块之间都要有竖向分隔线 ----
